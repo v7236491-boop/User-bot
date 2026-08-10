@@ -1,22 +1,26 @@
 import os
 import random
 import asyncio
-from fastapi import FastAPI, Request, Query
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, Query
+from fastapi.responses import FileResponse, JSONResponse
 
 app = FastAPI(title="Telegram Username Generator")
 
-# Ищем шаблоны прямо в текущей папке
-templates = Jinja2Templates(directory=".")
+# Определяем точный абсолютный путь к index.html
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 
-PREFIXES = ["vibe", "neo", "cyber", "meta", "hyper", "crypto", "retro", "synth"]
-SUFFIXES = ["coder", "dev", "punk", "whale", "ninja", "guru", "forge", "wave"]
 
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    # Просто отдаем index.html из корня
-    return templates.TemplateResponse("index.html", {"request": request})
+@app.get("/")
+async def read_root():
+    # Отдаем файл напрямую без сторонних шаблонизаторов
+    if os.path.exists(INDEX_PATH):
+        return FileResponse(INDEX_PATH, media_type="text/html")
+    return JSONResponse(
+        status_code=404,
+        content={"error": f"Файл index.html не найден по пути: {INDEX_PATH}"}
+    )
+
 
 @app.get("/api/check")
 async def check_username(username: str = Query(..., min_length=3, max_length=32)):
@@ -25,10 +29,14 @@ async def check_username(username: str = Query(..., min_length=3, max_length=32)
     is_free = random.random() > 0.3
     return {"status": "success", "username": clean_username, "is_free": is_free}
 
+
 @app.get("/api/generate")
 async def generate_username():
-    generated = f"{random.choice(PREFIXES)}_{random.choice(SUFFIXES)}"
+    prefixes = ["vibe", "neo", "cyber", "meta", "hyper", "crypto", "retro", "synth"]
+    suffixes = ["coder", "dev", "punk", "whale", "ninja", "guru", "forge", "wave"]
+    generated = f"{random.choice(prefixes)}_{random.choice(suffixes)}"
     return {"status": "success", "generated_username": generated}
+
 
 if __name__ == "__main__":
     import uvicorn
