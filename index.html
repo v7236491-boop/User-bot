@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TG Username Catch Evaluator</title>
+    <title>TG Username Generator & Checker</title>
     <style>
         body {
             background-color: #0f172a;
@@ -27,7 +27,7 @@
             text-align: center;
         }
         .username {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
             margin: 16px 0;
             color: #38bdf8;
@@ -60,10 +60,11 @@
         }
         .link-btn {
             display: inline-block;
-            margin-top: 12px;
-            color: #94a3b8;
+            margin-top: 16px;
+            color: #38bdf8;
             text-decoration: none;
             font-size: 14px;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -71,11 +72,11 @@
 
 <div class="card">
     <h2>TG Username Catch</h2>
-    <div id="username" class="username">@click_generate</div>
+    <div id="username" class="username">@нажми_кнопку</div>
     <div id="badge" class="badge" style="color: #94a3b8;">Ранг: -</div>
     <button class="btn" onclick="generate()">🎲 Сгенерировать</button>
     <br>
-    <a id="tgLink" href="#" target="_blank" class="link-btn" style="display:none;">Открыть в Telegram ↗</a>
+    <a id="tgLink" href="#" target="_blank" class="link-btn" style="display:none;">Открыть профиль в Telegram ↗</a>
 </div>
 
 <script>
@@ -84,7 +85,10 @@ async function generate() {
     const badgeEl = document.getElementById('badge');
     const linkEl = document.getElementById('tgLink');
     
-    unEl.innerText = "Генерация...";
+    unEl.innerText = "Проверка...";
+    badgeEl.innerText = "Запрос к Fragment...";
+    badgeEl.style.color = "#94a3b8";
+    badgeEl.style.borderColor = "rgba(255, 255, 255, 0.1)";
     
     try {
         const res = await fetch('/api/generate');
@@ -101,7 +105,7 @@ async function generate() {
         linkEl.href = data.tg_link;
         linkEl.style.display = "inline-block";
     } catch (e) {
-        unEl.innerText = "Ошибка запроса";
+        unEl.innerText = "Ошибка сервера";
     }
 }
 </script>
