@@ -6,28 +6,13 @@ import json
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse, JSONResponse
 
-app = FastAPI(title="Real Catch Value Username Generator")
+app = FastAPI(title="High-Success Telegram Username Generator")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 
-# 1. Знаменитости
-CELEBRITIES = [
-    "messi", "ronaldo", "neymar", "mbappe", "jordan", "musk", "jobs", "gates",
-    "drake", "eminem", "rihanna", "bieber", "kanye", "pitt", "depp", "reeves"
-]
-
-# 2. Компании и бренды
-COMPANIES = [
-    "apple", "google", "nike", "adidas", "gucci", "prada", "tesla",
-    "sony", "steam", "roblox", "nvidia", "rolex", "bmw", "binance"
-]
-
-OFFICIAL_PREFIXES = ["real", "iam", "the", "get", "try", "go", "my"]
-OFFICIAL_SUFFIXES = ["official", "corp", "ltd", "store", "pay", "club", "vip", "lab"]
-
-# 3. Эстетичные короткие корни
-PREMIUM_ROOTS = [
+# Редкие комбинации корней (высокий шанс свободы)
+RARE_PREFIXES = [
     "aero", "alvo", "apex", "arch", "aura", "aera", "aster", "aevi",
     "bold", "byte", "cora", "crest", "cron", "cyra", "dusk", "drift",
     "elix", "echo", "enzo", "fable", "flux", "halo", "hyper", "iris",
@@ -35,10 +20,21 @@ PREMIUM_ROOTS = [
     "orion", "onyx", "pulse", "prism", "quill", "riva", "solis", "silk",
     "vortex", "velox", "vera", "vybe", "xenon", "zephyr", "zara", "zest"
 ]
-PREMIUM_ENDINGS = ["lab", "hub", "net", "dev", "io", "one", "pro", "mode", "zone", "wave", "vibe", "flow", "mind", "soul", "core"]
+
+RARE_SUFFIXES = [
+    "lab", "hub", "net", "dev", "io", "one", "pro", "mode",
+    "zone", "wave", "vibe", "flow", "mind", "soul", "core"
+]
+
+# Редкие бренд-модификаторы
+BRANDS = ["nike", "adidas", "gucci", "prada", "tesla", "sony", "rolex", "bmw", "binance", "messi", "drake"]
+BRAND_MODS = ["hub", "club", "zone", "wave", "flow", "core"]
 
 
 def check_fragment_availability(username: str) -> bool:
+    """
+    Проверка через Fragment.com
+    """
     url = f"https://fragment.com/api?hash=search&query={username}"
     req = urllib.request.Request(
         url,
@@ -60,50 +56,31 @@ def check_fragment_availability(username: str) -> bool:
         return True
 
 
-def calculate_catch_score(username: str, is_free: bool, is_pure_brand: bool) -> dict:
-    """
-    Корректная объективная оценка ценности юзернейма
-    """
+def calculate_catch_score(username: str, is_free: bool) -> dict:
     if not is_free:
         return {"rank": "F", "status": "Занят (0$)", "color": "#ef4444"}
 
-    score = 0
     length = len(username)
-    has_underscore = "_" in username
+    score = 100
 
-    # 1. Оценка длины (главный фактор ценности на рынке)
-    if length <= 5:
-        score += 500
-    elif length == 6:
-        score += 350
+    if length <= 6:
+        score += 450
     elif length <= 8:
-        score += 200
+        score += 250
     elif length <= 10:
         score += 100
-    else:
-        score += 30
 
-    # 2. Бонус за чистый бренд без приписок (например, чистый "tesla" или "messi")
-    if is_pure_brand:
-        score += 400
-    elif any(b in username for b in COMPANIES + CELEBRITIES):
-        score += 120  # Небольшой бонус за упоминание бренда/звезды со служебным словом
+    if any(b in username for b in BRANDS):
+        score += 150
 
-    # 3. Штраф за подчёркивание (чистые слитные слова ценятся выше)
-    if has_underscore:
-        score -= 80
-
-    # Вывод ранга и корректной рыночной стоимости
-    if score >= 700:
-        return {"rank": "SSS+", "status": "Грааль рынка! (~1000-5000+$)", "color": "#2bcf66"}
-    elif score >= 500:
-        return {"rank": "SS", "status": "Премиум улов (~250-1000$)", "color": "#eab308"}
+    if score >= 500:
+        return {"rank": "SSS+", "status": "Редкий Грааль! (~300-1000+$)", "color": "#2bcf66"}
     elif score >= 350:
-        return {"rank": "S", "status": "Редкий ник (~50-250$)", "color": "#a855f7"}
+        return {"rank": "SS", "status": "Премиум улов (~100-300$)", "color": "#eab308"}
     elif score >= 200:
-        return {"rank": "A", "status": "Хороший улов (~15-50$)", "color": "#06b6d4"}
+        return {"rank": "S", "status": "Хороший ник (~30-100$)", "color": "#a855f7"}
     else:
-        return {"rank": "B", "status": "Обычный логин (~5-15$)", "color": "#38bdf8"}
+        return {"rank": "A", "status": "Достойный логин (~10-30$)", "color": "#06b6d4"}
 
 
 @app.get("/")
@@ -116,45 +93,17 @@ async def read_root():
 @app.get("/api/generate")
 async def generate_username(platform: str = Query("telegram")):
     rand_val = random.random()
-    is_pure_brand = False
 
-    # 1. Генерация знаменитостей
-    if rand_val < 0.30:
-        celeb = random.choice(CELEBRITIES)
-        fmt = random.choice(["pure", "official_under", "official_concat", "real", "prefix"])
-        if fmt == "pure":
-            generated = celeb
-            is_pure_brand = True
-        elif fmt == "official_under":
-            generated = f"{celeb}_official"
-        elif fmt == "official_concat":
-            generated = f"{celeb}official"
-        elif fmt == "real":
-            generated = f"real{celeb}"
-        else:
-            generated = f"{random.choice(OFFICIAL_PREFIXES)}{celeb}"
-
-    # 2. Генерация брендов и компаний
-    elif rand_val < 0.60:
-        brand = random.choice(COMPANIES)
-        fmt = random.choice(["pure", "official_under", "official_concat", "real", "suffix"])
-        if fmt == "pure":
-            generated = brand
-            is_pure_brand = True
-        elif fmt == "official_under":
-            generated = f"{brand}_official"
-        elif fmt == "official_concat":
-            generated = f"{brand}official"
-        elif fmt == "real":
-            generated = f"real{brand}"
-        else:
-            generated = f"{brand}_{random.choice(OFFICIAL_SUFFIXES)}"
-
-    # 3. Абстрактные эстетичные ники
+    # 90% шанс сгенерировать слитный редкий эстетичный ник (высокий шанс свободы)
+    # 10% шанс попробовать редкую связку с брендом
+    if rand_val < 0.90:
+        prefix = random.choice(RARE_PREFIXES)
+        suffix = random.choice(RARE_SUFFIXES)
+        generated = f"{prefix}{suffix}"
     else:
-        root = random.choice(PREMIUM_ROOTS)
-        ending = random.choice(PREMIUM_ENDINGS)
-        generated = f"{root}{ending}"
+        brand = random.choice(BRANDS)
+        mod = random.choice(BRAND_MODS)
+        generated = f"{brand}_{mod}"
 
     if platform == "whatsapp":
         is_free = True
@@ -163,7 +112,8 @@ async def generate_username(platform: str = Query("telegram")):
         is_free = check_fragment_availability(generated)
         link = f"https://t.me/{generated}"
 
-    catch_eval = calculate_catch_score(generated, is_free, is_pure_brand)
+    catch_eval = calculate_catch_score(generated, is_free)
+
     return {
         "status": "success",
         "generated_username": generated,
