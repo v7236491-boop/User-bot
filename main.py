@@ -1,11 +1,11 @@
 import os
 import random
-import urllib.request
-import urllib.error
+import asyncio
+import httpx
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse, JSONResponse
 
-app = FastAPI(title="Reliable Telegram Username Generator")
+app = FastAPI(title="Fast & Non-Blocking Telegram Username Generator")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
@@ -27,45 +27,33 @@ RARE_SUFFIXES = [
 BRANDS = ["nike", "adidas", "gucci", "prada", "tesla", "sony", "rolex", "bmw", "binance", "messi", "drake"]
 BRAND_MODS = ["hub", "club", "zone", "wave", "flow", "core"]
 
-def strict_tg_check(username: str) -> bool:
+
+async def async_check_tg(username: str) -> bool:
     """
-    Строгая проверка через t.me.
-    Если имя занято, Telegram отдаст страницу с заголовком канала/юзера или специальными мета-тегами.
-    Если свободен — страницы нет или она содержит кнопку скачивания без данных профиля.
+    Асинхронная неблокирующая проверка через httpx.
+    Исключает падения сервера в 502 Bad Gateway.
     """
     url = f"https://t.me/{username}"
-    req = urllib.request.Request(
-        url,
-        headers={
-            # Притворяемся Telegram Web / Googlebot, чтобы сервер отдавал полную HTML-разметку
-            "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-        }
-    )
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
     try:
-        with urllib.request.urlopen(req, timeout=4) as response:
-            html = response.read().decode('utf-8').lower()
+        async with httpx.AsyncClient(timeout=1.5, follow_redirects=True) as client:
+            response = await client.get(url, headers=headers)
+            html = response.text.lower()
             
-            # Маркеры того, что ЮЗЕРНЕЙМ ЗАНЯТ (есть фото, имя, подписчики или кнопка SEND MESSAGE)
-            if "tgme_page_title" in html or "tgme_page_extra" in html or "send message" in html or "view in telegram" in html:
-                # Если на странице есть явное указание "If you have Telegram, you can contact...", проверяем дальше
-                if "you can contact @" in html:
-                    return False  # Занят!
-                if "subscribers" in html or "members" in html:
-                    return False  # Это занятый канал/чат!
-                
-                # Если мета-заголовок содержит название
+            # Признаки того, что аккаунт/канал зарегистрирован
+            if "tgme_page_title" in html or "tgme_page_extra" in html or "send message" in html:
+                if "you can contact @" in html or "subscribers" in html or "members" in html:
+                    return False
                 if '<meta property="og:title"' in html:
-                    return False  # Занят!
-                    
-            # Если нет ключевых тегов профиля — имя свободно
+                    return False
             return True
 
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return True  # 100% свободен
-        return False  # Если сервер сбоит/блокирует — помечаем как занят (безопасный режим)
     except Exception:
-        return False  # Любая ошибка сети = помечаем как занят, чтобы не вреть пользователю
+        # При таймауте или ошибке сети возвращаем False (безопасный режим без падения 502)
+        return False
 
 
 def calculate_catch_score(username: str, is_free: bool) -> dict:
@@ -119,7 +107,7 @@ async def generate_username(platform: str = Query("telegram")):
         is_free = True
         link = f"https://wa.me/{generated}"
     else:
-        is_free = strict_tg_check(generated)
+        is_free = await async_check_tg(generated)
         link = f"https://t.me/{generated}"
 
     catch_eval = calculate_catch_score(generated, is_free)
@@ -138,4 +126,3 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
-ы
