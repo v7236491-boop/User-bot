@@ -2,16 +2,14 @@ import os
 import random
 import urllib.request
 import urllib.error
-import json
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse, JSONResponse
 
-app = FastAPI(title="High-Success Telegram Username Generator")
+app = FastAPI(title="Reliable Telegram Username Generator")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 
-# Редкие комбинации корней (высокий шанс свободы)
 RARE_PREFIXES = [
     "aero", "alvo", "apex", "arch", "aura", "aera", "aster", "aevi",
     "bold", "byte", "cora", "crest", "cron", "cyra", "dusk", "drift",
@@ -26,34 +24,48 @@ RARE_SUFFIXES = [
     "zone", "wave", "vibe", "flow", "mind", "soul", "core"
 ]
 
-# Редкие бренд-модификаторы
 BRANDS = ["nike", "adidas", "gucci", "prada", "tesla", "sony", "rolex", "bmw", "binance", "messi", "drake"]
 BRAND_MODS = ["hub", "club", "zone", "wave", "flow", "core"]
 
-
-def check_fragment_availability(username: str) -> bool:
+def strict_tg_check(username: str) -> bool:
     """
-    Проверка через Fragment.com
+    Строгая проверка через t.me.
+    Если имя занято, Telegram отдаст страницу с заголовком канала/юзера или специальными мета-тегами.
+    Если свободен — страницы нет или она содержит кнопку скачивания без данных профиля.
     """
-    url = f"https://fragment.com/api?hash=search&query={username}"
+    url = f"https://t.me/{username}"
     req = urllib.request.Request(
         url,
         headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            "X-Requested-With": "XMLHttpRequest"
+            # Притворяемся Telegram Web / Googlebot, чтобы сервер отдавал полную HTML-разметку
+            "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
         }
     )
     try:
         with urllib.request.urlopen(req, timeout=4) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            html_res = data.get("html", "").lower()
+            html = response.read().decode('utf-8').lower()
             
-            if username.lower() in html_res:
-                if "tm-search-row" in html_res or "table-cell" in html_res:
-                    return False
+            # Маркеры того, что ЮЗЕРНЕЙМ ЗАНЯТ (есть фото, имя, подписчики или кнопка SEND MESSAGE)
+            if "tgme_page_title" in html or "tgme_page_extra" in html or "send message" in html or "view in telegram" in html:
+                # Если на странице есть явное указание "If you have Telegram, you can contact...", проверяем дальше
+                if "you can contact @" in html:
+                    return False  # Занят!
+                if "subscribers" in html or "members" in html:
+                    return False  # Это занятый канал/чат!
+                
+                # Если мета-заголовок содержит название
+                if '<meta property="og:title"' in html:
+                    return False  # Занят!
+                    
+            # Если нет ключевых тегов профиля — имя свободно
             return True
+
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return True  # 100% свободен
+        return False  # Если сервер сбоит/блокирует — помечаем как занят (безопасный режим)
     except Exception:
-        return True
+        return False  # Любая ошибка сети = помечаем как занят, чтобы не вреть пользователю
 
 
 def calculate_catch_score(username: str, is_free: bool) -> dict:
@@ -94,9 +106,7 @@ async def read_root():
 async def generate_username(platform: str = Query("telegram")):
     rand_val = random.random()
 
-    # 90% шанс сгенерировать слитный редкий эстетичный ник (высокий шанс свободы)
-    # 10% шанс попробовать редкую связку с брендом
-    if rand_val < 0.90:
+    if rand_val < 0.85:
         prefix = random.choice(RARE_PREFIXES)
         suffix = random.choice(RARE_SUFFIXES)
         generated = f"{prefix}{suffix}"
@@ -109,7 +119,7 @@ async def generate_username(platform: str = Query("telegram")):
         is_free = True
         link = f"https://wa.me/{generated}"
     else:
-        is_free = check_fragment_availability(generated)
+        is_free = strict_tg_check(generated)
         link = f"https://t.me/{generated}"
 
     catch_eval = calculate_catch_score(generated, is_free)
@@ -128,3 +138,4 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
+ы
