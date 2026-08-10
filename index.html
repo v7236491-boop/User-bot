@@ -2,280 +2,109 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TG Username Catch Evaluator</title>
     <style>
-        :root {
-            --bg-dark: #0a0c0a;
-            --card-bg: #111412;
-            --neon-green-muted: rgba(43, 207, 102, 0.4);
-            --neon-green-bright: #2bcf66;
-            --text-main: #ffffff;
-            --text-sub: #7a8a80;
-        }
-
         body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
             margin: 0;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* Декоративные минималистичные листья на фоне */
-        .leaf {
-            position: absolute;
-            opacity: 0.05;
-            fill: var(--neon-green-bright);
-            z-index: 0;
-        }
-        .leaf-1 { top: 10%; left: 10%; width: 120px; transform: rotate(45deg); }
-        .leaf-2 { bottom: 15%; right: 5%; width: 180px; transform: rotate(-30deg); }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 360px;
             padding: 20px;
             box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
-
-        /* Окошко с результатом и приглушенным свечением */
-        .result-box {
-            background-color: var(--card-bg);
-            border: 1px solid var(--neon-green-muted);
-            border-radius: 20px;
-            padding: 30px 20px;
+        .card {
+            background: #1e293b;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             width: 100%;
+            max-width: 400px;
             text-align: center;
-            box-shadow: 0 0 25px rgba(43, 207, 102, 0.1), inset 0 0 15px rgba(43, 207, 102, 0.05);
-            margin-bottom: 25px;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
         }
-
-        .result-box:hover {
-            box-shadow: 0 0 35px rgba(43, 207, 102, 0.2), inset 0 0 20px rgba(43, 207, 102, 0.1);
-        }
-
-        .username-display {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--neon-green-bright);
-            letter-spacing: 1px;
-            text-shadow: 0 0 10px rgba(43, 207, 102, 0.3);
-            transition: opacity 0.2s ease;
+        .username {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 16px 0;
+            color: #38bdf8;
             word-break: break-all;
         }
-
-        /* Кнопка генерации */
-        .generate-btn {
-            background-color: var(--neon-green-bright);
-            color: var(--bg-dark);
+        .badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn {
+            background: #2563eb;
+            color: white;
             border: none;
-            border-radius: 14px;
-            padding: 16px;
-            width: 100%;
+            padding: 14px 24px;
+            border-radius: 12px;
             font-size: 16px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(43, 207, 102, 0.2);
-            transition: all 0.2s ease;
-            margin-bottom: 30px;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .generate-btn:active {
-            transform: scale(0.96);
-            background-color: #24b056;
-        }
-
-        .generate-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* Платформы для поиска */
-        .platforms-title {
-            font-size: 12px;
-            color: var(--text-sub);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 15px;
-        }
-
-        .apps-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
             width: 100%;
+            transition: 0.2s;
         }
-
-        .app-btn {
-            background-color: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px
-
-
-;
-            padding: 15px 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
+        .btn:active {
+            transform: scale(0.98);
         }
-
-        .app-btn:active {
-            transform: scale(0.95);
-            border-color: var(--neon-green-muted);
-            background-color: rgba(43, 207, 102, 0.05);
-        }
-
-        .app-btn svg {
-            width: 26px;
-            height: 26px;
-            fill: var(--text-main);
-            margin-bottom: 8px;
-            transition: fill 0.2s ease;
-        }
-
-        .app-btn:active svg {
-            fill: var(--neon-green-bright);
-        }
-
-        .app-name {
-            font-size: 11px;
-            color: var(--text-sub);
-            font-weight: 500;
+        .link-btn {
+            display: inline-block;
+            margin-top: 12px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Фоновые листья (SVG) -->
-    <svg class="leaf leaf-1" viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>
-    <svg class="leaf leaf-2" viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>
+<div class="card">
+    <h2>TG Username Catch</h2>
+    <div id="username" class="username">@click_generate</div>
+    <div id="badge" class="badge" style="color: #94a3b8;">Ранг: -</div>
+    <button class="btn" onclick="generate()">🎲 Сгенерировать</button>
+    <br>
+    <a id="tgLink" href="#" target="_blank" class="link-btn" style="display:none;">Открыть в Telegram ↗</a>
+</div>
 
-    <div class="container">
-        <!-- Блок юзернейма -->
-        <div class="result-box">
-            <div class="username-display" id="usernameDisplay">Нажмите кнопку</div>
-        </div>
+<script>
+async function generate() {
+    const unEl = document.getElementById('username');
+    const badgeEl = document.getElementById('badge');
+    const linkEl = document.getElementById('tgLink');
+    
+    unEl.innerText = "Генерация...";
+    
+    try {
+        const res = await fetch('/api/generate');
+        const data = await res.json();
         
-        <!-- Кнопка -->
-        <button class="generate-btn" id="generateBtn">Сгенерировать</button>
+        unEl.innerText = "@" + data.generated_username;
         
-        <div class="platforms-title">Проверить юзернейм</div>
-        
-        <!-- Кнопки платформ -->
-        <div class="apps-container">
-            <div class="app-btn" onclick="searchPlatform('telegram')">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.96 1.25-5.54 3.67-.52.36-.99.54-1.41.53-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.24.36-.48.97-.74 3.78-1.65 6.31-2.74 7.58-3.27 3.61-1.51 4.36-1.77 4.85-1.78.11 0 .35.03.48.14.11.09.14.22.15.33-.01.07-.01.21-.02.32z"/></svg>
-                <span class="app-name">Telegram</span>
-            </div>
-            
-            <div class="app-btn" onclick="searchPlatform('whatsapp')">
-                <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                <span class="app-name">WhatsApp</span>
-            </div>
-
-            <div class="app-btn" onclick="searchPlatform('github')">
-                <svg viewBox="0 0 24 24"><path d="M12 2
-
-
-C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-                <span class="app-name">GitHub</span>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const display = document.getElementById("usernameDisplay");
-        const btn = document.getElementById("generateBtn");
-
-        // Функция автоматической генерации и проверки через FastAPI бэкенд
-        btn.addEventListener("click", async () => {
-            btn.disabled = true;
-            display.style.opacity = "0.5";
-            display.innerText = "Поиск...";
-
-            let found = false;
-            let attempts = 0;
-            const maxAttempts = 15;
-
-            while (!found && attempts < maxAttempts) {
-                try {
-                    // Генерируем случайный юзернейм
-                    const w1 = ["vibe", "neo", "cyber", "meta", "hyper", "crypto", "retro", "synth", "pixel", "dark"][Math.floor(Math.random() * 10)];
-                    const w2 = ["coder", "dev", "punk", "whale", "ninja", "guru", "forge", "wave", "phantom", "logic"][Math.floor(Math.random() * 10)];
-                    const username = `${w1}_${w2}`;
-
-                    // Проверяем его доступность через бэкенд
-                    const checkResponse = await fetch(`/api/check?username=${username}`);
-                    const checkData = await checkResponse.json();
-
-                    if (checkData.is_free) {
-                        display.innerText = "@" + username;
-                        found = true;
-                    }
-                } catch (e) {
-                    console.error("Ошибка запроса:", e);
-                }
-                attempts++;
-            }
-
-            if (!found) {
-                display.innerText = "Занято, еще раз!";
-            }
-            
-            display.style.opacity = "1";
-            btn.disabled = false;
-        });
-
-        // Функция открытия профиля в соцсетях
-        function searchPlatform(platform) {
-            const currentName = display.innerText.replace('@', '');
-            if (currentName === "Поиск..." || currentName === "Занято, еще раз!" || currentName === "Нажмите кнопку") return;
-
-            let url = '';
-            switch(platform) {
-                case 'telegram':
-                    url = `https://t.me/${currentName}`;
-                    break;
-                case 'whatsapp':
-                    url = `https://wa.me/${currentName}`;
-                    break;
-                case 'github':
-                    url = `https://github.com/${currentName}`;
-                    break;
-            }
-
-            if (url !== '') {
-                window.open(url, '_blank');
-            }
+        if (data.evaluation) {
+            badgeEl.innerText = `[${data.evaluation.rank}] ${data.evaluation.status}`;
+            badgeEl.style.color = data.evaluation.color;
+            badgeEl.style.borderColor = data.evaluation.color;
         }
-    </script>
+        
+        linkEl.href = data.tg_link;
+        linkEl.style.display = "inline-block";
+    } catch (e) {
+        unEl.innerText = "Ошибка запроса";
+    }
+}
+</script>
+
 </body>
 </html>
-
-
-
-
-
-
-
