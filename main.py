@@ -146,18 +146,34 @@ CELEB_CATEGORIES = {
 QUALITY_PREFIXES = ["real", "official", "iam", "the"]
 
 USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 ]
 
-# --- ЧЕСТНАЯ ПРОВЕРКА БЕЗ УГАДЫВАНИЙ ---
+# --- ДВОЙНАЯ СИСТЕМА ПРОВЕРКИ ---
 async def async_check_tg(username: str):
     """
     Возвращает:
     True - Точно свободен
     False - Точно занят
-    None - Ошибка сети / Блокировка IP (неизвестно)
+    None - Ошибка сети / Блокировка (неизвестно)
     """
+    
+    # МЕТОД 1: Официальный Telegram Bot API
+    if BOT_TOKEN:
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                api_url = f"https://api.telegram.org/bot{BOT_TOKEN}/getChat?chat_id=@{username}"
+                res_api = await client.get(api_url)
+                
+                if res_api.status_code == 200:
+                    data = res_api.json()
+                    if data.get("ok"):
+                        return False # 100% Занят (Профиль существует)
+        except Exception:
+            pass # Если API недоступен, переходим ко второму методу
+
+    # МЕТОД 2: Резервный веб-парсинг t.me
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "en-US,en;q=0.9",
@@ -168,14 +184,12 @@ async def async_check_tg(username: str):
             url_tg = f"https://t.me/{username}"
             res_tg = await client.get(url_tg, headers=headers)
             
-            # Если Telegram заблокировал запрос или сервер недоступен
             if res_tg.status_code in [429, 403, 500, 502, 503]:
-                return None 
+                return None # Сервер заблокировал запрос
             
             if res_tg.status_code == 200:
                 html = res_tg.text.lower()
                 
-                # Признаки того, что юзернейм КЕМ-ТО ЗАНЯТ
                 taken_indicators = [
                     '<meta property="og:title"',
                     'tgme_page_title',
@@ -186,7 +200,6 @@ async def async_check_tg(username: str):
                 
                 for ind in taken_indicators:
                     if ind in html:
-                        # Исключение: стандартная дефолтная плашка t.me без реального имени
                         if f'telegram: contact @{username}' in html and 'tgme_page_title' not in html:
                             continue
                         return False # Точно занят
@@ -196,12 +209,10 @@ async def async_check_tg(username: str):
             return None
 
     except Exception:
-        # При обрыве связи / таймауте возвращаем None
         return None
 
 
 def calculate_catch_score(username: str, check_result, is_pure_word: bool, has_underscore: bool) -> dict:
-    # Обработка ошибки сети / лимита запросов
     if check_result is None:
         return {"rank": "ERR", "status": "Лимит запросов (Попробуй еще)", "color": "#f97316"}
         
@@ -285,7 +296,6 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
 
     catch_eval = calculate_catch_score(generated, check_result, is_pure_word, has_underscore)
     
-    # Чтобы JSON не сломался на фронтенде, передаем булевое значение, даже если была ошибка
     is_free_bool = True if check_result is True else False
 
     return {
