@@ -21,9 +21,8 @@ bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
 
 USER_COOLDOWNS = {}
-COOLDOWN_SECONDS = 1.0
+COOLDOWN_SECONDS = 0.8
 
-# --- РАДАР (БАЗА ДАННЫХ И ФОНОВЫЙ МОНИТОРИНГ) ---
 def load_radar_db():
     if os.path.exists(RADAR_DB_PATH):
         with open(RADAR_DB_PATH, "r", encoding="utf-8") as f:
@@ -35,7 +34,6 @@ def save_radar_db(db):
         json.dump(db, f, ensure_ascii=False, indent=4)
 
 async def radar_worker():
-    """Фоновый процесс: проверяет ники из Радара."""
     while True:
         try:
             db = load_radar_db()
@@ -62,7 +60,6 @@ async def radar_worker():
             print(f"Ошибка воркера радара: {e}")
         await asyncio.sleep(10)
 
-# --- БАЗЫ ДАННЫХ ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -147,14 +144,14 @@ def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tupl
 async def async_check_tg(username: str):
     if BOT_TOKEN:
         try:
-            async with httpx.AsyncClient(timeout=2.5) as client:
+            async with httpx.AsyncClient(timeout=2.0) as client:
                 res = await client.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getChat?chat_id=@{username}")
                 if res.status_code == 200 and res.json().get("ok"): return False
         except Exception: pass
 
     headers = {"User-Agent": random.choice(USER_AGENTS)}
     try:
-        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
             res = await client.get(f"https://t.me/{username}", headers=headers)
             if res.status_code in [429, 403, 500, 502, 503]: return None
             if res.status_code == 200:
@@ -171,7 +168,7 @@ async def async_check_tg(username: str):
 async def async_check_wa(username: str):
     headers = {"User-Agent": random.choice(USER_AGENTS), "Accept-Language": "en-US"}
     try:
-        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
             res_wa = await client.get(f"https://wa.me/{username}", headers=headers)
             if res_wa.status_code == 200:
                 html = res_wa.text.lower()
@@ -185,7 +182,7 @@ async def async_check_wa(username: str):
     except Exception: pass
     
     try:
-        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
             res_api = await client.get(f"https://api.whatsapp.com/send/?phone={username}&text&type=phone_number&app_absent=0", headers=headers)
             if res_api.status_code == 200:
                 html_api = res_api.text.lower()
@@ -245,7 +242,6 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # ФИКС: 3 попытки, чтобы избежать случайного "Error"
     for _ in range(3):
         if use_filter:
             generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
@@ -261,12 +257,15 @@ async def generate_username(
                 generated = f"{b}_{c}" if random.random() < 0.5 else f"{b}{c}"
                 has_und = "_" in generated
 
+        # Исключаем слово "error" из списка генерации навсегда
+        if generated.lower() in ["error", "timeout", "retry"]:
+            continue
+
         if platform == "whatsapp":
             check_result = await async_check_wa(generated)
         else:
             check_result = await async_check_tg(generated)
 
-        # Если ответ получен, возвращаем результат
         if check_result is not None:
             is_free_bool = True if check_result is True else False
             return {
@@ -277,13 +276,11 @@ async def generate_username(
                 "evaluation": calculate_catch_score(generated, check_result, is_pure, has_und)
             }
         
-        # Если None (лимит/ошибка), ждем и пробуем еще раз
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.3)
 
-    # Если 3 раза подряд ошибка
-    return {"status": "error", "generated_username": "timeout", "is_free": False, "evaluation": {"rank": "ERR", "status": "Ошибка сети", "color": "#f97316"}}
+    # При сбое отдаем HTTP 503 без передачи фейкового ника
+    return JSONResponse(status_code=503, content={"error": "network_timeout"})
 
-# --- ЭНДПОИНТЫ РАДАРА ---
 @app.get("/api/radar/add")
 async def radar_add(chat_id: str, username: str):
     db = load_radar_db()
