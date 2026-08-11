@@ -26,7 +26,7 @@
             overflow: hidden; position: relative;
         }
 
-        /* --- ИНТЕРАКТИВНЫЙ НЕОНОВЫЙ ТУМАН (CANVAS) --- */
+        /* --- ИНТЕРАКТИВНЫЙ ТУМАН (CANVAS) --- */
         #fog-canvas {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: -10; pointer-events: none; mix-blend-mode: screen;
@@ -127,13 +127,41 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
+        .filter-options { display: none; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-top: -6px; margin-bottom: 12px; }
+        .filter-options.active { display: block; }
+        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .filter-row:last-child { margin-bottom: 0; }
+        select { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 8px; outline: none; font-family: inherit; font-size: 0.85rem;}
+
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; outline: none; margin-bottom: 10px; font-family: inherit; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
         
         .history-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; transition: 0.2s; position: relative; overflow: hidden; }
         .radar-remove { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
-        .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text-main); color: #000; border-radius: 12px; padding: 12px 24px; font-weight: 600; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* --- НОВЫЙ ДИЗАЙН УВЕДОМЛЕНИЯ (ЖИДКОЕ СТЕКЛО) --- */
+        .toast { 
+            position: fixed; 
+            bottom: 50px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(20px); 
+            background: rgba(15, 25, 18, 0.85); /* Тёмно-зеленое стекло */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: #fff; 
+            border: 1px solid rgba(41, 199, 95, 0.4);
+            border-radius: 16px; 
+            padding: 14px 24px; 
+            font-weight: 600; 
+            font-size: 0.95rem; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            z-index: 2000; 
+            box-shadow: 0 10px 40px rgba(41, 199, 95, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05); 
+            text-align: center;
+            white-space: nowrap;
+        }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
@@ -167,16 +195,16 @@
             <!-- Кнопки быстрых действий -->
             <div class="quick-actions" id="quick-actions">
                 <button class="action-btn btn-take" onclick="takeUsername()">🚀 Занять</button>
-                <button class="action-btn btn-story" onclick="shareStory()">📲 В Сторис</button>
+                <button class="action-btn btn-story" onclick="shareToFriends()">📲 Поделиться</button>
             </div>
 
             <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
         </div>
     </main>
 
-    <div class="toast" id="global-toast">Успешно!</div>
+    <div class="toast" id="global-toast">✨ Успешно!</div>
 
-    <!-- Модалка: Настройки (ЗДЕСЬ ТЕПЕРЬ РАДАР) -->
+    <!-- Модалка: Настройки -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -185,11 +213,11 @@
             </div>
             <div class="modal-body">
                 
-                <!-- ОГРОМНАЯ КНОПКА РАДАРА ВНУТРИ НАСТРОЕК -->
+                <!-- КНОПКА РАДАРА -->
                 <div class="setting-item" style="cursor: pointer; border-color: var(--primary); background: rgba(41,199,95,0.05);" onclick="openModal('modal-radar')">
                     <div class="setting-info">
                         <span class="setting-title" style="color: var(--primary);">🎯 Охота за никами (Радар)</span>
-                        <span class="setting-desc">Мониторинг занятых юзернеймов</span>
+                        <span class="setting-desc">Бот пришлет СМС, когда ник освободится</span>
                     </div>
                     <span style="font-size: 1.2rem; color: var(--primary);">→</span>
                 </div>
@@ -199,15 +227,35 @@
                     <label class="switch"><input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)"><span class="slider"></span></label>
                 </div>
                 
+                <!-- ФИЛЬТРЫ -->
                 <div class="setting-item">
-                    <div class="setting-info"><span class="setting-title">Смарт-маски (AI)</span><span class="setting-desc">Короткие читаемые слова</span></div>
-                    <label class="switch"><input type="checkbox" id="toggle-filter"><span class="slider"></span></label>
+                    <div class="setting-info"><span class="setting-title">Смарт-фильтр (AI)</span><span class="setting-desc">Короткие читаемые слова</span></div>
+                    <label class="switch"><input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)"><span class="slider"></span></label>
                 </div>
+
+                <div class="filter-options" id="filter-menu">
+                    <div class="filter-row">
+                        <span style="font-size: 0.85rem; color: var(--text-main);">Длина слова</span>
+                        <select id="filter-len">
+                            <option value="5-6">5-6 символов</option>
+                            <option value="7-8">7-8 символов</option>
+                        </select>
+                    </div>
+                    <div class="filter-row">
+                        <span style="font-size: 0.85rem; color: var(--text-main);">Добавить цифры</span>
+                        <label class="switch"><input type="checkbox" id="filter-num"><span class="slider"></span></label>
+                    </div>
+                    <div class="filter-row">
+                        <span style="font-size: 0.85rem; color: var(--text-main);">Разрешить "_"</span>
+                        <label class="switch"><input type="checkbox" id="filter-und"><span class="slider"></span></label>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Модалка: Радар (Сама функция охоты) -->
+    <!-- Модалка: Радар -->
     <div class="modal-overlay" id="modal-radar">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -215,7 +263,7 @@
                 <button class="btn-close" onclick="closeModal('modal-radar')">✕</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Добавьте занятый ник. Бот пришлет уведомление в ЛС, когда он освободится!</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Введите занятый ник. Бот напишет в ЛС, если он освободится! (Убедитесь, что диалог с ботом открыт).</div>
                 <input type="text" id="radar-input" class="form-input" placeholder="@nickname (без @)">
                 <button class="form-btn" onclick="addRadarTarget()">Поставить на мониторинг</button>
                 <div id="radar-list" style="margin-top: 20px;"></div>
@@ -242,7 +290,6 @@
         let slotInterval;
         let tgChatId = "0";
 
-        // Получаем ChatID из Telegram
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
             tgChatId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
         }
@@ -254,15 +301,10 @@
         let particles = [];
         let mouseX = 0, mouseY = 0;
 
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
         mouseX = width / 2; mouseY = height / 2;
 
-        // Отслеживаем и мышь, и пальцы
         window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
         window.addEventListener('touchmove', e => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; });
 
@@ -270,64 +312,43 @@
             particles.push({
                 x: Math.random() * width, y: Math.random() * height,
                 vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5,
-                radius: Math.random() * 150 + 150, 
-                color: i % 2 === 0 ? 'rgba(41,199,95,0.15)' : 'rgba(5,150,105,0.15)'
+                radius: Math.random() * 150 + 150, color: i % 2 === 0 ? 'rgba(41,199,95,0.15)' : 'rgba(5,150,105,0.15)'
             });
         }
 
         function drawFog() {
             ctx.clearRect(0, 0, width, height);
             particles.forEach((p, i) => {
-                // Притяжение к мыши/пальцу
                 if (i === 0 || i === 1) { p.x += (mouseX - p.x) * 0.03; p.y += (mouseY - p.y) * 0.03; } 
                 else { p.x += p.vx; p.y += p.vy; }
-
                 if(p.x < 0 || p.x > width) p.vx *= -1;
                 if(p.y < 0 || p.y > height) p.vy *= -1;
 
                 let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
                 grad.addColorStop(0, p.color); grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad;
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
             });
             requestAnimationFrame(drawFog);
         }
         drawFog();
 
-        /* --- SCREEN RIPPLE (ВОЛНА ПРИ КЛИКЕ) --- */
+        /* --- ВОЛНА ПРИ КЛИКЕ И ВЗРЫВ --- */
         function createRipple(x, y) {
-            const ripple = document.createElement('div');
-            ripple.className = 'screen-ripple';
-            ripple.style.width = ripple.style.height = '100px';
-            ripple.style.left = (x - 50) + 'px';
-            ripple.style.top = (y - 50) + 'px';
-            document.body.appendChild(ripple);
-            setTimeout(() => ripple.remove(), 1200);
+            const ripple = document.createElement('div'); ripple.className = 'screen-ripple';
+            ripple.style.width = ripple.style.height = '100px'; ripple.style.left = (x - 50) + 'px'; ripple.style.top = (y - 50) + 'px';
+            document.body.appendChild(ripple); setTimeout(() => ripple.remove(), 1200);
         }
 
-        /* --- ВЗРЫВ ЭМОДЗИ ДЛЯ ДЖЕКПОТА --- */
         function triggerJackpot() {
-            vibrate('success');
-            setTimeout(() => vibrate('success'), 200);
+            vibrate('success'); setTimeout(() => vibrate('success'), 200);
             document.getElementById('result-box').classList.add('golden-mode');
-            
             const emojis = ['⚡', '✨', '🔥', '💎', '🚀'];
             for(let i=0; i<30; i++) {
-                const p = document.createElement('div');
-                p.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-                p.className = 'jackpot-particle';
-                document.body.appendChild(p);
-
+                const p = document.createElement('div'); p.innerText = emojis[Math.floor(Math.random() * emojis.length)]; p.className = 'jackpot-particle'; document.body.appendChild(p);
                 const rect = document.getElementById('result-box').getBoundingClientRect();
-                p.style.left = (rect.left + rect.width / 2) + 'px';
-                p.style.top = (rect.top + rect.height / 2) + 'px';
-
-                const angle = Math.random() * Math.PI * 2;
-                const distance = 100 + Math.random() * 200;
-                p.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-                p.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-                p.style.setProperty('--rot', `${Math.random() * 360}deg`);
-
+                p.style.left = (rect.left + rect.width / 2) + 'px'; p.style.top = (rect.top + rect.height / 2) + 'px';
+                const angle = Math.random() * Math.PI * 2; const distance = 100 + Math.random() * 200;
+                p.style.setProperty('--tx', `${Math.cos(angle) * distance}px`); p.style.setProperty('--ty', `${Math.sin(angle) * distance}px`); p.style.setProperty('--rot', `${Math.random() * 360}deg`);
                 setTimeout(() => p.remove(), 1200);
             }
         }
@@ -342,12 +363,15 @@
             }
         }
 
+        // Обновленная функция уведомления (увеличено время, добавлен текст)
         function showToast(msg) {
             const toast = document.getElementById('global-toast');
-            toast.textContent = msg; toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
+            toast.textContent = msg; 
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
+        /* --- UI ЛОГИКА --- */
         function setPlatform(platform, btn) {
             if (isAuto) return; 
             currentPlatform = platform;
@@ -356,22 +380,24 @@
         }
 
         function openModal(id) {
-            vibrate('light');
-            document.getElementById(id).classList.add('active');
+            vibrate('light'); document.getElementById(id).classList.add('active');
             if(id === 'modal-radar') fetchRadarList();
             if(id === 'modal-history') renderHistory();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
+        function toggleFilterMenu(cb) {
+            const menu = document.getElementById('filter-menu');
+            if (cb.checked) menu.classList.add('active'); else menu.classList.remove('active');
+        }
+
         // --- РАДАР ---
         async function fetchRadarList() {
             const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
-            const data = await res.json();
-            renderRadar(data.targets);
+            const data = await res.json(); renderRadar(data.targets);
         }
         async function addRadarTarget() {
-            const inp = document.getElementById('radar-input');
-            const val = inp.value.trim();
+            const inp = document.getElementById('radar-input'); const val = inp.value.trim();
             if(!val) return;
             const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
             const data = await res.json();
@@ -379,114 +405,100 @@
         }
         async function removeRadarTarget(username) {
             const res = await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${username}`);
-            const data = await res.json();
-            renderRadar(data.targets);
+            const data = await res.json(); renderRadar(data.targets);
         }
         function renderRadar(targets) {
             const cont = document.getElementById('radar-list');
-            cont.innerHTML = targets.map(t => `
-                <div class="history-card">
-                    <div style="font-weight:bold; color:var(--text-main)">@${t}</div>
-                    <button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button>
-                </div>
-            `).join('');
+            cont.innerHTML = targets.map(t => `<div class="history-card"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
         }
 
-        // --- СЛОТ МАШИНА ---
+        // --- ИСТОРИЯ ---
+        function saveToHistory(item) {
+            if (historyData.some(i => i.user === item.user && i.plat === item.plat)) return;
+            historyData.push(item);
+            historyData.sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
+            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
+        }
+
+        function renderHistory() {
+            const cont = document.getElementById('history-container'); cont.innerHTML = '';
+            if (historyData.length === 0) { cont.innerHTML = '<div class="empty-state">История пуста.</div>'; return; }
+            historyData.forEach(item => {
+                const div = document.createElement('div'); div.className = 'history-card';
+                div.onclick = () => { navigator.clipboard.writeText(item.user); showToast('✨ Ник скопирован!'); vibrate('light'); };
+                div.innerHTML = `
+                    <div class="hist-left"><div class="hist-user" style="color: ${item.color}">@${item.user}</div><div class="hist-plat">${item.plat}</div></div>
+                    <div class="hist-right"><div class="hist-rank" style="color: ${item.color}">${item.rank}</div><div class="price-text">${item.price}</div></div>
+                `;
+                cont.appendChild(div);
+            });
+        }
+
+        // --- СЛОТ МАШИНА И ГЕНЕРАЦИЯ ---
         function startSlotMachine() {
-            const el = document.getElementById('res-username');
-            const chars = "abcdefghijklmnopqrstuvwxyz";
-            document.getElementById('res-market').style.display = 'none';
-            document.getElementById('result-box').classList.remove('golden-mode');
-            
-            slotInterval = setInterval(() => {
-                let rand = ""; for(let i=0; i<6; i++) rand += chars[Math.floor(Math.random() * chars.length)];
-                el.textContent = "@" + rand;
-            }, 60);
+            const el = document.getElementById('res-username'); const chars = "abcdefghijklmnopqrstuvwxyz";
+            document.getElementById('res-market').style.display = 'none'; document.getElementById('result-box').classList.remove('golden-mode');
+            slotInterval = setInterval(() => { let rand = ""; for(let i=0; i<6; i++) rand += chars[Math.floor(Math.random() * chars.length)]; el.textContent = "@" + rand; }, 60);
         }
-        function stopSlotMachine(finalName) {
-            clearInterval(slotInterval);
-            document.getElementById('res-username').textContent = "@" + finalName;
-        }
+        function stopSlotMachine(finalName) { clearInterval(slotInterval); document.getElementById('res-username').textContent = "@" + finalName; }
 
         function toggleAutoSearch(cb) {
-            vibrate('light'); isAuto = cb.checked;
-            const btn = document.getElementById('btn-generate');
-            if (isAuto) { btn.disabled = true; btn.textContent = "Парсинг..."; runCycle(); } 
-            else { btn.disabled = false; btn.textContent = "Сгенерировать"; }
+            vibrate('light'); isAuto = cb.checked; const btn = document.getElementById('btn-generate');
+            if (isAuto) { btn.disabled = true; btn.textContent = "Парсинг..."; runCycle(); } else { btn.disabled = false; btn.textContent = "Сгенерировать"; }
         }
 
-        async function runCycle() {
-            if (!isAuto) return;
-            if (!isFetching) await fetchUsername();
-            if (isAuto) setTimeout(runCycle, 2500);
-        }
+        async function runCycle() { if (!isAuto) return; if (!isFetching) await fetchUsername(); if (isAuto) setTimeout(runCycle, 2500); }
 
         async function manualGenerate(event) {
-            if (isFetching || isAuto) return;
-            vibrate('light');
-            
-            // Запуск волны от клика (если событие мыши/касания передано)
-            if(event && event.clientX) createRipple(event.clientX, event.clientY);
-            else createRipple(window.innerWidth/2, window.innerHeight/2);
-
+            if (isFetching || isAuto) return; vibrate('light');
+            if(event && event.clientX) createRipple(event.clientX, event.clientY); else createRipple(window.innerWidth/2, window.innerHeight/2);
             document.getElementById('quick-actions').style.display = 'none';
-            const btn = document.getElementById('btn-generate');
-            btn.disabled = true; btn.textContent = "Анализ...";
-            await fetchUsername();
-            btn.textContent = "Сгенерировать"; btn.disabled = false;
+            const btn = document.getElementById('btn-generate'); btn.disabled = true; btn.textContent = "Анализ...";
+            await fetchUsername(); btn.textContent = "Сгенерировать"; btn.disabled = false;
         }
 
         async function fetchUsername() {
             isFetching = true; startSlotMachine();
             const useFilter = document.getElementById('toggle-filter').checked;
-            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=5-6&use_num=false&use_und=false`;
+            const lenMode = document.getElementById('filter-len').value;
+            const useNum = document.getElementById('filter-num').checked;
+            const useUnd = document.getElementById('filter-und').checked;
+
+            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}`;
 
             try {
                 const res = await fetch(url); const data = await res.json();
-                lastGenerated = data.generated_username;
-                stopSlotMachine(lastGenerated);
+                lastGenerated = data.generated_username; stopSlotMachine(lastGenerated);
                 
-                const uEl = document.getElementById('res-username');
-                const mEl = document.getElementById('res-market');
-                const sEl = document.getElementById('res-status');
-
-                uEl.style.color = data.evaluation.color;
-                sEl.textContent = data.evaluation.status; sEl.style.color = data.evaluation.color;
+                const uEl = document.getElementById('res-username'); const mEl = document.getElementById('res-market'); const sEl = document.getElementById('res-status');
+                uEl.style.color = data.evaluation.color; sEl.textContent = data.evaluation.status; sEl.style.color = data.evaluation.color;
 
                 if (data.is_free === true && data.evaluation.rank !== "ERR") {
                     if(!isAuto) document.getElementById('quick-actions').style.display = 'flex';
+                    saveToHistory({ user: data.generated_username, plat: currentPlatform, rank: data.evaluation.rank, price: data.evaluation.status, color: data.evaluation.color });
                     
                     if (data.evaluation.status.includes("Fragment")) {
-                        mEl.style.display = 'inline-block';
-                        mEl.textContent = data.evaluation.status;
-                        triggerJackpot(); // Взрыв джекпота
+                        mEl.style.display = 'inline-block'; mEl.textContent = data.evaluation.status; triggerJackpot();
                     } else { vibrate('light'); }
                 }
             } catch (e) { stopSlotMachine("error"); } finally { isFetching = false; }
         }
 
         // --- ДЕЙСТВИЯ: В СТОРИС И ЗАНЯТЬ ---
-        function shareStory() {
+        function shareToFriends() {
             vibrate('light');
-            if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareToStory) {
-                window.Telegram.WebApp.shareToStory(`https://t.me/`, { text: `Заловил супер-редкий юзернейм @${lastGenerated} в этом боте! 💎` });
-            } else {
-                showToast("Сторис доступны только внутри Telegram!");
-            }
+            let text = `Заловил супер-редкий юзернейм @${lastGenerated}!`;
+            if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+                window.Telegram.WebApp.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent('https://t.me/') + '&text=' + encodeURIComponent(text));
+            } else { showToast("Скопируйте ссылку и отправьте друзьям!"); }
         }
 
         function takeUsername() {
             navigator.clipboard.writeText(lastGenerated);
             vibrate('success');
-            showToast('Скопировано! Открываем настройки Telegram...');
-            setTimeout(() => {
-                if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-                    window.Telegram.WebApp.openTelegramLink('https://t.me/change_username_bot');
-                } else {
-                    window.location.href = "tg://settings";
-                }
-            }, 1000);
+            
+            // Новое стеклянное уведомление без закрытия приложения
+            showToast('✨ Юзернейм скопирован! Примените его в настройках Telegram.');
         }
     </script>
 </body>
