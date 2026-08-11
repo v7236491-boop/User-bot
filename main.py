@@ -2,27 +2,54 @@ import os
 import random
 import asyncio
 import time
-import httpx
 import json
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import CommandStart
+from aiogram import Bot, Dispatcher
+from telethon import TelegramClient
+from telethon.errors import RPCError, FloodWaitError
+from telethon.tl.functions.account import CheckUsernameRequest
 import uvicorn
-
-app = FastAPI(title="Username Generator & Checker")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 
+# --- НАСТРОЙКИ TELEGRAM API ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+API_ID = 38162572
+API_HASH = "71b8ecb44bddc1ae0a802f4a0f6628ba"
+
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
 
-USER_COOLDOWNS = {}
-COOLDOWN_SECONDS = 0.8
+telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
+USER_COOLDOWNS = {}
+COOLDOWN_SECONDS = 0.5
+
+# --- LIFESPAN MANAGER (Современная замена @app.on_event) ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Старт Telethon (запросит номер телефона в консоли при 1-м запуске)
+    print("⏳ Запуск Telethon сессии...")
+    await telethon_client.start()
+    print("✅ Telethon сессия успешно запущена!")
+    
+    # Запуск фоновых задач
+    asyncio.create_task(radar_worker())
+    if bot and dp:
+        asyncio.create_task(dp.start_polling(bot))
+    
+    yield
+    
+    # Завершение работы
+    await telethon_client.disconnect()
+
+app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
+
+# --- РАДАР ---
 def load_radar_db():
     if os.path.exists(RADAR_DB_PATH):
         with open(RADAR_DB_PATH, "r", encoding="utf-8") as f:
@@ -43,7 +70,7 @@ async def radar_worker():
 
             for chat_id, targets in list(db.items()):
                 for username in targets:
-                    is_free = await async_check_tg(username)
+                    is_free = await check_username_telethon(username)
                     if is_free is True:
                         try:
                             await bot.send_message(
@@ -55,11 +82,31 @@ async def radar_worker():
                             save_radar_db(db)
                         except Exception as e:
                             print(f"Ошибка отправки радара: {e}")
-                    await asyncio.sleep(7)
+                    await asyncio.sleep(3)
         except Exception as e:
             print(f"Ошибка воркера радара: {e}")
         await asyncio.sleep(10)
 
+# --- ПРОВЕРКА TELETHON ---
+async def check_username_telethon(username: str):
+    username = username.replace("@", "").strip().lower()
+    if len(username) < 5:
+        return False
+
+    try:
+        result = await telethon_client(CheckUsernameRequest(username=username))
+        return result
+    except FloodWaitError as e:
+        print(f"FloodWait: ждем {e.seconds} сек.")
+        return None
+    except RPCError as e:
+        print(f"RPC Ошибка: {e}")
+        return False
+    except Exception as e:
+        print(f"Ошибка проверки {username}: {e}")
+        return None
+
+# --- БАЗА ДАННЫХ ДЛЯ ГЕНЕРАЦИИ ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -109,11 +156,6 @@ BRAND_CATEGORIES = {
     "fashion": {"names": ["nike", "adidas", "puma", "gucci", "prada", "dior", "chanel"], "contexts": ["style", "wear", "fit", "run", "shoes"]}
 }
 
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-]
-
 def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tuple[str, bool, bool]:
     vowels = "aeiouy"
     consonants = "bcdfghjklmnprstvwxz"
@@ -140,57 +182,6 @@ def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tupl
         num = str(random.randint(0, 99)) if chars_to_generate >= 4 else str(random.randint(0, 9))
         res = res + num if random.choice([True, False]) else num + res
     return res, True, use_und
-
-async def async_check_tg(username: str):
-    if BOT_TOKEN:
-        try:
-            async with httpx.AsyncClient(timeout=2.0) as client:
-                res = await client.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getChat?chat_id=@{username}")
-                if res.status_code == 200 and res.json().get("ok"): return False
-        except Exception: pass
-
-    headers = {"User-Agent": random.choice(USER_AGENTS)}
-    try:
-        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
-            res = await client.get(f"https://t.me/{username}", headers=headers)
-            if res.status_code in [429, 403, 500, 502, 503]: return None
-            if res.status_code == 200:
-                html = res.text.lower()
-                if "just a moment" in html or "cf-challenge" in html: return None
-                taken_inds = ['tgme_page_extra', 'subscribers', 'members']
-                if any(ind in html for ind in taken_inds): return False
-                if '<meta property="og:title"' in html:
-                    if f'telegram: contact @{username}' not in html: return False
-                return True
-            return None
-    except Exception: return None
-
-async def async_check_wa(username: str):
-    headers = {"User-Agent": random.choice(USER_AGENTS), "Accept-Language": "en-US"}
-    try:
-        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
-            res_wa = await client.get(f"https://wa.me/{username}", headers=headers)
-            if res_wa.status_code == 200:
-                html = res_wa.text.lower()
-                if "just a moment" in html or "cf-challenge" in html: pass 
-                else:
-                    invalid = ["url is invalid", "invalid url", "page not found"]
-                    if any(ind in html for ind in invalid): return True 
-                    taken = ["action_button", "send_message", "continue to chat", "chat on whatsapp"]
-                    if any(ind in html for ind in taken): return False 
-            if res_wa.status_code == 404: return True
-    except Exception: pass
-    
-    try:
-        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
-            res_api = await client.get(f"https://api.whatsapp.com/send/?phone={username}&text&type=phone_number&app_absent=0", headers=headers)
-            if res_api.status_code == 200:
-                html_api = res_api.text.lower()
-                if "invalid" in html_api: return True 
-                if "action_button" in html_api or "continue to chat" in html_api: return False 
-            if res_api.status_code == 404: return True
-    except Exception: pass
-    return None
 
 def calculate_fragment_price(username: str, is_pure: bool, has_und: bool) -> str:
     length = len(username)
@@ -257,14 +248,10 @@ async def generate_username(
                 generated = f"{b}_{c}" if random.random() < 0.5 else f"{b}{c}"
                 has_und = "_" in generated
 
-        # Исключаем слово "error" из списка генерации навсегда
         if generated.lower() in ["error", "timeout", "retry"]:
             continue
 
-        if platform == "whatsapp":
-            check_result = await async_check_wa(generated)
-        else:
-            check_result = await async_check_tg(generated)
+        check_result = await check_username_telethon(generated)
 
         if check_result is not None:
             is_free_bool = True if check_result is True else False
@@ -278,8 +265,7 @@ async def generate_username(
         
         await asyncio.sleep(0.3)
 
-    # При сбое отдаем HTTP 503 без передачи фейкового ника
-    return JSONResponse(status_code=503, content={"error": "network_timeout"})
+    return JSONResponse(status_code=503, content={"error": "telethon_timeout"})
 
 @app.get("/api/radar/add")
 async def radar_add(chat_id: str, username: str):
@@ -304,12 +290,6 @@ async def radar_remove(chat_id: str, username: str):
         db[chat_id].remove(username)
         save_radar_db(db)
     return {"status": "ok", "targets": db.get(chat_id, [])}
-
-@app.on_event("startup")
-async def on_startup():
-    asyncio.create_task(radar_worker())
-    if bot and dp:
-        asyncio.create_task(dp.start_polling(bot))
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
