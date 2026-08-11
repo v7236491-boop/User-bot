@@ -33,49 +33,42 @@
             position: relative;
         }
 
-        /* --- 1. ФОН: ЛИСТОЧКИ --- */
-        .leaf-pattern {
-            position: fixed;
-            inset: 0;
-            /* Встроенный SVG паттерн листочков, как в VPN */
-            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 15C40 15 55 25 55 40C55 55 40 65 40 65C40 65 25 55 25 40C25 25 40 15 40 15Z' fill='none' stroke='%2329c75f' stroke-width='1' stroke-opacity='0.05'/%3E%3Cpath d='M40 15L40 65' fill='none' stroke='%2329c75f' stroke-width='1' stroke-opacity='0.05'/%3E%3Cpath d='M40 40L50 32' fill='none' stroke='%2329c75f' stroke-width='1' stroke-opacity='0.05'/%3E%3Cpath d='M40 40L30 32' fill='none' stroke='%2329c75f' stroke-width='1' stroke-opacity='0.05'/%3E%3C/svg%3E");
-            background-size: 140px 140px;
-            z-index: -20;
-            pointer-events: none;
-        }
-
-        /* --- 2. ФОН: КРУТЯЩИЙСЯ ТЕМНЫЙ ДЫМ --- */
+        /* --- ФОН: ГУСТОЙ И СПОКОЙНЫЙ ТЕМНО-ЗЕЛЕНЫЙ ДЫМ --- */
         .smoke-container {
             position: fixed;
             top: -50%; left: -50%; right: -50%; bottom: -50%;
             z-index: -15;
-            pointer-events: none; /* ЖИЗНЕННО ВАЖНО: пропускает клики */
+            pointer-events: none;
             display: flex;
             justify-content: center;
             align-items: center;
-            animation: spinSmoke 45s linear infinite;
+            animation: spinSmoke 60s linear infinite; /* Спокойное, очень медленное вращение */
         }
 
         .smoke {
             position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
+            filter: blur(55px); /* Уменьшил размытие, чтобы дым собрался в видимые облака */
             mix-blend-mode: screen;
         }
 
-        .smoke-1 { width: 70vw; height: 70vw; background: rgba(41, 199, 95, 0.15); transform: translate(-20%, -30%); animation: pulseSmoke 10s infinite alternate ease-in-out; }
-        .smoke-2 { width: 80vw; height: 60vw; background: rgba(22, 163, 74, 0.12); transform: translate(30%, 20%); animation: pulseSmoke 15s infinite alternate-reverse ease-in-out; }
-        .smoke-3 { width: 65vw; height: 80vw; background: rgba(5, 150, 105, 0.15); transform: translate(10%, -40%); animation: pulseSmoke 20s infinite alternate ease-in-out; }
+        /* Увеличил прозрачность, чтобы дым был ЯВНО виден */
+        .smoke-1 { width: 70vw; height: 70vw; background: rgba(41, 199, 95, 0.35); transform: translate(-20%, -30%); animation: pulseSmoke 15s infinite alternate ease-in-out; }
+        .smoke-2 { width: 80vw; height: 60vw; background: rgba(22, 163, 74, 0.25); transform: translate(30%, 20%); animation: pulseSmoke 20s infinite alternate-reverse ease-in-out; }
+        .smoke-3 { width: 65vw; height: 80vw; background: rgba(5, 150, 105, 0.35); transform: translate(10%, -40%); animation: pulseSmoke 25s infinite alternate ease-in-out; }
 
         @keyframes spinSmoke { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulseSmoke { 0% { opacity: 0.5; transform: scale(0.9); } 100% { opacity: 0.9; transform: scale(1.1) translate(5%, 5%); } }
+        @keyframes pulseSmoke { 
+            0% { opacity: 0.6; transform: scale(0.95); } 
+            100% { opacity: 1; transform: scale(1.05) translate(3%, 3%); } 
+        }
 
         /* --- НАВИГАЦИЯ --- */
         header {
             display: flex;
             justify-content: space-between;
             padding: 20px 24px;
-            z-index: 50; /* Поднято над фоном */
+            z-index: 50;
             position: relative;
             width: 100%;
             max-width: 600px;
@@ -113,10 +106,10 @@
 
         .app-container {
             width: 100%;
-            max-width: 320px; /* Сжато с боков для аккуратности */
+            max-width: 320px;
             display: flex;
             flex-direction: column;
-            gap: 12px; /* Уменьшил отступы между блоками (поджато) */
+            gap: 12px;
         }
 
         /* Переключатель платформ */
@@ -156,7 +149,7 @@
             animation: pulseText 1.5s infinite alternate;
             margin: 4px 0;
         }
-        @keyframes pulseText { 0% { opacity: 0.5; } 100% { opacity: 1; text-shadow: 0 0 8px rgba(41, 199, 95, 0.6); } }
+        @keyframes pulseText { 0% { opacity: 0.5; text-shadow: none; } 100% { opacity: 1; text-shadow: 0 0 8px rgba(41, 199, 95, 0.6); } }
 
         /* Центральное поле вывода */
         .result-field {
@@ -228,7 +221,7 @@
         .btn-generate:hover:not(:disabled) { background: var(--primary-hover); }
         .btn-generate:disabled { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); cursor: not-allowed; }
 
-        /* --- МОДАЛЬНЫЕ ОКНА (ЖЕСТКИЙ ФИКС КЛИКОВ) --- */
+        /* --- МОДАЛЬНЫЕ ОКНА --- */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -238,8 +231,6 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            
-            /* ЖЕСТКАЯ БЛОКИРОВКА НЕВИДИМЫХ СЛОЕВ */
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
@@ -249,7 +240,7 @@
         .modal-overlay.active {
             opacity: 1;
             visibility: visible;
-            pointer-events: auto; /* Включаем клики только когда открыто */
+            pointer-events: auto;
         }
 
         .modal-content {
@@ -311,10 +302,7 @@
 </head>
 <body>
 
-    <!-- 1. ФОН: ЛИСТОЧКИ -->
-    <div class="leaf-pattern"></div>
-
-    <!-- 2. ФОН: ДЫМ/СИЯНИЕ -->
+    <!-- 1. ФОН: ГУСТОЙ И МЕДЛЕННЫЙ ТЕМНО-ЗЕЛЕНЫЙ ДЫМ -->
     <div class="smoke-container">
         <div class="smoke smoke-1"></div>
         <div class="smoke smoke-2"></div>
@@ -495,11 +483,13 @@
         async function fetchUsername() {
             isFetching = true;
             
+            // Получение параметров фильтра
             const useFilter = document.getElementById('toggle-filter').checked;
             const lenMode = document.getElementById('filter-len').value;
             const useNum = document.getElementById('filter-num').checked;
             const useUnd = document.getElementById('filter-und').checked;
 
+            // Формирование URL для main.py
             const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}`;
 
             try {
