@@ -150,67 +150,62 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 ]
 
-# --- ИСПРАВЛЕННАЯ ПРОВЕРКА ---
-async def async_check_tg(username: str) -> bool:
+# --- ЧЕСТНАЯ ПРОВЕРКА БЕЗ УГАДЫВАНИЙ ---
+async def async_check_tg(username: str):
+    """
+    Возвращает:
+    True - Точно свободен
+    False - Точно занят
+    None - Ошибка сети / Блокировка IP (неизвестно)
+    """
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "en-US,en;q=0.9",
     }
     
-    is_free = True
-    
     try:
         async with httpx.AsyncClient(timeout=4.0, follow_redirects=True) as client:
-            # 1. Проверка Telegram (t.me)
             url_tg = f"https://t.me/{username}"
             res_tg = await client.get(url_tg, headers=headers)
             
-            if res_tg.status_code == 200:
-                html_tg = res_tg.text.lower()
-                # Удаляем все HTML теги (включая <strong>), чтобы читать чистый текст
-                clean_html = re.sub(r'<[^>]+>', '', html_tg)
-                
-                # Признак 1: Если указано реальное имя (мета-тег) и это не дефолтная заглушка
-                if '<meta property="og:title"' in html_tg and f'telegram: contact @{username}' not in html_tg:
-                    return False
-                    
-                # Признак 2: Есть описание (bio), подписчики или участники
-                if 'tgme_page_extra' in html_tg or 'subscribers' in html_tg or 'members' in html_tg:
-                    return False
-                    
-                # Признак 3: Кнопка контакта для ЗАНЯТОГО профиля без био.
-                # У свободного ника пишется: "if you have telegram, you can contact @username"
-                # У занятого пишется: "you can contact @username" (без первой части)
-                if f'you can contact @{username}' in clean_html and 'if you have telegram' not in clean_html:
-                    return False
-
-            await asyncio.sleep(0.3)
-
-            # 2. Проверка Fragment
-            url_frag = f"https://fragment.com/username/{username}"
-            res_frag = await client.get(url_frag, headers=headers)
+            # Если Telegram заблокировал запрос или сервер недоступен
+            if res_tg.status_code in [429, 403, 500, 502, 503]:
+                return None 
             
-            if res_frag.status_code == 200:
-                html_frag = res_frag.text.lower()
+            if res_tg.status_code == 200:
+                html = res_tg.text.lower()
                 
-                # Слово "unavailable" на Фрагменте означает "нет на аукционе", а не "занят".
-                # Поэтому ищем только 100% признаки продажи или наличия владельца.
-                frag_taken_keywords = [
-                    "status-taken", "status-sold", "minimum bid", "place bid", "owner", "buy now"
+                # Признаки того, что юзернейм КЕМ-ТО ЗАНЯТ
+                taken_indicators = [
+                    '<meta property="og:title"',
+                    'tgme_page_title',
+                    'tgme_page_extra',
+                    'subscribers',
+                    'members'
                 ]
-                if any(kw in html_frag for kw in frag_taken_keywords):
-                    return False
+                
+                for ind in taken_indicators:
+                    if ind in html:
+                        # Исключение: стандартная дефолтная плашка t.me без реального имени
+                        if f'telegram: contact @{username}' in html and 'tgme_page_title' not in html:
+                            continue
+                        return False # Точно занят
+                        
+                return True # Точно свободен
+
+            return None
 
     except Exception:
-        # В случае ошибки сети (например, блокировки IP от Cloudflare), 
-        # возвращаем True, чтобы скрипт выдал ник как свободный (лучше ложноположительный, чем вечный "Занят").
-        return True
-
-    return is_free
+        # При обрыве связи / таймауте возвращаем None
+        return None
 
 
-def calculate_catch_score(username: str, is_free: bool, is_pure_word: bool, has_underscore: bool) -> dict:
-    if not is_free:
+def calculate_catch_score(username: str, check_result, is_pure_word: bool, has_underscore: bool) -> dict:
+    # Обработка ошибки сети / лимита запросов
+    if check_result is None:
+        return {"rank": "ERR", "status": "Лимит запросов (Попробуй еще)", "color": "#f97316"}
+        
+    if check_result is False:
         return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
 
     length = len(username)
@@ -282,19 +277,22 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
             generated = f"{w1}{w2}"
 
     if platform == "whatsapp":
-        is_free = True
+        check_result = True
         link = f"https://wa.me/{generated}"
     else:
-        is_free = await async_check_tg(generated)
+        check_result = await async_check_tg(generated)
         link = f"https://t.me/{generated}"
 
-    catch_eval = calculate_catch_score(generated, is_free, is_pure_word, has_underscore)
+    catch_eval = calculate_catch_score(generated, check_result, is_pure_word, has_underscore)
+    
+    # Чтобы JSON не сломался на фронтенде, передаем булевое значение, даже если была ошибка
+    is_free_bool = True if check_result is True else False
 
     return {
         "status": "success",
         "generated_username": generated,
         "platform": platform,
-        "is_free": is_free,
+        "is_free": is_free_bool,
         "evaluation": catch_eval,
         "link": link
     }
