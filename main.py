@@ -26,16 +26,15 @@ SESSION_STRING = os.getenv("TELEGRAM_SESSION")
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
 
-# Выбор формата сессии: StringSession (для Railway/Облака) или Файловая сессия (для Termux/Локально)
 if SESSION_STRING:
     telethon_client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
 USER_COOLDOWNS = {}
-COOLDOWN_SECONDS = 0.5
+COOLDOWN_SECONDS = 0.3
 
-# --- LIFESPAN MANAGER (Менеджер жизненного цикла) ---
+# --- LIFESPAN MANAGER ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("⏳ Запуск Telethon сессии...")
@@ -193,34 +192,54 @@ def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tupl
         res = res + num if random.choice([True, False]) else num + res
     return res, True, use_und
 
-def calculate_fragment_price(username: str, is_pure: bool, has_und: bool) -> str:
-    length = len(username)
-    if has_und or not is_pure:
-        return "Обычный актив"
-    if length <= 4:
-        ton_price = random.randint(300, 1500)
-        return f"Fragment: ~{ton_price} TON (${ton_price * 5})"
-    elif length == 5:
-        ton_price = random.randint(100, 350)
-        return f"Fragment: ~{ton_price} TON (${ton_price * 5})"
-    elif length == 6:
-        ton_price = random.randint(20, 80)
-        return f"Fragment: ~{ton_price} TON (${ton_price * 5})"
-    else:
-        return "Обычный актив"
-
+# --- ТОЧНАЯ ОЦЕНКА ЦЕННОСТИ НИКА ---
 def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: bool):
-    if check_result is None: return {"rank": "ERR", "status": "Лимит", "color": "#f97316"}
-    if check_result is False: return {"rank": "F", "status": "Занят", "color": "#ef4444"}
+    if check_result is None: 
+        return {"rank": "ERR", "status": "Лимит", "color": "#f97316", "score": 0}
+    if check_result is False: 
+        return {"rank": "F", "status": "Занят", "color": "#ef4444", "score": 0}
     
-    fragment_price = calculate_fragment_price(username, is_pure, has_und)
+    username = username.lower().replace("@", "").strip()
     length = len(username)
+    vowels = set("aeiouy")
     
-    if is_pure and length <= 5: return {"rank": "SSS+", "status": fragment_price, "color": "#29c75f"}
-    if is_pure and length <= 7: return {"rank": "SS", "status": fragment_price, "color": "#eab308"}
-    return {"rank": "S", "status": "Свободен", "color": "#a855f7"}
+    has_num = any(char.isdigit() for char in username)
+    vowel_count = sum(1 for c in username if c in vowels)
+    vowel_ratio = vowel_count / length if length > 0 else 0
+    
+    score = 50
+    if length <= 4: score += 45
+    elif length == 5: score += 30
+    elif length == 6: score += 15
+    
+    if is_pure: score += 20
+    if not has_und and not has_num: score += 15
+    if 0.3 <= vowel_ratio <= 0.6: score += 10
+    
+    if has_num: score -= 20
+    if has_und: score -= 15
 
-# --- МАРШРУТЫ (API & FRONTEND) ---
+    if score >= 85:
+        rank, color = "SSS+", "#29c75f"
+        price = "Fragment: High Value (~150+ TON)" if length <= 5 else "Fragment (~30-80 TON)"
+    elif score >= 70:
+        rank, color = "SS", "#eab308"
+        price = "Fragment (~15-40 TON)" if length <= 5 else "Редкий актив (~5-15 TON)"
+    elif score >= 55:
+        rank, color = "S", "#a855f7"
+        price = "Красивый ник (~3-10 TON)"
+    else:
+        rank, color = "A", "#3b82f6"
+        price = "Обычный ник"
+
+    return {
+        "rank": rank,
+        "status": price if check_result is True else "Занят",
+        "color": color,
+        "score": score
+    }
+
+# --- МАРШРУТЫ API ---
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH):
@@ -302,7 +321,6 @@ async def radar_remove(chat_id: str, username: str):
         save_radar_db(db)
     return {"status": "ok", "targets": db.get(chat_id, [])}
 
-# --- ТОЧКА ВХОДА ДЛЯ RAILWAY И ЛОКАЛЬНОГО ЗАПУСКА ---
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
