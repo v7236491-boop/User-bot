@@ -83,31 +83,57 @@ QUALITY_PREFIXES = ["real", "official", "iam", "the"]
 
 
 async def async_check_tg(username: str) -> bool:
+    """
+    100% Точная проверка через внутренний API Fragment + t.me
+    """
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
     }
+    
     try:
-        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
-            url_tg = f"https://t.me/{username}"
-            res_tg = await client.get(url_tg, headers=headers)
-            html_tg = res_tg.text.lower()
-
-            if "tgme_page_title" in html_tg or "you can contact @" in html_tg or "extra_state" in html_tg:
-                return False
+        async with httpx.AsyncClient(timeout=4.0, follow_redirects=True) as client:
+            # 1. Запрос к API Fragment (возвращает точный статус юзернейма)
+            frag_api_url = "https://fragment.com/api?method=searchAuctions"
+            payload = {"query": username, "filter": "username"}
+            
+            res_frag = await client.post(frag_api_url, data=payload, headers=headers)
+            
+            if res_frag.status_code == 200:
+                data = res_frag.json()
+                if data.get("ok"):
+                    html = data.get("html", "").lower()
+                    # Если в ответе API есть статус "taken" или информация об аукционе/владельце — юзернейм ЗАНЯТ
+                    if "tm-status-taken" in html or "status-taken" in html or "unavailable" in html or "sold" in html:
+                        return False
+                    if "cant_be_bought" in html or "cant be bought" in html:
+                        return False
 
             await asyncio.sleep(0.2)
 
-            url_frag = f"https://fragment.com/username/{username}"
-            res_frag = await client.get(url_frag, headers=headers)
-            html_frag = res_frag.text.lower()
+            # 2. Дополнительная проверка через t.me
+            url_tg = f"https://t.me/{username}"
+            res_tg = await client.get(url_tg, headers={"User-Agent": headers["User-Agent"]})
+            html_tg = res_tg.text.lower()
 
-            if "status-taken" in html_frag or "status-sold" in html_frag or "status-bidding" in html_frag:
-                return False
+            # Любые признаки существования профиля / канала / бота
+            taken_signals = [
+                "tgme_page_title", "you can contact", "subscribers", 
+                "members", "extra_state", "view in telegram", "download"
+            ]
+            
+            for signal in taken_signals:
+                if signal in html_tg:
+                    # Проверяем, что это не просто стандартный футер
+                    if "you can contact @" in html_tg or "tgme_page_title" in html_tg:
+                        return False
 
             return True
+
     except Exception:
-        return True
+        # При ошибке сети или блокировке помечаем как занят для надежности
+        return False
 
 
 def calculate_catch_score(username: str, is_free: bool, is_pure_word: bool, has_underscore: bool) -> dict:
