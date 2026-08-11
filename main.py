@@ -35,7 +35,7 @@ def save_radar_db(db):
         json.dump(db, f, ensure_ascii=False, indent=4)
 
 async def radar_worker():
-    """Фоновый процесс: каждые 10 секунд проверяет один ник из Радара."""
+    """Фоновый процесс: проверяет ники из Радара."""
     while True:
         try:
             db = load_radar_db()
@@ -53,12 +53,11 @@ async def radar_worker():
                                 text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nНикнейм: `@{username}`\nБыстрее забирай его!",
                                 parse_mode="Markdown"
                             )
-                            # Удаляем из радара после поимки
                             db[chat_id].remove(username)
                             save_radar_db(db)
                         except Exception as e:
                             print(f"Ошибка отправки радара: {e}")
-                    await asyncio.sleep(7) # Пауза между проверками, чтобы не забанил ТГ
+                    await asyncio.sleep(7)
         except Exception as e:
             print(f"Ошибка воркера радара: {e}")
         await asyncio.sleep(10)
@@ -197,10 +196,9 @@ async def async_check_wa(username: str):
     return None
 
 def calculate_fragment_price(username: str, is_pure: bool, has_und: bool) -> str:
-    """Точный алгоритм оценки Fragment на основе реальных торгов"""
     length = len(username)
     if has_und or not is_pure:
-        return "Fragment: Не торгуется (неформат)"
+        return "Обычный актив"
     if length <= 4:
         ton_price = random.randint(300, 1500)
         return f"Fragment: ~{ton_price} TON (${ton_price * 5})"
@@ -211,10 +209,10 @@ def calculate_fragment_price(username: str, is_pure: bool, has_und: bool) -> str
         ton_price = random.randint(20, 80)
         return f"Fragment: ~{ton_price} TON (${ton_price * 5})"
     else:
-        return "Fragment: Обычный актив"
+        return "Обычный актив"
 
 def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: bool):
-    if check_result is None: return {"rank": "ERR", "status": "Лимит запросов (Пауза)", "color": "#f97316"}
+    if check_result is None: return {"rank": "ERR", "status": "Лимит", "color": "#f97316"}
     if check_result is False: return {"rank": "F", "status": "Занят", "color": "#ef4444"}
     
     fragment_price = calculate_fragment_price(username, is_pure, has_und)
@@ -222,7 +220,7 @@ def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: b
     
     if is_pure and length <= 5: return {"rank": "SSS+", "status": fragment_price, "color": "#29c75f"}
     if is_pure and length <= 7: return {"rank": "SS", "status": fragment_price, "color": "#eab308"}
-    return {"rank": "S", "status": "Хороший ник (Свободен)", "color": "#a855f7"}
+    return {"rank": "S", "status": "Свободен", "color": "#a855f7"}
 
 @app.get("/")
 async def read_root():
@@ -247,33 +245,43 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    if use_filter:
-        generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
-    else:
-        rand_type = random.random()
-        is_pure, has_und = False, False
-        if rand_type < 0.20:
-            generated = random.choice(PURE_WORDS)
-            is_pure = True
+    # ФИКС: 3 попытки, чтобы избежать случайного "Error"
+    for _ in range(3):
+        if use_filter:
+            generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
         else:
-            cat = random.choice(list(BRAND_CATEGORIES.values()))
-            b, c = random.choice(cat["names"]), random.choice(cat["contexts"])
-            generated = f"{b}_{c}" if random.random() < 0.5 else f"{b}{c}"
-            has_und = "_" in generated
+            rand_type = random.random()
+            is_pure, has_und = False, False
+            if rand_type < 0.20:
+                generated = random.choice(PURE_WORDS)
+                is_pure = True
+            else:
+                cat = random.choice(list(BRAND_CATEGORIES.values()))
+                b, c = random.choice(cat["names"]), random.choice(cat["contexts"])
+                generated = f"{b}_{c}" if random.random() < 0.5 else f"{b}{c}"
+                has_und = "_" in generated
 
-    if platform == "whatsapp":
-        check_result = await async_check_wa(generated)
-    else:
-        check_result = await async_check_tg(generated)
+        if platform == "whatsapp":
+            check_result = await async_check_wa(generated)
+        else:
+            check_result = await async_check_tg(generated)
 
-    is_free_bool = True if check_result is True else False
-    return {
-        "status": "success",
-        "generated_username": generated,
-        "platform": platform,
-        "is_free": is_free_bool,
-        "evaluation": calculate_catch_score(generated, check_result, is_pure, has_und)
-    }
+        # Если ответ получен, возвращаем результат
+        if check_result is not None:
+            is_free_bool = True if check_result is True else False
+            return {
+                "status": "success",
+                "generated_username": generated,
+                "platform": platform,
+                "is_free": is_free_bool,
+                "evaluation": calculate_catch_score(generated, check_result, is_pure, has_und)
+            }
+        
+        # Если None (лимит/ошибка), ждем и пробуем еще раз
+        await asyncio.sleep(0.5)
+
+    # Если 3 раза подряд ошибка
+    return {"status": "error", "generated_username": "timeout", "is_free": False, "evaluation": {"rank": "ERR", "status": "Ошибка сети", "color": "#f97316"}}
 
 # --- ЭНДПОИНТЫ РАДАРА ---
 @app.get("/api/radar/add")
