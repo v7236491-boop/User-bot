@@ -3,6 +3,7 @@ import random
 import asyncio
 import time
 import httpx
+import re
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher, types
@@ -27,7 +28,7 @@ if dp:
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 1.5
 
-# --- 1. ТОП 500 ЧИСТЫХ СЛОВ (Упаковано через split() для компактности) ---
+# --- 1. ТОП 500 ЧИСТЫХ СЛОВ ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -71,7 +72,7 @@ PURE_WORDS = (
     "sweep dust dirt mud clay soil land earth globe sphere orb ball cube block dice grid"
 ).split()
 
-# --- 2. БРЕНДЫ ПО КАТЕГОРИЯМ С УМНЫМ КОНТЕКСТОМ (~250-300 топовых) ---
+# --- 2. БРЕНДЫ ПО КАТЕГОРИЯМ С УМНЫМ КОНТЕКСТОМ ---
 BRAND_CATEGORIES = {
     "tech": {
         "names": ["apple", "google", "microsoft", "sony", "samsung", "intel", "amd", "nvidia", 
@@ -113,7 +114,7 @@ BRAND_CATEGORIES = {
     }
 }
 
-# --- 3. ЗНАМЕНИТОСТИ ПО КАТЕГОРИЯМ (~200+ А-листа) ---
+# --- 3. ЗНАМЕНИТОСТИ ПО КАТЕГОРИЯМ ---
 CELEB_CATEGORIES = {
     "sport": {
         "names": ["messi", "ronaldo", "neymar", "mbappe", "pele", "maradona", "jordan", "kobe", 
@@ -145,50 +146,67 @@ CELEB_CATEGORIES = {
 QUALITY_PREFIXES = ["real", "official", "iam", "the"]
 
 USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 ]
 
-# --- ИДЕАЛЬНАЯ ПРОВЕРКА (Оставляем без изменений) ---
+# --- ИСПРАВЛЕННАЯ ПРОВЕРКА ---
 async def async_check_tg(username: str) -> bool:
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "en-US,en;q=0.9",
     }
+    
+    is_free = True
+    
     try:
-        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=4.0, follow_redirects=True) as client:
+            # 1. Проверка Telegram (t.me)
             url_tg = f"https://t.me/{username}"
             res_tg = await client.get(url_tg, headers=headers)
-            html_tg = res_tg.text.lower()
-
-            tg_taken_keywords = [
-                "tgme_page_title", "tgme_page_extra", "send message",
-                "you can contact", "subscribers", "members", "view in telegram",
-                "if you have telegram, you can contact"
-            ]
-            if any(kw in html_tg for kw in tg_taken_keywords):
-                if '<meta property="og:title"' in html_tg and 'telegram: contact' not in html_tg:
+            
+            if res_tg.status_code == 200:
+                html_tg = res_tg.text.lower()
+                # Удаляем все HTML теги (включая <strong>), чтобы читать чистый текст
+                clean_html = re.sub(r'<[^>]+>', '', html_tg)
+                
+                # Признак 1: Если указано реальное имя (мета-тег) и это не дефолтная заглушка
+                if '<meta property="og:title"' in html_tg and f'telegram: contact @{username}' not in html_tg:
                     return False
-                if "subscribers" in html_tg or "members" in html_tg or "you can contact @" in html_tg:
+                    
+                # Признак 2: Есть описание (bio), подписчики или участники
+                if 'tgme_page_extra' in html_tg or 'subscribers' in html_tg or 'members' in html_tg:
+                    return False
+                    
+                # Признак 3: Кнопка контакта для ЗАНЯТОГО профиля без био.
+                # У свободного ника пишется: "if you have telegram, you can contact @username"
+                # У занятого пишется: "you can contact @username" (без первой части)
+                if f'you can contact @{username}' in clean_html and 'if you have telegram' not in clean_html:
                     return False
 
             await asyncio.sleep(0.3)
 
+            # 2. Проверка Fragment
             url_frag = f"https://fragment.com/username/{username}"
             res_frag = await client.get(url_frag, headers=headers)
-            html_frag = res_frag.text.lower()
-
-            frag_taken_keywords = [
-                "unavailable", "taken", "auction", "sold", "on sale",
-                "minimum bid", "place bid", "owner", "buy now"
-            ]
-            if any(kw in html_frag for kw in frag_taken_keywords):
-                return False
-
-            return True
+            
+            if res_frag.status_code == 200:
+                html_frag = res_frag.text.lower()
+                
+                # Слово "unavailable" на Фрагменте означает "нет на аукционе", а не "занят".
+                # Поэтому ищем только 100% признаки продажи или наличия владельца.
+                frag_taken_keywords = [
+                    "status-taken", "status-sold", "minimum bid", "place bid", "owner", "buy now"
+                ]
+                if any(kw in html_frag for kw in frag_taken_keywords):
+                    return False
 
     except Exception:
-        return False
+        # В случае ошибки сети (например, блокировки IP от Cloudflare), 
+        # возвращаем True, чтобы скрипт выдал ник как свободный (лучше ложноположительный, чем вечный "Занят").
+        return True
+
+    return is_free
 
 
 def calculate_catch_score(username: str, is_free: bool, is_pure_word: bool, has_underscore: bool) -> dict:
@@ -231,11 +249,9 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
     has_underscore = False
 
     if rand_type < 0.10:
-        # 10% - Одиночные слова
         generated = random.choice(PURE_WORDS)
         is_pure_word = True
     elif rand_type < 0.35:
-        # 25% - Бренды
         category = random.choice(list(BRAND_CATEGORIES.values()))
         brand = random.choice(category["names"])
         word = random.choice(category["contexts"])
@@ -245,7 +261,6 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
         else:
             generated = f"{brand}{word}"
     elif rand_type < 0.60:
-        # 25% - Знаменитости
         category = random.choice(list(CELEB_CATEGORIES.values()))
         celeb = random.choice(category["names"])
         word = random.choice(category["contexts"])
@@ -255,7 +270,6 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
         else:
             generated = f"{word}{celeb}" if word in QUALITY_PREFIXES else f"{celeb}{word}"
     else:
-        # 40% - Двойные эстетичные слова
         w1 = random.choice(PURE_WORDS)
         w2 = random.choice(PURE_WORDS)
         while w1 == w2:
