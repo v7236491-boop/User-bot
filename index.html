@@ -2,438 +2,630 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NameHunter PRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Username Scanner PRO</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #0d130e;
-            --card-bg: #141f17;
-            --accent-green: #29c75f;
-            --accent-glow: rgba(41, 199, 95, 0.25);
-            --text-main: #e2e8f0;
-            --text-muted: #8b9b8e;
-            --border-color: rgba(41, 199, 95, 0.15);
+            --bg-app: #040806;
+            --primary: #29c75f;
+            --primary-hover: #22a94f;
+            --text-main: #ffffff;
+            --text-muted: #829288;
+            --glass-bg: rgba(20, 26, 23, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --glass-highlight: rgba(255, 255, 255, 0.02);
         }
 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 16px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
+            background-color: var(--bg-app); color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+            overflow: hidden; position: relative;
         }
 
-        .container {
-            width: 100%;
-            max-width: 440px;
+        /* --- ИНТЕРАКТИВНЫЙ ТУМАН --- */
+        #fog-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -10; pointer-events: none; mix-blend-mode: screen;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
+        .screen-ripple {
+            position: fixed; border-radius: 50%;
+            background: radial-gradient(circle, rgba(41, 199, 95, 0.4) 0%, transparent 60%);
+            transform: scale(0); opacity: 1; pointer-events: none; z-index: 100;
+            animation: rippleExplode 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes rippleExplode { 100% { transform: scale(50); opacity: 0; } }
+
+        .jackpot-particle {
+            position: fixed; font-size: 2rem; pointer-events: none; z-index: 9999;
+            animation: explode 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 1; }
+            100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5) rotate(var(--rot)); opacity: 0; }
         }
 
-        .header h1 {
-            font-size: 24px;
-            color: var(--accent-green);
-            margin: 0;
-            text-shadow: 0 0 12px var(--accent-glow);
+        .glass-panel {
+            background: var(--glass-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--glass-highlight);
         }
 
-        .header p {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
+        /* --- НАВИГАЦИЯ --- */
+        header { display: flex; justify-content: space-between; padding: 15px 20px; z-index: 50; width: 100%; max-width: 600px; margin: 0 auto; }
+        .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: 0.3s; border-radius: 12px; }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--primary); }
+        .nav-btn svg { opacity: 0.8; transition: 0.3s; }
+        .nav-btn:hover svg { opacity: 1; filter: drop-shadow(0 0 5px var(--primary)); stroke: var(--primary); }
 
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
+        /* --- ГЛАВНЫЙ ЭКРАН --- */
+        main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transform: translateY(-5vh); }
+        .app-container { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 14px; }
 
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: none;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-top: 8px;
-        }
+        .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
+        .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .platform-btn.active { background: rgba(41, 199, 95, 0.15); color: var(--primary); box-shadow: 0 4px 15px rgba(41, 199, 95, 0.1); }
 
-        .btn-primary {
-            background: var(--accent-green);
-            color: #000;
-            box-shadow: 0 0 12px var(--accent-glow);
-        }
+        .result-field { border-radius: 24px; padding: 35px 20px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; }
+        .result-field:hover { border-color: rgba(41, 199, 95, 0.4); box-shadow: 0 15px 40px rgba(41, 199, 95, 0.15); }
+        .username-text { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); word-break: break-all; font-family: monospace; }
+        .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
+        .price-text { font-size: 0.85rem; opacity: 0.7; }
+        .golden-mode { border-color: #FFD700 !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.1) !important; animation: goldPulse 2s infinite alternate; }
+        @keyframes goldPulse { 0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); } 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.5); } }
 
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
+        .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .action-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .btn-take { background: rgba(41, 199, 95, 0.15); color: var(--primary); border-color: rgba(41, 199, 95, 0.3); }
+        .btn-story { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
 
-        .btn-autoparse {
-            background: #1e293b;
-            color: #38bdf8;
-            border: 1px solid #0284c7;
-        }
+        .btn-generate { background: linear-gradient(135deg, var(--primary), #1b9b47); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; box-shadow: 0 8px 25px rgba(41, 199, 95, 0.3); position: relative; overflow: hidden; }
+        .btn-generate:active { transform: scale(0.96); }
+        .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; border: 1px solid var(--border-color); cursor: not-allowed; }
 
-        .btn-autoparse.active {
-            background: #ef4444;
-            color: #fff;
-            border: 1px solid #dc2626;
-            animation: pulse 1.5s infinite;
-        }
+        /* --- МОДАЛЬНЫЕ ОКНА --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(4, 8, 6, 0.8); backdrop-filter: blur(8px); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; pointer-events: auto; }
+        .modal-content { width: 100%; max-width: 380px; max-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { margin: 0; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .btn-close { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .btn-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
+        /* Настройки */
+        .setting-item { background: rgba(255,255,255,0.03); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; }
+        .setting-info { display: flex; flex-direction: column; gap: 4px; }
+        .setting-title { font-weight: 600; font-size: 0.95rem; }
+        .setting-desc { font-size: 0.75rem; color: var(--text-muted); }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        .result-box {
-            display: none;
-            text-align: center;
-            padding: 16px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.03);
-            margin-top: 12px;
-            border: 1px solid var(--border-color);
-        }
+        .filter-options { display: none; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-top: -6px; margin-bottom: 12px; }
+        .filter-options.active { display: block; }
+        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .filter-row:last-child { margin-bottom: 0; }
+        select { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 8px; outline: none; font-family: inherit; font-size: 0.85rem;}
 
-        .username-title {
-            font-size: 22px;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 6px;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-
-        .btn-clear {
-            background: transparent;
-            border: 1px solid #ef4444;
-            color: #ef4444;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        /* КАРТОЧКА СВАЙПА */
+        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; outline: none; margin-bottom: 10px; font-family: inherit; }
+        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        
+        /* СВАЙП КАРТОЧКА И ИСТОРИЯ */
         .history-wrapper {
-            position: relative;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            overflow: hidden;
-            background: rgba(239, 68, 68, 0.2); /* Красный подслой при свайпе */
+            position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
+            background: rgba(239, 68, 68, 0.25);
             transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease;
-            max-height: 70px;
+            max-height: 80px;
         }
+        .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
-        .history-wrapper.deleting {
-            max-height: 0;
-            margin-bottom: 0;
-            opacity: 0;
+        .history-card { 
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; 
+            align-items: center; transition: background 0.2s; position: relative; z-index: 2; 
+            touch-action: pan-y; will-change: transform; user-select: none;
         }
+        .history-card:hover { border-color: var(--primary); }
+        .radar-remove { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #141f17;
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
-            font-size: 14px;
-            position: relative;
-            z-index: 2;
-            touch-action: pan-y;
-            will-change: transform;
-            user-select: none;
-        }
+        .btn-clear-history { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
-        /* МОДАЛЬНОЕ ОКНО */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
+        /* КВАДРАТНОЕ КОМПАКТНОЕ УВЕДОМЛЕНИЕ */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            color: #fff; border: 1px solid var(--primary);
+            border-radius: 20px; padding: 18px 16px; 
+            width: 80%; max-width: 240px;
+            text-align: center; font-weight: 600; font-size: 0.85rem; line-height: 1.3;
+            opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 2000; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
         }
-
-        .modal-card {
-            background: #121814;
-            border: 1px solid var(--accent-green);
-            border-radius: 16px;
-            padding: 20px;
-            width: 85%;
-            max-width: 360px;
-            text-align: center;
-            box-shadow: 0 0 25px var(--accent-glow);
-        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>🎯 NameHunter PRO</h1>
-        <p>Поиск и отслеживание редких юзернеймов</p>
-    </div>
+    <canvas id="fog-canvas"></canvas>
 
-    <div class="card">
-        <button class="btn btn-primary" onclick="generateOne()">Сгенерировать ник 🎲</button>
-        <button id="autoParseBtn" class="btn btn-autoparse" onclick="toggleAutoParse()">Запустить автопарс 🚀</button>
+    <header>
+        <button class="nav-btn" onclick="openModal('modal-history')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> История
+        </button>
+        <button class="nav-btn" onclick="openModal('modal-settings')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Настройки
+        </button>
+    </header>
 
-        <div id="resultBox" class="result-box">
-            <div id="resUsername" class="username-title">@username</div>
-            <div>
-                <span id="resRank" class="badge">S</span>
-                <span id="resStatus" style="font-size: 13px; color: var(--text-muted);">Проверка...</span>
+    <main>
+        <div class="app-container">
+            <div class="platform-toggle glass-panel">
+                <button class="platform-btn active" onclick="setPlatform('telegram', this)">Telegram</button>
+                <button class="platform-btn" onclick="setPlatform('whatsapp', this)">WhatsApp</button>
+            </div>
+
+            <div class="result-field glass-panel" id="result-box">
+                <div class="username-text" id="res-username">@username</div>
+                <div class="market-value" id="res-market">Fragment: ~150 TON</div>
+                <div class="price-text" id="res-status">Нажми сгенерировать</div>
+            </div>
+
+            <div class="quick-actions" id="quick-actions">
+                <button class="action-btn btn-take" onclick="takeUsername()">🚀 Занять</button>
+                <button class="action-btn btn-story" onclick="shareToFriends()">📲 Поделиться</button>
+            </div>
+
+            <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
+        </div>
+    </main>
+
+    <div class="toast" id="global-toast">✨ Ник скопирован!<br>Примените в настройках.</div>
+
+    <!-- Модалка: Настройки -->
+    <div class="modal-overlay" id="modal-settings">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 class="modal-title">Настройки</h2>
+                <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
+            </div>
+            <div class="modal-body">
+                
+                <div class="setting-item" style="cursor: pointer; border-color: var(--primary); background: rgba(41,199,95,0.05);" onclick="openModal('modal-radar')">
+                    <div class="setting-info">
+                        <span class="setting-title" style="color: var(--primary);">🎯 Охота за никами (Радар)</span>
+                        <span class="setting-desc">Бот пришлет СМС, когда ник освободится</span>
+                    </div>
+                    <span style="font-size: 1.2rem; color: var(--primary);">→</span>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info"><span class="setting-title">Автопарсер</span><span class="setting-desc">Фоновый поиск ников</span></div>
+                    <label class="switch"><input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)"><span class="slider"></span></label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info"><span class="setting-title">Смарт-фильтр (AI)</span><span class="setting-desc">Короткие читаемые слова</span></div>
+                    <label class="switch"><input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)"><span class="slider"></span></label>
+                </div>
+
+                <div class="filter-options" id="filter-menu">
+                    <div class="filter-row">
+                        <span style="font-size: 0.85rem; color: var(--text-main);">Длина слова</span>
+                        <select id="filter-len">
+                            <option value="5-6">5-6 символов</option>
+                            <option value="7-8">7-8 символов</option>
+                        </select>
+                    </div>
+                    <div class="filter-row">
+                        <span style="font-size: 0.85rem; color: var(--text-main);">Добавить цифры</span>
+                        <label class="switch"><input type="checkbox" id="filter-num"><span class="slider"></span></label>
+                    </div>
+                    <div class="filter-row">
+                        <span style="font-size: 0.85rem; color: var(--text-main);">Разрешить "_"</span>
+                        <label class="switch"><input type="checkbox" id="filter-und"><span class="slider"></span></label>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 
-    <div class="history-header">
-        <h3 style="margin: 0; font-size: 16px;">История вылова</h3>
-        <button class="btn-clear" onclick="clearHistory()">🗑 Очистить</button>
+    <!-- Модалка: Радар -->
+    <div class="modal-overlay" id="modal-radar">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 class="modal-title">🎯 Радар (Охота)</h2>
+                <button class="btn-close" onclick="closeModal('modal-radar')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Введите занятый ник. Бот напишет в ЛС, если он освободится! (Убедитесь, что диалог с ботом открыт).</div>
+                <input type="text" id="radar-input" class="form-input" placeholder="@nickname (без @)">
+                <button class="form-btn" onclick="addRadarTarget()">Поставить на мониторинг</button>
+                <div id="radar-list" style="margin-top: 20px;"></div>
+            </div>
+        </div>
     </div>
 
-    <div id="historyList"></div>
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО ИТОГОВ АВТОПАРСА -->
-<div id="summaryModal" class="modal-overlay">
-    <div class="modal-card">
-        <h3 style="color: var(--accent-green); margin-top:0;">🎯 Итоги Автопарса</h3>
-        <p style="font-size:13px; color:#aaa; margin-bottom: 12px;">Выловлено свободных: <b id="modalCount">0</b></p>
-        <div id="modalList" style="text-align:left; max-height:200px; overflow-y:auto; margin-bottom: 15px;"></div>
-        <button class="btn btn-primary" onclick="closeModal()">Отлично</button>
+    <!-- Модалка: История -->
+    <div class="modal-overlay" id="modal-history">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 class="modal-title">История улова</h2>
+                <button class="btn-clear-history" onclick="clearHistory()">🗑 Очистить</button>
+                <button class="btn-close" onclick="closeModal('modal-history')">✕</button>
+            </div>
+            <div class="modal-body"><div class="history-list" id="history-container"></div></div>
+        </div>
     </div>
-</div>
 
-<script>
-    let isAutoParsing = false;
-    let autoParseCatches = [];
-    let localHistory = JSON.parse(localStorage.getItem('vh_history') || '[]');
+    <!-- Модалка: Итоги Автопарса -->
+    <div class="modal-overlay" id="modal-summary">
+        <div class="modal-content glass-panel" style="text-align: center;">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: var(--primary);">🎯 Итоги Автопарса</h2>
+                <button class="btn-close" onclick="closeModal('modal-summary')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Найдено свободных ников за сессию: <b id="summary-count" style="color: var(--primary);">0</b></p>
+                <div id="summary-list" style="text-align:left; max-height:200px; overflow-y:auto; margin-bottom: 15px;"></div>
+                <button class="form-btn" onclick="closeModal('modal-summary')">Отлично</button>
+            </div>
+        </div>
+    </div>
 
-    renderHistory();
+    <script>
+        let currentPlatform = 'telegram';
+        let isAuto = false;
+        let isFetching = false;
+        let lastGenerated = "";
+        let slotInterval;
+        let tgChatId = "0";
+        let autoParseCatches = [];
+        const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
-    async function generateOne() {
-        const resBox = document.getElementById('resultBox');
-        resBox.style.display = 'block';
-        document.getElementById('resUsername').innerText = "Поиск...";
-        
-        try {
-            const res = await fetch('/api/generate?use_filter=true&len_mode=5-6');
-            const data = await res.json();
-            
-            if(data.status === 'success') {
-                displayResult(data);
-                saveToHistory(data);
-            } else {
-                document.getElementById('resUsername').innerText = "Ошибка лимита";
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+            tgChatId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
+        }
+
+        /* --- ИНТЕРАКТИВНЫЙ ТУМАН --- */
+        const canvas = document.getElementById('fog-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let mouseX = 0, mouseY = 0;
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+        mouseX = width / 2; mouseY = height / 2;
+
+        window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+        window.addEventListener('touchmove', e => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; });
+
+        for(let i=0; i<5; i++) {
+            particles.push({
+                x: Math.random() * width, y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5,
+                radius: Math.random() * 150 + 150, color: i % 2 === 0 ? 'rgba(41,199,95,0.15)' : 'rgba(5,150,105,0.15)'
+            });
+        }
+
+        function drawFog() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach((p, i) => {
+                if (i === 0 || i === 1) { p.x += (mouseX - p.x) * 0.03; p.y += (mouseY - p.y) * 0.03; } 
+                else { p.x += p.vx; p.y += p.vy; }
+                if(p.x < 0 || p.x > width) p.vx *= -1;
+                if(p.y < 0 || p.y > height) p.vy *= -1;
+
+                let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+                grad.addColorStop(0, p.color); grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(drawFog);
+        }
+        drawFog();
+
+        function createRipple(x, y) {
+            const ripple = document.createElement('div'); ripple.className = 'screen-ripple';
+            ripple.style.width = ripple.style.height = '100px'; ripple.style.left = (x - 50) + 'px'; ripple.style.top = (y - 50) + 'px';
+            document.body.appendChild(ripple); setTimeout(() => ripple.remove(), 1200);
+        }
+
+        function triggerJackpot() {
+            vibrate('success'); setTimeout(() => vibrate('success'), 200);
+            document.getElementById('result-box').classList.add('golden-mode');
+            const emojis = ['⚡', '✨', '🔥', '💎', '🚀'];
+            for(let i=0; i<30; i++) {
+                const p = document.createElement('div'); p.innerText = emojis[Math.floor(Math.random() * emojis.length)]; p.className = 'jackpot-particle'; document.body.appendChild(p);
+                const rect = document.getElementById('result-box').getBoundingClientRect();
+                p.style.left = (rect.left + rect.width / 2) + 'px'; p.style.top = (rect.top + rect.height / 2) + 'px';
+                const angle = Math.random() * Math.PI * 2; const distance = 100 + Math.random() * 200;
+                p.style.setProperty('--tx', `${Math.cos(angle) * distance}px`); p.style.setProperty('--ty', `${Math.sin(angle) * distance}px`); p.style.setProperty('--rot', `${Math.random() * 360}deg`);
+                setTimeout(() => p.remove(), 1200);
             }
-        } catch(e) {
-            document.getElementById('resUsername').innerText = "Ошибка сети";
         }
-    }
 
-    function displayResult(data) {
-        document.getElementById('resUsername').innerText = "@" + data.generated_username;
-        const rankEl = document.getElementById('resRank');
-        rankEl.innerText = data.evaluation.rank;
-        rankEl.style.backgroundColor = data.evaluation.color;
-        rankEl.style.color = "#000";
-        document.getElementById('resStatus').innerText = data.evaluation.status;
-    }
-
-    async function toggleAutoParse() {
-        const btn = document.getElementById('autoParseBtn');
-        if (!isAutoParsing) {
-            isAutoParsing = true;
-            autoParseCatches = [];
-            btn.innerText = "Остановить автопарс 🛑";
-            btn.classList.add('active');
-            runAutoParse();
-        } else {
-            isAutoParsing = false;
-            btn.innerText = "Запустить автопарс 🚀";
-            btn.classList.remove('active');
-            showSummary();
+        function vibrate(type = 'light') {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                if (type === 'light') window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                if (type === 'success') window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            } else if (navigator.vibrate) {
+                if (type === 'light') navigator.vibrate(15);
+                if (type === 'success') navigator.vibrate([50, 50, 100]);
+            }
         }
-    }
 
-    async function runAutoParse() {
-        while (isAutoParsing) {
-            try {
-                const res = await fetch('/api/generate?use_filter=true&len_mode=5-6');
-                const data = await res.json();
+        function showToast(msg) {
+            const toast = document.getElementById('global-toast');
+            if (msg) toast.innerHTML = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        function setPlatform(platform, btn) {
+            if (isAuto) return; 
+            currentPlatform = platform;
+            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active'); vibrate('light');
+        }
+
+        function openModal(id) {
+            vibrate('light'); document.getElementById(id).classList.add('active');
+            if(id === 'modal-radar') fetchRadarList();
+            if(id === 'modal-history') renderHistory();
+        }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function toggleFilterMenu(cb) {
+            const menu = document.getElementById('filter-menu');
+            if (cb.checked) menu.classList.add('active'); else menu.classList.remove('active');
+        }
+
+        // --- РАДАР ---
+        async function fetchRadarList() {
+            const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
+            const data = await res.json(); renderRadar(data.targets);
+        }
+        async function addRadarTarget() {
+            const inp = document.getElementById('radar-input'); const val = inp.value.trim();
+            if(!val) return;
+            const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
+            const data = await res.json();
+            inp.value = ""; showToast("Взято на мушку!"); renderRadar(data.targets);
+        }
+        async function removeRadarTarget(username) {
+            const res = await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${username}`);
+            const data = await res.json(); renderRadar(data.targets);
+        }
+        function renderRadar(targets) {
+            const cont = document.getElementById('radar-list');
+            cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
+        }
+
+        // --- ИСТОРИЯ С СВАЙПОМ ДЛЯ УДАЛЕНИЯ ---
+        function saveToHistory(item) {
+            if (!item.user || item.user === "timeout" || item.user === "error") return;
+            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
+            if (historyData.some(i => i.user === item.user && i.plat === item.plat)) return;
+            historyData.push(item);
+            historyData.sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
+            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
+        }
+
+        function renderHistory() {
+            const cont = document.getElementById('history-container'); cont.innerHTML = '';
+            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
+            
+            if (historyData.length === 0) { cont.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.85rem;">История пуста.</div>'; return; }
+            
+            historyData.forEach((item, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'history-wrapper';
+                wrapper.id = `hist-wrap-${index}`;
+
+                const div = document.createElement('div'); 
+                div.className = 'history-card';
+                div.setAttribute('data-index', index);
                 
-                if (data.status === 'success' && data.is_free) {
-                    autoParseCatches.push(data);
-                    saveToHistory(data);
-                    displayResult(data);
+                div.innerHTML = `
+                    <div class="hist-left"><div class="hist-user" style="color: ${item.color}">@${item.user}</div><div class="hist-plat" style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div></div>
+                    <div class="hist-right" style="text-align:right;"><div class="hist-rank" style="color: ${item.color}; font-weight:bold;">${item.rank}</div><div class="price-text" style="font-size:0.75rem; opacity:0.8;">${item.price}</div></div>
+                `;
+
+                // Привязываем свайп
+                div.ontouchstart = handleTouchStart;
+                div.ontouchmove = handleTouchMove;
+                div.ontouchend = handleTouchEnd;
+
+                // Клик для копирования
+                div.onclick = (e) => {
+                    if (isSwiping) return;
+                    navigator.clipboard.writeText(item.user); 
+                    showToast('✨ Ник скопирован!'); 
+                    vibrate('light'); 
+                };
+
+                wrapper.appendChild(div);
+                cont.appendChild(wrapper);
+            });
+        }
+
+        function clearHistory() {
+            if (confirm("Очистить всю историю проверок?")) {
+                localStorage.removeItem('vpn_parser_history');
+                renderHistory();
+            }
+        }
+
+        /* --- СВАЙП ВПРАВО ДЛЯ УДАЛЕНИЯ КАРТОЧКИ --- */
+        let startX = 0, currentX = 0, activeCard = null, isSwiping = false;
+
+        function handleTouchStart(e) {
+            startX = e.touches[0].clientX;
+            activeCard = e.currentTarget;
+            activeCard.style.transition = 'none';
+            isSwiping = false;
+        }
+
+        function handleTouchMove(e) {
+            if (!activeCard) return;
+            currentX = e.touches[0].clientX;
+            let diffX = currentX - startX;
+
+            if (diffX > 10) isSwiping = true;
+
+            if (diffX > 0) {
+                activeCard.style.transform = `translateX(${diffX}px)`;
+                activeCard.style.opacity = `${1 - diffX / 250}`;
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (!activeCard) return;
+            let diffX = currentX - startX;
+            const index = parseInt(activeCard.getAttribute('data-index'));
+            const wrapper = document.getElementById(`hist-wrap-${index}`);
+
+            if (diffX > 140) {
+                activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+                activeCard.style.transform = 'translateX(100%)';
+                activeCard.style.opacity = '0';
+
+                setTimeout(() => { if (wrapper) wrapper.classList.add('deleting'); }, 120);
+
+                setTimeout(() => {
+                    let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
+                    historyData.splice(index, 1);
+                    localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
+                    renderHistory();
+                }, 350);
+            } else {
+                activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+                activeCard.style.transform = 'translateX(0px)';
+                activeCard.style.opacity = '1';
+            }
+
+            startX = 0; currentX = 0; activeCard = null;
+            setTimeout(() => { isSwiping = false; }, 50);
+        }
+
+        // --- СЛОТ МАШИНА И ГЕНЕРАЦИЯ ---
+        function startSlotMachine() {
+            const el = document.getElementById('res-username'); const chars = "abcdefghijklmnopqrstuvwxyz";
+            document.getElementById('res-market').style.display = 'none'; document.getElementById('result-box').classList.remove('golden-mode');
+            slotInterval = setInterval(() => { let rand = ""; for(let i=0; i<6; i++) rand += chars[Math.floor(Math.random() * chars.length)]; el.textContent = "@" + rand; }, 60);
+        }
+        function stopSlotMachine(finalName) { clearInterval(slotInterval); document.getElementById('res-username').textContent = "@" + finalName; }
+
+        function toggleAutoSearch(cb) {
+            vibrate('light'); isAuto = cb.checked; const btn = document.getElementById('btn-generate');
+            if (isAuto) { 
+                autoParseCatches = [];
+                btn.disabled = true; 
+                btn.textContent = "Парсинг..."; 
+                runCycle(); 
+            } else { 
+                btn.disabled = false; 
+                btn.textContent = "Сгенерировать"; 
+                showSummaryModal();
+            }
+        }
+
+        async function runCycle() { if (!isAuto) return; if (!isFetching) await fetchUsername(); if (isAuto) setTimeout(runCycle, 2500); }
+
+        async function manualGenerate(event) {
+            if (isFetching || isAuto) return; vibrate('light');
+            if(event && event.clientX) createRipple(event.clientX, event.clientY); else createRipple(window.innerWidth/2, window.innerHeight/2);
+            document.getElementById('quick-actions').style.display = 'none';
+            const btn = document.getElementById('btn-generate'); btn.disabled = true; btn.textContent = "Анализ...";
+            await fetchUsername(); btn.textContent = "Сгенерировать"; btn.disabled = false;
+        }
+
+        async function fetchUsername() {
+            isFetching = true; startSlotMachine();
+            const useFilter = document.getElementById('toggle-filter').checked;
+            const lenMode = document.getElementById('filter-len').value;
+            const useNum = document.getElementById('filter-num').checked;
+            const useUnd = document.getElementById('filter-und').checked;
+
+            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}`;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Server_Error");
+                
+                const data = await res.json();
+                lastGenerated = data.generated_username; stopSlotMachine(lastGenerated);
+                
+                const uEl = document.getElementById('res-username'); const mEl = document.getElementById('res-market'); const sEl = document.getElementById('res-status');
+                uEl.style.color = data.evaluation.color; sEl.textContent = data.evaluation.status; sEl.style.color = data.evaluation.color;
+
+                if (data.is_free === true && data.evaluation.rank !== "ERR") {
+                    if(!isAuto) document.getElementById('quick-actions').style.display = 'flex';
+                    
+                    const catchItem = { user: data.generated_username, plat: currentPlatform, rank: data.evaluation.rank, price: data.evaluation.status, color: data.evaluation.color, score: data.evaluation.score || 0 };
+                    saveToHistory(catchItem);
+                    if (isAuto) autoParseCatches.push(catchItem);
+
+                    if (data.evaluation.status.includes("Fragment")) {
+                        mEl.style.display = 'inline-block'; mEl.textContent = data.evaluation.status; triggerJackpot();
+                    } else { vibrate('light'); }
                 }
             } catch (e) {
-                console.error(e);
+                stopSlotMachine("---");
+                document.getElementById('res-status').textContent = "Сбой сети, повторите";
+                document.getElementById('res-status').style.color = "#f97316";
+            } finally { isFetching = false; }
+        }
+
+        // --- МОДАЛКА ИТОГОВ АВТОПАРСА ---
+        function showSummaryModal() {
+            if (autoParseCatches.length === 0) {
+                showToast("За автопарс свободных ников не найдено");
+                return;
             }
-            await new Promise(r => setTimeout(r, 1200));
-        }
-    }
+            const sorted = [...autoParseCatches].sort((a,b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
+            const top = sorted.slice(0, 5);
 
-    function showSummary() {
-        if (autoParseCatches.length === 0) {
-            alert("За время автопарса свободных ников не найдено.");
-            return;
-        }
-
-        const sorted = [...autoParseCatches].sort((a,b) => b.evaluation.score - a.evaluation.score);
-        const top = sorted.slice(0, 5);
-
-        document.getElementById('modalCount').innerText = autoParseCatches.length;
-        const listHtml = top.map(item => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:6px;">
-                <span style="font-weight:bold; color:#fff;">@${item.generated_username}</span>
-                <span style="color:${item.evaluation.color}; font-weight:bold; font-size:12px;">${item.evaluation.rank}</span>
-            </div>
-        `).join('');
-
-        document.getElementById('modalList').innerHTML = listHtml;
-        document.getElementById('summaryModal').style.display = 'flex';
-    }
-
-    function closeModal() {
-        document.getElementById('summaryModal').style.display = 'none';
-    }
-
-    function saveToHistory(item) {
-        localHistory.unshift(item);
-        if (localHistory.length > 30) localHistory.pop();
-        localStorage.setItem('vh_history', JSON.stringify(localHistory));
-        renderHistory();
-    }
-
-    function renderHistory() {
-        const container = document.getElementById('historyList');
-        if (localHistory.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:15px;">История пуста</div>`;
-            return;
-        }
-
-        container.innerHTML = localHistory.map((item, index) => `
-            <div class="history-wrapper" id="wrapper-${index}">
-                <div class="history-item" 
-                     data-index="${index}"
-                     ontouchstart="handleTouchStart(event)" 
-                     ontouchmove="handleTouchMove(event)" 
-                     ontouchend="handleTouchEnd(event)">
-                    <span style="font-weight:bold; color:#fff;">@${item.generated_username}</span>
-                    <div>
-                        <span style="color:${item.evaluation.color}; font-weight:bold; margin-right:8px;">${item.evaluation.rank}</span>
-                        <span style="color:${item.is_free ? '#29c75f' : '#ef4444'}; font-size:12px;">${item.is_free ? 'Свободен' : 'Занят'}</span>
-                    </div>
+            document.getElementById('summary-count').innerText = autoParseCatches.length;
+            document.getElementById('summary-list').innerHTML = top.map(item => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:10px; margin-bottom:6px;">
+                    <span style="font-weight:bold; color:#fff;">@${item.user}</span>
+                    <span style="color:${item.color}; font-weight:bold; font-size:0.85rem;">${item.rank}</span>
                 </div>
-            </div>
-        `).join('');
-    }
+            `).join('');
 
-    /* МЕХАНИКА СВАЙПА ВПРАВО ДЛЯ УДАЛЕНИЯ */
-    let startX = 0;
-    let currentX = 0;
-    let activeItem = null;
-
-    function handleTouchStart(e) {
-        startX = e.touches[0].clientX;
-        activeItem = e.currentTarget;
-        activeItem.style.transition = 'none';
-    }
-
-    function handleTouchMove(e) {
-        if (!activeItem) return;
-        currentX = e.touches[0].clientX;
-        let diffX = currentX - startX;
-
-        // Позволяем свайпать только ВПРАВО (diffX > 0)
-        if (diffX > 0) {
-            activeItem.style.transform = `translateX(${diffX}px)`;
-            activeItem.style.opacity = `${1 - diffX / 250}`;
-        }
-    }
-
-    function handleTouchEnd(e) {
-        if (!activeItem) return;
-        let diffX = currentX - startX;
-        const index = parseInt(activeItem.getAttribute('data-index'));
-        const wrapper = document.getElementById(`wrapper-${index}`);
-
-        // Если свайпнули вправо более чем на 140 пикселей (полный свайп)
-        if (diffX > 140) {
-            // Анимация вылета карточки вправо
-            activeItem.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
-            activeItem.style.transform = 'translateX(100%)';
-            activeItem.style.opacity = '0';
-
-            // Плавное схлопывание высоты блока
-            setTimeout(() => {
-                if (wrapper) wrapper.classList.add('deleting');
-            }, 150);
-
-            // Удаление из данных через 0.4 секунды после окончания анимаций
-            setTimeout(() => {
-                localHistory.splice(index, 1);
-                localStorage.setItem('vh_history', JSON.stringify(localHistory));
-                renderHistory();
-            }, 400);
-
-        } else {
-            // Если свайп не доведен до конца — возвращаем карточку на место
-            activeItem.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-            activeItem.style.transform = 'translateX(0px)';
-            activeItem.style.opacity = '1';
+            openModal('modal-summary');
         }
 
-        startX = 0;
-        currentX = 0;
-        activeItem = null;
-    }
-
-    function clearHistory() {
-        if (confirm("Очистить всю историю проверок?")) {
-            localHistory = [];
-            localStorage.removeItem('vh_history');
-            renderHistory();
+        // --- ДЕЙСТВИЯ: ПОДЕЛИТЬСЯ И ЗАНЯТЬ ---
+        function shareToFriends() {
+            vibrate('light');
+            const botUsername = "selectionusername_bot";
+            const priceText = document.getElementById('res-market').innerText;
+            const text = `🎯 Поймал крутой ник @${lastGenerated} в боте @${botUsername}!\nОценка: ${priceText}`;
+            const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/' + botUsername)}&text=${encodeURIComponent(text)}`;
+            
+            if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+                window.Telegram.WebApp.openTelegramLink(url);
+            } else {
+                window.open(url, '_blank');
+            }
         }
-    }
-</script>
+
+        function takeUsername() {
+            navigator.clipboard.writeText(lastGenerated);
+            vibrate('success');
+            showToast('✨ Ник скопирован!<br>Примените в настройках.');
+        }
+    </script>
 </body>
 </html>
