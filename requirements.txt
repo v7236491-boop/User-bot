@@ -1,4 +1,5 @@
 fastapi
 uvicorn
+telethon
 httpx
 aiogram
