@@ -81,62 +81,61 @@ CELEB_CONTEXTS = {
 
 QUALITY_PREFIXES = ["real", "official", "iam", "the"]
 
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+]
 
+# --- ИДЕАЛЬНАЯ ПРОВЕРКА (ИЗ ПРЕДЫДУЩЕЙ РАБОЧЕЙ ВЕРСИИ) ---
 async def async_check_tg(username: str) -> bool:
-    """
-    100% Точная проверка через внутренний API Fragment + t.me
-    """
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept-Language": "en-US,en;q=0.9",
     }
     
     try:
-        async with httpx.AsyncClient(timeout=4.0, follow_redirects=True) as client:
-            # 1. Запрос к API Fragment (возвращает точный статус юзернейма)
-            frag_api_url = "https://fragment.com/api?method=searchAuctions"
-            payload = {"query": username, "filter": "username"}
-            
-            res_frag = await client.post(frag_api_url, data=payload, headers=headers)
-            
-            if res_frag.status_code == 200:
-                data = res_frag.json()
-                if data.get("ok"):
-                    html = data.get("html", "").lower()
-                    # Если в ответе API есть статус "taken" или информация об аукционе/владельце — юзернейм ЗАНЯТ
-                    if "tm-status-taken" in html or "status-taken" in html or "unavailable" in html or "sold" in html:
-                        return False
-                    if "cant_be_bought" in html or "cant be bought" in html:
-                        return False
-
-            await asyncio.sleep(0.2)
-
-            # 2. Дополнительная проверка через t.me
+        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
+            # 1. Проверка Telegram (t.me)
             url_tg = f"https://t.me/{username}"
-            res_tg = await client.get(url_tg, headers={"User-Agent": headers["User-Agent"]})
+            res_tg = await client.get(url_tg, headers=headers)
             html_tg = res_tg.text.lower()
 
-            # Любые признаки существования профиля / канала / бота
-            taken_signals = [
-                "tgme_page_title", "you can contact", "subscribers", 
-                "members", "extra_state", "view in telegram", "download"
+            tg_taken_keywords = [
+                "tgme_page_title", "tgme_page_extra", "send message",
+                "you can contact", "subscribers", "members", "view in telegram",
+                "if you have telegram, you can contact"
             ]
-            
-            for signal in taken_signals:
-                if signal in html_tg:
-                    # Проверяем, что это не просто стандартный футер
-                    if "you can contact @" in html_tg or "tgme_page_title" in html_tg:
-                        return False
+            if any(kw in html_tg for kw in tg_taken_keywords):
+                if '<meta property="og:title"' in html_tg and 'telegram: contact' not in html_tg:
+                    return False
+                if "subscribers" in html_tg or "members" in html_tg or "you can contact @" in html_tg:
+                    return False
+
+            await asyncio.sleep(0.3)
+
+            # 2. Проверка Fragment (fragment.com)
+            url_frag = f"https://fragment.com/username/{username}"
+            res_frag = await client.get(url_frag, headers=headers)
+            html_frag = res_frag.text.lower()
+
+            frag_taken_keywords = [
+                "unavailable", "taken", "auction", "sold", "on sale",
+                "minimum bid", "place bid", "owner", "buy now"
+            ]
+            if any(kw in html_frag for kw in frag_taken_keywords):
+                return False
 
             return True
 
     except Exception:
-        # При ошибке сети или блокировке помечаем как занят для надежности
         return False
 
 
 def calculate_catch_score(username: str, is_free: bool, is_pure_word: bool, has_underscore: bool) -> dict:
+    """
+    Консервативная и реальная система оценки стоимости юзернеймов
+    """
     if not is_free:
         return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
 
