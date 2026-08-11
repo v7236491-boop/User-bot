@@ -3,7 +3,6 @@ import random
 import asyncio
 import time
 import httpx
-import re
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher, types
@@ -15,7 +14,6 @@ app = FastAPI(title="Username Generator & Checker")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 
-# --- НАСТРОЙКА TELEGRAM БОТА ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
@@ -28,7 +26,7 @@ if dp:
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 1.0
 
-# --- БАЗЫ ДАННЫХ ---
+# --- БАЗЫ ДАННЫХ ДЛЯ ОБЫЧНОГО РЕЖИМА ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -75,15 +73,7 @@ PURE_WORDS = (
 BRAND_CATEGORIES = {
     "tech": {"names": ["apple", "google", "microsoft", "sony", "samsung", "intel", "amd", "nvidia"], "contexts": ["tech", "app", "dev", "pay", "cloud"]},
     "auto": {"names": ["toyota", "volkswagen", "ford", "honda", "bmw", "mercedes", "audi", "porsche"], "contexts": ["auto", "drive", "car", "club", "race"]},
-    "fashion": {"names": ["nike", "adidas", "puma", "gucci", "prada", "dior", "chanel"], "contexts": ["style", "wear", "fit", "run", "shoes"]},
-    "food": {"names": ["cocacola", "pepsi", "mcdonalds", "starbucks", "subway"], "contexts": ["drink", "food", "fresh", "eat", "cold"]},
-    "crypto": {"names": ["binance", "coinbase", "kraken", "bybit", "tether", "solana"], "contexts": ["pay", "trade", "crypto", "app"]}
-}
-
-CELEB_CATEGORIES = {
-    "sport": {"names": ["messi", "ronaldo", "neymar", "mbappe", "jordan", "kobe", "lebron"], "contexts": ["real", "official", "goat", "king", "champ"]},
-    "music": {"names": ["eminem", "drake", "kanye", "taylor", "beyonce", "rihanna", "bieber"], "contexts": ["music", "real", "official", "sound", "live"]},
-    "movies": {"names": ["cruise", "pitt", "depp", "dicaprio", "reeves", "downey", "holland"], "contexts": ["real", "official", "actor", "film", "star"]}
+    "fashion": {"names": ["nike", "adidas", "puma", "gucci", "prada", "dior", "chanel"], "contexts": ["style", "wear", "fit", "run", "shoes"]}
 }
 
 USER_AGENTS = [
@@ -91,112 +81,108 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 ]
 
-# --- ДВОЙНАЯ ПРОВЕРКА TELEGRAM ---
+# --- АЛГОРИТМ ГЕНЕРАЦИИ КОРОТКИХ КРАСИВЫХ НИКОВ (ФИЛЬТР) ---
+def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tuple[str, bool, bool]:
+    vowels = "aeiouy"
+    consonants = "bcdfghjklmnprstvwxz"
+    
+    # Определение длины
+    if len_mode == "5-6": target_len = random.choice([5, 6])
+    elif len_mode == "7-8": target_len = random.choice([7, 8])
+    else: target_len = random.choice([5, 6, 7])
+
+    # Если используем цифры или _, резервируем место
+    chars_to_generate = target_len
+    if use_num: chars_to_generate -= random.choice([1, 2])
+    if use_und: chars_to_generate -= 1
+    chars_to_generate = max(3, chars_to_generate)
+
+    # Генерация читаемого слова (чередование)
+    res = ""
+    is_cons = random.choice([True, False])
+    for _ in range(chars_to_generate):
+        res += random.choice(consonants) if is_cons else random.choice(vowels)
+        is_cons = not is_cons
+
+    # Добавление подчеркивания
+    if use_und and len(res) >= 3:
+        insert_pos = random.randint(1, len(res) - 1)
+        res = res[:insert_pos] + "_" + res[insert_pos:]
+
+    # Добавление цифр
+    if use_num:
+        num = str(random.randint(0, 99)) if chars_to_generate >= 4 else str(random.randint(0, 9))
+        res = res + num if random.choice([True, False]) else num + res
+
+    return res, True, use_und
+
+
+# --- ИСПРАВЛЕННАЯ ПРОВЕРКА TELEGRAM ---
 async def async_check_tg(username: str):
-    # МЕТОД 1: Bot API
     if BOT_TOKEN:
         try:
             async with httpx.AsyncClient(timeout=2.5) as client:
                 res = await client.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getChat?chat_id=@{username}")
-                if res.status_code == 200 and res.json().get("ok"):
-                    return False
-        except Exception:
-            pass
+                if res.status_code == 200 and res.json().get("ok"): return False
+        except Exception: pass
 
-    # МЕТОД 2: t.me
     headers = {"User-Agent": random.choice(USER_AGENTS)}
     try:
         async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
             res = await client.get(f"https://t.me/{username}", headers=headers)
-            if res.status_code in [429, 403, 500, 502, 503]:
-                return None
+            if res.status_code in [429, 403, 500, 502, 503]: return None
+                
             if res.status_code == 200:
                 html = res.text.lower()
-                taken_indicators = ['<meta property="og:title"', 'tgme_page_title', 'tgme_page_extra', 'subscribers', 'members']
-                for ind in taken_indicators:
-                    if ind in html:
-                        if f'telegram: contact @{username}' in html and 'tgme_page_title' not in html:
-                            continue
-                        return False
-                return True
+                if "just a moment" in html or "cf-challenge" in html or "robot" in html: return None
+                
+                taken_inds = ['tgme_page_title', 'tgme_page_extra', 'subscribers', 'members']
+                if any(ind in html for ind in taken_inds): return False
+                
+                if '<meta property="og:title"' in html and f'telegram: contact @{username}' not in html: return False
+                if f'telegram: contact @{username}' in html and 'tgme_page_title' not in html: return True
+                return None
             return None
-    except Exception:
-        return None
+    except Exception: return None
 
-# --- ДВОЙНАЯ ПРОВЕРКА WHATSAPP ---
+
+# --- ПРОВЕРКА WHATSAPP ---
 async def async_check_wa(username: str):
-    headers = {
-        "User-Agent": random.choice(USER_AGENTS),
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-    }
-
-    # МЕТОД 1: Проверка через wa.me
+    headers = {"User-Agent": random.choice(USER_AGENTS), "Accept-Language": "en-US"}
     try:
         async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
-            url_wa = f"https://wa.me/{username}"
-            res_wa = await client.get(url_wa, headers=headers)
-
+            res_wa = await client.get(f"https://wa.me/{username}", headers=headers)
             if res_wa.status_code == 200:
                 html = res_wa.text.lower()
-
-                # Если сработал блок Cloudflare / капча
-                if "just a moment..." in html or "cf-challenge" in html or "attention required!" in html:
-                    pass # Пробуем метод 2
+                if "just a moment" in html or "cf-challenge" in html: pass 
                 else:
-                    invalid_indicators = [
-                        "url is invalid", "invalid url", "page not found", 
-                        "страница не найдена", "недействительный адрес"
-                    ]
-                    if any(ind in html for ind in invalid_indicators):
-                        return True # Свободен
-
-                    taken_indicators = [
-                        "action_button", "send_message", "continue to chat", 
-                        "перейти в чат", "chat on whatsapp"
-                    ]
-                    if any(ind in html for ind in taken_indicators):
-                        return False # Занят
-
-            if res_wa.status_code == 404:
-                return True
-    except Exception:
-        pass
-
-    # МЕТОД 2: Резервная проверка через api.whatsapp.com
+                    invalid = ["url is invalid", "invalid url", "page not found"]
+                    if any(ind in html for ind in invalid): return True 
+                    taken = ["action_button", "send_message", "continue to chat", "chat on whatsapp"]
+                    if any(ind in html for ind in taken): return False 
+            if res_wa.status_code == 404: return True
+    except Exception: pass
+    
     try:
         async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
-            url_api = f"https://api.whatsapp.com/send/?phone={username}&text&type=phone_number&app_absent=0"
-            res_api = await client.get(url_api, headers=headers)
-
+            res_api = await client.get(f"https://api.whatsapp.com/send/?phone={username}&text&type=phone_number&app_absent=0", headers=headers)
             if res_api.status_code == 200:
                 html_api = res_api.text.lower()
-                
-                if "phone number shared via url is invalid" in html_api or "invalid" in html_api:
-                    return True # Свободен
-                if "action_button" in html_api or "continue to chat" in html_api:
-                    return False # Занят
-
-            if res_api.status_code == 404:
-                return True
-    except Exception:
-        pass
-
-    # Если оба метода не смогли дать точный ответ из-за ошибок/лимитов
+                if "invalid" in html_api: return True 
+                if "action_button" in html_api or "continue to chat" in html_api: return False 
+            if res_api.status_code == 404: return True
+    except Exception: pass
     return None
 
-def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: bool):
-    if check_result is None:
-        return {"rank": "ERR", "status": "Лимит запросов", "color": "#f97316"}
-    if check_result is False:
-        return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
 
+def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: bool):
+    if check_result is None: return {"rank": "ERR", "status": "Лимит запросов", "color": "#f97316"}
+    if check_result is False: return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
     length = len(username)
-    if is_pure and length <= 6:
-        return {"rank": "SSS+", "status": "Грааль (~$100+)", "color": "#2bcf66"}
-    if is_pure and length <= 9:
-        return {"rank": "SS", "status": "Премиум (~$30+)", "color": "#eab308"}
+    if is_pure and length <= 6: return {"rank": "SSS+", "status": "Редкий Грааль (~$100+)", "color": "#2bcf66"}
+    if is_pure and length <= 9: return {"rank": "SS", "status": "Премиум (~$30+)", "color": "#eab308"}
     return {"rank": "S", "status": "Хороший ник (~$5+)", "color": "#a855f7"}
+
 
 @app.get("/")
 async def read_root():
@@ -204,35 +190,40 @@ async def read_root():
         return FileResponse(INDEX_PATH, media_type="text/html")
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
+
 @app.get("/api/generate")
-async def generate_username(request: Request, platform: str = Query("telegram")):
+async def generate_username(
+    request: Request, 
+    platform: str = Query("telegram"),
+    use_filter: bool = Query(False),
+    len_mode: str = Query("5-6"),
+    use_num: bool = Query(False),
+    use_und: bool = Query(False)
+):
     client_ip = request.client.host if request.client else "global"
     now = time.time()
-
     if client_ip in USER_COOLDOWNS:
         elapsed = now - USER_COOLDOWNS[client_ip]
         if elapsed < COOLDOWN_SECONDS:
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
-
     USER_COOLDOWNS[client_ip] = time.time()
 
-    rand_type = random.random()
-    is_pure, has_und = False, False
-
-    if rand_type < 0.20:
-        generated = random.choice(PURE_WORDS)
-        is_pure = True
-    elif rand_type < 0.60:
-        cat = random.choice(list(BRAND_CATEGORIES.values()))
-        b, c = random.choice(cat["names"]), random.choice(cat["contexts"])
-        generated = f"{b}_{c}" if random.random() < 0.5 else f"{b}{c}"
-        has_und = "_" in generated
+    # --- ВЫБОР ГЕНЕРАТОРА ---
+    if use_filter:
+        generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
     else:
-        cat = random.choice(list(CELEB_CATEGORIES.values()))
-        c, w = random.choice(cat["names"]), random.choice(cat["contexts"])
-        generated = f"{c}_{w}" if random.random() < 0.5 else f"{c}{w}"
-        has_und = "_" in generated
+        rand_type = random.random()
+        is_pure, has_und = False, False
+        if rand_type < 0.20:
+            generated = random.choice(PURE_WORDS)
+            is_pure = True
+        else:
+            cat = random.choice(list(BRAND_CATEGORIES.values()))
+            b, c = random.choice(cat["names"]), random.choice(cat["contexts"])
+            generated = f"{b}_{c}" if random.random() < 0.5 else f"{b}{c}"
+            has_und = "_" in generated
 
+    # --- ПРОВЕРКА ---
     if platform == "whatsapp":
         check_result = await async_check_wa(generated)
         link = f"https://wa.me/{generated}"
@@ -250,11 +241,6 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
         "evaluation": calculate_catch_score(generated, check_result, is_pure, has_und),
         "link": link
     }
-
-@app.on_event("startup")
-async def on_startup():
-    if bot and dp:
-        asyncio.create_task(dp.start_polling(bot))
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
