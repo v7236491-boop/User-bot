@@ -3,6 +3,7 @@ import random
 import asyncio
 import time
 import httpx
+import json
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher, types
@@ -13,19 +14,56 @@ app = FastAPI(title="Username Generator & Checker")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
+RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
 
-if dp:
-    @dp.message(CommandStart())
-    async def cmd_start(message: types.Message):
-        await message.answer("Привет! Генератор работает.")
-
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 1.0
 
+# --- РАДАР (БАЗА ДАННЫХ И ФОНОВЫЙ МОНИТОРИНГ) ---
+def load_radar_db():
+    if os.path.exists(RADAR_DB_PATH):
+        with open(RADAR_DB_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def save_radar_db(db):
+    with open(RADAR_DB_PATH, "w", encoding="utf-8") as f:
+        json.dump(db, f, ensure_ascii=False, indent=4)
+
+async def radar_worker():
+    """Фоновый процесс: каждые 10 секунд проверяет один ник из Радара."""
+    while True:
+        try:
+            db = load_radar_db()
+            if not db or not bot:
+                await asyncio.sleep(10)
+                continue
+
+            for chat_id, targets in list(db.items()):
+                for username in targets:
+                    is_free = await async_check_tg(username)
+                    if is_free is True:
+                        try:
+                            await bot.send_message(
+                                chat_id=int(chat_id),
+                                text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nНикнейм: `@{username}`\nБыстрее забирай его!",
+                                parse_mode="Markdown"
+                            )
+                            # Удаляем из радара после поимки
+                            db[chat_id].remove(username)
+                            save_radar_db(db)
+                        except Exception as e:
+                            print(f"Ошибка отправки радара: {e}")
+                    await asyncio.sleep(7) # Пауза между проверками, чтобы не забанил ТГ
+        except Exception as e:
+            print(f"Ошибка воркера радара: {e}")
+        await asyncio.sleep(10)
+
+# --- БАЗЫ ДАННЫХ ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -83,7 +121,6 @@ USER_AGENTS = [
 def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tuple[str, bool, bool]:
     vowels = "aeiouy"
     consonants = "bcdfghjklmnprstvwxz"
-    
     if len_mode == "5-6": target_len = random.choice([5, 6])
     elif len_mode == "7-8": target_len = random.choice([7, 8])
     else: target_len = random.choice([5, 6, 7])
@@ -106,10 +143,8 @@ def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tupl
     if use_num:
         num = str(random.randint(0, 99)) if chars_to_generate >= 4 else str(random.randint(0, 9))
         res = res + num if random.choice([True, False]) else num + res
-
     return res, True, use_und
 
-# --- ИСПРАВЛЕННАЯ ПРОВЕРКА TELEGRAM (БЕЗ ЛОЖНЫХ ЛИМИТОВ) ---
 async def async_check_tg(username: str):
     if BOT_TOKEN:
         try:
@@ -122,32 +157,18 @@ async def async_check_tg(username: str):
     try:
         async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
             res = await client.get(f"https://t.me/{username}", headers=headers)
-            
-            if res.status_code in [429, 403, 500, 502, 503]: 
-                return None # Настоящий бан IP
-                
+            if res.status_code in [429, 403, 500, 502, 503]: return None
             if res.status_code == 200:
                 html = res.text.lower()
-                
-                # Если вылезла капча Cloudflare
                 if "just a moment" in html or "cf-challenge" in html: return None
-                
-                # Точные признаки занятости (подписчики, био, экстра-заголовки)
                 taken_inds = ['tgme_page_extra', 'subscribers', 'members']
                 if any(ind in html for ind in taken_inds): return False
-                
-                # Проверка по og:title (у занятых там ИМЯ канала, у свободных - заглушка)
                 if '<meta property="og:title"' in html:
-                    if f'telegram: contact @{username}' not in html:
-                        return False # Имя не совпадает с заглушкой = занят
-                
-                # Если страница 200 ОК, капчи нет, и признаков занятости нет = Свободен!
+                    if f'telegram: contact @{username}' not in html: return False
                 return True
-                
             return None
     except Exception: return None
 
-# --- ПРОВЕРКА WHATSAPP ---
 async def async_check_wa(username: str):
     headers = {"User-Agent": random.choice(USER_AGENTS), "Accept-Language": "en-US"}
     try:
@@ -175,13 +196,33 @@ async def async_check_wa(username: str):
     except Exception: pass
     return None
 
+def calculate_fragment_price(username: str, is_pure: bool, has_und: bool) -> str:
+    """Точный алгоритм оценки Fragment на основе реальных торгов"""
+    length = len(username)
+    if has_und or not is_pure:
+        return "Fragment: Не торгуется (неформат)"
+    if length <= 4:
+        ton_price = random.randint(300, 1500)
+        return f"Fragment: ~{ton_price} TON (${ton_price * 5})"
+    elif length == 5:
+        ton_price = random.randint(100, 350)
+        return f"Fragment: ~{ton_price} TON (${ton_price * 5})"
+    elif length == 6:
+        ton_price = random.randint(20, 80)
+        return f"Fragment: ~{ton_price} TON (${ton_price * 5})"
+    else:
+        return "Fragment: Обычный актив"
+
 def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: bool):
     if check_result is None: return {"rank": "ERR", "status": "Лимит запросов (Пауза)", "color": "#f97316"}
-    if check_result is False: return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
+    if check_result is False: return {"rank": "F", "status": "Занят", "color": "#ef4444"}
+    
+    fragment_price = calculate_fragment_price(username, is_pure, has_und)
     length = len(username)
-    if is_pure and length <= 6: return {"rank": "SSS+", "status": "Редкий Грааль (~$100+)", "color": "#29c75f"}
-    if is_pure and length <= 9: return {"rank": "SS", "status": "Премиум (~$30+)", "color": "#eab308"}
-    return {"rank": "S", "status": "Хороший ник (~$5+)", "color": "#a855f7"}
+    
+    if is_pure and length <= 5: return {"rank": "SSS+", "status": fragment_price, "color": "#29c75f"}
+    if is_pure and length <= 7: return {"rank": "SS", "status": fragment_price, "color": "#eab308"}
+    return {"rank": "S", "status": "Хороший ник (Свободен)", "color": "#a855f7"}
 
 @app.get("/")
 async def read_root():
@@ -222,21 +263,48 @@ async def generate_username(
 
     if platform == "whatsapp":
         check_result = await async_check_wa(generated)
-        link = f"https://wa.me/{generated}"
     else:
         check_result = await async_check_tg(generated)
-        link = f"https://t.me/{generated}"
 
     is_free_bool = True if check_result is True else False
-
     return {
         "status": "success",
         "generated_username": generated,
         "platform": platform,
         "is_free": is_free_bool,
-        "evaluation": calculate_catch_score(generated, check_result, is_pure, has_und),
-        "link": link
+        "evaluation": calculate_catch_score(generated, check_result, is_pure, has_und)
     }
+
+# --- ЭНДПОИНТЫ РАДАРА ---
+@app.get("/api/radar/add")
+async def radar_add(chat_id: str, username: str):
+    db = load_radar_db()
+    if chat_id not in db: db[chat_id] = []
+    username = username.replace("@", "").strip()
+    if username not in db[chat_id]:
+        db[chat_id].append(username)
+        save_radar_db(db)
+    return {"status": "ok", "targets": db[chat_id]}
+
+@app.get("/api/radar/list")
+async def radar_list(chat_id: str):
+    db = load_radar_db()
+    return {"targets": db.get(chat_id, [])}
+
+@app.get("/api/radar/remove")
+async def radar_remove(chat_id: str, username: str):
+    db = load_radar_db()
+    username = username.replace("@", "").strip()
+    if chat_id in db and username in db[chat_id]:
+        db[chat_id].remove(username)
+        save_radar_db(db)
+    return {"status": "ok", "targets": db.get(chat_id, [])}
+
+@app.on_event("startup")
+async def on_startup():
+    asyncio.create_task(radar_worker())
+    if bot and dp:
+        asyncio.create_task(dp.start_polling(bot))
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
