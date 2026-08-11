@@ -26,13 +26,12 @@
             overflow: hidden; position: relative;
         }
 
-        /* --- ИНТЕРАКТИВНЫЙ ТУМАН (CANVAS) --- */
+        /* --- ИНТЕРАКТИВНЫЙ ТУМАН --- */
         #fog-canvas {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: -10; pointer-events: none; mix-blend-mode: screen;
         }
 
-        /* --- SCREEN RIPPLE EFFECT (ВОЛНА ПРИ КЛИКЕ) --- */
         .screen-ripple {
             position: fixed; border-radius: 50%;
             background: radial-gradient(circle, rgba(41, 199, 95, 0.4) 0%, transparent 60%);
@@ -41,7 +40,6 @@
         }
         @keyframes rippleExplode { 100% { transform: scale(50); opacity: 0; } }
 
-        /* --- ЧАСТИЦЫ ДЖЕКПОТА (ВЗРЫВ ЭМОДЗИ) --- */
         .jackpot-particle {
             position: fixed; font-size: 2rem; pointer-events: none; z-index: 9999;
             animation: explode 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
@@ -58,10 +56,7 @@
 
         /* --- НАВИГАЦИЯ --- */
         header { display: flex; justify-content: space-between; padding: 15px 20px; z-index: 50; width: 100%; max-width: 600px; margin: 0 auto; }
-        .nav-btn {
-            background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px;
-            display: flex; align-items: center; gap: 8px; transition: 0.3s; border-radius: 12px;
-        }
+        .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: 0.3s; border-radius: 12px; }
         .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--primary); }
         .nav-btn svg { opacity: 0.8; transition: 0.3s; }
         .nav-btn:hover svg { opacity: 1; filter: drop-shadow(0 0 5px var(--primary)); stroke: var(--primary); }
@@ -74,38 +69,25 @@
         .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .platform-btn.active { background: rgba(41, 199, 95, 0.15); color: var(--primary); box-shadow: 0 4px 15px rgba(41, 199, 95, 0.1); }
 
-        /* Поле вывода */
-        .result-field {
-            border-radius: 24px; padding: 35px 20px; text-align: center; min-height: 170px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative;
-        }
+        .result-field { border-radius: 24px; padding: 35px 20px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; }
         .result-field:hover { border-color: rgba(41, 199, 95, 0.4); box-shadow: 0 15px 40px rgba(41, 199, 95, 0.15); }
-        
         .username-text { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); word-break: break-all; font-family: monospace; }
         .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
         .price-text { font-size: 0.85rem; opacity: 0.7; }
-
-        /* Золотой режим */
         .golden-mode { border-color: #FFD700 !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.1) !important; animation: goldPulse 2s infinite alternate; }
         @keyframes goldPulse { 0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); } 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.5); } }
 
-        /* Быстрые действия */
         .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .action-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: flex; justify-content: center; align-items: center; gap: 6px; }
         .btn-take { background: rgba(41, 199, 95, 0.15); color: var(--primary); border-color: rgba(41, 199, 95, 0.3); }
         .btn-story { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
 
-        /* Главная Кнопка */
-        .btn-generate {
-            background: linear-gradient(135deg, var(--primary), #1b9b47); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700;
-            cursor: pointer; transition: 0.3s; width: 100%; box-shadow: 0 8px 25px rgba(41, 199, 95, 0.3); position: relative; overflow: hidden;
-        }
+        .btn-generate { background: linear-gradient(135deg, var(--primary), #1b9b47); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; box-shadow: 0 8px 25px rgba(41, 199, 95, 0.3); position: relative; overflow: hidden; }
         .btn-generate:active { transform: scale(0.96); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; border: 1px solid var(--border-color); cursor: not-allowed; }
 
-        /* Модальные окна */
+        /* --- МОДАЛЬНЫЕ ОКНА --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(4, 8, 6, 0.8); backdrop-filter: blur(8px); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s ease; }
         .modal-overlay.active { opacity: 1; visibility: visible; pointer-events: auto; }
         .modal-content { width: 100%; max-width: 380px; max-height: 85vh; display: flex; flex-direction: column; position: relative; }
@@ -136,38 +118,26 @@
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; outline: none; margin-bottom: 10px; font-family: inherit; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
         
-        .history-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; transition: 0.2s; position: relative; overflow: hidden; }
+        .history-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; transition: 0.2s; position: relative; overflow: hidden; cursor: pointer; }
+        .history-card:hover { border-color: var(--primary); }
         .radar-remove { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
-        /* --- НОВЫЙ ДИЗАЙН УВЕДОМЛЕНИЯ (ЖИДКОЕ СТЕКЛО) --- */
-        .toast { 
-            position: fixed; 
-            bottom: 50px; 
-            left: 50%; 
-            transform: translateX(-50%) translateY(20px); 
-            background: rgba(15, 25, 18, 0.85); /* Тёмно-зеленое стекло */
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            color: #fff; 
-            border: 1px solid rgba(41, 199, 95, 0.4);
-            border-radius: 16px; 
-            padding: 14px 24px; 
-            font-weight: 600; 
-            font-size: 0.95rem; 
-            opacity: 0; 
-            pointer-events: none; 
-            transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); 
-            z-index: 2000; 
-            box-shadow: 0 10px 40px rgba(41, 199, 95, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05); 
-            text-align: center;
-            white-space: nowrap;
+        /* КВАДРАТНОЕ УВЕДОМЛЕНИЕ (ЖИДКОЕ СТЕКЛО) */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            color: #fff; border: 1px solid var(--primary);
+            border-radius: 24px; padding: 25px 20px; 
+            width: 85%; max-width: 260px; /* Делаем визуально более квадратным */
+            text-align: center; font-weight: 600; font-size: 0.95rem; line-height: 1.4;
+            opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 2000; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
 
-    <!-- ИНТЕРАКТИВНЫЙ ТУМАН (CANVAS) -->
     <canvas id="fog-canvas"></canvas>
 
     <header>
@@ -192,7 +162,6 @@
                 <div class="price-text" id="res-status">Нажми сгенерировать</div>
             </div>
 
-            <!-- Кнопки быстрых действий -->
             <div class="quick-actions" id="quick-actions">
                 <button class="action-btn btn-take" onclick="takeUsername()">🚀 Занять</button>
                 <button class="action-btn btn-story" onclick="shareToFriends()">📲 Поделиться</button>
@@ -202,7 +171,7 @@
         </div>
     </main>
 
-    <div class="toast" id="global-toast">✨ Успешно!</div>
+    <div class="toast" id="global-toast">✨ Юзернейм скопирован!<br>Примените его в настройках.</div>
 
     <!-- Модалка: Настройки -->
     <div class="modal-overlay" id="modal-settings">
@@ -213,7 +182,6 @@
             </div>
             <div class="modal-body">
                 
-                <!-- КНОПКА РАДАРА -->
                 <div class="setting-item" style="cursor: pointer; border-color: var(--primary); background: rgba(41,199,95,0.05);" onclick="openModal('modal-radar')">
                     <div class="setting-info">
                         <span class="setting-title" style="color: var(--primary);">🎯 Охота за никами (Радар)</span>
@@ -227,7 +195,6 @@
                     <label class="switch"><input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)"><span class="slider"></span></label>
                 </div>
                 
-                <!-- ФИЛЬТРЫ -->
                 <div class="setting-item">
                     <div class="setting-info"><span class="setting-title">Смарт-фильтр (AI)</span><span class="setting-desc">Короткие читаемые слова</span></div>
                     <label class="switch"><input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)"><span class="slider"></span></label>
@@ -332,7 +299,6 @@
         }
         drawFog();
 
-        /* --- ВОЛНА ПРИ КЛИКЕ И ВЗРЫВ --- */
         function createRipple(x, y) {
             const ripple = document.createElement('div'); ripple.className = 'screen-ripple';
             ripple.style.width = ripple.style.height = '100px'; ripple.style.left = (x - 50) + 'px'; ripple.style.top = (y - 50) + 'px';
@@ -363,15 +329,13 @@
             }
         }
 
-        // Обновленная функция уведомления (увеличено время, добавлен текст)
         function showToast(msg) {
             const toast = document.getElementById('global-toast');
-            toast.textContent = msg; 
+            if (msg) toast.innerHTML = msg; // Поддержка HTML переносов строк
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
-        /* --- UI ЛОГИКА --- */
         function setPlatform(platform, btn) {
             if (isAuto) return; 
             currentPlatform = platform;
@@ -409,11 +373,12 @@
         }
         function renderRadar(targets) {
             const cont = document.getElementById('radar-list');
-            cont.innerHTML = targets.map(t => `<div class="history-card"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
+            cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
         }
 
         // --- ИСТОРИЯ ---
         function saveToHistory(item) {
+            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
             if (historyData.some(i => i.user === item.user && i.plat === item.plat)) return;
             historyData.push(item);
             historyData.sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
@@ -422,6 +387,8 @@
 
         function renderHistory() {
             const cont = document.getElementById('history-container'); cont.innerHTML = '';
+            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
+            
             if (historyData.length === 0) { cont.innerHTML = '<div class="empty-state">История пуста.</div>'; return; }
             historyData.forEach(item => {
                 const div = document.createElement('div'); div.className = 'history-card';
@@ -484,21 +451,25 @@
             } catch (e) { stopSlotMachine("error"); } finally { isFetching = false; }
         }
 
-        // --- ДЕЙСТВИЯ: В СТОРИС И ЗАНЯТЬ ---
+        // --- ДЕЙСТВИЯ: ПОДЕЛИТЬСЯ И ЗАНЯТЬ ---
         function shareToFriends() {
             vibrate('light');
-            let text = `Заловил супер-редкий юзернейм @${lastGenerated}!`;
+            const botUsername = "selectionusername_bot"; // ТВОЙ БОТ
+            const priceText = document.getElementById('res-market').innerText;
+            const text = `🎯 Поймал крутой ник @${lastGenerated} в боте @${botUsername}!\nОценка: ${priceText}`;
+            const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/' + botUsername)}&text=${encodeURIComponent(text)}`;
+            
             if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-                window.Telegram.WebApp.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent('https://t.me/') + '&text=' + encodeURIComponent(text));
-            } else { showToast("Скопируйте ссылку и отправьте друзьям!"); }
+                window.Telegram.WebApp.openTelegramLink(url);
+            } else {
+                window.open(url, '_blank');
+            }
         }
 
         function takeUsername() {
             navigator.clipboard.writeText(lastGenerated);
             vibrate('success');
-            
-            // Новое стеклянное уведомление без закрытия приложения
-            showToast('✨ Юзернейм скопирован! Примените его в настройках Telegram.');
+            showToast('✨ Юзернейм скопирован!<br>Примените его в настройках.');
         }
     </script>
 </body>
