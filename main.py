@@ -28,130 +28,115 @@ if dp:
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 1.5
 
-# --- СЛОВАРНЫЕ БАЗЫ ---
-DICTIONARY_WORDS = [
-    "apple", "world", "music", "house", "light", "dream", "space", "power", "angel", "smart",
+# --- 1. ТОП ЧИСТЫЕ СЛОВА (БЕЗ ПРИСТАВОК И СИМВОЛОВ) ---
+PURE_WORDS = [
+    "apple", "world", "music", "house", "light", "dream", "space", "power", "smart",
     "stone", "water", "earth", "cloud", "storm", "river", "ocean", "flame", "shadow", "silver",
-    "golden", "crystal", "magic", "spirit", "nature", "forest", "winter", "summer", "spring", "autumn",
-    "sunset", "sunrise", "silent", "secret", "future", "vision", "wonder", "action", "energy", "planet",
-    "galaxy", "cosmic", "infinity", "legend", "hero", "master", "leader", "pioneer", "champion", "winner",
-    "starlight", "moonlight", "diamond", "emerald", "sapphire", "phoenix", "dragon", "tiger", "falcon", "eagle",
-    "freedom", "victory", "passion", "harmony", "destiny", "horizon", "paradise", "eternity", "miracle", "treasure",
-    "velvet", "breeze", "velocity", "aurora", "solitude", "serenity", "zenith", "vortex", "nebula", "element",
-    "castle", "kingdom", "throne", "emperor", "knight", "shield", "sword", "crown", "monarch", "dynasty",
+    "golden", "crystal", "magic", "spirit", "nature", "forest", "winter", "summer", "spring",
+    "sunset", "sunrise", "silent", "secret", "future", "vision", "wonder", "action", "energy",
+    "galaxy", "cosmic", "infinity", "legend", "hero", "master", "leader", "pioneer", "champion",
+    "starlight", "moonlight", "diamond", "emerald", "sapphire", "phoenix", "dragon", "falcon",
+    "freedom", "victory", "passion", "harmony", "destiny", "horizon", "paradise", "eternity",
+    "velvet", "breeze", "velocity", "aurora", "solitude", "serenity", "zenith", "vortex", "nebula",
+    "castle", "kingdom", "throne", "emperor", "knight", "shield", "sword", "crown", "dynasty",
     "legacy", "empire", "symbol", "beacon", "summit", "peak", "vertex", "vector", "matrix", "orbit"
 ]
 
-COMPANIES = [
-    "apple", "google", "nike", "adidas", "gucci", "prada", "tesla", "sony",
-    "steam", "roblox", "nvidia", "intel", "canon", "rolex", "porsche", "ferrari",
-    "bmw", "audi", "redbull", "binance", "bybit", "openai", "uber", "spotify",
-    "netflix", "tiktok", "amazon", "dior", "samsung", "puma", "microsoft",
-    "meta", "toyota", "honda", "mercedes", "volkswagen", "ford",
-    "chevrolet", "nissan", "hyundai", "kia", "lexus", "bentley", "lamborghini", "bugatti",
-    "mclaren", "aston", "chanel", "louisvuitton", "hermes", "versace", "armani", "balenciaga",
-    "burberry", "fendi", "omega", "cartier", "seiko", "casio", "pepsi",
-    "cocacola", "monster", "starbucks", "mcdonalds", "kfc", "subway", "burgerking",
-    "twitch", "discord", "youtube", "telegram", "whatsapp", "instagram", "twitter", "reddit",
-    "snapchat", "pinterest", "linkedin", "shazam", "tinder", "airbnb", "booking",
-    "stripe", "paypal", "revolut", "wise", "coinbase", "kraken", "okx", "kucoin",
-    "asus", "msi", "gigabyte", "razer", "logitech", "corsair", "hyperx", "steelseries"
-]
+# --- 2. БРЕНДЫ С КОНТЕКСТНЫМИ СУФФИКСАМИ (СМЫСЛОВЫЕ СВЯЗКИ) ---
+BRAND_CONTEXTS = {
+    "sony": ["camera", "audio", "sound", "tv", "play", "music", "studio"],
+    "coca": ["drink", "cola", "cold", "fresh", "ice", "glass"],
+    "subway": ["sandwich", "fresh", "eat", "food"],
+    "nike": ["run", "shoes", "sport", "snkrs", "air", "fit"],
+    "adidas": ["original", "shoes", "sport", "run"],
+    "tesla": ["car", "auto", "drive", "energy", "power", "tech"],
+    "apple": ["store", "app", "tech", "dev", "pay", "mac", "ios"],
+    "google": ["dev", "tech", "cloud", "search", "app", "pay"],
+    "rolex": ["watch", "time", "gold", "club"],
+    "ferrari": ["auto", "race", "speed", "red", "club"],
+    "bmw": ["auto", "m", "power", "club", "drive"],
+    "porsche": ["auto", "club", "race", "speed"],
+    "samsung": ["mobile", "tech", "pay", "tv"],
+    "redbull": ["racing", "energy", "drink", "air"],
+    "binance": ["pay", "trade", "crypto", "app", "lab"],
+    "bybit": ["trade", "crypto", "app", "pay"],
+    "spotify": ["music", "sound", "app", "podcast"],
+    "netflix": ["show", "tv", "movie", "app"],
+    "razer": ["tech", "game", "zone", "gear"],
+    "steam": ["deck", "game", "pay", "community"]
+}
 
-CELEBRITIES = [
-    "messi", "ronaldo", "neymar", "mbappe", "jordan", "kobe", "lebron", "musk",
-    "jobs", "gates", "bezos", "altman", "zuck", "drake", "eminem", "rihanna",
-    "bieber", "kanye", "beyonce", "shakira", "pitt", "depp", "reeves", "dicaprio",
-    "zendaya", "gadot", "robbie", "batman", "joker", "spidey", "haaland", "vinicius",
-    "bellingham", "modric", "kroos", "benzema", "lewandowski", "salah", "debruyne", "kane",
-    "curry", "durant", "giannis", "doncic", "jokic", "federer", "nadal", "djokovic",
-    "hamilton", "verstappen", "snoop", "fiftycent", "jayz", "weeknd", "postmalone", "travis",
-    "brunomars", "edsheeran", "adele", "taylor", "dualipa", "billie", "gomez", "grande",
-    "tomcruise", "rock", "statham", "keanu", "rdj", "hemsworth", "evans", "holland",
-    "chalamet", "ramsey", "pascal", "jenna", "sydney", "ana", "scarlett",
-    "margot", "pewdiepie", "mrbeast", "ispeed", "ksi", "logan", "jake",
-    "xqc", "kai", "ninja", "shroud", "pokimane", "rubius", "ibai", "grefg"
-]
+# --- 3. ЗНАМЕНИТОСТИ С КОНТЕКСТНЫМИ ПРИСТАВКАМИ/СУФФИКСАМИ ---
+CELEB_CONTEXTS = {
+    "messi": ["real", "official", "leo", "goat", "king", "ten"],
+    "ronaldo": ["real", "official", "cr7", "goat", "king"],
+    "jordan": ["air", "shoes", "real", "goat", "twentythree"],
+    "musk": ["real", "elon", "tech", "x"],
+    "drake": ["real", "official", "champagne", "music"],
+    "eminem", ["real", "official", "slim", "shady"],
+    "kanye": ["real", "ye", "west", "music"],
+    "keanu": ["real", "reeves", "official"],
+    "mrbeast": ["real", "official", "feast", "team"]
+}
 
-MODIFIERS = [
-    "official", "real", "original", "true", "pro", "vip", "club", "live", "app", "dev",
-    "io", "hub", "lab", "labs", "net", "mode", "zone", "vibe", "flow", "space", "craft",
-    "base", "sync", "link", "desk", "box", "drop", "nest", "forge", "site", "web", "cloud",
-    "group", "studio", "tech", "soft", "ai", "media", "agency", "team", "crew", "house",
-    "world", "verse", "realm", "spot", "node", "loop", "line", "gate"
-]
-
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
-]
+# Дополнительные нейтральные префиксы высокого качества
+QUALITY_PREFIXES = ["real", "official", "iam", "the"]
 
 
 async def async_check_tg(username: str) -> bool:
-    """
-    Точная проверка свободен ли username в Telegram и на Fragment
-    """
     headers = {
-        "User-Agent": random.choice(USER_AGENTS),
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9",
     }
-    
     try:
         async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
-            # 1. Проверка через t.me
             url_tg = f"https://t.me/{username}"
             res_tg = await client.get(url_tg, headers=headers)
             html_tg = res_tg.text.lower()
 
-            # Точные индикаторы занятого канала/профиля/бота
-            if "tgme_page_title" in html_tg:
-                # Если есть заголовок страницы с именем, логин точно занят
-                return False
-            if "you can contact @" in html_tg or "extra_state" in html_tg:
+            if "tgme_page_title" in html_tg or "you can contact @" in html_tg or "extra_state" in html_tg:
                 return False
 
             await asyncio.sleep(0.2)
 
-            # 2. Проверка через Fragment
             url_frag = f"https://fragment.com/username/{username}"
             res_frag = await client.get(url_frag, headers=headers)
             html_frag = res_frag.text.lower()
 
-            # Если на Fragment написано, что ник был продан или находится на аукционе
             if "status-taken" in html_frag or "status-sold" in html_frag or "status-bidding" in html_frag:
                 return False
-            if "unclaimed" in html_frag or "available" in html_frag:
-                return True
 
             return True
-
     except Exception:
-        # В случае таймаута пропускаем статус как потенциально свободный
         return True
 
 
-def calculate_catch_score(username: str, is_free: bool) -> dict:
+def calculate_catch_score(username: str, is_free: bool, is_pure_word: bool, has_underscore: bool) -> dict:
+    """
+    Консервативная и реальная система оценки стоимости юзернеймов
+    """
     if not is_free:
-        return {"rank": "F", "status": "Занят (0$)", "color": "#ef4444"}
+        return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
 
     length = len(username)
-    score = 100
 
-    if length <= 6:
-        score += 450
-    elif length <= 8:
-        score += 250
-    elif length <= 10:
-        score += 100
+    # 1. Топовые короткие чистые слова без символов (Редчайшие)
+    if is_pure_word and length <= 5:
+        return {"rank": "SSS+", "status": "Редкий Грааль (~$100–$500+)", "color": "#2bcf66"}
 
-    if score >= 500:
-        return {"rank": "SSS+", "status": "Редкий Грааль! (~300-1000+$)", "color": "#2bcf66"}
-    elif score >= 350:
-        return {"rank": "SS", "status": "Премиум улов (~100-300$)", "color": "#eab308"}
-    elif score >= 200:
-        return {"rank": "S", "status": "Хороший ник (~30-100$)", "color": "#a855f7"}
-    else:
-        return {"rank": "A", "status": "Достойный логин (~10-30$)", "color": "#06b6d4"}
+    # 2. Чистые слова или очень короткие комбинации без подчёркиваний
+    if is_pure_word and length <= 7:
+        return {"rank": "SS", "status": "Премиум улов (~$30–$100)", "color": "#eab308"}
+
+    # 3. Осмысленные комбинации без подчёркиваний
+    if not has_underscore and length <= 10:
+        return {"rank": "S", "status": "Хороший ник (~$10–$30)", "color": "#a855f7"}
+
+    # 4. Все комбинации с подчёркиваниями или длинные имена
+    if has_underscore or length > 10:
+        return {"rank": "A", "status": "Обычный ник (~$2–$10)", "color": "#06b6d4"}
+
+    return {"rank": "B", "status": "Базовый логин (~$0–$5)", "color": "#6b7280"}
 
 
 @app.get("/")
@@ -174,21 +159,33 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
     USER_COOLDOWNS[client_ip] = time.time()
 
     rand_type = random.random()
+    is_pure_word = False
+    has_underscore = False
 
-    if rand_type < 0.35:
-        generated = random.choice(DICTIONARY_WORDS)
-    elif rand_type < 0.65:
-        brand = random.choice(COMPANIES)
-        mod = random.choice(MODIFIERS)
-        use_underscore = random.random() < 0.4
-        sep = "_" if use_underscore else ""
-        generated = f"{brand}{sep}{mod}" if random.random() < 0.5 else f"{mod}{sep}{brand}"
+    if rand_type < 0.40:
+        # 1. Чистые красивые слова (Самый высокий шанс получить ценный ник)
+        generated = random.choice(PURE_WORDS)
+        is_pure_word = True
+    elif rand_type < 0.70:
+        # 2. Бренды с осмысленными контекстными словами (e.g. sony_camera)
+        brand, contexts = random.choice(list(BRAND_CONTEXTS.items()))
+        word = random.choice(contexts)
+        
+        if random.random() < 0.35:
+            generated = f"{brand}_{word}"
+            has_underscore = True
+        else:
+            generated = f"{brand}{word}"
     else:
-        celeb = random.choice(CELEBRITIES)
-        mod = random.choice(MODIFIERS)
-        use_underscore = random.random() < 0.4
-        sep = "_" if use_underscore else ""
-        generated = f"{celeb}{sep}{mod}" if random.random() < 0.5 else f"{mod}{sep}{celeb}"
+        # 3. Знаменитости с контекстными префиксами/суффиксами (e.g. real_messi)
+        celeb, contexts = random.choice(list(CELEBRITIES_CONTEXTS.items() if 'CELEBRITIES_CONTEXTS' in globals() else CELEB_CONTEXTS.items()))
+        word = random.choice(contexts)
+        
+        if random.random() < 0.35:
+            generated = f"{word}_{celeb}" if word in QUALITY_PREFIXES else f"{celeb}_{word}"
+            has_underscore = True
+        else:
+            generated = f"{word}{celeb}" if word in QUALITY_PREFIXES else f"{celeb}{word}"
 
     if platform == "whatsapp":
         is_free = True
@@ -197,7 +194,7 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
         is_free = await async_check_tg(generated)
         link = f"https://t.me/{generated}"
 
-    catch_eval = calculate_catch_score(generated, is_free)
+    catch_eval = calculate_catch_score(generated, is_free, is_pure_word, has_underscore)
 
     return {
         "status": "success",
