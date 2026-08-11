@@ -1,128 +1,248 @@
-import os
-import random
 import asyncio
-import httpx
-from fastapi import FastAPI, Query
-from fastapi.responses import FileResponse, JSONResponse
+import re
+import time
+import aiohttp
 
-app = FastAPI(title="Fast & Non-Blocking Telegram Username Generator")
+# ==========================================
+# 1. СЛОВАРИ И БАЗЫ ДАННЫХ
+# ==========================================
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-INDEX_PATH = os.path.join(BASE_DIR, "index.html")
-
-RARE_PREFIXES = [
-    "aero", "alvo", "apex", "arch", "aura", "aera", "aster", "aevi",
-    "bold", "byte", "cora", "crest", "cron", "cyra", "dusk", "drift",
-    "elix", "echo", "enzo", "fable", "flux", "halo", "hyper", "iris",
-    "kora", "koda", "lumi", "luxe", "mona", "myth", "nova", "nexus",
-    "orion", "onyx", "pulse", "prism", "quill", "riva", "solis", "silk",
-    "vortex", "velox", "vera", "vybe", "xenon", "zephyr", "zara", "zest"
+# Словарные популярные слова (проверяются strictly без приписок и без '_')
+DICTIONARY_WORDS = [
+    "sun", "cat", "hello", "love", "sky", "time", "fire", "ice", "star", "moon",
+    "king", "boss", "gold", "hero", "soul", "mind", "life", "word", "music", "game",
+    "play", "code", "tech", "data", "web", "chat", "bot", "app", "dev", "soft",
+    "core", "net", "link", "node", "fast", "cool", "top", "best", "super", "mega",
+    "pro", "master", "vip", "club", "team", "group", "shop", "store", "deal", "cash",
+    "coin", "bank", "pay", "trade", "work", "job", "space", "earth", "world", "city",
+    "town", "road", "park", "home", "room", "desk", "book", "card", "note", "file",
+    "view", "look", "site", "page", "news", "post", "blog", "feed", "live", "stream",
+    "flow", "wave", "vibe", "zone", "spot", "base", "hub", "lab", "box", "drop"
 ]
 
-RARE_SUFFIXES = [
-    "lab", "hub", "net", "dev", "io", "one", "pro", "mode",
-    "zone", "wave", "vibe", "flow", "mind", "soul", "core"
+# 100 Знаменитостей / Известных личностей
+CELEBRITIES = [
+    "cristiano", "ronaldo", "messi", "neymar", "mbappe", "haaland", "lebron", "curry",
+    "jordan", "kobe", "tyson", "ali", "mcgregor", "khabib", "federer", "nadal",
+    "musk", "jobs", "gates", "bezos", "zuckerberg", "buffett", "altman", "durov",
+    "drake", "eminem", "kanye", "beyonce", "rihanna", "taylor", "gomez", "bieber",
+    "theweeknd", "shakira", "adele", "bruno", "edward", "pitt", "dicaprio", "depp",
+    "tomcruise", "keanu", "rock", "downey", "johansson", "zendaya", "robbie", "holland",
+    "chalamet", "ramsay", "mrbeast", "pewdiepie", "khaby", "sergey", "pavel", "ilong",
+    "obama", "trump", "biden", "putin", "xi", "modi", "macron", "scholz", "schwarzenegger",
+    "stallone", "chan", "jetli", "statham", "reeves", "gosling", "hardy", "bale",
+    "cavanill", "hemsworth", "hiddleston", "cumberbatch", "pattinson", "affleck", "cavill",
+    "pratt", "evans", "gadot", "olsen", "pugh", "taylorjoy", "stone", "lawrence",
+    "portman", "hatheway", "blunt", "theron", "berry", "jolie", "fox", "sweeney"
 ]
 
-BRANDS = ["nike", "adidas", "gucci", "prada", "tesla", "sony", "rolex", "bmw", "binance", "messi", "drake"]
-BRAND_MODS = ["hub", "club", "zone", "wave", "flow", "core"]
+# 100 Популярных брендов
+BRANDS = [
+    "apple", "google", "microsoft", "amazon", "meta", "tesla", "spacex", "nvidia",
+    "intel", "amd", "samsung", "sony", "lg", "huawei", "xiaomi", "asus", "acer",
+    "dell", "hp", "lenovo", "nike", "adidas", "puma", "reebok", "jordan", "gucci",
+    "louisvuitton", "chanel", "prada", "dior", "hermes", "rolex", "zara", "uniqlo",
+    "bmw", "mercedes", "audi", "porsche", "ferrari", "lamborghini", "toyota", "honda",
+    "ford", "chevrolet", "nissan", "hyundai", "kia", "volvo", "bentley", "bugatti",
+    "coca-cola", "pepsi", "redbull", "nestle", "starbucks", "mcdonalds", "kfc", "subway",
+    "visa", "mastercard", "paypal", "stripe", "revolut", "binance", "bybit", "tether",
+    "steam", "playstation", "xbox", "nintendo", "roblox", "epicgames", "twitch", "discord",
+    "spotify", "netflix", "youtube", "tiktok", "instagram", "telegram", "reddit", "x",
+    "openai", "anthropic", "uber", "airbnb", "booking", "amazon", "ebay", "shopify"
+]
+
+# 50 Смысловых приставок/суффиксов (для имен и брендов)
+AFFIXES = [
+    "official", "real", "the", "iam", "is", "original", "daily", "live", "news",
+    "club", "team", "fan", "hub", "zone", "net", "app", "dev", "media", "studio",
+    "lab", "world", "space", "life", "vibe", "tv", "page", "blog", "feed", "channel",
+    "press", "hq", "corp", "inc", "group", "pro", "master", "vip", "top", "prime",
+    "star", "one", "go", "now", "me", "io", "ai", "tech", "box", "spot"
+]
 
 
-async def async_check_tg(username: str) -> bool:
+# ==========================================
+# 2. КЭШ И ОГРАНИЧЕНИЕ ЗАПРОСОВ (RATE LIMIT)
+# ==========================================
+
+class UsernameChecker:
+    def __init__(self, cache_ttl: int = 3600, min_delay: float = 1.5):
+        self.cache = {}  # {username: (is_free, timestamp)}
+        self.cache_ttl = cache_ttl
+        self.min_delay = min_delay
+        self.user_last_request = {}  # {user_id: timestamp}
+
+    def _clean_cache(self):
+        now = time.time()
+        self.cache = {
+            k: v for k, v in self.cache.items()
+            if now - v[1] < self.cache_ttl
+        }
+
+    async def apply_rate_limit(self, user_id: int):
+        """Индивидуальная задержка для каждого пользователя."""
+        now = time.time()
+        last_req = self.user_last_request.get(user_id, 0)
+        elapsed = now - last_req
+        if elapsed < self.min_delay:
+            await asyncio.sleep(self.min_delay - elapsed)
+        self.user_last_request[user_id] = time.time()
+
+
+# ==========================================
+# 3. АСИНХРОННАЯ ПРОВЕРКА (t.me + Fragment)
+# ==========================================
+
+    async def check_telegram_web(self, session: aiohttp.ClientSession, username: str) -> bool:
+        """
+        Проверка через t.me.
+        Возвращает True, если ник СВОБОДЕН.
+        """
+        url = f"https://t.me/{username}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        try:
+            async with session.get(url, headers=headers, timeout=5) as response:
+                if response.status == 200:
+                    text = await response.text()
+                    # Если на странице есть заголовок профиля/канала или кнопка открытия - он занят
+                    if "tgme_page_title" in text or "tgme_action_button_new" in text:
+                        return False
+                    # Если перенаправляет на специфический инфо-блок — свободен
+                    if "If you have Telegram, you can contact" in text or "extra_small" in text:
+                        return True
+                    return True
+                elif response.status == 404:
+                    return True
+                return False
+        except Exception:
+            return False
+
+    async def check_fragment(self, session: aiohttp.ClientSession, username: str) -> bool:
+        """
+        Проверка через Fragment.
+        Возвращает True, если ник СВОБОДЕН (не продается, не куплен, не на аукционе).
+        """
+        url = f"https://fragment.com/username/{username}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        try:
+            async with session.get(url, headers=headers, timeout=5) as response:
+                if response.status == 200:
+                    text = await response.text()
+                    # Маркеры занятости на Fragment: аукцион, продан, зарезервирован
+                    if "On auction" in text or "Sold" in text or "Unavailable" in text or "Taken" in text:
+                        return False
+                    return True
+                elif response.status == 404:
+                    return True
+                return False
+        except Exception:
+            return False
+
+    async def is_username_free(self, user_id: int, username: str, session: aiohttp.ClientSession) -> bool:
+        """Комплексная проверка с кэшем, задержкой и запросами."""
+        username = username.lower().strip("@")
+        self._clean_cache()
+
+        # Проверка кэша
+        if username in self.cache:
+            return self.cache[username][0]
+
+        # Применение задержки пользователя
+        await self.apply_rate_limit(user_id)
+
+        # Параллельный запрос к t.me и Fragment
+        tg_free, fragment_free = await asyncio.gather(
+            self.check_telegram_web(session, username),
+            self.check_fragment(session, username)
+        )
+
+        is_free = tg_free and fragment_free
+
+        # Запись результата в кэш
+        self.cache[username] = (is_free, time.time())
+        return is_free
+
+
+# ==========================================
+# 4. ОЦЕНКА ЦЕННОСТИ (SCORING)
+# ==========================================
+
+def calculate_username_value(username: str, category: str) -> dict:
     """
-    Асинхронная неблокирующая проверка через httpx.
-    Исключает падения сервера в 502 Bad Gateway.
+    Рассчитывает ориентировочную стоимость и ценность юзернейма.
     """
-    url = f"https://t.me/{username}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
+    clean_name = username.lower().replace("_", "")
+    length = len(clean_name)
+    has_underscore = "_" in username
     
-    try:
-        async with httpx.AsyncClient(timeout=1.5, follow_redirects=True) as client:
-            response = await client.get(url, headers=headers)
-            html = response.text.lower()
-            
-            # Признаки того, что аккаунт/канал зарегистрирован
-            if "tgme_page_title" in html or "tgme_page_extra" in html or "send message" in html:
-                if "you can contact @" in html or "subscribers" in html or "members" in html:
-                    return False
-                if '<meta property="og:title"' in html:
-                    return False
-            return True
-
-    except Exception:
-        # При таймауте или ошибке сети возвращаем False (безопасный режим без падения 502)
-        return False
-
-
-def calculate_catch_score(username: str, is_free: bool) -> dict:
-    if not is_free:
-        return {"rank": "F", "status": "Занят (0$)", "color": "#ef4444"}
-
-    length = len(username)
     score = 100
+    
+    # Категория словарного слова ценится максимально
+    if category == "dictionary":
+        score += 500
+        estimated_price = "$500 - $5,000+"
+    elif category == "celebrity" or category == "brand":
+        score += 200
+        estimated_price = "$100 - $1,500"
+    else:
+        estimated_price = "$20 - $200"
 
-    if length <= 6:
-        score += 450
-    elif length <= 8:
-        score += 250
-    elif length <= 10:
+    # Штрафы за длину и подчёркивания
+    if length <= 4:
+        score += 300
+    elif length <= 6:
         score += 100
-
-    if any(b in username for b in BRANDS):
-        score += 150
-
-    if score >= 500:
-        return {"rank": "SSS+", "status": "Редкий Грааль! (~300-1000+$)", "color": "#2bcf66"}
-    elif score >= 350:
-        return {"rank": "SS", "status": "Премиум улов (~100-300$)", "color": "#eab308"}
-    elif score >= 200:
-        return {"rank": "S", "status": "Хороший ник (~30-100$)", "color": "#a855f7"}
     else:
-        return {"rank": "A", "status": "Достойный логин (~10-30$)", "color": "#06b6d4"}
+        score -= (length - 6) * 10
 
+    if has_underscore:
+        score -= 50
 
-@app.get("/")
-async def read_root():
-    if os.path.exists(INDEX_PATH):
-        return FileResponse(INDEX_PATH, media_type="text/html")
-    return JSONResponse(status_code=404, content={"error": "index.html не найден"})
-
-
-@app.get("/api/generate")
-async def generate_username(platform: str = Query("telegram")):
-    rand_val = random.random()
-
-    if rand_val < 0.85:
-        prefix = random.choice(RARE_PREFIXES)
-        suffix = random.choice(RARE_SUFFIXES)
-        generated = f"{prefix}{suffix}"
-    else:
-        brand = random.choice(BRANDS)
-        mod = random.choice(BRAND_MODS)
-        generated = f"{brand}_{mod}"
-
-    if platform == "whatsapp":
-        is_free = True
-        link = f"https://wa.me/{generated}"
-    else:
-        is_free = await async_check_tg(generated)
-        link = f"https://t.me/{generated}"
-
-    catch_eval = calculate_catch_score(generated, is_free)
-
+    score = max(score, 10)
+    
     return {
-        "status": "success",
-        "generated_username": generated,
-        "platform": platform,
-        "is_free": is_free,
-        "evaluation": catch_eval,
-        "link": link
+        "username": username,
+        "score": score,
+        "estimated_value": estimated_price,
+        "has_underscore": has_underscore,
+        "length": length
     }
 
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+# ==========================================
+# 5. ГЕНЕРАЦИЯ ВАРИАНТОВ ЮЗЕРНЕЙМОВ
+# ==========================================
+
+def generate_username_candidates() -> list:
+    """
+    Генерирует список кандидатов:
+    - Словарные слова: только чистые имена.
+    - Знаменитости и бренды: чистые имена + осмысленные приставки.
+    """
+    candidates = []
+
+    # 1. Словарные слова (Strictly без приставок и подчёркиваний)
+    for word in DICTIONARY_WORDS:
+        candidates.append((word, "dictionary"))
+
+    # 2. Знаменитости
+    for celeb in CELEBRITIES:
+        candidates.append((celeb, "celebrity"))
+        for affix in AFFIXES:
+            candidates.append((f"{affix}_{celeb}", "celebrity_affix"))
+            candidates.append((f"{celeb}_{affix}", "celebrity_affix"))
+            candidates.append((f"{affix}{celeb}", "celebrity_affix"))
+
+    # 3. Бренды
+    for brand in BRANDS:
+        candidates.append((brand, "brand"))
+        for affix in AFFIXES:
+            candidates.append((f"{affix}_{brand}", "brand_affix"))
+            candidates.append((f"{brand}_{affix}", "brand_affix"))
+            candidates.append((f"{brand}{affix}", "brand_affix"))
+
+    return candidates
