@@ -26,7 +26,6 @@ if dp:
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 1.0
 
-# --- БАЗЫ ДАННЫХ ДЛЯ ОБЫЧНОГО РЕЖИМА ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -81,43 +80,36 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 ]
 
-# --- АЛГОРИТМ ГЕНЕРАЦИИ КОРОТКИХ КРАСИВЫХ НИКОВ (ФИЛЬТР) ---
 def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tuple[str, bool, bool]:
     vowels = "aeiouy"
     consonants = "bcdfghjklmnprstvwxz"
     
-    # Определение длины
     if len_mode == "5-6": target_len = random.choice([5, 6])
     elif len_mode == "7-8": target_len = random.choice([7, 8])
     else: target_len = random.choice([5, 6, 7])
 
-    # Если используем цифры или _, резервируем место
     chars_to_generate = target_len
     if use_num: chars_to_generate -= random.choice([1, 2])
     if use_und: chars_to_generate -= 1
     chars_to_generate = max(3, chars_to_generate)
 
-    # Генерация читаемого слова (чередование)
     res = ""
     is_cons = random.choice([True, False])
     for _ in range(chars_to_generate):
         res += random.choice(consonants) if is_cons else random.choice(vowels)
         is_cons = not is_cons
 
-    # Добавление подчеркивания
     if use_und and len(res) >= 3:
         insert_pos = random.randint(1, len(res) - 1)
         res = res[:insert_pos] + "_" + res[insert_pos:]
 
-    # Добавление цифр
     if use_num:
         num = str(random.randint(0, 99)) if chars_to_generate >= 4 else str(random.randint(0, 9))
         res = res + num if random.choice([True, False]) else num + res
 
     return res, True, use_und
 
-
-# --- ИСПРАВЛЕННАЯ ПРОВЕРКА TELEGRAM ---
+# --- ИСПРАВЛЕННАЯ ПРОВЕРКА TELEGRAM (БЕЗ ЛОЖНЫХ ЛИМИТОВ) ---
 async def async_check_tg(username: str):
     if BOT_TOKEN:
         try:
@@ -130,21 +122,30 @@ async def async_check_tg(username: str):
     try:
         async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
             res = await client.get(f"https://t.me/{username}", headers=headers)
-            if res.status_code in [429, 403, 500, 502, 503]: return None
+            
+            if res.status_code in [429, 403, 500, 502, 503]: 
+                return None # Настоящий бан IP
                 
             if res.status_code == 200:
                 html = res.text.lower()
-                if "just a moment" in html or "cf-challenge" in html or "robot" in html: return None
                 
-                taken_inds = ['tgme_page_title', 'tgme_page_extra', 'subscribers', 'members']
+                # Если вылезла капча Cloudflare
+                if "just a moment" in html or "cf-challenge" in html: return None
+                
+                # Точные признаки занятости (подписчики, био, экстра-заголовки)
+                taken_inds = ['tgme_page_extra', 'subscribers', 'members']
                 if any(ind in html for ind in taken_inds): return False
                 
-                if '<meta property="og:title"' in html and f'telegram: contact @{username}' not in html: return False
-                if f'telegram: contact @{username}' in html and 'tgme_page_title' not in html: return True
-                return None
+                # Проверка по og:title (у занятых там ИМЯ канала, у свободных - заглушка)
+                if '<meta property="og:title"' in html:
+                    if f'telegram: contact @{username}' not in html:
+                        return False # Имя не совпадает с заглушкой = занят
+                
+                # Если страница 200 ОК, капчи нет, и признаков занятости нет = Свободен!
+                return True
+                
             return None
     except Exception: return None
-
 
 # --- ПРОВЕРКА WHATSAPP ---
 async def async_check_wa(username: str):
@@ -174,22 +175,19 @@ async def async_check_wa(username: str):
     except Exception: pass
     return None
 
-
 def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: bool):
-    if check_result is None: return {"rank": "ERR", "status": "Лимит запросов", "color": "#f97316"}
+    if check_result is None: return {"rank": "ERR", "status": "Лимит запросов (Пауза)", "color": "#f97316"}
     if check_result is False: return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
     length = len(username)
-    if is_pure and length <= 6: return {"rank": "SSS+", "status": "Редкий Грааль (~$100+)", "color": "#2bcf66"}
+    if is_pure and length <= 6: return {"rank": "SSS+", "status": "Редкий Грааль (~$100+)", "color": "#29c75f"}
     if is_pure and length <= 9: return {"rank": "SS", "status": "Премиум (~$30+)", "color": "#eab308"}
     return {"rank": "S", "status": "Хороший ник (~$5+)", "color": "#a855f7"}
-
 
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH):
         return FileResponse(INDEX_PATH, media_type="text/html")
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
-
 
 @app.get("/api/generate")
 async def generate_username(
@@ -208,7 +206,6 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # --- ВЫБОР ГЕНЕРАТОРА ---
     if use_filter:
         generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
     else:
@@ -223,7 +220,6 @@ async def generate_username(
             generated = f"{b}_{c}" if random.random() < 0.5 else f"{b}{c}"
             has_und = "_" in generated
 
-    # --- ПРОВЕРКА ---
     if platform == "whatsapp":
         check_result = await async_check_wa(generated)
         link = f"https://wa.me/{generated}"
