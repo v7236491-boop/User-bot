@@ -268,14 +268,17 @@
 
     <!-- Модалка: Итоги Автопарса -->
     <div class="modal-overlay" id="modal-summary">
-        <div class="modal-content glass-panel" style="text-align: center;">
+        <div class="modal-content glass-panel" style="text-align: center; max-width: 400px;">
             <div class="modal-header">
                 <h2 class="modal-title" style="color: var(--primary);">🎯 Итоги Автопарса</h2>
                 <button class="btn-close" onclick="closeModal('modal-summary')">✕</button>
             </div>
             <div class="modal-body">
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Найдено свободных ников за сессию: <b id="summary-count" style="color: var(--primary);">0</b></p>
-                <div id="summary-list" style="text-align:left; max-height:200px; overflow-y:auto; margin-bottom: 15px;"></div>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 12px;">
+                    Выловлено свободных: <b id="summary-count" style="color: var(--primary);">0</b>
+                    <span style="display:block; font-size:0.75rem; opacity:0.7; margin-top:3px;">(Нажмите на ник, чтобы скопировать)</span>
+                </p>
+                <div id="summary-list" style="text-align:left; max-height:280px; overflow-y:auto; margin-bottom: 15px; display:flex; flex-direction:column; gap:8px;"></div>
                 <button class="form-btn" onclick="closeModal('modal-summary')">Отлично</button>
             </div>
         </div>
@@ -440,12 +443,10 @@
                     <div class="hist-right" style="text-align:right;"><div class="hist-rank" style="color: ${item.color}; font-weight:bold;">${item.rank}</div><div class="price-text" style="font-size:0.75rem; opacity:0.8;">${item.price}</div></div>
                 `;
 
-                // Привязываем свайп
                 div.ontouchstart = handleTouchStart;
                 div.ontouchmove = handleTouchMove;
                 div.ontouchend = handleTouchEnd;
 
-                // Клик для копирования
                 div.onclick = (e) => {
                     if (isSwiping) return;
                     navigator.clipboard.writeText(item.user); 
@@ -571,7 +572,7 @@
                 if (data.is_free === true && data.evaluation.rank !== "ERR") {
                     if(!isAuto) document.getElementById('quick-actions').style.display = 'flex';
                     
-                    const catchItem = { user: data.generated_username, plat: currentPlatform, rank: data.evaluation.rank, price: data.evaluation.status, color: data.evaluation.color, score: data.evaluation.score || 0 };
+                    const catchItem = { user: data.generated_username, plat: currentPlatform, rank: data.evaluation.rank, price: data.evaluation.status, color: data.evaluation.color };
                     saveToHistory(catchItem);
                     if (isAuto) autoParseCatches.push(catchItem);
 
@@ -586,24 +587,43 @@
             } finally { isFetching = false; }
         }
 
-        // --- МОДАЛКА ИТОГОВ АВТОПАРСА ---
+        // --- ИТОГИ АВТОПАРСА С СОРТИРОВКОЙ И КОПИРОВАНИЕМ ---
         function showSummaryModal() {
             if (autoParseCatches.length === 0) {
                 showToast("За автопарс свободных ников не найдено");
                 return;
             }
-            const sorted = [...autoParseCatches].sort((a,b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
-            const top = sorted.slice(0, 5);
+
+            // Сортировка от дорогих и редких (SSS+, SS, S) к дешевым
+            const sorted = [...autoParseCatches].sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
 
             document.getElementById('summary-count').innerText = autoParseCatches.length;
-            document.getElementById('summary-list').innerHTML = top.map(item => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:10px; margin-bottom:6px;">
-                    <span style="font-weight:bold; color:#fff;">@${item.user}</span>
-                    <span style="color:${item.color}; font-weight:bold; font-size:0.85rem;">${item.rank}</span>
+            
+            document.getElementById('summary-list').innerHTML = sorted.map(item => `
+                <div class="history-card" 
+                     style="cursor:pointer; padding:12px 14px; border-left: 3px solid ${item.color}; margin-bottom:0;" 
+                     onclick="copySummaryUsername('${item.user}')">
+                    <div class="hist-left">
+                        <div class="hist-user" style="color: #ffffff; font-weight:bold;">@${item.user}</div>
+                        <div style="font-size:0.75rem; color: ${item.color}; font-weight:600; margin-top:2px;">
+                            Редкость: ${item.rank}
+                        </div>
+                    </div>
+                    <div class="hist-right" style="text-align:right;">
+                        <div style="font-size:0.8rem; color:#eab308; font-weight:600; background:rgba(234, 179, 8, 0.1); padding:2px 6px; border-radius:6px; border:1px solid rgba(234, 179, 8, 0.2);">
+                            ${item.price}
+                        </div>
+                    </div>
                 </div>
             `).join('');
 
             openModal('modal-summary');
+        }
+
+        function copySummaryUsername(username) {
+            navigator.clipboard.writeText(username);
+            vibrate('success');
+            showToast(`✨ @${username} скопирован!`);
         }
 
         // --- ДЕЙСТВИЯ: ПОДЕЛИТЬСЯ И ЗАНЯТЬ ---
