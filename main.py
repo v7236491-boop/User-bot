@@ -1,69 +1,27 @@
 import asyncio
 import os
-import re
 import time
 import aiohttp
 from aiohttp import web
 
-# ==========================================
-# 1. СЛОВАРИ И БАЗЫ ДАННЫХ (Расширенные)
-# ==========================================
-
-# Словарные популярные слова (проверяются строго без приписок)
-DICTIONARY_WORDS = [
-    "sun", "cat", "hello", "love", "sky", "time", "fire", "ice", "star", "moon",
-    "king", "boss", "gold", "hero", "soul", "mind", "life", "word", "music", "game",
-    "play", "code", "tech", "data", "web", "chat", "bot", "app", "dev", "soft",
-    "core", "net", "link", "node", "fast", "cool", "top", "best", "super", "mega",
-    "pro", "master", "vip", "club", "team", "group", "shop", "store", "deal", "cash",
-    "coin", "bank", "pay", "trade", "work", "job", "space", "earth", "world", "city",
-    "town", "road", "park", "home", "room", "desk", "book", "card", "note", "file",
-    "view", "look", "site", "page", "news", "post", "blog", "feed", "live", "stream",
-    "flow", "wave", "vibe", "zone", "spot", "base", "hub", "lab", "box", "drop"
-]
-
-# 100 Знаменитостей / Известных личностей
-CELEBRITIES = [
-    "cristiano", "ronaldo", "messi", "neymar", "mbappe", "haaland", "lebron", "curry",
-    "jordan", "kobe", "tyson", "ali", "mcgregor", "khabib", "federer", "nadal",
-    "musk", "jobs", "gates", "bezos", "zuckerberg", "buffett", "altman", "durov",
-    "drake", "eminem", "kanye", "beyonce", "rihanna", "taylor", "gomez", "bieber",
-    "theweeknd", "shakira", "adele", "bruno", "edward", "pitt", "dicaprio", "depp",
-    "tomcruise", "keanu", "rock", "downey", "johansson", "zendaya", "robbie", "holland",
-    "chalamet", "ramsay", "mrbeast", "pewdiepie", "khaby", "sergey", "pavel", "ilong",
-    "obama", "trump", "biden", "putin", "xi", "modi", "macron", "scholz", "schwarzenegger",
-    "stallone", "chan", "jetli", "statham", "reeves", "gosling", "hardy", "bale",
-    "cavanill", "hemsworth", "hiddleston", "cumberbatch", "pattinson", "affleck", "cavill",
-    "pratt", "evans", "gadot", "olsen", "pugh", "taylorjoy", "stone", "lawrence",
-    "portman", "hatheway", "blunt", "theron", "berry", "jolie", "fox", "sweeney"
-]
-
-# 100 Популярных брендов
-BRANDS = [
-    "apple", "google", "microsoft", "amazon", "meta", "tesla", "spacex", "nvidia",
-    "intel", "amd", "samsung", "sony", "lg", "huawei", "xiaomi", "asus", "acer",
-    "dell", "hp", "lenovo", "nike", "adidas", "puma", "reebok", "jordan", "gucci",
-    "louisvuitton", "chanel", "prada", "dior", "hermes", "rolex", "zara", "uniqlo",
-    "bmw", "mercedes", "audi", "porsche", "ferrari", "lamborghini", "toyota", "honda",
-    "ford", "chevrolet", "nissan", "hyundai", "kia", "volvo", "bentley", "bugatti",
-    "cocacola", "pepsi", "redbull", "nestle", "starbucks", "mcdonalds", "kfc", "subway",
-    "visa", "mastercard", "paypal", "stripe", "revolut", "binance", "bybit", "tether",
-    "steam", "playstation", "xbox", "nintendo", "roblox", "epicgames", "twitch", "discord",
-    "spotify", "netflix", "youtube", "tiktok", "instagram", "telegram", "reddit", "x",
-    "openai", "anthropic", "uber", "airbnb", "booking", "amazon", "ebay", "shopify"
-]
-
-# 50 Смысловых приставок/суффиксов
-AFFIXES = [
-    "official", "real", "the", "iam", "is", "original", "daily", "live", "news",
-    "club", "team", "fan", "hub", "zone", "net", "app", "dev", "media", "studio",
-    "lab", "world", "space", "life", "vibe", "tv", "page", "blog", "feed", "channel",
-    "press", "hq", "corp", "inc", "group", "pro", "master", "vip", "top", "prime",
-    "star", "one", "go", "now", "me", "io", "ai", "tech", "box", "spot"
-]
+from aiogram import Bot, Dispatcher, types
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 # ==========================================
-# 2. КЭШ, ОГРАНИЧЕНИЕ ЗАПРОСОВ И ПРОВЕРКИ
+# 1. НАСТРОЙКА БОТА И ПЕРЕМЕННЫХ
+# ==========================================
+
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "ВАШ_ТОКЕН_БОТА")
+WEBHOOK_HOST = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "") # Railway автоматически подставляет домен
+WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
+WEBHOOK_URL = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
+
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(storage=MemoryStorage())
+
+# ==========================================
+# 2. КЭШ И ОГРАНИЧЕНИЕ ЗАПРОСОВ (ЧЕКЕР)
 # ==========================================
 
 class UsernameChecker:
@@ -135,44 +93,60 @@ class UsernameChecker:
         self.cache[username] = (is_free, time.time())
         return is_free
 
+checker = UsernameChecker()
+
 # ==========================================
-# 3. ФИКС ОШИБКИ PORT НА RAILWAY
+# 3. ОБРАБОТЧИКИ КОМАНД БОТА
 # ==========================================
 
-async def handle_ping(request):
-    """Эндпоинт для проверки работоспособности серверами Railway."""
-    return web.Response(text="Bot is running smoothly!", status=200)
+@dp.message()
+async def handle_message(message: types.Message):
+    # Обязательно отвечать сразу, чтобы избежать ошибки "Приложение не ответило"
+    user_id = message.from_user.id
+    text = message.text.strip()
+    
+    if text.startswith("/start"):
+        await message.answer("Привет! Отправь мне юзернейм для проверки.")
+        return
 
-async def start_healthcheck_server():
-    """Фоновый сервер, слушающий порт PORT от Railway."""
+    msg = await message.answer("Проверяю юзернейм...")
+    
+    async with aiohttp.ClientSession() as session:
+        is_free = await checker.is_username_free(user_id, text, session)
+        
+    if is_free:
+        await msg.edit_text(f"Юзернейм @{text} свободен!")
+    else:
+        await msg.edit_text(f"Юзернейм @{text} занят или недоступен.")
+
+# ==========================================
+# 4. ЗАПУСК ВЕБ-СЕРВЕРА С WEBHOOK
+# ==========================================
+
+async def on_startup(bot: Bot) -> None:
+    # Установка Webhook при запуске
+    await bot.set_webhook(WEBHOOK_URL)
+    print(f"[Webhook] Установлен на {WEBHOOK_URL}")
+
+def main():
+    dp.startup.register(on_startup)
+
     app = web.Application()
-    app.router.add_get('/', handle_ping)
-    app.router.add_get('/health', handle_ping)
-    
+
+    # Настройка обработки Webhook от Telegram
+    webhook_requests_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot,
+    )
+    webhook_requests_handler.register(app, path=WEBHOOK_PATH)
+
+    # Дополнительный эндпоинт для проверки от Railway
+    app.router.add_get("/", lambda r: web.Response(text="OK"))
+
+    setup_application(app, dp, bot=bot)
+
     port = int(os.environ.get("PORT", 8080))
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, host="0.0.0.0", port=port)
-    await site.start()
-    print(f"[Railway] Healthcheck server started on port {port}")
-
-# ==========================================
-# 4. ОСНОВНАЯ ТОЧКА ВХОДА
-# ==========================================
-
-async def main():
-    # 1. Запуск веб-сервера для Railway
-    await start_healthcheck_server()
-    
-    # 2. Инициализация объекта проверки
-    checker = UsernameChecker()
-    
-    print("[System] Checker initialized. Starting main task loop...")
-    
-    # Здесь подключается запуск вашего бота (например, dp.start_polling) 
-    # или выполнение тестов логики:
-    while True:
-        await asyncio.sleep(3600)
+    web.run_app(app, host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
