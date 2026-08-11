@@ -8,6 +8,7 @@ from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher
 from telethon import TelegramClient
+from telethon.sessions import StringSession
 from telethon.errors import RPCError, FloodWaitError
 from telethon.tl.functions.account import CheckUsernameRequest
 import uvicorn
@@ -16,49 +17,58 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 
-# --- НАСТРОЙКИ TELEGRAM API ---
+# --- ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-API_ID = 38162572
-API_HASH = "71b8ecb44bddc1ae0a802f4a0f6628ba"
+API_ID = int(os.getenv("API_ID", "38162572"))
+API_HASH = os.getenv("API_HASH", "71b8ecb44bddc1ae0a802f4a0f6628ba")
+SESSION_STRING = os.getenv("TELEGRAM_SESSION")
 
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
 
-telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
+# Выбор формата сессии: StringSession (для Railway/Облака) или Файловая сессия (для Termux/Локально)
+if SESSION_STRING:
+    telethon_client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
+else:
+    telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.5
 
-# --- LIFESPAN MANAGER (Современная замена @app.on_event) ---
+# --- LIFESPAN MANAGER (Менеджер жизненного цикла) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Старт Telethon (запросит номер телефона в консоли при 1-м запуске)
     print("⏳ Запуск Telethon сессии...")
     await telethon_client.start()
     print("✅ Telethon сессия успешно запущена!")
     
-    # Запуск фоновых задач
     asyncio.create_task(radar_worker())
     if bot and dp:
         asyncio.create_task(dp.start_polling(bot))
     
     yield
     
-    # Завершение работы
+    print("🛑 Остановка Telethon...")
     await telethon_client.disconnect()
 
 app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
 
-# --- РАДАР ---
+# --- РАДАР ОПЕРАЦИИ ---
 def load_radar_db():
     if os.path.exists(RADAR_DB_PATH):
-        with open(RADAR_DB_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(RADAR_DB_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
     return {}
 
 def save_radar_db(db):
-    with open(RADAR_DB_PATH, "w", encoding="utf-8") as f:
-        json.dump(db, f, ensure_ascii=False, indent=4)
+    try:
+        with open(RADAR_DB_PATH, "w", encoding="utf-8") as f:
+            json.dump(db, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
 
 async def radar_worker():
     while True:
@@ -106,7 +116,7 @@ async def check_username_telethon(username: str):
         print(f"Ошибка проверки {username}: {e}")
         return None
 
-# --- БАЗА ДАННЫХ ДЛЯ ГЕНЕРАЦИИ ---
+# --- БАЗА СЛОВ И БРЕНДОВ ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -210,6 +220,7 @@ def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: b
     if is_pure and length <= 7: return {"rank": "SS", "status": fragment_price, "color": "#eab308"}
     return {"rank": "S", "status": "Свободен", "color": "#a855f7"}
 
+# --- МАРШРУТЫ (API & FRONTEND) ---
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH):
@@ -291,5 +302,7 @@ async def radar_remove(chat_id: str, username: str):
         save_radar_db(db)
     return {"status": "ok", "targets": db.get(chat_id, [])}
 
+# --- ТОЧКА ВХОДА ДЛЯ RAILWAY И ЛОКАЛЬНОГО ЗАПУСКА ---
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
