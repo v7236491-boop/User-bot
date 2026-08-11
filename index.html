@@ -6,206 +6,185 @@
     <title>Username Scanner</title>
     <style>
         :root {
-            --bg-app: #050a07;
-            --bg-card: rgba(15, 22, 18, 0.85);
-            --primary: #29c75f;
+            --bg-app: #060b08; /* Темный VPN цвет */
+            --bg-card: #141a17; /* Цвет карточек */
+            --primary: #29c75f; /* Яркий VPN неон */
             --primary-hover: #22a94f;
             --text-main: #ffffff;
             --text-muted: #829288;
-            --border-color: rgba(41, 199, 95, 0.2);
+            --border-color: #1e2822;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             background-color: var(--bg-app);
-            /* ФОН-КАРТИНКА: Загрузи bg.jpg в свой GitHub, и он появится здесь! */
-            background-image: url('bg.jpg'); 
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
             color: var(--text-main);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
+            overflow: hidden;
+            position: relative;
         }
 
-        /* Затемнение и неоновое сияние поверх картинки */
-        .overlay-fx {
-            position: fixed;
-            inset: 0;
-            background: rgba(4, 8, 5, 0.85); /* Затемняет картинку, чтобы текст читался */
-            z-index: -1;
+        /* --- ЖИВОЙ АНИМИРОВАННЫЙ ФОН --- */
+        .live-bg {
+            position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
         }
-        .glow-fx {
-            position: fixed;
-            top: 30%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70vw; height: 70vw;
-            max-width: 600px; max-height: 600px;
-            background: radial-gradient(circle, rgba(41, 199, 95, 0.15) 0%, transparent 60%);
-            filter: blur(50px);
-            z-index: -1;
+        
+        /* Неоновые пятна */
+        .glow-orb {
+            position: absolute; border-radius: 50%;
+            background: radial-gradient(circle, rgba(41, 199, 95, 0.05) 0%, transparent 60%);
+            filter: blur(40px); animation: floatOrb 15s infinite alternate ease-in-out;
+        }
+        .glow-orb:nth-child(1) { width: 70vw; height: 70vw; top: -20%; left: -20%; }
+        .glow-orb:nth-child(2) { width: 60vw; height: 60vw; bottom: -10%; right: -20%; animation-delay: -5s; animation-direction: alternate-reverse; }
+
+        /* Плавающие частицы */
+        .particle {
+            position: absolute; width: 6px; height: 6px; background: rgba(41, 199, 95, 0.2);
+            border-radius: 50%; filter: blur(2px); animation: floatUp 12s infinite linear;
+        }
+
+        @keyframes floatOrb { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(5%, 10%) scale(1.1); } }
+        @keyframes floatUp { 
+            0% { transform: translateY(100vh) translateX(0) scale(0.5); opacity: 0; } 
+            20% { opacity: 1; } 80% { opacity: 1; } 
+            100% { transform: translateY(-20vh) translateX(50px) scale(1.5); opacity: 0; } 
         }
 
         /* --- НАВИГАЦИЯ --- */
         header {
-            display: flex;
-            justify-content: space-between;
-            padding: 20px;
-            z-index: 10;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
+            display: flex; justify-content: space-between; padding: 20px;
+            width: 100%; max-width: 500px; margin: 0 auto;
+            position: relative; z-index: 10;
         }
         .nav-btn {
-            background: rgba(15, 22, 18, 0.7);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 10px 16px;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            transition: 0.2s;
+            background: transparent; border: none; color: var(--text-main); font-size: 1rem; font-weight: 600; cursor: pointer; padding: 10px; display: flex; align-items: center; gap: 6px; transition: 0.2s;
         }
-        .nav-btn:hover { border-color: var(--primary); box-shadow: 0 0 10px rgba(41, 199, 95, 0.2); }
+        .nav-btn:hover { color: var(--primary); }
 
-        /* --- ГЛАВНЫЙ ЭКРАН (Сдвинут вверх) --- */
+        /* --- ГЛАВНЫЙ ЭКРАН --- */
         main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 10;
-            transform: translateY(-8vh); /* Сдвигает весь блок выше центра */
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; position: relative; z-index: 10; transform: translateY(-10vh); /* ПОДНЯТО ВЫШЕ ЦЕНТРА */
         }
-
-        .app-container { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; }
+        .app-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; }
 
         .platform-toggle {
-            display: flex; background: var(--bg-card); border-radius: 14px; padding: 4px; border: 1px solid var(--border-color); backdrop-filter: blur(10px);
+            display: flex; background: var(--bg-card); border-radius: 14px; padding: 4px; border: 1px solid var(--border-color);
         }
         .platform-btn {
-            flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.3s;
+            flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.3s;
         }
-        .platform-btn.active { background: rgba(41, 199, 95, 0.15); color: var(--primary); }
+        .platform-btn.active { background: rgba(41, 199, 95, 0.1); color: var(--primary); }
+
+        /* Индикатор автопарсера */
+        .auto-indicator {
+            display: none; text-align: center; color: var(--primary); font-size: 0.9rem; font-weight: 600;
+            animation: pulseText 1.5s infinite alternate; margin-bottom: -5px;
+        }
+        @keyframes pulseText { 0% { opacity: 0.5; } 100% { opacity: 1; text-shadow: 0 0 10px rgba(41, 199, 95, 0.5); } }
 
         /* Поле вывода */
         .result-field {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 30px 20px;
-            text-align: center;
-            min-height: 140px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(15px);
-            transition: 0.3s;
-            position: relative;
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px;
+            padding: 35px 20px; text-align: center; min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.3s ease; position: relative;
         }
-        .result-field:hover { border-color: rgba(41, 199, 95, 0.5); box-shadow: 0 10px 30px rgba(41, 199, 95, 0.1); }
-        
-        .username-text { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; color: var(--text-muted); word-break: break-all; }
-        .rank-badge { font-size: 0.85rem; font-weight: 700; padding: 4px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 4px; display: none; }
+        .result-field:hover { background: #1a221e; border-color: rgba(41, 199, 95, 0.4); box-shadow: 0 10px 30px rgba(41, 199, 95, 0.08); }
+        .auto-glow-effect { border-color: var(--primary) !important; box-shadow: 0 0 20px rgba(41, 199, 95, 0.2) !important; }
+
+        .username-text { font-size: 1.6rem; font-weight: 700; margin-bottom: 12px; color: var(--text-muted); word-break: break-all; transition: 0.3s; }
+        .rank-badge { font-size: 0.9rem; font-weight: 700; padding: 6px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 6px; display: none; }
         .price-text { font-size: 0.85rem; opacity: 0.8; }
 
         /* Кнопка */
         .btn-generate {
-            background: var(--primary);
-            color: #000;
-            border: none;
-            border-radius: 16px;
-            padding: 18px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
-            box-shadow: 0 4px 15px rgba(41, 199, 95, 0.2);
+            background: var(--primary); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; width: 100%;
         }
         .btn-generate:active { transform: scale(0.97); }
-        .btn-generate:hover:not(:disabled) { background: var(--primary-hover); box-shadow: 0 6px 20px rgba(41, 199, 95, 0.4); }
-        .btn-generate:disabled { background: rgba(20, 30, 25, 0.8); color: var(--text-muted); border: 1px solid var(--border-color); box-shadow: none; cursor: not-allowed; }
+        .btn-generate:hover:not(:disabled) { background: var(--primary-hover); }
+        .btn-generate:disabled { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); cursor: not-allowed; }
 
-        /* Индикатор автопарсера */
-        .auto-glow-effect {
-            animation: autoPulse 1.5s infinite alternate;
-            border-color: var(--primary) !important;
-        }
-        @keyframes autoPulse {
-            0% { box-shadow: 0 0 10px rgba(41, 199, 95, 0.2); }
-            100% { box-shadow: 0 0 30px rgba(41, 199, 95, 0.6); }
-        }
-        .auto-label { display: none; text-align: center; color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: -5px; }
-
-        /* --- МОДАЛЬНЫЕ ОКНА --- */
+        /* --- МОДАЛЬНЫЕ ОКНА (ИСПРАВЛЕНЫ) --- */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(5, 10, 7, 0.9); backdrop-filter: blur(8px); z-index: 100;
-            display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; padding: 20px;
+            display: none; position: fixed; inset: 0; background: rgba(9, 14, 11, 0.9); z-index: 100; justify-content: center; align-items: center; padding: 20px; opacity: 0; transition: opacity 0.3s ease;
         }
-        .modal-overlay.active { opacity: 1; pointer-events: all; }
         .modal-content {
-            background: #090e0b; border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: 400px; max-height: 85vh; display: flex; flex-direction: column;
+            background: var(--bg-app); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 400px; max-height: 85vh; display: flex; flex-direction: column; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
-        .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        .modal-title { margin: 0; font-size: 1.2rem; }
-        .btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
-        .btn-close:hover { color: #fff; }
-        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { margin: 0; font-size: 1.2rem; font-weight: 600; }
+        .btn-close {
+            background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: 0.2s;
+        }
+        .btn-close:hover { color: #fff; background: var(--border-color); }
+        .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
 
-        /* Настройки и Фильтры */
-        .setting-item { background: var(--bg-card); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); margin-bottom: 10px; }
+        /* Настройки (Тумблеры и Фильтры) */
+        .setting-item { background: var(--bg-card); padding: 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); margin-bottom: 12px; }
         .setting-info { display: flex; flex-direction: column; gap: 4px; }
-        .setting-title { font-weight: 600; font-size: 0.95rem; }
-        .setting-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.3; }
+        .setting-title { font-weight: 600; font-size: 1rem; }
+        .setting-desc { font-size: 0.8rem; color: var(--text-muted); }
 
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #1a221e; border: 1px solid var(--border-color); border-radius: 34px; transition: .3s; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--text-muted); border-radius: 50%; transition: .3s; }
-        input:checked + .slider { background-color: rgba(41, 199, 95, 0.2); border-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); background-color: var(--primary); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: var(--text-muted); border-radius: 50%; transition: .3s; }
+        input:checked + .slider { background-color: rgba(41, 199, 95, 0.15); border-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); background-color: var(--primary); }
 
-        .filter-options {
-            display: none; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 10px;
-        }
+        .filter-options { display: none; background: #0c120f; border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; margin-top: -6px; margin-bottom: 12px; }
         .filter-options.active { display: block; }
         .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .filter-row:last-child { margin-bottom: 0; }
-        select { background: #111; color: #fff; border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; outline: none; }
+        select { background: var(--bg-card); color: #fff; border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; outline: none; }
 
         /* История */
-        .history-list { display: flex; flex-direction: column; gap: 10px; }
-        .history-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; position: relative; }
-        .history-card:hover { border-color: var(--primary); }
-        .hist-user { font-size: 1.05rem; font-weight: 700; }
-        .hist-plat { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
-        .hist-rank { font-weight: 700; font-size: 0.85rem; text-align: right; }
-        .toast { position: absolute; inset: 0; background: var(--primary); color: #000; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: 700; opacity: 0; pointer-events: none; transition: 0.2s; }
+        .history-list { display: flex; flex-direction: column; gap: 12px; }
+        .history-card {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+        }
+        .history-card:hover { border-color: var(--primary); background: #1a221e; }
+        .hist-left { display: flex; flex-direction: column; gap: 4px; }
+        .hist-right { text-align: right; }
+        .hist-user { font-size: 1.1rem; font-weight: 700; }
+        .hist-plat { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        .hist-rank { font-weight: 700; font-size: 0.9rem; }
+        .empty-state { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 0.95rem; }
+
+        .toast { position: absolute; inset: 0; background: var(--primary); color: #000; border-radius: 14px; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .toast.show { opacity: 1; }
-        .empty-state { text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-    <div class="overlay-fx"></div>
-    <div class="glow-fx"></div>
+    <!-- Живой фон (Плавающие частицы) -->
+    <div class="live-bg">
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+        <script>
+            for(let i=0; i<20; i++) {
+                let p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.animationDelay = (Math.random() * 12) + 's';
+                p.style.opacity = Math.random() * 0.5 + 0.1;
+                document.querySelector('.live-bg').appendChild(p);
+            }
+        </script>
+    </div>
 
+    <!-- Шапка -->
     <header>
         <button class="nav-btn" onclick="openModal('modal-history')">🗂 История</button>
         <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
     </header>
 
+    <!-- Основной экран -->
     <main>
         <div class="app-container">
             
@@ -214,12 +193,12 @@
                 <button class="platform-btn" onclick="setPlatform('whatsapp', this)">WhatsApp</button>
             </div>
 
-            <div id="auto-label" class="auto-label">✦ АВТОПАРСЕР АКТИВЕН ✦</div>
+            <div id="auto-indicator" class="auto-indicator">Автопарсер активен...</div>
 
             <div class="result-field" id="result-box">
                 <div class="username-text" id="res-username">@username</div>
-                <div class="rank-badge" id="res-rank">-</div>
-                <div class="price-text" id="res-status">Нажми сгенерировать</div>
+                <div class="rank-badge" id="res-rank" style="color: var(--text-muted); display: none;">-</div>
+                <div class="price-text" id="res-status" style="color: var(--text-muted);">Нажмите сгенерировать</div>
             </div>
 
             <button class="btn-generate" id="btn-generate" onclick="manualGenerate()">Сгенерировать</button>
@@ -227,7 +206,7 @@
         </div>
     </main>
 
-    <!-- Настройки -->
+    <!-- Модалка: Настройки -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content">
             <div class="modal-header">
@@ -250,7 +229,7 @@
                 <div class="setting-item">
                     <div class="setting-info">
                         <span class="setting-title">Смарт-фильтр</span>
-                        <span class="setting-desc">Генерация красивых коротких слов (L5-L7)</span>
+                        <span class="setting-desc">Генерация коротких никнеймов</span>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)">
@@ -280,15 +259,17 @@
         </div>
     </div>
 
-    <!-- История -->
+    <!-- Модалка: История -->
     <div class="modal-overlay" id="modal-history">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">История улова</h2>
+                <h2 class="modal-title">История</h2>
                 <button class="btn-close" onclick="closeModal('modal-history')">✕</button>
             </div>
             <div class="modal-body">
-                <div class="history-list" id="history-container"></div>
+                <div class="history-list" id="history-container">
+                    <!-- JS Данные -->
+                </div>
             </div>
         </div>
     </div>
@@ -307,8 +288,19 @@
             btn.classList.add('active');
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('active'); if(id === 'modal-history') renderHistory(); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        /* 100% Рабочие окна */
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.style.display = 'flex';
+            setTimeout(() => modal.style.opacity = '1', 10);
+            if(id === 'modal-history') renderHistory();
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
 
         function toggleFilterMenu(cb) {
             const menu = document.getElementById('filter-menu');
@@ -319,19 +311,17 @@
             isAuto = cb.checked;
             const btn = document.getElementById('btn-generate');
             const box = document.getElementById('result-box');
-            const lbl = document.getElementById('auto-label');
+            const ind = document.getElementById('auto-indicator');
             
             if (isAuto) {
-                btn.disabled = true;
-                btn.textContent = "Поиск...";
+                btn.disabled = true; btn.textContent = "Поиск...";
                 box.classList.add('auto-glow-effect');
-                lbl.style.display = 'block';
+                ind.style.display = 'block';
                 runCycle();
             } else {
-                btn.disabled = false;
-                btn.textContent = "Сгенерировать";
+                btn.disabled = false; btn.textContent = "Сгенерировать";
                 box.classList.remove('auto-glow-effect');
-                lbl.style.display = 'none';
+                ind.style.display = 'none';
             }
         }
 
@@ -344,8 +334,7 @@
         async function manualGenerate() {
             if (isFetching || isAuto) return;
             const btn = document.getElementById('btn-generate');
-            btn.disabled = true;
-            btn.textContent = "Генерация...";
+            btn.disabled = true; btn.textContent = "Генерация...";
             await fetchUsername();
             btn.textContent = "Сгенерировать";
             btn.disabled = false;
@@ -354,7 +343,6 @@
         async function fetchUsername() {
             isFetching = true;
             
-            // Считываем фильтры
             const useFilter = document.getElementById('toggle-filter').checked;
             const lenMode = document.getElementById('filter-len').value;
             const useNum = document.getElementById('filter-num').checked;
@@ -411,17 +399,26 @@
         function renderHistory() {
             const cont = document.getElementById('history-container');
             cont.innerHTML = '';
+            
             if (historyData.length === 0) {
                 cont.innerHTML = '<div class="empty-state">История пуста.<br>Найденные ники сохранятся здесь навсегда.</div>';
                 return;
             }
+            
             historyData.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'history-card';
                 div.onclick = () => copyText(item.user, div);
+                
                 div.innerHTML = `
-                    <div><div class="hist-user" style="color: ${item.color}">@${item.user}</div><div class="hist-plat">${item.plat}</div></div>
-                    <div class="hist-rank" style="color: ${item.color}">${item.rank}<br><span style="color:#829288; font-size:0.75rem; font-weight:normal">${item.price}</span></div>
+                    <div class="hist-left">
+                        <div class="hist-user" style="color: ${item.color}">@${item.user}</div>
+                        <div class="hist-plat">${item.plat}</div>
+                    </div>
+                    <div class="hist-right">
+                        <div class="hist-rank" style="color: ${item.color}">${item.rank}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">${item.price}</div>
+                    </div>
                     <div class="toast">Скопировано!</div>
                 `;
                 cont.appendChild(div);
@@ -430,4 +427,3 @@
     </script>
 </body>
 </html>
-
