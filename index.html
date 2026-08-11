@@ -3,28 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner</title>
+    <title>Username Scanner PRO</title>
+    <!-- Скрипт Telegram для работы вибрации (Haptic Feedback) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-app: #060a08;
-            --bg-card: #141A17;
-            --bg-card-hover: #1A221E;
             --primary: #29c75f;
             --primary-hover: #22a94f;
             --text-main: #ffffff;
             --text-muted: #829288;
-            --border-color: #1E2822;
+            
+            /* Цвета Glassmorphism */
+            --glass-bg: rgba(20, 26, 23, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --glass-highlight: rgba(255, 255, 255, 0.02);
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             background-color: var(--bg-app);
             color: var(--text-main);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             min-height: 100vh;
             display: flex;
@@ -33,307 +34,227 @@
             position: relative;
         }
 
-        /* --- ФОН: ГУСТОЙ И СПОКОЙНЫЙ ТЕМНО-ЗЕЛЕНЫЙ ДЫМ --- */
+        /* --- ФОН: ГУСТОЙ ДЫМ --- */
         .smoke-container {
-            position: fixed;
-            top: -50%; left: -50%; right: -50%; bottom: -50%;
-            z-index: -15;
-            pointer-events: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: spinSmoke 60s linear infinite; /* Спокойное, очень медленное вращение */
+            position: fixed; top: -50%; left: -50%; right: -50%; bottom: -50%;
+            z-index: -15; pointer-events: none; display: flex; justify-content: center; align-items: center;
+            animation: spinSmoke 60s linear infinite;
         }
-
-        .smoke {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(55px); /* Уменьшил размытие, чтобы дым собрался в видимые облака */
-            mix-blend-mode: screen;
-        }
-
-        /* Увеличил прозрачность, чтобы дым был ЯВНО виден */
-        .smoke-1 { width: 70vw; height: 70vw; background: rgba(41, 199, 95, 0.35); transform: translate(-20%, -30%); animation: pulseSmoke 15s infinite alternate ease-in-out; }
-        .smoke-2 { width: 80vw; height: 60vw; background: rgba(22, 163, 74, 0.25); transform: translate(30%, 20%); animation: pulseSmoke 20s infinite alternate-reverse ease-in-out; }
-        .smoke-3 { width: 65vw; height: 80vw; background: rgba(5, 150, 105, 0.35); transform: translate(10%, -40%); animation: pulseSmoke 25s infinite alternate ease-in-out; }
+        .smoke { position: absolute; border-radius: 50%; filter: blur(60px); mix-blend-mode: screen; }
+        .smoke-1 { width: 70vw; height: 70vw; background: rgba(41, 199, 95, 0.25); transform: translate(-20%, -30%); animation: pulseSmoke 15s infinite alternate ease-in-out; }
+        .smoke-2 { width: 80vw; height: 60vw; background: rgba(22, 163, 74, 0.15); transform: translate(30%, 20%); animation: pulseSmoke 20s infinite alternate-reverse ease-in-out; }
 
         @keyframes spinSmoke { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulseSmoke { 
-            0% { opacity: 0.6; transform: scale(0.95); } 
-            100% { opacity: 1; transform: scale(1.05) translate(3%, 3%); } 
+        @keyframes pulseSmoke { 0% { opacity: 0.6; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1.05) translate(3%, 3%); } }
+
+        /* --- GLASSMORPHISM CLASS --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 var(--glass-highlight);
         }
 
         /* --- НАВИГАЦИЯ --- */
         header {
-            display: flex;
-            justify-content: space-between;
-            padding: 20px 24px;
-            z-index: 50;
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
+            display: flex; justify-content: space-between; padding: 20px 24px;
+            z-index: 50; position: relative; width: 100%; max-width: 600px; margin: 0 auto;
         }
 
         .nav-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-size: 1.05rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
+            background: transparent; border: none; color: var(--text-main);
+            font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px;
+            display: flex; align-items: center; gap: 8px; transition: 0.3s;
+            border-radius: 12px;
         }
-        .nav-btn:hover { color: var(--primary); }
-        .nav-icon { font-size: 1.2rem; }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--primary); }
+        .nav-btn svg { opacity: 0.8; transition: 0.3s; }
+        .nav-btn:hover svg { opacity: 1; filter: drop-shadow(0 0 5px var(--primary)); stroke: var(--primary); }
 
         /* --- ГЛАВНЫЙ ЭКРАН --- */
         main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 10;
-            position: relative;
-            transform: translateY(-8vh);
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; z-index: 10; position: relative; transform: translateY(-8vh);
         }
 
-        .app-container {
-            width: 100%;
-            max-width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        .app-container { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 16px; }
 
-        /* Переключатель платформ */
-        .platform-toggle {
-            display: flex;
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 4px;
-            border: 1px solid var(--border-color);
-        }
-
+        .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
         .platform-btn {
-            flex: 1;
-            padding: 10px;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
+            flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted);
+            border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.3s;
         }
-
-        .platform-btn.active {
-            background: rgba(41, 199, 95, 0.1);
-            color: var(--primary);
-        }
+        .platform-btn.active { background: rgba(41, 199, 95, 0.15); color: var(--primary); box-shadow: 0 4px 15px rgba(41, 199, 95, 0.1); }
 
         /* Индикатор автопарсера */
         .auto-indicator {
-            display: none;
-            text-align: center;
-            color: var(--primary);
-            font-size: 0.9rem;
-            font-weight: 500;
-            animation: pulseText 1.5s infinite alternate;
-            margin: 4px 0;
+            display: none; text-align: center; color: var(--primary); font-size: 0.85rem; font-weight: 600;
+            animation: pulseText 1.5s infinite alternate; margin: -4px 0; letter-spacing: 1px;
         }
-        @keyframes pulseText { 0% { opacity: 0.5; text-shadow: none; } 100% { opacity: 1; text-shadow: 0 0 8px rgba(41, 199, 95, 0.6); } }
+        @keyframes pulseText { 0% { opacity: 0.5; } 100% { opacity: 1; text-shadow: 0 0 10px rgba(41, 199, 95, 0.6); } }
 
         /* Центральное поле вывода */
         .result-field {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 25px 15px;
-            text-align: center;
-            min-height: 130px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-            position: relative;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            border-radius: 24px; padding: 35px 20px; text-align: center; min-height: 160px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative;
         }
 
-        .result-field:hover {
-            border-color: rgba(41, 199, 95, 0.6);
-            box-shadow: 0 10px 30px rgba(41, 199, 95, 0.15);
+        .result-field:hover { border-color: rgba(41, 199, 95, 0.4); box-shadow: 0 15px 40px rgba(41, 199, 95, 0.15), inset 0 1px 0 var(--glass-highlight); }
+
+        .username-text { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); word-break: break-all; transition: 0.3s; }
+        .rank-badge { font-size: 0.85rem; font-weight: 700; padding: 4px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 8px; display: none; text-transform: uppercase; }
+        .price-text { font-size: 0.85rem; opacity: 0.7; }
+
+        /* Золотой режим для джекпота */
+        .golden-mode {
+            border-color: #FFD700 !important;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.1) !important;
+            animation: goldPulse 2s infinite alternate;
+        }
+        @keyframes goldPulse { 0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); } 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.5); } }
+
+        /* Частицы джекпота */
+        .jackpot-particle {
+            position: fixed; font-size: 1.8rem; pointer-events: none; z-index: 9999;
+            animation: explode 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 1; }
+            100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5) rotate(var(--rot)); opacity: 0; }
         }
 
-        .auto-glow-effect {
-            border-color: var(--primary) !important;
-            animation: autoPulseBox 1.5s infinite alternate;
+        /* Быстрые действия (Появляются при успехе) */
+        .quick-actions {
+            display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s ease;
         }
-        @keyframes autoPulseBox { 0% { box-shadow: 0 0 10px rgba(41, 199, 95, 0.1); } 100% { box-shadow: 0 0 25px rgba(41, 199, 95, 0.4); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .username-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            color: var(--text-muted);
-            word-break: break-all;
+        .action-btn {
+            flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+            display: flex; justify-content: center; align-items: center; gap: 6px;
         }
+        .btn-take { background: rgba(41, 199, 95, 0.15); color: var(--primary); border-color: rgba(41, 199, 95, 0.3); }
+        .btn-take:hover { background: rgba(41, 199, 95, 0.25); }
+        .btn-copy { background: rgba(255,255,255,0.05); color: var(--text-main); border-color: rgba(255,255,255,0.1); }
+        .btn-copy:hover { background: rgba(255,255,255,0.1); }
 
-        .rank-badge {
-            font-size: 0.85rem;
-            font-weight: 700;
-            padding: 4px 10px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 6px;
-            margin-bottom: 6px;
-            display: none;
-        }
-
-        .price-text {
-            font-size: 0.85rem;
-            opacity: 0.7;
-        }
-
-        /* Кнопка генерации */
+        /* Главная Кнопка */
         .btn-generate {
-            background: var(--primary);
-            color: #000;
-            border: none;
-            border-radius: 14px;
-            padding: 16px;
-            font-size: 1.05rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
+            background: linear-gradient(135deg, var(--primary), #1b9b47);
+            color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); width: 100%;
+            box-shadow: 0 8px 25px rgba(41, 199, 95, 0.3); position: relative; overflow: hidden;
         }
-
-        .btn-generate:active { transform: scale(0.97); }
-        .btn-generate:hover:not(:disabled) { background: var(--primary-hover); }
-        .btn-generate:disabled { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); cursor: not-allowed; }
+        /* Эффект блика на кнопке */
+        .btn-generate::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+            transform: skewX(-20deg); transition: 0.5s;
+        }
+        .btn-generate:hover:not(:disabled)::after { left: 150%; transition: 0.7s ease-in-out; }
+        .btn-generate:active { transform: scale(0.96); box-shadow: 0 4px 15px rgba(41, 199, 95, 0.2); }
+        .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; border: 1px solid var(--border-color); cursor: not-allowed; }
 
         /* --- МОДАЛЬНЫЕ ОКНА --- */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(6, 10, 8, 0.95);
-            z-index: 1000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            position: fixed; inset: 0; background: rgba(4, 8, 6, 0.8); backdrop-filter: blur(8px);
+            z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px;
+            opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s ease;
         }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
-
+        .modal-overlay.active { opacity: 1; visibility: visible; pointer-events: auto; }
         .modal-content {
-            background: var(--bg-app);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            width: 100%;
-            max-width: 360px;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
+            width: 100%; max-width: 380px; max-height: 85vh; display: flex; flex-direction: column; position: relative;
         }
 
-        .modal-header { padding: 18px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
         .modal-title { margin: 0; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
         
         .btn-close {
-            background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted);
-            width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+            background: rgba(255,255,255,0.05); border: none; color: var(--text-muted);
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
         }
-        .btn-close:hover { color: #fff; background: var(--border-color); }
-        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .btn-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
 
-        /* Настройки (Тумблеры и Фильтры) */
-        .setting-item { background: var(--bg-card); padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); margin-bottom: 12px; }
+        /* Настройки */
+        .setting-item { background: rgba(255,255,255,0.03); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; }
         .setting-info { display: flex; flex-direction: column; gap: 4px; }
         .setting-title { font-weight: 600; font-size: 0.95rem; }
-        .setting-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.2; }
+        .setting-desc { font-size: 0.75rem; color: var(--text-muted); }
 
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #1a221e; border: 1px solid var(--border-color); border-radius: 34px; transition: .3s; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--text-muted); border-radius: 50%; transition: .3s; }
-        
-        input:checked + .slider { background-color: rgba(41, 199, 95, 0.15); border-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); background-color: var(--primary); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        .filter-options { display: none; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; margin-top: -6px; margin-bottom: 12px; }
+        .filter-options { display: none; background: rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 16px; margin-top: -6px; margin-bottom: 12px; }
         .filter-options.active { display: block; }
         .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .filter-row:last-child { margin-bottom: 0; }
-        select { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px; border-radius: 6px; outline: none; font-family: inherit; font-size: 0.85rem;}
+        select { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; outline: none; font-family: inherit; font-size: 0.85rem;}
 
         /* История */
         .history-list { display: flex; flex-direction: column; gap: 10px; }
-        .history-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-        .history-card:hover { border-color: var(--primary); background: var(--bg-card-hover); }
-        .hist-left { display: flex; flex-direction: column; gap: 4px; }
-        .hist-right { text-align: right; }
+        .history-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .history-card:hover { border-color: var(--primary); background: rgba(41, 199, 95, 0.05); }
         .hist-user { font-size: 1.05rem; font-weight: 700; }
-        .hist-plat { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+        .hist-plat { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-top: 4px;}
         .hist-rank { font-weight: 700; font-size: 0.85rem; }
         .empty-state { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 0.9rem; }
 
-        .toast { position: absolute; inset: 0; background: var(--primary); color: #000; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 0.95rem; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 5; }
-        .toast.show { opacity: 1; }
+        .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text-main); color: #000; border-radius: 12px; padding: 12px 24px; font-weight: 600; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
 
-    <!-- 1. ФОН: ГУСТОЙ И МЕДЛЕННЫЙ ТЕМНО-ЗЕЛЕНЫЙ ДЫМ -->
     <div class="smoke-container">
         <div class="smoke smoke-1"></div>
         <div class="smoke smoke-2"></div>
-        <div class="smoke smoke-3"></div>
     </div>
 
-    <!-- Шапка -->
+    <!-- Шапка со строгими SVG иконками -->
     <header>
         <button class="nav-btn" onclick="openModal('modal-history')">
-            <span class="nav-icon">📁</span> История
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            История
         </button>
         <button class="nav-btn" onclick="openModal('modal-settings')">
-            <span class="nav-icon">⚙️</span> Настройки
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Настройки
         </button>
     </header>
 
-    <!-- Основной контент -->
     <main>
         <div class="app-container">
             
-            <div class="platform-toggle">
+            <div class="platform-toggle glass-panel">
                 <button class="platform-btn active" onclick="setPlatform('telegram', this)">Telegram</button>
                 <button class="platform-btn" onclick="setPlatform('whatsapp', this)">WhatsApp</button>
             </div>
 
-            <div id="auto-indicator" class="auto-indicator">Автопарсер активен...</div>
+            <div id="auto-indicator" class="auto-indicator">АВТОПАРСИНГ ИДЕТ...</div>
 
-            <div class="result-field" id="result-box">
+            <div class="result-field glass-panel" id="result-box">
                 <div class="username-text" id="res-username">@username</div>
-                <div class="rank-badge" id="res-rank" style="color: var(--text-muted); display: none;">-</div>
-                <div class="price-text" id="res-status" style="color: var(--text-muted);">Нажмите сгенерировать</div>
+                <div class="rank-badge" id="res-rank">-</div>
+                <div class="price-text" id="res-status">Нажми сгенерировать</div>
+            </div>
+
+            <!-- Микро-карточки действий -->
+            <div class="quick-actions" id="quick-actions">
+                <button class="action-btn btn-take" onclick="takeUsername()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    Занять
+                </button>
+                <button class="action-btn btn-copy" onclick="copyResult()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
             </div>
 
             <button class="btn-generate" id="btn-generate" onclick="manualGenerate()">Сгенерировать</button>
@@ -341,70 +262,58 @@
         </div>
     </main>
 
+    <!-- Тост-уведомление -->
+    <div class="toast" id="global-toast">Скопировано!</div>
+
     <!-- Модалка: Настройки -->
     <div class="modal-overlay" id="modal-settings">
-        <div class="modal-content">
+        <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 class="modal-title"><span class="nav-icon">⚙️</span> Настройки</h2>
+                <h2 class="modal-title">Настройки</h2>
                 <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
             </div>
             <div class="modal-body">
-                
                 <div class="setting-item">
                     <div class="setting-info">
                         <span class="setting-title">Автопарсер</span>
-                        <span class="setting-desc">Фоновый перебор никнеймов</span>
+                        <span class="setting-desc">Фоновый поиск свободных ников</span>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)">
-                        <span class="slider"></span>
-                    </label>
+                    <label class="switch"><input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)"><span class="slider"></span></label>
                 </div>
-
                 <div class="setting-item">
                     <div class="setting-info">
                         <span class="setting-title">Смарт-фильтр</span>
-                        <span class="setting-desc">Генерация коротких ников (2000+)</span>
+                        <span class="setting-desc">Короткие читаемые слова (L5-L7)</span>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)">
-                        <span class="slider"></span>
-                    </label>
+                    <label class="switch"><input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)"><span class="slider"></span></label>
                 </div>
-
                 <div class="filter-options" id="filter-menu">
                     <div class="filter-row">
-                        <span style="font-size: 0.85rem; color: var(--text-main);">Длина слова</span>
-                        <select id="filter-len">
-                            <option value="5-6">5-6 символов</option>
-                            <option value="7-8">7-8 символов</option>
-                        </select>
+                        <span style="font-size: 0.85rem;">Длина</span>
+                        <select id="filter-len"><option value="5-6">5-6 симв.</option><option value="7-8">7-8 симв.</option></select>
                     </div>
                     <div class="filter-row">
-                        <span style="font-size: 0.85rem; color: var(--text-main);">Добавить цифры</span>
+                        <span style="font-size: 0.85rem;">С цифрами</span>
                         <label class="switch"><input type="checkbox" id="filter-num"><span class="slider"></span></label>
                     </div>
                     <div class="filter-row">
-                        <span style="font-size: 0.85rem; color: var(--text-main);">Разрешить "_"</span>
+                        <span style="font-size: 0.85rem;">С "_"</span>
                         <label class="switch"><input type="checkbox" id="filter-und"><span class="slider"></span></label>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
     <!-- Модалка: История -->
     <div class="modal-overlay" id="modal-history">
-        <div class="modal-content">
+        <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 class="modal-title"><span class="nav-icon">📁</span> История улова</h2>
+                <h2 class="modal-title">История</h2>
                 <button class="btn-close" onclick="closeModal('modal-history')">✕</button>
             </div>
             <div class="modal-body">
-                <div class="history-list" id="history-container">
-                    <!-- Данные JS -->
-                </div>
+                <div class="history-list" id="history-container"></div>
             </div>
         </div>
     </div>
@@ -413,54 +322,58 @@
         let currentPlatform = 'telegram';
         let isAuto = false;
         let isFetching = false;
+        let lastGenerated = "";
         let historyData = JSON.parse(localStorage.getItem('vpn_parser_history')) || [];
-        
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
+
+        function vibrate(type = 'light') {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                if (type === 'light') window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                if (type === 'success') window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            } else if (navigator.vibrate) {
+                if (type === 'light') navigator.vibrate(10);
+                if (type === 'success') navigator.vibrate([50, 50, 100]);
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('global-toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
 
         function setPlatform(platform, btn) {
             if (isAuto) return; 
             currentPlatform = platform;
             document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            vibrate('light');
         }
 
         function openModal(id) {
-            const modal = document.getElementById(id);
-            modal.classList.add('active');
+            vibrate('light');
+            document.getElementById(id).classList.add('active');
             if(id === 'modal-history') renderHistory();
         }
 
-        function closeModal(id) {
-            const modal = document.getElementById(id);
-            modal.classList.remove('active');
-        }
-
-        function toggleFilterMenu(cb) {
-            const menu = document.getElementById('filter-menu');
-            if (cb.checked) {
-                menu.classList.add('active');
-            } else {
-                menu.classList.remove('active');
-            }
-        }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function toggleFilterMenu(cb) { document.getElementById('filter-menu').classList.toggle('active', cb.checked); vibrate('light'); }
 
         function toggleAutoSearch(cb) {
+            vibrate('light');
             isAuto = cb.checked;
             const btn = document.getElementById('btn-generate');
             const ind = document.getElementById('auto-indicator');
-            const box = document.getElementById('result-box');
+            const acts = document.getElementById('quick-actions');
             
             if (isAuto) {
-                btn.disabled = true;
-                btn.textContent = "Поиск...";
-                ind.style.display = 'block';
-                box.classList.add('auto-glow-effect');
+                btn.disabled = true; btn.textContent = "Идет поиск...";
+                ind.style.display = 'block'; acts.style.display = 'none';
                 runCycle();
             } else {
-                btn.disabled = false;
-                btn.textContent = "Сгенерировать";
+                btn.disabled = false; btn.textContent = "Сгенерировать";
                 ind.style.display = 'none';
-                box.classList.remove('auto-glow-effect');
             }
         }
 
@@ -472,9 +385,10 @@
 
         async function manualGenerate() {
             if (isFetching || isAuto) return;
+            vibrate('light');
             const btn = document.getElementById('btn-generate');
-            btn.disabled = true;
-            btn.textContent = "Генерация...";
+            document.getElementById('quick-actions').style.display = 'none';
+            btn.disabled = true; btn.textContent = "Подключение...";
             await fetchUsername();
             btn.textContent = "Сгенерировать";
             btn.disabled = false;
@@ -483,22 +397,25 @@
         async function fetchUsername() {
             isFetching = true;
             
-            // Получение параметров фильтра
             const useFilter = document.getElementById('toggle-filter').checked;
             const lenMode = document.getElementById('filter-len').value;
             const useNum = document.getElementById('filter-num').checked;
             const useUnd = document.getElementById('filter-und').checked;
 
-            // Формирование URL для main.py
             const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}`;
 
             try {
                 const res = await fetch(url);
                 const data = await res.json();
+                lastGenerated = data.generated_username;
                 
                 const uEl = document.getElementById('res-username');
                 const rEl = document.getElementById('res-rank');
                 const sEl = document.getElementById('res-status');
+                const box = document.getElementById('result-box');
+
+                // Очистка золотого режима
+                box.classList.remove('golden-mode');
 
                 uEl.textContent = `@${data.generated_username}`;
                 uEl.style.color = data.evaluation.color;
@@ -511,19 +428,70 @@
                 sEl.style.color = data.evaluation.color;
 
                 if (data.is_free === true && data.evaluation.rank !== "ERR") {
-                    saveToHistory({
-                        user: data.generated_username,
-                        plat: currentPlatform,
-                        rank: data.evaluation.rank,
-                        price: data.evaluation.status,
-                        color: data.evaluation.color
-                    });
+                    // Если ручной поиск - показываем кнопки действий
+                    if(!isAuto) document.getElementById('quick-actions').style.display = 'flex';
+                    
+                    saveToHistory({ user: data.generated_username, plat: currentPlatform, rank: data.evaluation.rank, price: data.evaluation.status, color: data.evaluation.color });
+                    
+                    // ЭФФЕКТ ДЖЕКПОТА ДЛЯ SSS+ И SS
+                    if (data.evaluation.rank === "SSS+" || data.evaluation.rank === "SS") {
+                        triggerJackpot(data.evaluation.color);
+                    } else {
+                        vibrate('success');
+                    }
                 }
             } catch (e) {
                 console.log(e);
             } finally {
                 isFetching = false;
             }
+        }
+
+        // --- ВИЗУАЛЬНЫЕ СПЕЦЭФФЕКТЫ ---
+        function triggerJackpot(color) {
+            vibrate('success');
+            setTimeout(() => vibrate('success'), 200);
+
+            const box = document.getElementById('result-box');
+            box.classList.add('golden-mode');
+            
+            // Выстрел искр (эмодзи молний и звезд)
+            const emojis = ['⚡', '✨', '🔥', '💎', '🚀'];
+            for(let i=0; i<30; i++) {
+                createParticle(emojis[Math.floor(Math.random() * emojis.length)]);
+            }
+        }
+
+        function createParticle(char) {
+            const p = document.createElement('div');
+            p.innerText = char;
+            p.className = 'jackpot-particle';
+            document.body.appendChild(p);
+
+            const rect = document.getElementById('result-box').getBoundingClientRect();
+            p.style.left = (rect.left + rect.width / 2) + 'px';
+            p.style.top = (rect.top + rect.height / 2) + 'px';
+
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 120 + Math.random() * 150;
+            p.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+            p.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+            p.style.setProperty('--rot', `${Math.random() * 360}deg`);
+
+            setTimeout(() => p.remove(), 1200);
+        }
+
+        // --- ДЕЙСТВИЯ ---
+        function copyResult() {
+            navigator.clipboard.writeText(lastGenerated).then(() => { vibrate('light'); showToast('Никнейм скопирован!'); });
+        }
+
+        function takeUsername() {
+            navigator.clipboard.writeText(lastGenerated).then(() => {
+                vibrate('success');
+                showToast('Скопировано! Открываем настройки...');
+                setTimeout(() => { window.location.href = "tg://settings"; }, 1500);
+            });
         }
 
         function saveToHistory(item) {
@@ -533,38 +501,20 @@
             localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
         }
 
-        function copyText(text, cardElement) {
-            navigator.clipboard.writeText(text).then(() => {
-                const toast = cardElement.querySelector('.toast');
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 1200);
-            });
-        }
-
         function renderHistory() {
             const cont = document.getElementById('history-container');
             cont.innerHTML = '';
-            
             if (historyData.length === 0) {
-                cont.innerHTML = '<div class="empty-state">История пуста.<br>Найденные ники сохранятся здесь навсегда.</div>';
-                return;
+                cont.innerHTML = '<div style="text-align:center; color:#829288; padding:30px 0;">История пуста.</div>'; return;
             }
-            
             historyData.forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'history-card';
-                div.onclick = () => copyText(item.user, div);
-                
+                div.className = 'history-card setting-item';
+                div.style.cursor = 'pointer';
+                div.onclick = () => { navigator.clipboard.writeText(item.user); showToast('Скопировано!'); vibrate('light'); };
                 div.innerHTML = `
-                    <div class="hist-left">
-                        <div class="hist-user" style="color: ${item.color}">@${item.user}</div>
-                        <div class="hist-plat">${item.plat}</div>
-                    </div>
-                    <div class="hist-right">
-                        <div class="hist-rank" style="color: ${item.color}">${item.rank}</div>
-                        <div class="price-text" style="color: var(--text-muted)">${item.price}</div>
-                    </div>
-                    <div class="toast">Скопировано!</div>
+                    <div><div style="font-weight:700; color:${item.color};">@${item.user}</div><div style="font-size:0.7rem; color:#829288; margin-top:4px;">${item.plat.toUpperCase()}</div></div>
+                    <div style="text-align:right;"><div style="font-weight:700; color:${item.color};">${item.rank}</div><div style="font-size:0.8rem; color:#829288;">${item.price}</div></div>
                 `;
                 cont.appendChild(div);
             });
