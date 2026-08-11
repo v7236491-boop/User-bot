@@ -1,211 +1,502 @@
-<!DOCTYPE html> 
-<html lang="ru"> 
-<head> 
-    <meta charset="UTF-8"> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-    <title>Multi-Platform Username Catch</title> 
-    <style> 
-        :root { 
-            --bg-dark: #0a0c0a; 
-            --card-bg: #111412; 
-            --neon-green-muted: rgba(43, 207, 102, 0.4); 
-            --neon-green-bright: #2bcf66; 
-            --text-main: #ffffff; 
-            --text-sub: #7a8a80; 
-        } 
- 
-        body { 
-            background-color: var(--bg-dark); 
-            color: var(--text-main); 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            overflow: hidden; 
-            position: relative; 
-        } 
- 
-        .leaf { 
-            position: absolute; 
-            opacity: 0.05; 
-            fill: var(--neon-green-bright); 
-            z-index: 0; 
-        } 
-        .leaf-1 { top: 10%; left: 10%; width: 120px; transform: rotate(45deg); } 
-        .leaf-2 { bottom: 15%; right: 5%; width: 180px; transform: rotate(-30deg); } 
- 
-        .container { 
-            position: relative; 
-            z-index: 1; 
-            width: 100%; 
-            max-width: 360px; 
-            padding: 20px; 
-            box-sizing: border-box; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        } 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Username Generator & Scanner</title>
+    <style>
+        :root {
+            --bg: #050a07;
+            --surface: #0f1712;
+            --border: #166534;
+            --accent: #22c55e;
+            --accent-hover: #16a34a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
 
-        /* Выбор платформы */
-        .platform-selector {
+        * { box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
             display: flex;
-            background: var(--card-bg);
-            border: 1px solid var(--neon-green-muted);
-            border-radius: 14px;
-            padding: 4px;
-            width: 100%;
-            margin-bottom: 20px;
-            box-sizing: border-box;
+            flex-direction: column;
+            overflow-x: hidden;
         }
 
-        .platform-tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-sub);
-            border-radius: 10px;
+        /* Приглушенное зеленое свечение на фоне */
+        .ambient-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            height: 80vw;
+            max-width: 800px;
+            max-height: 800px;
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Верхняя панель */
+        header {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .nav-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .platform-tab.active {
-            background: var(--neon-green-bright);
-            color: var(--bg-dark);
+        .nav-btn:hover {
+            background: var(--accent);
+            color: #000;
         }
- 
-        .result-box { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--neon-green-muted); 
-            border-radius: 20px; 
-            padding: 25px 20px; 
-            width: 100%; 
-            text-align: center; 
-            box-shadow: 0 0 25px rgba(43, 207, 102, 0.1), inset 0 0 15px rgba(43, 207, 102, 0.05); 
-            margin-bottom: 25px; 
-            transition: all 0.3s ease; 
-            box-sizing: border-box; 
-        } 
- 
-        .username-display { 
-            font-size: 24px; 
-            font-weight: 700; 
-            color: var(--neon-green-bright); 
-            letter-spacing: 1px; 
-            text-shadow: 0 0 10px rgba(43, 207, 102, 0.3); 
-            transition: opacity 0.2s ease; 
-            word-break: break-all; 
-            margin-bottom: 10px;
-        } 
 
-        .rank-badge {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-sub);
-            letter-spacing: 0.5px;
+        /* Главный экран */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10;
         }
- 
-        .generate-btn { 
-            background-color: var(--neon-green-bright); 
-            color: var(--bg-dark); 
-            border: none; 
-            border-radius: 14px; 
-            padding: 16px; 
-            width: 100%; 
-            font-size: 16px; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            cursor: pointer; 
-            box-shadow: 0 4px 15px rgba(43, 207, 102, 0.2); 
-            transition: all 0.2s ease; 
-            margin-bottom: 20px; 
-            -webkit-tap-highlight-color: transparent; 
-        } 
- 
-        .generate-btn:active { 
-            transform: scale(0.96); 
-            background-color: #24b056; 
-        } 
 
-        .open-btn {
-            color: var(--neon-green-bright);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
+        .scanner-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        h1 { margin-top: 0; font-size: 1.5rem; letter-spacing: 1px; }
+
+        .select-platform {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            outline: none;
+        }
+
+        .main-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .main-btn:disabled {
+            background: var(--surface);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            cursor: not-allowed;
+        }
+
+        .main-btn:not(:disabled):hover {
+            background: var(--accent-hover);
+        }
+
+        #result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #000;
+            border: 1px solid #333;
             display: none;
         }
-    </style> 
-</head> 
-<body> 
- 
-    <svg class="leaf leaf-1" viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg> 
-    <svg class="leaf leaf-2" viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg> 
- 
-    <div class="container"> 
-        <!-- Переключатель платформы -->
-        <div class="platform-selector">
-            <div id="tabTg" class="platform-tab active" onclick="selectPlatform('telegram')">Telegram</div>
-            <div id="tabWa" class="platform-tab" onclick="selectPlatform('whatsapp')">WhatsApp</div>
-        </div>
 
-        <div class="result-box"> 
-            <div class="username-display" id="usernameDisplay">Выбери сервис</div> 
-            <div class="rank-badge" id="rankBadge">Оценка: -</div>
-        </div> 
-         
-        <button class="generate-btn" id="generateBtn">Сгенерировать</button> 
-        <a id="openLink" href="#" target="_blank" class="open-btn">Открыть профиль ↗</a>
-    </div> 
- 
-    <script> 
-        let currentPlatform = "telegram";
-        const display = document.getElementById("usernameDisplay"); 
-        const rankBadge = document.getElementById("rankBadge"); 
-        const btn = document.getElementById("generateBtn"); 
-        const openLink = document.getElementById("openLink");
+        .username-display { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
+        .rank-badge { font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #222; }
 
-        function selectPlatform(p) {
-            currentPlatform = p;
-            document.getElementById("tabTg").classList.toggle("active", p === "telegram");
-            document.getElementById("tabWa").classList.toggle("active", p === "whatsapp");
-            display.innerText = "@выбран_" + p;
-            rankBadge.innerText = "Оценка: -";
-            openLink.style.display = "none";
+        /* Модальные окна */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
- 
-        btn.addEventListener("click", async () => { 
-            btn.disabled = true; 
-            display.style.opacity = "0.5"; 
-            display.innerText = "Поиск..."; 
-            rankBadge.innerText = currentPlatform === "telegram" ? "Двойная проверка (t.me + Fragment)..." : "Формирование...";
-            rankBadge.style.color = "var(--text-sub)";
 
-            try { 
-                const response = await fetch(`/api/generate?platform=${currentPlatform}`); 
-                const data = await response.json(); 
- 
-                display.innerText = "@" + data.generated_username; 
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 450px;
+            max-height: 80vh;
+            padding: 20px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(34, 197, 94, 0.1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .close-btn:hover { color: #fff; }
+
+        .modal-title { margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+        /* Настройки (Тумблер) */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* История */
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 5px;
+        }
+        
+        .history-list::-webkit-scrollbar { width: 6px; }
+        .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .history-item {
+            background: #000;
+            border: 1px solid #222;
+            border-left: 4px solid var(--accent);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item-left { display: flex; flex-direction: column; gap: 4px; }
+        .history-item-right { text-align: right; }
+        
+        .history-name { font-weight: bold; font-size: 1.1rem; }
+        .history-platform { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+        .history-price { font-size: 0.85rem; color: var(--text-muted); }
+        .history-rank { font-weight: bold; }
+
+        .empty-history { text-align: center; color: var(--text-muted); padding: 20px; }
+        
+        .loader {
+            display: none;
+            margin: 10px auto;
+            border: 3px solid #333;
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+
+    <header>
+        <button class="nav-btn" onclick="openModal('history-modal')">
+            <span>🗂</span> History
+        </button>
+        <button class="nav-btn" onclick="openModal('settings-modal')">
+            <span>⚙</span> Settings
+        </button>
+    </header>
+
+    <main>
+        <div class="scanner-box">
+            <h1>USERNAME SCANNER</h1>
+            
+            <select id="platform-select" class="select-platform">
+                <option value="telegram">Telegram (t.me)</option>
+                <option value="whatsapp">WhatsApp (wa.me)</option>
+            </select>
+
+            <button id="generate-btn" class="main-btn" onclick="manualGenerate()">СГЕНЕРИРОВАТЬ</button>
+            <div id="loader" class="loader"></div>
+
+            <div id="result-box">
+                <div class="username-display" id="res-username">-</div>
+                <div style="margin-bottom: 10px;">
+                    <span id="res-rank" class="rank-badge">-</span>
+                </div>
+                <div id="res-status" style="font-size: 0.9rem;">-</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Модальное окно Настроек -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('settings-modal')">✕</button>
+            <h2 class="modal-title">Настройки</h2>
+            
+            <div class="setting-row">
+                <div>
+                    <strong>Автопоиск (Фоновый сканер)</strong>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Ищет непрерывно с задержкой 2.5с.</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="auto-search-toggle" onchange="toggleAutoSearch(this)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно Истории -->
+    <div id="history-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('history-modal')">✕</button>
+            <h2 class="modal-title">История улова</h2>
+            
+            <div id="history-container" class="history-list">
+                <!-- Сюда добавляются пойманные ники -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- СОСТОЯНИЕ И НАСТРОЙКИ ---
+        let isAutoSearching = false;
+        let isFetching = false;
+        let historyData = JSON.parse(localStorage.getItem('catch_history')) || [];
+        
+        // Веса рангов для правильной сортировки (от дорогих к дешевым)
+        const rankWeights = {
+            "SSS+": 100,
+            "SS": 80,
+            "S": 60,
+            "A": 40,
+            "B": 20,
+            "ERR": -1,
+            "F": -10
+        };
+
+        // --- УПРАВЛЕНИЕ МОДАЛЬНЫМИ ОКНАМИ ---
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            if(id === 'history-modal') renderHistory();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // --- ЛОГИКА АВТОПОИСКА ---
+        function toggleAutoSearch(checkbox) {
+            isAutoSearching = checkbox.checked;
+            const btn = document.getElementById('generate-btn');
+            
+            if (isAutoSearching) {
+                btn.disabled = true;
+                btn.textContent = "АВТОПОИСК АКТИВЕН...";
+                runAutoSearchCycle();
+            } else {
+                btn.disabled = false;
+                btn.textContent = "СГЕНЕРИРОВАТЬ";
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        async function runAutoSearchCycle() {
+            if (!isAutoSearching) return;
+            
+            if (!isFetching) {
+                await fetchAndProcessUsername();
+            }
+            
+            // Задержка 2.5 секунды для защиты от блокировок
+            if (isAutoSearching) {
+                setTimeout(runAutoSearchCycle, 2500);
+            }
+        }
+
+        // --- ЛОГИКА РУЧНОГО ПОИСКА ---
+        async function manualGenerate() {
+            if (isFetching || isAutoSearching) return;
+            const btn = document.getElementById('generate-btn');
+            btn.disabled = true;
+            await fetchAndProcessUsername();
+            btn.disabled = false;
+        }
+
+        // --- ОСНОВНАЯ ФУНКЦИЯ ЗАПРОСА ---
+        async function fetchAndProcessUsername() {
+            isFetching = true;
+            const platform = document.getElementById('platform-select').value;
+            const resBox = document.getElementById('result-box');
+            const loader = document.getElementById('loader');
+            
+            loader.style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/generate?platform=${platform}`);
+                const data = await response.json();
                 
-                if (data.evaluation) {
-                    rankBadge.innerText = `[${data.evaluation.rank}] ${data.evaluation.status}`;
-                    rankBadge.style.color = data.evaluation.color;
-                }
+                // Обновление интерфейса
+                resBox.style.display = 'block';
+                document.getElementById('res-username').textContent = `@${data.generated_username}`;
+                document.getElementById('res-username').style.color = data.evaluation.color;
+                
+                const rankEl = document.getElementById('res-rank');
+                rankEl.textContent = data.evaluation.rank;
+                rankEl.style.color = data.evaluation.color;
+                
+                document.getElementById('res-status').textContent = data.evaluation.status;
+                document.getElementById('res-status').style.color = data.evaluation.color;
 
-                openLink.href = data.link;
-                openLink.style.display = "inline-block";
-            } catch (e) { 
-                console.error("Ошибка:", e); 
-                display.innerText = "Ошибка сервера";
-            } 
-             
-            display.style.opacity = "1"; 
-            btn.disabled = false; 
-        }); 
-    </script> 
-</body> 
+                // Сохранение в историю, если свободен и не является ошибкой лимита
+                if (data.is_free === true && data.evaluation.rank !== "ERR") {
+                    addToHistory({
+                        username: data.generated_username,
+                        platform: platform,
+                        rank: data.evaluation.rank,
+                        price: data.evaluation.status,
+                        color: data.evaluation.color
+                    });
+                }
+            } catch (err) {
+                console.error("Ошибка запроса:", err);
+            } finally {
+                loader.style.display = 'none';
+                isFetching = false;
+            }
+        }
+
+        // --- ЛОГИКА ИСТОРИИ ---
+        function addToHistory(item) {
+            // Проверка на дубликаты
+            if (historyData.some(i => i.username === item.username && i.platform === item.platform)) {
+                return;
+            }
+            
+            historyData.push(item);
+            
+            // Сортировка по убыванию веса ранга
+            historyData.sort((a, b) => {
+                const weightA = rankWeights[a.rank] || 0;
+                const weightB = rankWeights[b.rank] || 0;
+                return weightB - weightA;
+            });
+            
+            // Сохранение в память браузера
+            localStorage.setItem('catch_history', JSON.stringify(historyData));
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            container.innerHTML = '';
+            
+            if (historyData.length === 0) {
+                container.innerHTML = '<div class="empty-history">История пуста.<br>Найденные свободные юзернеймы появятся здесь.</div>';
+                return;
+            }
+            
+            historyData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.style.borderLeftColor = item.color;
+                
+                div.innerHTML = `
+                    <div class="history-item-left">
+                        <div class="history-name" style="color: ${item.color}">@${item.username}</div>
+                        <div class="history-platform">${item.platform}</div>
+                    </div>
+                    <div class="history-item-right">
+                        <div class="history-rank" style="color: ${item.color}">${item.rank}</div>
+                        <div class="history-price">${item.price}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
 </html>
