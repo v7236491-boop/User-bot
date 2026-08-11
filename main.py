@@ -26,11 +26,9 @@ if dp:
 
 # --- СИСТЕМА КУЛДАУНА (RATE LIMITING) ---
 USER_COOLDOWNS = {}
-COOLDOWN_SECONDS = 1.5  # Персональная задержка между генерациями для одного IP
+COOLDOWN_SECONDS = 1.5
 
-# --- СЛОВАРНЫЕ БАЗЫ (100 СЛОВ / 100 БРЕНДОВ / 100 ЗНАМЕНИТОСТЕЙ) ---
-
-# 1. 100 простых английских слов (генерируются в чистом виде)
+# --- СЛОВАРНЫЕ БАЗЫ ---
 DICTIONARY_WORDS = [
     "apple", "world", "music", "house", "light", "dream", "space", "power", "angel", "smart",
     "stone", "water", "earth", "cloud", "storm", "river", "ocean", "flame", "shadow", "silver",
@@ -44,24 +42,22 @@ DICTIONARY_WORDS = [
     "legacy", "empire", "symbol", "beacon", "summit", "peak", "vertex", "vector", "matrix", "orbit"
 ]
 
-# 2. 100 Брендов и компаний
 COMPANIES = [
     "apple", "google", "nike", "adidas", "gucci", "prada", "tesla", "sony",
     "steam", "roblox", "nvidia", "intel", "canon", "rolex", "porsche", "ferrari",
     "bmw", "audi", "redbull", "binance", "bybit", "openai", "uber", "spotify",
-    "netflix", "tiktok", "amazon", "dior", "samsung", "puma", "microsoft", "amazon",
-    "meta", "samsung", "toyota", "honda", "mercedes", "bmw", "volkswagen", "ford",
+    "netflix", "tiktok", "amazon", "dior", "samsung", "puma", "microsoft",
+    "meta", "toyota", "honda", "mercedes", "volkswagen", "ford",
     "chevrolet", "nissan", "hyundai", "kia", "lexus", "bentley", "lamborghini", "bugatti",
     "mclaren", "aston", "chanel", "louisvuitton", "hermes", "versace", "armani", "balenciaga",
-    "burberry", "fendi", "rolex", "omega", "cartier", "seiko", "casio", "pepsi",
-    "cocacola", "redbull", "monster", "starbucks", "mcdonalds", "kfc", "subway", "burgerking",
+    "burberry", "fendi", "omega", "cartier", "seiko", "casio", "pepsi",
+    "cocacola", "monster", "starbucks", "mcdonalds", "kfc", "subway", "burgerking",
     "twitch", "discord", "youtube", "telegram", "whatsapp", "instagram", "twitter", "reddit",
-    "snapchat", "pinterest", "linkedin", "spotify", "shazam", "tinder", "airbnb", "booking",
+    "snapchat", "pinterest", "linkedin", "shazam", "tinder", "airbnb", "booking",
     "stripe", "paypal", "revolut", "wise", "coinbase", "kraken", "okx", "kucoin",
     "asus", "msi", "gigabyte", "razer", "logitech", "corsair", "hyperx", "steelseries"
 ]
 
-# 3. 100 Знаменитостей
 CELEBRITIES = [
     "messi", "ronaldo", "neymar", "mbappe", "jordan", "kobe", "lebron", "musk",
     "jobs", "gates", "bezos", "altman", "zuck", "drake", "eminem", "rihanna",
@@ -72,12 +68,11 @@ CELEBRITIES = [
     "hamilton", "verstappen", "snoop", "fiftycent", "jayz", "weeknd", "postmalone", "travis",
     "brunomars", "edsheeran", "adele", "taylor", "dualipa", "billie", "gomez", "grande",
     "tomcruise", "rock", "statham", "keanu", "rdj", "hemsworth", "evans", "holland",
-    "chalamet", "ramsey", "pascal", "jenna", "zendaya", "sydney", "ana", "scarlett",
-    "galgadot", "margot", "pewdiepie", "mrbeast", "ispeed", "ksi", "logan", "jake",
+    "chalamet", "ramsey", "pascal", "jenna", "sydney", "ana", "scarlett",
+    "margot", "pewdiepie", "mrbeast", "ispeed", "ksi", "logan", "jake",
     "xqc", "kai", "ninja", "shroud", "pokimane", "rubius", "ibai", "grefg"
 ]
 
-# 4. Осмысленные модификаторы без цифр
 MODIFIERS = [
     "official", "real", "original", "true", "pro", "vip", "club", "live", "app", "dev",
     "io", "hub", "lab", "labs", "net", "mode", "zone", "vibe", "flow", "space", "craft",
@@ -88,14 +83,13 @@ MODIFIERS = [
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
 ]
 
 
 async def async_check_tg(username: str) -> bool:
     """
-    Глубокая проверка юзернейма в Telegram и на Fragment
+    Точная проверка свободен ли username в Telegram и на Fragment
     """
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
@@ -103,46 +97,37 @@ async def async_check_tg(username: str) -> bool:
     }
     
     try:
-        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
-            # 1. Проверка Telegram (t.me)
+        async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
+            # 1. Проверка через t.me
             url_tg = f"https://t.me/{username}"
             res_tg = await client.get(url_tg, headers=headers)
             html_tg = res_tg.text.lower()
 
-            # Маркеры занятости в Telegram
-            tg_taken_keywords = [
-                "tgme_page_title", "tgme_page_extra", "send message",
-                "you can contact", "subscribers", "members", "view in telegram",
-                "if you have telegram, you can contact"
-            ]
-            if any(kw in html_tg for kw in tg_taken_keywords):
-                if '<meta property="og:title"' in html_tg and 'telegram: contact' not in html_tg:
-                    return False
-                if "subscribers" in html_tg or "members" in html_tg or "you can contact @" in html_tg:
-                    return False
+            # Точные индикаторы занятого канала/профиля/бота
+            if "tgme_page_title" in html_tg:
+                # Если есть заголовок страницы с именем, логин точно занят
+                return False
+            if "you can contact @" in html_tg or "extra_state" in html_tg:
+                return False
 
-            # Небольшая пауза для избежания банов
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(0.2)
 
-            # 2. Проверка Fragment (fragment.com)
+            # 2. Проверка через Fragment
             url_frag = f"https://fragment.com/username/{username}"
             res_frag = await client.get(url_frag, headers=headers)
             html_frag = res_frag.text.lower()
 
-            # Маркеры занятости/аукциона/продажи на Fragment
-            frag_taken_keywords = [
-                "unavailable", "taken", "auction", "sold", "on sale",
-                "minimum bid", "place bid", "owner", "buy now"
-            ]
-            if any(kw in html_frag for kw in frag_taken_keywords):
+            # Если на Fragment написано, что ник был продан или находится на аукционе
+            if "status-taken" in html_frag or "status-sold" in html_frag or "status-bidding" in html_frag:
                 return False
+            if "unclaimed" in html_frag or "available" in html_frag:
+                return True
 
-            # Если явных следов присутствия нет — юзернейм свободен
             return True
 
     except Exception:
-        # В случае сетевой ошибки или блокировки Cloudflare считаем за занятый (безопасный фоллбек)
-        return False
+        # В случае таймаута пропускаем статус как потенциально свободный
+        return True
 
 
 def calculate_catch_score(username: str, is_free: bool) -> dict:
@@ -181,7 +166,6 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
     client_ip = request.client.host if request.client else "global"
     now = time.time()
 
-    # Проверка персонального кулдауна
     if client_ip in USER_COOLDOWNS:
         elapsed = now - USER_COOLDOWNS[client_ip]
         if elapsed < COOLDOWN_SECONDS:
@@ -192,17 +176,14 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
     rand_type = random.random()
 
     if rand_type < 0.35:
-        # 1. Словарные простые слова (без приставок, суффиксов, подчеркиваний и цифр)
         generated = random.choice(DICTIONARY_WORDS)
     elif rand_type < 0.65:
-        # 2. Бренды с осмысленными модификаторами (без цифр)
         brand = random.choice(COMPANIES)
         mod = random.choice(MODIFIERS)
         use_underscore = random.random() < 0.4
         sep = "_" if use_underscore else ""
         generated = f"{brand}{sep}{mod}" if random.random() < 0.5 else f"{mod}{sep}{brand}"
     else:
-        # 3. Знаменитости с осмысленными модификаторами (без цифр)
         celeb = random.choice(CELEBRITIES)
         mod = random.choice(MODIFIERS)
         use_underscore = random.random() < 0.4
@@ -228,7 +209,6 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
     }
 
 
-# --- ФОНОВЫЙ ЗАПУСК БОТА ПРИ СТАРТЕ СЕРВЕРА ---
 @app.on_event("startup")
 async def on_startup():
     if bot and dp:
