@@ -28,7 +28,7 @@ if dp:
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 1.5
 
-# --- 1. ТОП ЧИСТЫЕ СЛОВА (БЕЗ ПРИСТАВОК И СИМВОЛОВ) ---
+# --- 1. ТОП ЧИСТЫЕ СЛОВА ---
 PURE_WORDS = [
     "apple", "world", "music", "house", "light", "dream", "space", "power", "smart",
     "stone", "water", "earth", "cloud", "storm", "river", "ocean", "flame", "shadow", "silver",
@@ -42,7 +42,7 @@ PURE_WORDS = [
     "legacy", "empire", "symbol", "beacon", "summit", "peak", "vertex", "vector", "matrix", "orbit"
 ]
 
-# --- 2. БРЕНДЫ С КОНТЕКСТНЫМИ СУФФИКСАМИ (СМЫСЛОВЫЕ СВЯЗКИ) ---
+# --- 2. БРЕНДЫ С КОНТЕКСТНЫМИ СУФФИКСАМИ ---
 BRAND_CONTEXTS = {
     "sony": ["camera", "audio", "sound", "tv", "play", "music", "studio"],
     "coca": ["drink", "cola", "cold", "fresh", "ice", "glass"],
@@ -73,13 +73,12 @@ CELEB_CONTEXTS = {
     "jordan": ["air", "shoes", "real", "goat", "twentythree"],
     "musk": ["real", "elon", "tech", "x"],
     "drake": ["real", "official", "champagne", "music"],
-    "eminem", ["real", "official", "slim", "shady"],
+    "eminem": ["real", "official", "slim", "shady"],
     "kanye": ["real", "ye", "west", "music"],
     "keanu": ["real", "reeves", "official"],
     "mrbeast": ["real", "official", "feast", "team"]
 }
 
-# Дополнительные нейтральные префиксы высокого качества
 QUALITY_PREFIXES = ["real", "official", "iam", "the"]
 
 
@@ -112,27 +111,20 @@ async def async_check_tg(username: str) -> bool:
 
 
 def calculate_catch_score(username: str, is_free: bool, is_pure_word: bool, has_underscore: bool) -> dict:
-    """
-    Консервативная и реальная система оценки стоимости юзернеймов
-    """
     if not is_free:
         return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
 
     length = len(username)
 
-    # 1. Топовые короткие чистые слова без символов (Редчайшие)
     if is_pure_word and length <= 5:
         return {"rank": "SSS+", "status": "Редкий Грааль (~$100–$500+)", "color": "#2bcf66"}
 
-    # 2. Чистые слова или очень короткие комбинации без подчёркиваний
     if is_pure_word and length <= 7:
         return {"rank": "SS", "status": "Премиум улов (~$30–$100)", "color": "#eab308"}
 
-    # 3. Осмысленные комбинации без подчёркиваний
     if not has_underscore and length <= 10:
         return {"rank": "S", "status": "Хороший ник (~$10–$30)", "color": "#a855f7"}
 
-    # 4. Все комбинации с подчёркиваниями или длинные имена
     if has_underscore or length > 10:
         return {"rank": "A", "status": "Обычный ник (~$2–$10)", "color": "#06b6d4"}
 
@@ -163,24 +155,19 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
     has_underscore = False
 
     if rand_type < 0.40:
-        # 1. Чистые красивые слова (Самый высокий шанс получить ценный ник)
         generated = random.choice(PURE_WORDS)
         is_pure_word = True
     elif rand_type < 0.70:
-        # 2. Бренды с осмысленными контекстными словами (e.g. sony_camera)
         brand, contexts = random.choice(list(BRAND_CONTEXTS.items()))
         word = random.choice(contexts)
-        
         if random.random() < 0.35:
             generated = f"{brand}_{word}"
             has_underscore = True
         else:
             generated = f"{brand}{word}"
     else:
-        # 3. Знаменитости с контекстными префиксами/суффиксами (e.g. real_messi)
-        celeb, contexts = random.choice(list(CELEBRITIES_CONTEXTS.items() if 'CELEBRITIES_CONTEXTS' in globals() else CELEB_CONTEXTS.items()))
+        celeb, contexts = random.choice(list(CELEB_CONTEXTS.items()))
         word = random.choice(contexts)
-        
         if random.random() < 0.35:
             generated = f"{word}_{celeb}" if word in QUALITY_PREFIXES else f"{celeb}_{word}"
             has_underscore = True
