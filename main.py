@@ -10,7 +10,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 import uvicorn
 
-app = FastAPI(title="TG Username Generator & Checker")
+app = FastAPI(title="Username Generator & Checker")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
@@ -23,12 +23,12 @@ dp = Dispatcher() if BOT_TOKEN else None
 if dp:
     @dp.message(CommandStart())
     async def cmd_start(message: types.Message):
-        await message.answer("Привет! Генератор работает. Заходи на сайт через браузер!")
+        await message.answer("Привет! Генератор работает.")
 
 USER_COOLDOWNS = {}
-COOLDOWN_SECONDS = 1.5
+COOLDOWN_SECONDS = 1.0
 
-# --- 1. ТОП 500 ЧИСТЫХ СЛОВ ---
+# --- БАЗЫ ДАННЫХ ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -72,171 +72,137 @@ PURE_WORDS = (
     "sweep dust dirt mud clay soil land earth globe sphere orb ball cube block dice grid"
 ).split()
 
-# --- 2. БРЕНДЫ ПО КАТЕГОРИЯМ С УМНЫМ КОНТЕКСТОМ ---
 BRAND_CATEGORIES = {
-    "tech": {
-        "names": ["apple", "google", "microsoft", "sony", "samsung", "intel", "amd", "nvidia", 
-                  "ibm", "hp", "dell", "asus", "acer", "lenovo", "cisco", "oracle", "amazon", 
-                  "tesla", "panasonic", "philips", "lg", "nokia", "ericsson", "motorola", 
-                  "xiaomi", "huawei", "oppo", "vivo", "meta", "whatsapp", "instagram", "telegram"],
-        "contexts": ["tech", "app", "dev", "pay", "cloud", "ai", "hub", "store", "mobile", "smart"]
-    },
-    "auto": {
-        "names": ["toyota", "volkswagen", "ford", "honda", "chevrolet", "nissan", "hyundai", "kia", 
-                  "bmw", "mercedes", "audi", "porsche", "ferrari", "lamborghini", "bugatti", "mclaren", 
-                  "aston", "bentley", "rollsroyce", "volvo", "mazda", "subaru", "lexus", "jaguar", 
-                  "landrover", "jeep", "dodge", "chrysler", "renault", "peugeot", "citroen"],
-        "contexts": ["auto", "drive", "car", "club", "race", "speed", "motors", "power", "racing"]
-    },
-    "fashion": {
-        "names": ["nike", "adidas", "puma", "reebok", "underarmour", "zara", "uniqlo", "gucci", 
-                  "prada", "dior", "chanel", "louisvuitton", "hermes", "versace", "armani", 
-                  "balenciaga", "burberry", "fendi", "rolex", "omega", "cartier", "tiffany", 
-                  "supreme", "vans", "converse", "crocs", "levis", "timberland", "calvinklein"],
-        "contexts": ["style", "wear", "fit", "run", "shoes", "store", "original", "club", "design"]
-    },
-    "food": {
-        "names": ["cocacola", "pepsi", "mcdonalds", "starbucks", "kfc", "burgerking", "subway", 
-                  "dominos", "pizzahut", "nestle", "unilever", "danone", "kelloggs", "mars", 
-                  "snickers", "redbull", "monster", "heineken", "budweiser", "guinness", "sprite", "fanta"],
-        "contexts": ["drink", "food", "fresh", "eat", "cold", "ice", "tasty", "club", "break"]
-    },
-    "gaming_media": {
-        "names": ["nintendo", "playstation", "xbox", "sega", "ea", "ubisoft", "activision", 
-                  "blizzard", "rockstar", "epic", "valve", "steam", "disney", "netflix", "hbo", 
-                  "warner", "universal", "marvel", "dc", "paramount", "pixar", "twitch", "spotify"],
-        "contexts": ["play", "game", "show", "tv", "movie", "music", "studio", "stream", "live"]
-    },
-    "crypto_fin": {
-        "names": ["visa", "mastercard", "paypal", "amex", "stripe", "square", "binance", 
-                  "coinbase", "kraken", "bybit", "okx", "tether", "solana", "ethereum", "bitcoin"],
-        "contexts": ["pay", "trade", "crypto", "app", "bank", "fund", "capital", "wallet"]
-    }
+    "tech": {"names": ["apple", "google", "microsoft", "sony", "samsung", "intel", "amd", "nvidia"], "contexts": ["tech", "app", "dev", "pay", "cloud"]},
+    "auto": {"names": ["toyota", "volkswagen", "ford", "honda", "bmw", "mercedes", "audi", "porsche"], "contexts": ["auto", "drive", "car", "club", "race"]},
+    "fashion": {"names": ["nike", "adidas", "puma", "gucci", "prada", "dior", "chanel"], "contexts": ["style", "wear", "fit", "run", "shoes"]},
+    "food": {"names": ["cocacola", "pepsi", "mcdonalds", "starbucks", "subway"], "contexts": ["drink", "food", "fresh", "eat", "cold"]},
+    "crypto": {"names": ["binance", "coinbase", "kraken", "bybit", "tether", "solana"], "contexts": ["pay", "trade", "crypto", "app"]}
 }
 
-# --- 3. ЗНАМЕНИТОСТИ ПО КАТЕГОРИЯМ ---
 CELEB_CATEGORIES = {
-    "sport": {
-        "names": ["messi", "ronaldo", "neymar", "mbappe", "pele", "maradona", "jordan", "kobe", 
-                  "lebron", "curry", "shaq", "brady", "mahomes", "tyson", "ali", "mcgregor", 
-                  "khabib", "federer", "nadal", "djokovic", "serena", "hamilton", "schumacher"],
-        "contexts": ["real", "official", "goat", "king", "champ", "legend", "sport"]
-    },
-    "music": {
-        "names": ["elvis", "beatles", "madonna", "eminem", "drake", "kanye", "jayz", "snoop", 
-                  "tupac", "biggie", "taylor", "beyonce", "rihanna", "gaga", "adele", "edsheeran", 
-                  "bieber", "ariana", "selena", "billie", "weeknd", "postmalone", "brunomars", 
-                  "shakira", "jlo", "queen", "nirvana", "metallica", "mozart", "beethoven"],
-        "contexts": ["music", "real", "official", "sound", "live", "tour", "star", "voice"]
-    },
-    "movies": {
-        "names": ["cruise", "pitt", "depp", "dicaprio", "hanks", "reeves", "downey", "hemsworth", 
-                  "evans", "holland", "pratt", "rock", "statham", "jackiechan", "brucelee", 
-                  "tarantino", "nolan", "spielberg", "scarlett", "jolie", "zendaya", "robbie", 
-                  "gadot", "anadearmas", "meganfox", "pattinson", "murphy"],
-        "contexts": ["real", "official", "actor", "film", "star", "iam", "the"]
-    },
-    "history_tech_web": {
-        "names": ["musk", "jobs", "gates", "bezos", "zuck", "einstein", "tesla", "newton", 
-                  "davinci", "shakespeare", "mrbeast", "pewdiepie", "ispeed", "kai", "xqc"],
-        "contexts": ["real", "official", "tech", "genius", "team", "crew", "hub"]
-    }
+    "sport": {"names": ["messi", "ronaldo", "neymar", "mbappe", "jordan", "kobe", "lebron"], "contexts": ["real", "official", "goat", "king", "champ"]},
+    "music": {"names": ["eminem", "drake", "kanye", "taylor", "beyonce", "rihanna", "bieber"], "contexts": ["music", "real", "official", "sound", "live"]},
+    "movies": {"names": ["cruise", "pitt", "depp", "dicaprio", "reeves", "downey", "holland"], "contexts": ["real", "official", "actor", "film", "star"]}
 }
-
-QUALITY_PREFIXES = ["real", "official", "iam", "the"]
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 ]
 
-# --- ДВОЙНАЯ СИСТЕМА ПРОВЕРКИ ---
+# --- ДВОЙНАЯ ПРОВЕРКА TELEGRAM ---
 async def async_check_tg(username: str):
-    """
-    Возвращает:
-    True - Точно свободен
-    False - Точно занят
-    None - Ошибка сети / Блокировка (неизвестно)
-    """
-    
-    # МЕТОД 1: Официальный Telegram Bot API
+    # МЕТОД 1: Bot API
     if BOT_TOKEN:
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
-                api_url = f"https://api.telegram.org/bot{BOT_TOKEN}/getChat?chat_id=@{username}"
-                res_api = await client.get(api_url)
-                
-                if res_api.status_code == 200:
-                    data = res_api.json()
-                    if data.get("ok"):
-                        return False # 100% Занят (Профиль существует)
+            async with httpx.AsyncClient(timeout=2.5) as client:
+                res = await client.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getChat?chat_id=@{username}")
+                if res.status_code == 200 and res.json().get("ok"):
+                    return False
         except Exception:
-            pass # Если API недоступен, переходим ко второму методу
+            pass
 
-    # МЕТОД 2: Резервный веб-парсинг t.me
-    headers = {
-        "User-Agent": random.choice(USER_AGENTS),
-        "Accept-Language": "en-US,en;q=0.9",
-    }
-    
+    # МЕТОД 2: t.me
+    headers = {"User-Agent": random.choice(USER_AGENTS)}
     try:
-        async with httpx.AsyncClient(timeout=4.0, follow_redirects=True) as client:
-            url_tg = f"https://t.me/{username}"
-            res_tg = await client.get(url_tg, headers=headers)
-            
-            if res_tg.status_code in [429, 403, 500, 502, 503]:
-                return None # Сервер заблокировал запрос
-            
-            if res_tg.status_code == 200:
-                html = res_tg.text.lower()
-                
-                taken_indicators = [
-                    '<meta property="og:title"',
-                    'tgme_page_title',
-                    'tgme_page_extra',
-                    'subscribers',
-                    'members'
-                ]
-                
+        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
+            res = await client.get(f"https://t.me/{username}", headers=headers)
+            if res.status_code in [429, 403, 500, 502, 503]:
+                return None
+            if res.status_code == 200:
+                html = res.text.lower()
+                taken_indicators = ['<meta property="og:title"', 'tgme_page_title', 'tgme_page_extra', 'subscribers', 'members']
                 for ind in taken_indicators:
                     if ind in html:
                         if f'telegram: contact @{username}' in html and 'tgme_page_title' not in html:
                             continue
-                        return False # Точно занят
-                        
-                return True # Точно свободен
-
+                        return False
+                return True
             return None
-
     except Exception:
         return None
 
+# --- ДВОЙНАЯ ПРОВЕРКА WHATSAPP ---
+async def async_check_wa(username: str):
+    headers = {
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    }
 
-def calculate_catch_score(username: str, check_result, is_pure_word: bool, has_underscore: bool) -> dict:
+    # МЕТОД 1: Проверка через wa.me
+    try:
+        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
+            url_wa = f"https://wa.me/{username}"
+            res_wa = await client.get(url_wa, headers=headers)
+
+            if res_wa.status_code == 200:
+                html = res_wa.text.lower()
+
+                # Если сработал блок Cloudflare / капча
+                if "just a moment..." in html or "cf-challenge" in html or "attention required!" in html:
+                    pass # Пробуем метод 2
+                else:
+                    invalid_indicators = [
+                        "url is invalid", "invalid url", "page not found", 
+                        "страница не найдена", "недействительный адрес"
+                    ]
+                    if any(ind in html for ind in invalid_indicators):
+                        return True # Свободен
+
+                    taken_indicators = [
+                        "action_button", "send_message", "continue to chat", 
+                        "перейти в чат", "chat on whatsapp"
+                    ]
+                    if any(ind in html for ind in taken_indicators):
+                        return False # Занят
+
+            if res_wa.status_code == 404:
+                return True
+    except Exception:
+        pass
+
+    # МЕТОД 2: Резервная проверка через api.whatsapp.com
+    try:
+        async with httpx.AsyncClient(timeout=3.5, follow_redirects=True) as client:
+            url_api = f"https://api.whatsapp.com/send/?phone={username}&text&type=phone_number&app_absent=0"
+            res_api = await client.get(url_api, headers=headers)
+
+            if res_api.status_code == 200:
+                html_api = res_api.text.lower()
+                
+                if "phone number shared via url is invalid" in html_api or "invalid" in html_api:
+                    return True # Свободен
+                if "action_button" in html_api or "continue to chat" in html_api:
+                    return False # Занят
+
+            if res_api.status_code == 404:
+                return True
+    except Exception:
+        pass
+
+    # Если оба метода не смогли дать точный ответ из-за ошибок/лимитов
+    return None
+
+def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: bool):
     if check_result is None:
-        return {"rank": "ERR", "status": "Лимит запросов (Попробуй еще)", "color": "#f97316"}
-        
+        return {"rank": "ERR", "status": "Лимит запросов", "color": "#f97316"}
     if check_result is False:
         return {"rank": "F", "status": "Занят ($0)", "color": "#ef4444"}
 
     length = len(username)
-
-    if is_pure_word and length <= 6:
-        return {"rank": "SSS+", "status": "Редкий Грааль (~$100–$500+)", "color": "#2bcf66"}
-    if is_pure_word and length <= 9:
-        return {"rank": "SS", "status": "Премиум улов (~$30–$100)", "color": "#eab308"}
-    if not has_underscore and length <= 13:
-        return {"rank": "S", "status": "Хороший ник (~$10–$30)", "color": "#a855f7"}
-    
-    return {"rank": "A", "status": "Обычный ник (~$2–$10)", "color": "#06b6d4"}
-
+    if is_pure and length <= 6:
+        return {"rank": "SSS+", "status": "Грааль (~$100+)", "color": "#2bcf66"}
+    if is_pure and length <= 9:
+        return {"rank": "SS", "status": "Премиум (~$30+)", "color": "#eab308"}
+    return {"rank": "S", "status": "Хороший ник (~$5+)", "color": "#a855f7"}
 
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH):
         return FileResponse(INDEX_PATH, media_type="text/html")
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
-
 
 @app.get("/api/generate")
 async def generate_username(request: Request, platform: str = Query("telegram")):
@@ -251,51 +217,29 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
     USER_COOLDOWNS[client_ip] = time.time()
 
     rand_type = random.random()
-    is_pure_word = False
-    has_underscore = False
+    is_pure, has_und = False, False
 
-    if rand_type < 0.10:
+    if rand_type < 0.20:
         generated = random.choice(PURE_WORDS)
-        is_pure_word = True
-    elif rand_type < 0.35:
-        category = random.choice(list(BRAND_CATEGORIES.values()))
-        brand = random.choice(category["names"])
-        word = random.choice(category["contexts"])
-        if random.random() < 0.35:
-            generated = f"{brand}_{word}"
-            has_underscore = True
-        else:
-            generated = f"{brand}{word}"
+        is_pure = True
     elif rand_type < 0.60:
-        category = random.choice(list(CELEB_CATEGORIES.values()))
-        celeb = random.choice(category["names"])
-        word = random.choice(category["contexts"])
-        if random.random() < 0.35:
-            generated = f"{word}_{celeb}" if word in QUALITY_PREFIXES else f"{celeb}_{word}"
-            has_underscore = True
-        else:
-            generated = f"{word}{celeb}" if word in QUALITY_PREFIXES else f"{celeb}{word}"
+        cat = random.choice(list(BRAND_CATEGORIES.values()))
+        b, c = random.choice(cat["names"]), random.choice(cat["contexts"])
+        generated = f"{b}_{c}" if random.random() < 0.5 else f"{b}{c}"
+        has_und = "_" in generated
     else:
-        w1 = random.choice(PURE_WORDS)
-        w2 = random.choice(PURE_WORDS)
-        while w1 == w2:
-            w2 = random.choice(PURE_WORDS)
-            
-        if random.random() < 0.35:
-            generated = f"{w1}_{w2}"
-            has_underscore = True
-        else:
-            generated = f"{w1}{w2}"
+        cat = random.choice(list(CELEB_CATEGORIES.values()))
+        c, w = random.choice(cat["names"]), random.choice(cat["contexts"])
+        generated = f"{c}_{w}" if random.random() < 0.5 else f"{c}{w}"
+        has_und = "_" in generated
 
     if platform == "whatsapp":
-        check_result = True
+        check_result = await async_check_wa(generated)
         link = f"https://wa.me/{generated}"
     else:
         check_result = await async_check_tg(generated)
         link = f"https://t.me/{generated}"
 
-    catch_eval = calculate_catch_score(generated, check_result, is_pure_word, has_underscore)
-    
     is_free_bool = True if check_result is True else False
 
     return {
@@ -303,7 +247,7 @@ async def generate_username(request: Request, platform: str = Query("telegram"))
         "generated_username": generated,
         "platform": platform,
         "is_free": is_free_bool,
-        "evaluation": catch_eval,
+        "evaluation": calculate_catch_score(generated, check_result, is_pure, has_und),
         "link": link
     }
 
@@ -313,5 +257,4 @@ async def on_startup():
         asyncio.create_task(dp.start_polling(bot))
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
