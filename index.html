@@ -107,7 +107,7 @@
         .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
         .price-text { font-size: 0.85rem; opacity: 0.7; }
         .golden-mode { border-color: #FFD700 !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.1) !important; animation: goldPulse 2s infinite alternate; }
-        @keyframes goldPulse { 0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); } 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.5); } }
+        @keyframes goldPulse { 0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); } 100% { shadow: 0 0 60px rgba(255, 215, 0, 0.5); } }
 
         .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -143,8 +143,9 @@
         .range-slider { width: 90px; accent-color: var(--primary); }
         
         .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
-        .color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; margin: 0 auto; }
-        .color-dot.active { border-color: #fff; transform: scale(1.2); }
+        .color-dot { width: 26px; height: 22px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+        .color-dot.active { border-color: #fff; transform: scale(1.15); }
+        .color-dot.secret-unlocked { border: 1px solid #FFD700; box-shadow: 0 0 10px rgba(255,215,0,0.4); }
 
         .filter-options { display: none; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-top: -4px; margin-bottom: 10px; position: relative; }
         .filter-options.active { display: block; animation: slideDown 0.25s ease; }
@@ -176,7 +177,7 @@
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* КАРТОЧКА ДОСТИЖЕНИЯ С ПРОГРЕСС-БАРОМ И ЭМОДЗИ */
+        /* КАРТОЧКА ДОСТИЖЕНИЯ */
         .achieve-card {
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
             border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;
@@ -192,7 +193,6 @@
         .achieve-title { font-size: 0.9rem; font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
         .achieve-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
         
-        /* ШКАЛА ПРОГРЕССА (PROGRESS BAR) */
         .progress-bar-bg {
             width: 100%; height: 6px; background: rgba(255,255,255,0.08);
             border-radius: 10px; overflow: hidden; position: relative;
@@ -275,6 +275,14 @@
                     <span style="font-size: 1.2rem; color: var(--primary);">→</span>
                 </div>
 
+                <div class="setting-item" style="cursor: pointer; border-color: #a855f7; background: rgba(168, 85, 247, 0.05);" onclick="openModal('modal-secret-code')">
+                    <div class="setting-info">
+                        <span class="setting-title" style="color: #a855f7;">🔑 Ввести секретный код</span>
+                        <span class="setting-desc">Разблокировка локальных тем и пасхалок</span>
+                    </div>
+                    <span style="font-size: 1.2rem; color: #a855f7;">→</span>
+                </div>
+
                 <div class="setting-item">
                     <div class="setting-info">
                         <span class="setting-title">Кастомизация</span>
@@ -292,8 +300,9 @@
                 </div>
 
                 <div class="filter-options" id="custom-menu">
-                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Выбор темы (10 цветов)</div>
-                    <div class="color-picker-grid">
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Выбор темы</div>
+                    <div class="color-picker-grid" id="theme-dots-grid">
+                        <!-- Базовые 10 цветов -->
                         <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', this)"></div>
                         <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', 'rgba(56, 189, 248, 0.25)', this)"></div>
                         <div class="color-dot" style="background:#6366f1;" onclick="setThemeColor('#6366f1', 'rgba(99, 102, 241, 0.25)', this)"></div>
@@ -328,7 +337,7 @@
                     </div>
 
                     <div id="emoji-controls-box">
-                        <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="checkSecretCodes(this.value); updateEmojiSettings();">
+                        <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="updateEmojiSettings();">
 
                         <div class="filter-row">
                             <span style="font-size: 0.8rem; color: var(--text-main);">Размер эмодзи</span>
@@ -380,6 +389,21 @@
         </div>
     </div>
 
+    <!-- Модалка: Ввод Секретного Кода -->
+    <div class="modal-overlay" id="modal-secret-code">
+        <div class="modal-content glass-panel" style="max-width: 360px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🔑 Секретные Коды</h2>
+                <button class="btn-close" onclick="closeModal('modal-secret-code')">✕</button>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите секретный промокод для разблокировки эксклюзивных локальных тем!</p>
+                <input type="text" id="secret-code-input" class="form-input" style="text-align:center; font-weight:bold; letter-spacing:1px; margin-bottom:12px;" placeholder="ПРОМОКОД (например: matrix)">
+                <button class="form-btn" onclick="submitSecretCode()">Разблокировать</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Модалка: Радар -->
     <div class="modal-overlay" id="modal-radar">
         <div class="modal-content glass-panel">
@@ -388,24 +412,22 @@
                 <button class="btn-close" onclick="closeModal('modal-radar')">✕</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Введите занятый ник или секретный код. Бот напишет в ЛС, если ник освободится!</div>
-                <input type="text" id="radar-input" class="form-input" placeholder="@nickname или секретный код" onkeyup="checkSecretCodes(this.value)">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Введите занятый ник. Бот напишет в ЛС, если он освободится!</div>
+                <input type="text" id="radar-input" class="form-input" placeholder="@nickname">
                 <button class="form-btn" onclick="addRadarTarget()">Поставить на мониторинг</button>
                 <div id="radar-list" style="margin-top: 20px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Модалка: Достижения (100 Ачивок с реальным прогрессом) -->
+    <!-- Модалка: Достижения -->
     <div class="modal-overlay" id="modal-achievements">
         <div class="modal-content glass-panel" style="max-width: 420px;">
             <div class="modal-header">
                 <h2 class="modal-title">🏆 Достижения (<span id="achieve-count-modal">0</span>/100)</h2>
                 <button class="btn-close" onclick="closeModal('modal-achievements')">✕</button>
             </div>
-            <div class="modal-body" id="achievements-list-container">
-                <!-- Загружается скриптом -->
-            </div>
+            <div class="modal-body" id="achievements-list-container"></div>
         </div>
     </div>
 
@@ -448,7 +470,6 @@
         let tgChatId = "0";
         let autoParseCatches = [];
         
-        // СЧЕТЧИКИ ПРОГРЕССА ПОЛЬЗОВАТЕЛЯ
         let stats = {
             generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
             radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
@@ -456,6 +477,8 @@
             fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0'),
             secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
         };
+
+        let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
 
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
@@ -472,9 +495,80 @@
             checkAchievementProgress();
         }
 
-        /* --- БАЗА 100 ДОСТИЖЕНИЙ С ПРОГРЕССОМ И ЭМОДЗИ --- */
+        /* --- СЕКРЕТНЫЕ ТЕМЫ И ПРОМОКОДЫ --- */
+        function submitSecretCode() {
+            const input = document.getElementById('secret-code-input');
+            const code = input.value.trim().toLowerCase();
+            input.value = "";
+
+            if (!code) return;
+
+            if (code === "matrix") {
+                unlockSecretTheme('matrix_theme', '💻', '#29c75f', 'rgba(41, 199, 95, 0.4)', '0, 1, ⚡, 💻');
+                showToast("🟢 Тема MATRIX разблокирована в кастомизации!");
+            } else if (code === "durov") {
+                unlockSecretTheme('durov_theme', '👑', '#eab308', 'rgba(234, 179, 8, 0.4)', '💎, 👑, ✈️, 💰');
+                showToast("👑 Тема TON KING разблокирована в кастомизации!");
+            } else if (code === "rainbow" || code === "радуга") {
+                unlockSecretTheme('rainbow_theme', '🌈', '#ec4899', 'rgba(236, 72, 153, 0.4)', '🌈, ✨, 🔥');
+                showToast("🌈 ТЕМА РАДУГА разблокирована в кастомизации!");
+            } else {
+                showToast("❌ Неверный промокод");
+                return;
+            }
+
+            stats.secretsFound++;
+            saveStats();
+            closeModal('modal-secret-code');
+        }
+
+        function unlockSecretTheme(themeId, icon, colorHex, glowHex, emojis) {
+            if (!unlockedSecretThemes.some(t => t.id === themeId)) {
+                unlockedSecretThemes.push({ id: themeId, icon, colorHex, glowHex, emojis });
+                localStorage.setItem('vh_secret_themes', JSON.stringify(unlockedSecretThemes));
+            }
+            renderCustomThemesGrid();
+            applyTheme(colorHex, glowHex, emojis, themeId === 'rainbow_theme');
+        }
+
+        function renderCustomThemesGrid() {
+            const grid = document.getElementById('theme-dots-grid');
+            if (!grid) return;
+
+            // Удаляем старые секретные плашки
+            document.querySelectorAll('.color-dot.secret-unlocked').forEach(e => e.remove());
+
+            unlockedSecretThemes.forEach(theme => {
+                const dot = document.createElement('div');
+                dot.className = 'color-dot secret-unlocked';
+                dot.style.background = theme.colorHex;
+                dot.innerText = theme.icon;
+                dot.onclick = (e) => {
+                    applyTheme(theme.colorHex, theme.glowHex, theme.emojis, theme.id === 'rainbow_theme');
+                    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                    dot.classList.add('active');
+                };
+                grid.appendChild(dot);
+            });
+        }
+
+        function applyTheme(colorHex, glowHex, emojis, isRainbow = False) {
+            if (isRainbow) {
+                document.body.classList.add("rainbow-mode");
+            } else {
+                document.body.classList.remove("rainbow-mode");
+            }
+
+            setThemeColor(colorHex, glowHex, null);
+            if (emojis) {
+                document.getElementById('emoji-input').value = emojis;
+                updateEmojiSettings();
+            }
+        }
+
+        /* --- БАЗА 100 ДОСТИЖЕНИЙ --- */
         const ACHIEVEMENTS_DATA = [];
-        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🔮", "🪐"];
+        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
         
         for (let i = 1; i <= 100; i++) {
             let title = `Достижение #${i}`;
@@ -486,7 +580,7 @@
             if (i === 1) { title = "Первый спин"; desc = "Сделать 1 генерацию."; icon = "🎲"; target = 1; statKey = "generations"; }
             else if (i === 2) { title = "Любитель спинов"; desc = "Сделать 10 генераций."; icon = "🎰"; target = 10; statKey = "generations"; }
             else if (i === 3) { title = "Мастер прокрутки"; desc = "Сделать 50 генераций."; icon = "⚡"; target = 50; statKey = "generations"; }
-            else if (i === 4) { title = "1,000 Спинов"; desc = "Совершить 1000 прокруток генератора!"; icon = "🔥"; target = 1000; statKey = "generations"; }
+            else if (i === 4) { title = "1,000 Спинов"; desc = "Совершить 1000 прокруток!"; icon = "🔥"; target = 1000; statKey = "generations"; }
             else if (i === 5) { title = "Наводчик радара"; desc = "Поставить 1 ник на Радар."; icon = "🎯"; target = 1; statKey = "radarAdded"; }
             else if (i === 6) { title = "Дизайнер стиля"; desc = "Сменить тему 3 раза."; icon = "🎨"; target = 3; statKey = "themesChanged"; }
             else if (i === 7) { title = "Охотник Fragment"; desc = "Выловить 1 ценный Fragment ник."; icon = "💎"; target = 1; statKey = "fragmentFound"; }
@@ -546,33 +640,6 @@
                     </div>
                 `;
             }).join('');
-        }
-
-        /* --- СЕКРЕТНЫЕ ПАСХАЛКИ (EASTER EGGS) --- */
-        function checkSecretCodes(text) {
-            if (!text) return;
-            const clean = text.toLowerCase().trim();
-
-            if (clean === "matrix") {
-                setThemeColor("#29c75f", "rgba(41, 199, 95, 0.4)", null);
-                document.getElementById('emoji-input').value = "0, 1, ⚡, 💻";
-                updateEmojiSettings();
-                showToast("🟢 СЕКРЕТНЫЙ РЕЖИМ MATRIX АКТИВИРОВАН!");
-                stats.secretsFound++; saveStats();
-            } 
-            else if (clean === "rainbow" || clean === "радуга") {
-                document.body.classList.add("rainbow-mode");
-                showToast("🌈 РАДУЖНАЯ ТЕМА ВКЛЮЧЕНА!");
-                stats.secretsFound++; saveStats();
-            } 
-            else if (clean === "durov") {
-                setThemeColor("#eab308", "rgba(234, 179, 8, 0.4)", null);
-                document.getElementById('emoji-input').value = "💎, 👑, ✈️, 💰";
-                updateEmojiSettings();
-                triggerJackpot();
-                showToast("👑 СЕКРЕТНЫЙ РЕЖИМ TON KING!");
-                stats.secretsFound++; saveStats();
-            }
         }
 
         /* --- ИНТЕРАКТИВНЫЙ ТУМАН --- */
@@ -781,6 +848,7 @@
         }
 
         function loadCustomization() {
+            renderCustomThemesGrid();
             const saved = localStorage.getItem('vh_custom_settings');
             checkAchievementProgress();
             if(!saved) return;
@@ -870,8 +938,6 @@
         async function addRadarTarget() {
             const inp = document.getElementById('radar-input'); const val = inp.value.trim();
             if(!val) return;
-            
-            checkSecretCodes(val);
 
             const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
             const data = await res.json();
