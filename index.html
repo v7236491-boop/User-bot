@@ -239,10 +239,13 @@
             color: #eab308; text-align: center;
         }
 
+        /* КОМПАКТНАЯ КНОПКА «💬 НАПИСАТЬ» */
         .lb-finder-btn {
             background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);
-            padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; margin-top: 6px; display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; 
+            margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
         }
+        .lb-finder-btn:active { transform: scale(0.95); }
 
         /* КАРТОЧКА ДОСТИЖЕНИЯ */
         .achieve-card {
@@ -601,7 +604,7 @@
             checkAchievementProgress();
         }
 
-        /* --- ПЕРЕХОД В ЛС Telegram ЛОВЦА --- */
+        /* --- ПЕРЕХОД В ЛС Telegram ЛОВЦА (СВОРОВАНИЕ В ФОН) --- */
         function openUserChat(finderId) {
             if (!finderId || finderId === "0") return;
             vibrate('light');
@@ -633,7 +636,7 @@
                                     <div>
                                         <div style="font-weight:bold; color:#fff;">@${item.username}</div>
                                         <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: ${item.finder_name}</div>
-                                        ${item.finder_id !== "0" ? `<button class="lb-finder-btn" onclick="openUserChat('${item.finder_id}')">💬 Написать пользователю</button>` : ''}
+                                        ${item.finder_id !== "0" ? `<button class="lb-finder-btn" onclick="openUserChat('${item.finder_id}')">💬 Написать</button>` : ''}
                                     </div>
                                 </div>
                                 <div style="text-align:right;">
