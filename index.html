@@ -216,47 +216,39 @@
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* --- ИСТОРИЯ И СТИЛЬНЫЕ СВАЙПЫ (ИКОНКИ НА ПОДЛОЖКЕ В УГЛАХ) --- */
+        /* --- ИСТОРИЯ И СВАЙПЫ С ФОНОВЫМИ ИКОНКАМИ В УГЛАХ --- */
         .history-wrapper {
             position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
             background: transparent;
             transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease;
             max-height: 80px;
         }
-        /* Подложка свайпа */
-        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.35); } /* Красный для удаления */
-        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.35); }  /* Голубой для share */
+        /* Подложка фонов при свайпе */
+        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.4); } /* Красный фон (справа налево / тянем вправо) */
+        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.4); }  /* Голубой фон (слева направо / тянем влево) */
 
-        /* Иконки на свободных местах фоновой подложки */
+        /* Фиксированные иконки на открывающемся свободном пространстве фона */
         .swipe-action-icon {
             position: absolute; top: 50%; transform: translateY(-50%);
             font-size: 1.25rem; opacity: 0; transition: opacity 0.2s ease; z-index: 1;
         }
-        .swipe-icon-left { left: 18px; }   /* Корзина слева, когда тянем вправо */
-        .swipe-icon-right { right: 18px; } /* Самолетик справа, когда тянем влево */
+        .swipe-icon-left { left: 18px; color: #fff; }   /* Корзина слева (появляется при свайпе вправо) */
+        .swipe-icon-right { right: 18px; color: #fff; } /* Иконка Share справа (появляется при свайпе влево) */
 
         .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
         .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
         .history-card { 
-            background: rgba(20, 26, 23, 0.92); border: 1px solid rgba(255,255,255,0.06); 
+            background: rgba(20, 26, 23, 0.95); border: 1px solid rgba(255,255,255,0.06); 
             border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; 
             align-items: center; transition: background 0.2s; position: relative; z-index: 2; 
             touch-action: pan-y; will-change: transform; user-select: none;
         }
         .history-card:hover { border-color: var(--primary); }
 
-        /* --- ПРЕМИУМ ДИЗАЙН ЛИДЕРБОРДА --- */
-        .lb-card {
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between;
-            align-items: center; transition: 0.2s; margin-bottom: 8px;
-        }
-        .lb-card:hover { border-color: #eab308; background: rgba(234, 179, 8, 0.04); }
-        
         .lb-rank-badge {
-            font-size: 1.2rem; font-weight: 800; min-width: 36px;
+            font-size: 1.1rem; font-weight: 800; min-width: 32px;
             text-align: center; display: flex; align-items: center; justify-content: center;
         }
 
@@ -342,11 +334,12 @@
         </div>
     </main>
 
-    <!-- ПЛАВАЮЩИЕ КНОПКИ В УГЛАХ -->
+    <!-- ПЛАВАЮЩАЯ КНОПКА ДОСТИЖЕНИЙ (ЛЕВЫЙ УГОЛ) -->
     <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
         🏆 <span id="achieve-counter-badge">0/100</span>
     </button>
 
+    <!-- ПЛАВАЮЩАЯ КНОПКА ЛИДЕРБОРДА (ПРАВЫЙ УГОЛ) -->
     <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')" title="Рейтинг и улов">
         📊 <span style="font-size:0.8rem; opacity:0.9;">Топ</span>
     </button>
@@ -431,7 +424,7 @@
                     </div>
 
                     <div id="emoji-controls-box">
-                        <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="updateEmojiSettings();">
+                        <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="updateEmojiSettings()">
 
                         <div class="filter-row">
                             <span style="font-size: 0.8rem; color: var(--text-main);">Размер эмодзи</span>
@@ -635,7 +628,7 @@
             }
         }
 
-        /* --- ГЛОБАЛЬНЫЙ ЛИДЕРБОРД С ПРЕМИУМ ДИЗАЙНОМ --- */
+        /* --- ГЛОБАЛЬНЫЙ ЛИДЕРБОРД --- */
         async function fetchLeaderboard(period = 'all') {
             const container = document.getElementById('leaderboard-list-container');
             container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка рейтинга...</div>';
@@ -1230,8 +1223,8 @@
                 
                 div.innerHTML = `
                     <div class="swipe-action-icon swipe-icon-left">🗑</div>
-                    <div class="hist-left"><div class="hist-user" style="color: ${item.color}">@${item.user}</div><div class="hist-plat" style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div></div>
-                    <div class="hist-right" style="text-align:right;"><div class="hist-rank" style="color: ${item.color}; font-weight:bold;">${item.rank}</div><div class="price-text" style="font-size:0.75rem; opacity:0.8;">${item.price}</div></div>
+                    <div class="hist-left" style="pointer-events:none;"><div class="hist-user" style="color: ${item.color}">@${item.user}</div><div class="hist-plat" style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div></div>
+                    <div class="hist-right" style="text-align:right; pointer-events:none;"><div class="hist-rank" style="color: ${item.color}; font-weight:bold;">${item.rank}</div><div class="price-text" style="font-size:0.75rem; opacity:0.8;">${item.price}</div></div>
                     <div class="swipe-action-icon swipe-icon-right">🔗</div>
                 `;
 
@@ -1239,6 +1232,7 @@
                 div.ontouchmove = handleTouchMove;
                 div.ontouchend = handleTouchEnd;
 
+                // КЛИК ТЕПЕРЬ ТОЛЬКО КОПИРУЕТ (НИКАКИХ СЛУЧАЙНЫХ ШАРОВ)
                 div.onclick = (e) => {
                     if (isSwiping) return;
                     navigator.clipboard.writeText(item.user); 
@@ -1258,7 +1252,7 @@
             }
         }
 
-        /* --- ДВУСТОРОННИЙ СВАЙП С ФОНОВЫМИ ИКОНКАМИ --- */
+        /* --- СВАЙПЫ С ПОДЛОЖКОЙ И ИКОНКАМИ В УГЛАХ --- */
         let startX = 0, currentX = 0, activeCard = null, isSwiping = false;
 
         function handleTouchStart(e) {
@@ -1279,13 +1273,13 @@
             if (Math.abs(diffX) > 10) isSwiping = true;
 
             if (diffX > 0) {
-                // Свайп ВПРАВО -> Красная подложка + Корзина слева
+                // Свайп ВПРАВО -> Красный фон (Корзина слева)
                 if (wrapper) {
                     wrapper.classList.add('swiping-right');
                     wrapper.classList.remove('swiping-left');
                 }
             } else if (diffX < 0) {
-                // Свайп ВЛЕВО -> Голубая подложка + Самолетик справа
+                // Свайп ВЛЕВО -> Голубой фон (Самолетик справа)
                 if (wrapper) {
                     wrapper.classList.add('swiping-left');
                     wrapper.classList.remove('swiping-right');
@@ -1304,7 +1298,7 @@
             const wrapper = document.getElementById(`hist-wrap-${index}`);
 
             if (diffX > 140) {
-                // УДАЛЕНИЕ
+                // ПОЛНЫЙ СВАЙП ВПРАВО -> УДАЛЕНИЕ
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translateX(100%)';
                 activeCard.style.opacity = '0';
@@ -1319,7 +1313,7 @@
                 }, 350);
             } 
             else if (diffX < -140) {
-                // ПОДЕЛИТЬСЯ
+                // ПОЛНЫЙ СВАЙП ВЛЕВО -> ПОДЕЛИТЬСЯ В ТЕЛЕГРАМ
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translateX(-100%)';
                 activeCard.style.opacity = '0';
@@ -1339,7 +1333,7 @@
                 }, 200);
             } 
             else {
-                // ВОЗВРАТ
+                // ВОЗВРАТ КАРТОЧКИ
                 activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
                 activeCard.style.transform = 'translateX(0px)';
                 activeCard.style.opacity = '1';
