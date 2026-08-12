@@ -25,6 +25,15 @@
             font-family: 'Inter', -apple-system, sans-serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column;
             overflow: hidden; position: relative;
+            transition: filter 0.5s ease;
+        }
+
+        body.rainbow-mode {
+            animation: rainbowAnim 6s linear infinite;
+        }
+        @keyframes rainbowAnim {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
         }
 
         /* --- ИНТЕРАКТИВНЫЙ ТУМАН И ЭМОДЗИ --- */
@@ -74,8 +83,18 @@
         .nav-btn svg { opacity: 0.8; transition: 0.3s; }
         .nav-btn:hover svg { opacity: 1; filter: drop-shadow(0 0 5px var(--primary)); stroke: var(--primary); }
 
+        .floating-achieving-btn {
+            position: fixed; bottom: 20px; left: 20px; z-index: 90;
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            border: 1px solid var(--primary); color: var(--text-main);
+            padding: 10px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
+            box-shadow: 0 4px 20px var(--primary-glow); transition: 0.3s ease;
+        }
+        .floating-achieving-btn:active { transform: scale(0.92); }
+
         /* --- ГЛАВНЫЙ ЭКРАН --- */
-        main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transform: translateY(-5vh); }
+        main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transform: translateY(-3vh); }
         .app-container { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 14px; }
 
         .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
@@ -110,7 +129,6 @@
         .btn-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
         .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
 
-        /* Элементы настроек */
         .setting-item { background: rgba(255,255,255,0.03); padding: 14px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
         .setting-info { display: flex; flex-direction: column; gap: 2px; }
         .setting-title { font-weight: 600; font-size: 0.9rem; }
@@ -124,17 +142,14 @@
 
         .range-slider { width: 90px; accent-color: var(--primary); }
         
-        /* 10 Цветовых Тем */
         .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
         .color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; margin: 0 auto; }
         .color-dot.active { border-color: #fff; transform: scale(1.2); }
 
-        /* Выпадающие панели */
         .filter-options { display: none; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-top: -4px; margin-bottom: 10px; position: relative; }
         .filter-options.active { display: block; animation: slideDown 0.25s ease; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* КНОПКА СВОРАЧИВАНИЯ / РАЗВОРАЧИВАНИЯ С АНИМАЦИЕЙ СТРЕЛКИ */
         .panel-collapse-btn {
             background: transparent; border: none;
             color: var(--text-muted); cursor: pointer;
@@ -161,26 +176,31 @@
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* ИСТОРИЯ - ТЕМНЫЙ ФОН И ДИНАМИЧЕСКИЙ СВАЙП */
-        .history-wrapper {
-            position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
-            background: transparent;
-            transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease, background 0.2s;
-            max-height: 80px;
+        /* КАРТОЧКА ДОСТИЖЕНИЯ С ПРОГРЕСС-БАРОМ И ЭМОДЗИ */
+        .achieve-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;
+            opacity: 0.6; filter: grayscale(0.8); transition: 0.3s;
         }
-        .history-wrapper.swiping { background: rgba(239, 68, 68, 0.25); }
-        .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
-
-        .history-card { 
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; 
-            align-items: center; transition: background 0.2s; position: relative; z-index: 2; 
-            touch-action: pan-y; will-change: transform; user-select: none;
+        .achieve-card.unlocked {
+            opacity: 1; filter: grayscale(0); border-color: var(--primary);
+            background: rgba(41, 199, 95, 0.06); box-shadow: 0 0 15px rgba(41, 199, 95, 0.1);
         }
-        .history-card:hover { border-color: var(--primary); }
-        .radar-remove { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
-
-        .btn-clear-history { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .achieve-header-row { display: flex; align-items: center; gap: 12px; }
+        .achieve-icon { font-size: 1.8rem; }
+        .achieve-info { flex: 1; }
+        .achieve-title { font-size: 0.9rem; font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
+        .achieve-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        
+        /* ШКАЛА ПРОГРЕССА (PROGRESS BAR) */
+        .progress-bar-bg {
+            width: 100%; height: 6px; background: rgba(255,255,255,0.08);
+            border-radius: 10px; overflow: hidden; position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%; background: var(--primary);
+            border-radius: 10px; transition: width 0.4s ease;
+        }
 
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -231,6 +251,11 @@
         </div>
     </main>
 
+    <!-- ПЛАВАЮЩАЯ КНОПКА ДОСТИЖЕНИЙ -->
+    <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
+        🏆 <span id="achieve-counter-badge">0/100</span>
+    </button>
+
     <div class="toast" id="global-toast">✨ Ник скопирован!<br>Примените в настройках.</div>
 
     <!-- Модалка: Настройки -->
@@ -250,7 +275,6 @@
                     <span style="font-size: 1.2rem; color: var(--primary);">→</span>
                 </div>
 
-                <!-- ТУМБЛЕР И УПРАВЛЕНИЕ КАСТОМИЗАЦИЕЙ -->
                 <div class="setting-item">
                     <div class="setting-info">
                         <span class="setting-title">Кастомизация</span>
@@ -267,7 +291,6 @@
                     </div>
                 </div>
 
-                <!-- ВЫПАДАЮЩАЯ ПАНЕЛЬ КАСТОМИЗАЦИИ -->
                 <div class="filter-options" id="custom-menu">
                     <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Выбор темы (10 цветов)</div>
                     <div class="color-picker-grid">
@@ -296,7 +319,6 @@
 
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
 
-                    <!-- ТУМБЛЕР ВКЛЮЧЕНИЯ / ВЫКЛЮЧЕНИЯ ЛЕТАЮЩИХ ЭМОДЗИ -->
                     <div class="filter-row">
                         <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Включить летающие эмодзи</span>
                         <label class="switch">
@@ -306,7 +328,7 @@
                     </div>
 
                     <div id="emoji-controls-box">
-                        <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="updateEmojiSettings()">
+                        <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="checkSecretCodes(this.value); updateEmojiSettings();">
 
                         <div class="filter-row">
                             <span style="font-size: 0.8rem; color: var(--text-main);">Размер эмодзи</span>
@@ -366,10 +388,23 @@
                 <button class="btn-close" onclick="closeModal('modal-radar')">✕</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Введите занятый ник. Бот напишет в ЛС, если он освободится! (Убедитесь, что диалог с ботом открыт).</div>
-                <input type="text" id="radar-input" class="form-input" placeholder="@nickname (без @)">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Введите занятый ник или секретный код. Бот напишет в ЛС, если ник освободится!</div>
+                <input type="text" id="radar-input" class="form-input" placeholder="@nickname или секретный код" onkeyup="checkSecretCodes(this.value)">
                 <button class="form-btn" onclick="addRadarTarget()">Поставить на мониторинг</button>
                 <div id="radar-list" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: Достижения (100 Ачивок с реальным прогрессом) -->
+    <div class="modal-overlay" id="modal-achievements">
+        <div class="modal-content glass-panel" style="max-width: 420px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🏆 Достижения (<span id="achieve-count-modal">0</span>/100)</h2>
+                <button class="btn-close" onclick="closeModal('modal-achievements')">✕</button>
+            </div>
+            <div class="modal-body" id="achievements-list-container">
+                <!-- Загружается скриптом -->
             </div>
         </div>
     </div>
@@ -412,10 +447,132 @@
         let slotInterval;
         let tgChatId = "0";
         let autoParseCatches = [];
+        
+        // СЧЕТЧИКИ ПРОГРЕССА ПОЛЬЗОВАТЕЛЯ
+        let stats = {
+            generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
+            radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
+            themesChanged: parseInt(localStorage.getItem('vh_stat_themes') || '0'),
+            fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0'),
+            secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
+        };
+
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
             tgChatId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
+        }
+
+        function saveStats() {
+            localStorage.setItem('vh_stat_gen', stats.generations.toString());
+            localStorage.setItem('vh_stat_radar', stats.radarAdded.toString());
+            localStorage.setItem('vh_stat_themes', stats.themesChanged.toString());
+            localStorage.setItem('vh_stat_fragment', stats.fragmentFound.toString());
+            localStorage.setItem('vh_stat_secrets', stats.secretsFound.toString());
+            checkAchievementProgress();
+        }
+
+        /* --- БАЗА 100 ДОСТИЖЕНИЙ С ПРОГРЕССОМ И ЭМОДЗИ --- */
+        const ACHIEVEMENTS_DATA = [];
+        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🔮", "🪐"];
+        
+        for (let i = 1; i <= 100; i++) {
+            let title = `Достижение #${i}`;
+            let desc = `Выполните условия для уровня ${i}.`;
+            let icon = EMOJI_LIST[i % EMOJI_LIST.length];
+            let statKey = "generations";
+            let target = i * 10;
+
+            if (i === 1) { title = "Первый спин"; desc = "Сделать 1 генерацию."; icon = "🎲"; target = 1; statKey = "generations"; }
+            else if (i === 2) { title = "Любитель спинов"; desc = "Сделать 10 генераций."; icon = "🎰"; target = 10; statKey = "generations"; }
+            else if (i === 3) { title = "Мастер прокрутки"; desc = "Сделать 50 генераций."; icon = "⚡"; target = 50; statKey = "generations"; }
+            else if (i === 4) { title = "1,000 Спинов"; desc = "Совершить 1000 прокруток генератора!"; icon = "🔥"; target = 1000; statKey = "generations"; }
+            else if (i === 5) { title = "Наводчик радара"; desc = "Поставить 1 ник на Радар."; icon = "🎯"; target = 1; statKey = "radarAdded"; }
+            else if (i === 6) { title = "Дизайнер стиля"; desc = "Сменить тему 3 раза."; icon = "🎨"; target = 3; statKey = "themesChanged"; }
+            else if (i === 7) { title = "Охотник Fragment"; desc = "Выловить 1 ценный Fragment ник."; icon = "💎"; target = 1; statKey = "fragmentFound"; }
+            else if (i === 8) { title = "Детектив"; desc = "Активировать 1 секретный код."; icon = "🕵️"; target = 1; statKey = "secretsFound"; }
+            else {
+                title = `Мастер сканирования Lvl.${i}`;
+                desc = `Сделать ${i * 15} успешных проверок.`;
+                target = i * 15;
+                statKey = "generations";
+            }
+
+            ACHIEVEMENTS_DATA.push({ id: `ach_${i}`, title, desc, icon, target, statKey });
+        }
+
+        let unlockedAchievements = JSON.parse(localStorage.getItem('vh_unlocked_achievements') || '[]');
+
+        function checkAchievementProgress() {
+            ACHIEVEMENTS_DATA.forEach(ach => {
+                const currentVal = stats[ach.statKey] || 0;
+                if (currentVal >= ach.target && !unlockedAchievements.includes(ach.id)) {
+                    unlockedAchievements.push(ach.id);
+                    localStorage.setItem('vh_unlocked_achievements', JSON.stringify(unlockedAchievements));
+                    showToast(`🏆 Достижение: ${ach.title}!`);
+                    vibrate('success');
+                }
+            });
+            renderAchievements();
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievements-list-container');
+            document.getElementById('achieve-counter-badge').innerText = `${unlockedAchievements.length}/100`;
+            document.getElementById('achieve-count-modal').innerText = unlockedAchievements.length;
+
+            if (!container) return;
+
+            container.innerHTML = ACHIEVEMENTS_DATA.map(item => {
+                const isUnlocked = unlockedAchievements.includes(item.id);
+                const currentVal = Math.min(stats[item.statKey] || 0, item.target);
+                const percent = Math.min(100, Math.floor((currentVal / item.target) * 100));
+
+                return `
+                    <div class="achieve-card ${isUnlocked ? 'unlocked' : ''}">
+                        <div class="achieve-header-row">
+                            <div class="achieve-icon">${item.icon}</div>
+                            <div class="achieve-info">
+                                <div class="achieve-title">
+                                    <span>${item.title}</span>
+                                    <span style="font-size:0.75rem; color:var(--primary);">${currentVal}/${item.target}</span>
+                                </div>
+                                <div class="achieve-desc">${item.desc}</div>
+                            </div>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${percent}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* --- СЕКРЕТНЫЕ ПАСХАЛКИ (EASTER EGGS) --- */
+        function checkSecretCodes(text) {
+            if (!text) return;
+            const clean = text.toLowerCase().trim();
+
+            if (clean === "matrix") {
+                setThemeColor("#29c75f", "rgba(41, 199, 95, 0.4)", null);
+                document.getElementById('emoji-input').value = "0, 1, ⚡, 💻";
+                updateEmojiSettings();
+                showToast("🟢 СЕКРЕТНЫЙ РЕЖИМ MATRIX АКТИВИРОВАН!");
+                stats.secretsFound++; saveStats();
+            } 
+            else if (clean === "rainbow" || clean === "радуга") {
+                document.body.classList.add("rainbow-mode");
+                showToast("🌈 РАДУЖНАЯ ТЕМА ВКЛЮЧЕНА!");
+                stats.secretsFound++; saveStats();
+            } 
+            else if (clean === "durov") {
+                setThemeColor("#eab308", "rgba(234, 179, 8, 0.4)", null);
+                document.getElementById('emoji-input').value = "💎, 👑, ✈️, 💰";
+                updateEmojiSettings();
+                triggerJackpot();
+                showToast("👑 СЕКРЕТНЫЙ РЕЖИМ TON KING!");
+                stats.secretsFound++; saveStats();
+            }
         }
 
         /* --- ИНТЕРАКТИВНЫЙ ТУМАН --- */
@@ -463,7 +620,7 @@
         }
         drawFog();
 
-        /* --- ЛЕТАЮЩИЕ ЭМОДЗИ ДИНАМИКА --- */
+        /* --- ЛЕТАЮЩИЕ ЭМОДЗИ --- */
         let floatingEmojisList = [];
         let emojiElements = [];
 
@@ -549,10 +706,10 @@
             document.documentElement.style.setProperty('--primary-glow', glow);
             document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
             if(dotEl) dotEl.classList.add('active');
+            stats.themesChanged++; saveStats();
             saveCustomization();
         }
 
-        /* ТУМБЛЕРЫ И УПРАВЛЕНИЕ СВОРАЧИВАНИЕМ */
         function toggleCustomMenu(cb) {
             const menu = document.getElementById('custom-menu');
             const btn = document.getElementById('btn-toggle-custom-panel');
@@ -580,7 +737,6 @@
             }
         }
 
-        // ДВУСТОРОННЕЕ СВОРАЧИВАНИЕ / РАЗВОРАЧИВАНИЕ
         function togglePanelVisibility(panelId, btnEl) {
             const menu = document.getElementById(panelId);
             if (menu.classList.contains('active')) {
@@ -594,6 +750,7 @@
 
         function resetCustomization() {
             localStorage.removeItem('vh_custom_settings');
+            document.body.classList.remove("rainbow-mode");
             setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', document.querySelectorAll('.color-dot')[0]);
             document.getElementById('fog-count-slider').value = 5;
             document.getElementById('fog-speed-slider').value = 3;
@@ -625,6 +782,7 @@
 
         function loadCustomization() {
             const saved = localStorage.getItem('vh_custom_settings');
+            checkAchievementProgress();
             if(!saved) return;
             const data = JSON.parse(saved);
 
@@ -660,6 +818,7 @@
         function triggerJackpot() {
             vibrate('success'); setTimeout(() => vibrate('success'), 200);
             document.getElementById('result-box').classList.add('golden-mode');
+            stats.fragmentFound++; saveStats();
             const emojis = ['⚡', '✨', '🔥', '💎', '🚀'];
             for(let i=0; i<30; i++) {
                 const p = document.createElement('div'); p.innerText = emojis[Math.floor(Math.random() * emojis.length)]; p.className = 'jackpot-particle'; document.body.appendChild(p);
@@ -699,6 +858,7 @@
             vibrate('light'); document.getElementById(id).classList.add('active');
             if(id === 'modal-radar') fetchRadarList();
             if(id === 'modal-history') renderHistory();
+            if(id === 'modal-achievements') renderAchievements();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -710,9 +870,13 @@
         async function addRadarTarget() {
             const inp = document.getElementById('radar-input'); const val = inp.value.trim();
             if(!val) return;
+            
+            checkSecretCodes(val);
+
             const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
             const data = await res.json();
             inp.value = ""; showToast("Взято на мушку!"); renderRadar(data.targets);
+            stats.radarAdded++; saveStats();
         }
         async function removeRadarTarget(username) {
             const res = await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${username}`);
@@ -723,7 +887,7 @@
             cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
         }
 
-        // --- ИСТОРИЯ С ЧИСТЫМ ФОНОМ И ДИНАМИЧЕСКИМ СВАЙПОМ ---
+        // --- ИСТОРИЯ ---
         function saveToHistory(item) {
             if (!item.user || item.user === "timeout" || item.user === "error") return;
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -869,6 +1033,10 @@
 
         async function fetchUsername() {
             isFetching = true; startSlotMachine();
+            
+            stats.generations++;
+            saveStats();
+
             const useFilter = document.getElementById('toggle-filter').checked;
             const lenMode = document.getElementById('filter-len').value;
             const useNum = document.getElementById('filter-num').checked;
@@ -904,7 +1072,7 @@
             } finally { isFetching = false; }
         }
 
-        // --- ИТОГИ АВТОПАРСА С СОРТИРОВКОЙ И КОПИРОВАНИЕМ ---
+        // --- ИТОГИ АВТОПАРСА ---
         function showSummaryModal() {
             if (autoParseCatches.length === 0) {
                 showToast("За автопарс свободных ников не найдено");
