@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
 
-# --- БАЗА БРЕНДОВ И ТОРПОВЫХ СЛОВ ---
+# --- БАЗА БРЕНДОВ И ТОПОВЫХ СЛОВ ---
 TOP_BRANDS = set([
     "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
     "tesla", "bitcoin", "crypto", "pavel", "durov", "telegram", "starbucks", "prada",
@@ -87,7 +87,6 @@ def load_leaderboard():
 
 def save_leaderboard(data):
     try:
-        # Сохраняем максимум ТОП-1000 записей
         data = sorted(data, key=lambda x: x.get("score", 0), reverse=True)[:1000]
         with open(LEADERBOARD_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
@@ -96,7 +95,6 @@ def save_leaderboard(data):
 
 def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_id):
     lb = load_leaderboard()
-    # Защита от дубликатов
     if any(item["username"].lower() == username.lower() for item in lb):
         return
     
@@ -112,7 +110,7 @@ def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_
     })
     save_leaderboard(lb)
 
-# --- СТРОГИЙ АЛГОРИТМ ОЦЕНКИ СТРУКТУРЫ РЫНКА FRAGMENT ---
+# --- АЛГОРИТМ ОЦЕНКИ ---
 def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: bool):
     if check_result is not True:
         return {"rank": "F", "status": "Занят", "color": "#ef4444", "score": 0}
@@ -122,11 +120,9 @@ def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: b
     vowels = set("aeiouy")
     has_num = any(char.isdigit() for char in username)
     
-    # ПРАВИЛО 1: Любой ник с "_" или цифрами сразу лишается рангов SSS+ и SS!
     if has_und or has_num or length > 8:
         return {"rank": "A", "status": "Обычный ник (~1-2 TON)", "color": "#3b82f6", "score": 20}
     
-    # ПРАВИЛО 2: Проверка на мусор (3+ согласных подряд)
     cons_streak = 0
     max_cons_streak = 0
     for char in username:
@@ -139,11 +135,9 @@ def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: b
     if max_cons_streak >= 3:
         return {"rank": "A", "status": "Набор букв (~1 TON)", "color": "#3b82f6", "score": 10}
 
-    # ПРАВИЛО 3: Топовые мировые бренды или слова из чистого словаря
     if username in TOP_BRANDS or username in PURE_WORDS:
         return {"rank": "SSS+", "status": "Fragment: High Value (~100-500+ TON)", "color": "#29c75f", "score": 100}
 
-    # ПРАВИЛО 4: Короткие читаемые слова (CVCVC)
     if length <= 4:
         return {"rank": "SSS+", "status": "Fragment (~50-150 TON)", "color": "#29c75f", "score": 90}
     elif length == 5:
@@ -203,7 +197,6 @@ async def radar_worker():
         except Exception: pass
         await asyncio.sleep(10)
 
-EASY_SYLLABLES = ["ma", "re", "ki", "so", "lu", "ta", "ve", "zi", "no", "pa", "ro", "mi", "da", "bu", "ne", "ly", "xo", "fa", "gi", "ka", "lo", "mu", "na", "ra", "se", "ti", "vo", "za"]
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
 VOWELS_EASY = "aeiouy"
 
@@ -267,7 +260,6 @@ async def generate_username(
             is_free_bool = True if check_result is True else False
             eval_data = calculate_catch_score(generated, check_result, is_pure, has_und)
             
-            # Если ник действительно свободен и имеет ранг S, SS или SSS+ — добавляем в Глобальный Лидерборд!
             if is_free_bool and eval_data["score"] >= 50:
                 add_to_leaderboard(
                     generated, 
@@ -296,7 +288,6 @@ async def get_leaderboard(period: str = Query("all")):
     lb = load_leaderboard()
     now = int(time.time())
     
-    # Фильтрация по времени
     if period == "day":
         lb = [x for x in lb if now - x.get("timestamp", 0) <= 86400]
     elif period == "week":
