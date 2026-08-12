@@ -15,6 +15,7 @@
             --glass-bg: rgba(20, 26, 23, 0.45);
             --glass-border: rgba(255, 255, 255, 0.05);
             --glass-highlight: rgba(255, 255, 255, 0.02);
+            --primary-glow: rgba(41, 199, 95, 0.25);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -26,15 +27,27 @@
             overflow: hidden; position: relative;
         }
 
-        /* --- ИНТЕРАКТИВНЫЙ ТУМАН --- */
+        /* --- ИНТЕРАКТИВНЫЙ ТУМАН И ЭМОДЗИ --- */
         #fog-canvas {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: -10; pointer-events: none; mix-blend-mode: screen;
         }
 
+        #emoji-layer {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -5; pointer-events: none; overflow: hidden;
+        }
+
+        .floating-emoji {
+            position: absolute;
+            user-select: none;
+            will-change: transform;
+            opacity: 0.7;
+        }
+
         .screen-ripple {
             position: fixed; border-radius: 50%;
-            background: radial-gradient(circle, rgba(41, 199, 95, 0.4) 0%, transparent 60%);
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 60%);
             transform: scale(0); opacity: 1; pointer-events: none; z-index: 100;
             animation: rippleExplode 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
         }
@@ -67,10 +80,10 @@
 
         .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
         .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .platform-btn.active { background: rgba(41, 199, 95, 0.15); color: var(--primary); box-shadow: 0 4px 15px rgba(41, 199, 95, 0.1); }
+        .platform-btn.active { background: var(--primary-glow); color: var(--primary); box-shadow: 0 4px 15px var(--primary-glow); }
 
         .result-field { border-radius: 24px; padding: 35px 20px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; }
-        .result-field:hover { border-color: rgba(41, 199, 95, 0.4); box-shadow: 0 15px 40px rgba(41, 199, 95, 0.15); }
+        .result-field:hover { border-color: var(--primary); box-shadow: 0 15px 40px var(--primary-glow); }
         .username-text { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); word-break: break-all; font-family: monospace; }
         .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
         .price-text { font-size: 0.85rem; opacity: 0.7; }
@@ -80,15 +93,15 @@
         .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .action-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: flex; justify-content: center; align-items: center; gap: 6px; }
-        .btn-take { background: rgba(41, 199, 95, 0.15); color: var(--primary); border-color: rgba(41, 199, 95, 0.3); }
+        .btn-take { background: var(--primary-glow); color: var(--primary); border-color: var(--primary); }
         .btn-story { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
 
-        .btn-generate { background: linear-gradient(135deg, var(--primary), #1b9b47); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; box-shadow: 0 8px 25px rgba(41, 199, 95, 0.3); position: relative; overflow: hidden; }
+        .btn-generate { background: var(--primary); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; box-shadow: 0 8px 25px var(--primary-glow); position: relative; overflow: hidden; }
         .btn-generate:active { transform: scale(0.96); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; border: 1px solid var(--border-color); cursor: not-allowed; }
 
         /* --- МОДАЛЬНЫЕ ОКНА --- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(4, 8, 6, 0.8); backdrop-filter: blur(8px); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s ease; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(4, 8, 6, 0.85); backdrop-filter: blur(8px); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s ease; }
         .modal-overlay.active { opacity: 1; visibility: visible; pointer-events: auto; }
         .modal-content { width: 100%; max-width: 380px; max-height: 85vh; display: flex; flex-direction: column; position: relative; }
         .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
@@ -97,10 +110,10 @@
         .btn-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
         .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
 
-        /* Настройки */
-        .setting-item { background: rgba(255,255,255,0.03); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; }
-        .setting-info { display: flex; flex-direction: column; gap: 4px; }
-        .setting-title { font-weight: 600; font-size: 0.95rem; }
+        /* Элементы настроек */
+        .setting-item { background: rgba(255,255,255,0.03); padding: 14px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
+        .setting-info { display: flex; flex-direction: column; gap: 2px; }
+        .setting-title { font-weight: 600; font-size: 0.9rem; }
         .setting-desc { font-size: 0.75rem; color: var(--text-muted); }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -109,16 +122,26 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .filter-options { display: none; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-top: -6px; margin-bottom: 12px; }
-        .filter-options.active { display: block; }
-        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .range-slider { width: 90px; accent-color: var(--primary); }
+        
+        /* 10 Цветовых Тем */
+        .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
+        .color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; margin: 0 auto; }
+        .color-dot.active { border-color: #fff; transform: scale(1.2); }
+
+        /* Выпадающие списки (Фильтры и Кастомизация) */
+        .filter-options { display: none; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-top: -4px; margin-bottom: 10px; }
+        .filter-options.active { display: block; animation: slideDown 0.25s ease; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .filter-row:last-child { margin-bottom: 0; }
         select { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 8px; outline: none; font-family: inherit; font-size: 0.85rem;}
 
-        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; outline: none; margin-bottom: 10px; font-family: inherit; }
+        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px; outline: none; font-family: inherit; font-size: 0.85rem; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
         
-        /* СВАЙП КАРТОЧКА И ИСТОРИЯ */
+        /* Свайп-карточка */
         .history-wrapper {
             position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
             background: rgba(239, 68, 68, 0.25);
@@ -138,7 +161,6 @@
 
         .btn-clear-history { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
-        /* КВАДРАТНОЕ КОМПАКТНОЕ УВЕДОМЛЕНИЕ */
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
             background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -155,6 +177,7 @@
 <body>
 
     <canvas id="fog-canvas"></canvas>
+    <div id="emoji-layer"></div>
 
     <header>
         <button class="nav-btn" onclick="openModal('modal-history')">
@@ -204,6 +227,60 @@
                         <span class="setting-desc">Бот пришлет СМС, когда ник освободится</span>
                     </div>
                     <span style="font-size: 1.2rem; color: var(--primary);">→</span>
+                </div>
+
+                <!-- ТУМБЛЕР КАСТОМИЗАЦИИ -->
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="setting-title">Кастомизация</span>
+                        <span class="setting-desc">Тема, огоньки и эмодзи</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-custom" onchange="toggleCustomMenu(this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <!-- ВЫПАДАЮЩАЯ ПАНЕЛЬ КАСТОМИЗАЦИИ -->
+                <div class="filter-options" id="custom-menu">
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Выбор темы (10 цветов)</div>
+                    <div class="color-picker-grid">
+                        <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', 'rgba(56, 189, 248, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#6366f1;" onclick="setThemeColor('#6366f1', 'rgba(99, 102, 241, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#a855f7;" onclick="setThemeColor('#a855f7', 'rgba(168, 85, 247, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', 'rgba(236, 72, 153, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#ef4444;" onclick="setThemeColor('#ef4444', 'rgba(239, 68, 68, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#f97316;" onclick="setThemeColor('#f97316', 'rgba(249, 115, 22, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', 'rgba(234, 179, 8, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#14b8a6;" onclick="setThemeColor('#14b8a6', 'rgba(20, 184, 166, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#f43f5e;" onclick="setThemeColor('#f43f5e', 'rgba(244, 63, 94, 0.25)', this)"></div>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
+
+                    <div class="filter-row">
+                        <span style="font-size: 0.8rem; color: var(--text-main);">Огоньки (кол-во)</span>
+                        <input type="range" class="range-slider" id="fog-count-slider" min="2" max="15" value="5" onchange="updateFogSettings()">
+                    </div>
+                    <div class="filter-row">
+                        <span style="font-size: 0.8rem; color: var(--text-main);">Скорость тумана</span>
+                        <input type="range" class="range-slider" id="fog-speed-slider" min="1" max="10" value="3" onchange="updateFogSettings()">
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
+
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Летающие эмодзи</div>
+                    <input type="text" id="emoji-input" class="form-input" style="margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="updateEmojiSettings()">
+
+                    <div class="filter-row">
+                        <span style="font-size: 0.8rem; color: var(--text-main);">Размер эмодзи</span>
+                        <input type="range" class="range-slider" id="emoji-size-slider" min="12" max="36" value="20" onchange="updateEmojiSettings()">
+                    </div>
+                    <div class="filter-row">
+                        <span style="font-size: 0.8rem; color: var(--text-main);">Скорость полёта</span>
+                        <input type="range" class="range-slider" id="emoji-speed-slider" min="1" max="10" value="4" onchange="updateEmojiSettings()">
+                    </div>
                 </div>
 
                 <div class="setting-item">
@@ -304,6 +381,7 @@
         let width, height;
         let particles = [];
         let mouseX = 0, mouseY = 0;
+        let fogSpeedFactor = 1.5;
 
         function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
@@ -312,29 +390,148 @@
         window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
         window.addEventListener('touchmove', e => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; });
 
-        for(let i=0; i<5; i++) {
-            particles.push({
-                x: Math.random() * width, y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5,
-                radius: Math.random() * 150 + 150, color: i % 2 === 0 ? 'rgba(41,199,95,0.15)' : 'rgba(5,150,105,0.15)'
-            });
+        function initParticles(count) {
+            particles = [];
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#29c75f';
+            for(let i=0; i<count; i++) {
+                particles.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * fogSpeedFactor, vy: (Math.random() - 0.5) * fogSpeedFactor,
+                    radius: Math.random() * 150 + 120, color: primaryColor
+                });
+            }
         }
+        initParticles(5);
 
         function drawFog() {
             ctx.clearRect(0, 0, width, height);
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
             particles.forEach((p, i) => {
-                if (i === 0 || i === 1) { p.x += (mouseX - p.x) * 0.03; p.y += (mouseY - p.y) * 0.03; } 
+                if (i === 0 || i === 1) { p.x += (mouseX - p.x) * 0.02 * (fogSpeedFactor/1.5); p.y += (mouseY - p.y) * 0.02 * (fogSpeedFactor/1.5); } 
                 else { p.x += p.vx; p.y += p.vy; }
                 if(p.x < 0 || p.x > width) p.vx *= -1;
                 if(p.y < 0 || p.y > height) p.vy *= -1;
 
                 let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-                grad.addColorStop(0, p.color); grad.addColorStop(1, 'transparent');
+                grad.addColorStop(0, primaryColor + '25'); grad.addColorStop(1, 'transparent');
                 ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
             });
             requestAnimationFrame(drawFog);
         }
         drawFog();
+
+        /* --- ЛЕТАЮЩИЕ ЭМОДЗИ ДИНАМИКА --- */
+        let floatingEmojisList = [];
+        let emojiElements = [];
+
+        function updateEmojiSettings() {
+            const raw = document.getElementById('emoji-input').value;
+            floatingEmojisList = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            const size = document.getElementById('emoji-size-slider').value;
+            const speed = document.getElementById('emoji-speed-slider').value;
+
+            const layer = document.getElementById('emoji-layer');
+            layer.innerHTML = '';
+            emojiElements = [];
+
+            if (floatingEmojisList.length === 0) return;
+
+            for (let i = 0; i < 8; i++) {
+                const el = document.createElement('div');
+                el.className = 'floating-emoji';
+                el.innerText = floatingEmojisList[i % floatingEmojisList.length];
+                el.style.fontSize = `${size}px`;
+                
+                let posX = Math.random() * window.innerWidth;
+                let posY = Math.random() * window.innerHeight;
+                let speedX = (Math.random() - 0.5) * (speed / 2);
+                let speedY = (Math.random() - 0.5) * (speed / 2);
+
+                layer.appendChild(el);
+                emojiElements.push({ el, posX, posY, speedX, speedY });
+            }
+
+            saveCustomization();
+        }
+
+        function animateEmojis() {
+            emojiElements.forEach(item => {
+                item.posX += item.speedX;
+                item.posY += item.speedY;
+
+                if (item.posX < -30) item.posX = window.innerWidth + 10;
+                if (item.posX > window.innerWidth + 30) item.posX = -10;
+                if (item.posY < -30) item.posY = window.innerHeight + 10;
+                if (item.posY > window.innerHeight + 30) item.posY = -10;
+
+                item.el.style.transform = `translate(${item.posX}px, ${item.posY}px)`;
+            });
+            requestAnimationFrame(animateEmojis);
+        }
+        animateEmojis();
+
+        function updateFogSettings() {
+            const count = parseInt(document.getElementById('fog-count-slider').value);
+            const speed = parseInt(document.getElementById('fog-speed-slider').value);
+            fogSpeedFactor = speed * 0.5;
+            initParticles(count);
+            saveCustomization();
+        }
+
+        function setThemeColor(hex, glow, dotEl) {
+            document.documentElement.style.setProperty('--primary', hex);
+            document.documentElement.style.setProperty('--primary-glow', glow);
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            if(dotEl) dotEl.classList.add('active');
+            saveCustomization();
+        }
+
+        function toggleCustomMenu(cb) {
+            const menu = document.getElementById('custom-menu');
+            if (cb.checked) menu.classList.add('active'); else menu.classList.remove('active');
+            saveCustomization();
+        }
+
+        function toggleFilterMenu(cb) {
+            const menu = document.getElementById('filter-menu');
+            if (cb.checked) menu.classList.add('active'); else menu.classList.remove('active');
+        }
+
+        function saveCustomization() {
+            const customData = {
+                customEnabled: document.getElementById('toggle-custom').checked,
+                themeColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
+                themeGlow: getComputedStyle(document.documentElement).getPropertyValue('--primary-glow').trim(),
+                fogCount: document.getElementById('fog-count-slider').value,
+                fogSpeed: document.getElementById('fog-speed-slider').value,
+                emojis: document.getElementById('emoji-input').value,
+                emojiSize: document.getElementById('emoji-size-slider').value,
+                emojiSpeed: document.getElementById('emoji-speed-slider').value
+            };
+            localStorage.setItem('vh_custom_settings', JSON.stringify(customData));
+        }
+
+        function loadCustomization() {
+            const saved = localStorage.getItem('vh_custom_settings');
+            if(!saved) return;
+            const data = JSON.parse(saved);
+
+            if(data.customEnabled) {
+                document.getElementById('toggle-custom').checked = true;
+                document.getElementById('custom-menu').classList.add('active');
+            }
+
+            if(data.themeColor) setThemeColor(data.themeColor, data.themeGlow, null);
+            if(data.fogCount) document.getElementById('fog-count-slider').value = data.fogCount;
+            if(data.fogSpeed) document.getElementById('fog-speed-slider').value = data.fogSpeed;
+            if(data.emojis) document.getElementById('emoji-input').value = data.emojis;
+            if(data.emojiSize) document.getElementById('emoji-size-slider').value = data.emojiSize;
+            if(data.emojiSpeed) document.getElementById('emoji-speed-slider').value = data.emojiSpeed;
+
+            updateFogSettings();
+            updateEmojiSettings();
+        }
+        loadCustomization();
 
         function createRipple(x, y) {
             const ripple = document.createElement('div'); ripple.className = 'screen-ripple';
@@ -386,11 +583,6 @@
             if(id === 'modal-history') renderHistory();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-        function toggleFilterMenu(cb) {
-            const menu = document.getElementById('filter-menu');
-            if (cb.checked) menu.classList.add('active'); else menu.classList.remove('active');
-        }
 
         // --- РАДАР ---
         async function fetchRadarList() {
@@ -594,7 +786,6 @@
                 return;
             }
 
-            // Сортировка от дорогих и редких (SSS+, SS, S) к дешевым
             const sorted = [...autoParseCatches].sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
 
             document.getElementById('summary-count').innerText = autoParseCatches.length;
