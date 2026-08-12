@@ -25,34 +25,61 @@
             font-family: 'Inter', -apple-system, sans-serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column;
             overflow: hidden; position: relative;
-            transition: filter 0.5s ease;
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
 
-        body.rainbow-mode {
-            animation: rainbowAnim 6s linear infinite;
+        /* === СПЕЦИАЛЬНЫЕ СЕКРЕТНЫЕ ТЕМЫ (CSS) === */
+        body.theme-terminal {
+            background-color: #050b05 !important;
+            color: #00ff66 !important;
+            font-family: 'Courier New', monospace !important;
+            text-shadow: 0 0 5px #00ff66;
         }
-        @keyframes rainbowAnim {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
+        body.theme-terminal::after {
+            content: " "; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 10;
         }
 
-        /* --- ИНТЕРАКТИВНЫЙ ТУМАН И ЭМОДЗИ --- */
-        #fog-canvas {
+        body.theme-glitch {
+            background-color: #0d021a !important;
+            color: #00f0ff !important;
+            animation: glitch-bg 2s infinite alternate;
+        }
+        @keyframes glitch-bg {
+            0% { box-shadow: inset 0 0 50px #ff0055; }
+            100% { box-shadow: inset 0 0 100px #00f0ff; }
+        }
+
+        body.theme-vapor {
+            background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important;
+            color: #fff !important;
+        }
+
+        body.theme-rainbow {
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8) !important;
+            background-size: 400% 400% !important;
+            animation: rainbow-bg 8s ease infinite !important;
+        }
+        @keyframes rainbow-bg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- ИНТЕРАКТИВНЫЕ ХОЛСТЫ И СЛОИ --- */
+        #fog-canvas, #secret-canvas {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -10; pointer-events: none; mix-blend-mode: screen;
+            z-index: -10; pointer-events: none;
         }
+        #secret-canvas { display: none; z-index: -8; }
 
         #emoji-layer {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: -5; pointer-events: none; overflow: hidden;
         }
 
-        .floating-emoji {
-            position: absolute;
-            user-select: none;
-            will-change: transform;
-            opacity: 0.7;
-        }
+        .floating-emoji { position: absolute; user-select: none; will-change: transform; opacity: 0.7; }
 
         .screen-ripple {
             position: fixed; border-radius: 50%;
@@ -107,7 +134,7 @@
         .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
         .price-text { font-size: 0.85rem; opacity: 0.7; }
         .golden-mode { border-color: #FFD700 !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.1) !important; animation: goldPulse 2s infinite alternate; }
-        @keyframes goldPulse { 0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); } 100% { shadow: 0 0 60px rgba(255, 215, 0, 0.5); } }
+        @keyframes goldPulse { 0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); } 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.5); } }
 
         .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -143,7 +170,7 @@
         .range-slider { width: 90px; accent-color: var(--primary); }
         
         .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
-        .color-dot { width: 26px; height: 22px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+        .color-dot { width: 26px; height: 26px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
         .color-dot.active { border-color: #fff; transform: scale(1.15); }
         .color-dot.secret-unlocked { border: 1px solid #FFD700; box-shadow: 0 0 10px rgba(255,215,0,0.4); }
 
@@ -176,6 +203,27 @@
             cursor: pointer; margin-top: 10px; transition: 0.2s;
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
+
+        /* ИСТОРИЯ - ТЕМНЫЙ ФОН И ДИНАМИЧЕСКИЙ СВАЙП */
+        .history-wrapper {
+            position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
+            background: transparent;
+            transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease, background 0.2s;
+            max-height: 80px;
+        }
+        .history-wrapper.swiping { background: rgba(239, 68, 68, 0.25); }
+        .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
+
+        .history-card { 
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; 
+            align-items: center; transition: background 0.2s; position: relative; z-index: 2; 
+            touch-action: pan-y; will-change: transform; user-select: none;
+        }
+        .history-card:hover { border-color: var(--primary); }
+        .radar-remove { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+
+        .btn-clear-history { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
         /* КАРТОЧКА ДОСТИЖЕНИЯ */
         .achieve-card {
@@ -218,6 +266,7 @@
 <body>
 
     <canvas id="fog-canvas"></canvas>
+    <canvas id="secret-canvas"></canvas>
     <div id="emoji-layer"></div>
 
     <header>
@@ -278,7 +327,7 @@
                 <div class="setting-item" style="cursor: pointer; border-color: #a855f7; background: rgba(168, 85, 247, 0.05);" onclick="openModal('modal-secret-code')">
                     <div class="setting-info">
                         <span class="setting-title" style="color: #a855f7;">🔑 Ввести секретный код</span>
-                        <span class="setting-desc">Разблокировка локальных тем и пасхалок</span>
+                        <span class="setting-desc">Разблокировка уникальных локальных тем</span>
                     </div>
                     <span style="font-size: 1.2rem; color: #a855f7;">→</span>
                 </div>
@@ -302,7 +351,6 @@
                 <div class="filter-options" id="custom-menu">
                     <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Выбор темы</div>
                     <div class="color-picker-grid" id="theme-dots-grid">
-                        <!-- Базовые 10 цветов -->
                         <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', this)"></div>
                         <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', 'rgba(56, 189, 248, 0.25)', this)"></div>
                         <div class="color-dot" style="background:#6366f1;" onclick="setThemeColor('#6366f1', 'rgba(99, 102, 241, 0.25)', this)"></div>
@@ -398,7 +446,7 @@
             </div>
             <div class="modal-body" style="text-align:center;">
                 <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите секретный промокод для разблокировки эксклюзивных локальных тем!</p>
-                <input type="text" id="secret-code-input" class="form-input" style="text-align:center; font-weight:bold; letter-spacing:1px; margin-bottom:12px;" placeholder="ПРОМОКОД (например: matrix)">
+                <input type="text" id="secret-code-input" class="form-input" style="text-align:center; font-weight:bold; letter-spacing:1px; margin-bottom:12px;" placeholder="ПРОМОКОД...">
                 <button class="form-btn" onclick="submitSecretCode()">Разблокировать</button>
             </div>
         </div>
@@ -479,6 +527,15 @@
         };
 
         let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
+        const SECRET_PROMOS = {
+            'REDPILL': { id: 'matrix', icon: '💻', colorHex: '#29c75f', glowHex: 'rgba(41, 199, 95, 0.4)', emojis: '0, 1, ⚡, 💻', msg: '🟢 MATRIX' },
+            'DUROV360': { id: 'durov', icon: '✈️', colorHex: '#1e3c72', glowHex: 'rgba(30, 60, 114, 0.4)', emojis: '💎, 👑, ✈️, 💰', msg: '✈️ DUROV SKY' },
+            'CROWN_KING': { id: 'kington', icon: '👑', colorHex: '#eab308', glowHex: 'rgba(234, 179, 8, 0.4)', emojis: '👑, 💎, ✨, 🔱', msg: '👑 KINGTON' },
+            'SUDO_RM_RF': { id: 'terminal', icon: '📟', colorHex: '#00ff66', glowHex: 'rgba(0, 255, 102, 0.4)', emojis: '👾, 💾, 📟, 🤖', msg: '📟 TERMINAL' },
+            '404_FOUND': { id: 'glitch', icon: '👾', colorHex: '#00f0ff', glowHex: 'rgba(0, 240, 255, 0.4)', emojis: '👾, ⚠️, ❌, 👁️', msg: '👾 GLITCH' },
+            'SYNTH_1984': { id: 'vapor', icon: '🌆', colorHex: '#ec4899', glowHex: 'rgba(236, 72, 153, 0.4)', emojis: '🌆, 🌴, 📼, 💖', msg: '🌆 VAPORWAVE' },
+            'IDDQD': { id: 'rainbow', icon: '🌈', colorHex: '#f43f5e', glowHex: 'rgba(244, 63, 94, 0.4)', emojis: '🌈, ✨, 🔥, 💥', msg: '🌈 GOD MODE' }
+        };
 
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
@@ -498,27 +555,18 @@
         /* --- СЕКРЕТНЫЕ ТЕМЫ И ПРОМОКОДЫ --- */
         function submitSecretCode() {
             const input = document.getElementById('secret-code-input');
-            const code = input.value.trim().toLowerCase();
+            const code = input.value.trim().toUpperCase();
             input.value = "";
 
-            if (!code) return;
-
-            if (code === "matrix") {
-                unlockSecretTheme('matrix_theme', '💻', '#29c75f', 'rgba(41, 199, 95, 0.4)', '0, 1, ⚡, 💻');
-                showToast("🟢 Тема MATRIX разблокирована в кастомизации!");
-            } else if (code === "durov") {
-                unlockSecretTheme('durov_theme', '👑', '#eab308', 'rgba(234, 179, 8, 0.4)', '💎, 👑, ✈️, 💰');
-                showToast("👑 Тема TON KING разблокирована в кастомизации!");
-            } else if (code === "rainbow" || code === "радуга") {
-                unlockSecretTheme('rainbow_theme', '🌈', '#ec4899', 'rgba(236, 72, 153, 0.4)', '🌈, ✨, 🔥');
-                showToast("🌈 ТЕМА РАДУГА разблокирована в кастомизации!");
+            if (SECRET_PROMOS[code]) {
+                const p = SECRET_PROMOS[code];
+                unlockSecretTheme(p.id, p.icon, p.colorHex, p.glowHex, p.emojis);
+                showToast(`✨ Разблокировано: ${p.msg}!`);
+                stats.secretsFound++; saveStats();
             } else {
                 showToast("❌ Неверный промокод");
                 return;
             }
-
-            stats.secretsFound++;
-            saveStats();
             closeModal('modal-secret-code');
         }
 
@@ -528,14 +576,13 @@
                 localStorage.setItem('vh_secret_themes', JSON.stringify(unlockedSecretThemes));
             }
             renderCustomThemesGrid();
-            applyTheme(colorHex, glowHex, emojis, themeId === 'rainbow_theme');
+            activateSecretEffect(themeId, colorHex, glowHex, emojis);
         }
 
         function renderCustomThemesGrid() {
             const grid = document.getElementById('theme-dots-grid');
             if (!grid) return;
 
-            // Удаляем старые секретные плашки
             document.querySelectorAll('.color-dot.secret-unlocked').forEach(e => e.remove());
 
             unlockedSecretThemes.forEach(theme => {
@@ -544,7 +591,7 @@
                 dot.style.background = theme.colorHex;
                 dot.innerText = theme.icon;
                 dot.onclick = (e) => {
-                    applyTheme(theme.colorHex, theme.glowHex, theme.emojis, theme.id === 'rainbow_theme');
+                    activateSecretEffect(theme.id, theme.colorHex, theme.glowHex, theme.emojis);
                     document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
                     dot.classList.add('active');
                 };
@@ -552,17 +599,97 @@
             });
         }
 
-        function applyTheme(colorHex, glowHex, emojis, isRainbow = False) {
-            if (isRainbow) {
-                document.body.classList.add("rainbow-mode");
-            } else {
-                document.body.classList.remove("rainbow-mode");
-            }
+        // АНИМАЦИОННЫЙ ДВИЖОК ДЛЯ СЕКРЕТНЫХ ТЕМ
+        let secretAnimId = null;
+        const secretCanvas = document.getElementById('secret-canvas');
+        const sCtx = secretCanvas.getContext('2d');
 
+        function stopSecretAnimation() {
+            if (secretAnimId) { cancelAnimationFrame(secretAnimId); secretAnimId = null; }
+            sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
+            secretCanvas.style.display = 'none';
+            document.body.className = '';
+        }
+
+        function activateSecretEffect(themeId, colorHex, glowHex, emojis) {
+            stopSecretAnimation();
             setThemeColor(colorHex, glowHex, null);
-            if (emojis) {
-                document.getElementById('emoji-input').value = emojis;
-                updateEmojiSettings();
+            if (emojis) { document.getElementById('emoji-input').value = emojis; updateEmojiSettings(); }
+
+            secretCanvas.width = window.innerWidth;
+            secretCanvas.height = window.innerHeight;
+
+            if (themeId === 'matrix') {
+                secretCanvas.style.display = 'block';
+                const chars = '0123456789ABCDEFｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ';
+                const fontSize = 14;
+                const columns = Math.floor(secretCanvas.width / fontSize);
+                const drops = Array(columns).fill(1);
+
+                function drawMatrix() {
+                    sCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    sCtx.fillRect(0, 0, secretCanvas.width, secretCanvas.height);
+                    sCtx.fillStyle = '#0F0';
+                    sCtx.font = `${fontSize}px monospace`;
+                    for (let i = 0; i < drops.length; i++) {
+                        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                        sCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+                        if (drops[i] * fontSize > secretCanvas.height && Math.random() > 0.975) drops[i] = 0;
+                        drops[i]++;
+                    }
+                    secretAnimId = requestAnimationFrame(drawMatrix);
+                }
+                drawMatrix();
+            } 
+            else if (themeId === 'durov') {
+                secretCanvas.style.display = 'block';
+                let planes = Array.from({ length: 20 }, () => ({
+                    x: Math.random() * secretCanvas.width,
+                    y: Math.random() * secretCanvas.height,
+                    speed: 1 + Math.random() * 2, size: 15 + Math.random() * 10
+                }));
+
+                function drawDurov() {
+                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
+                    sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    planes.forEach(p => {
+                        sCtx.save();
+                        sCtx.translate(p.x, p.y);
+                        sCtx.beginPath();
+                        sCtx.moveTo(0, 0); sCtx.lineTo(-p.size, -p.size/2); sCtx.lineTo(-p.size/2, 0); sCtx.lineTo(-p.size, p.size/2);
+                        sCtx.closePath(); sCtx.fill();
+                        sCtx.restore();
+                        p.x -= p.speed; p.y -= p.speed * 0.5;
+                        if (p.x < -30 || p.y < -30) { p.x = secretCanvas.width + 30; p.y = Math.random() * secretCanvas.height; }
+                    });
+                    secretAnimId = requestAnimationFrame(drawDurov);
+                }
+                drawDurov();
+            }
+            else if (themeId === 'kington') {
+                secretCanvas.style.display = 'block';
+                let goldList = Array.from({ length: 50 }, () => ({
+                    x: Math.random() * secretCanvas.width, y: Math.random() * secretCanvas.height,
+                    size: Math.random() * 3 + 1, speed: Math.random() * 1.5 + 0.5, op: Math.random()
+                }));
+
+                function drawKington() {
+                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
+                    goldList.forEach(g => {
+                        sCtx.fillStyle = `rgba(255, 215, 0, ${g.op})`;
+                        sCtx.beginPath(); sCtx.arc(g.x, g.y, g.size, 0, Math.PI * 2); sCtx.fill();
+                        g.y += g.speed;
+                        if (g.y > secretCanvas.height) { g.y = 0; g.x = Math.random() * secretCanvas.width; }
+                    });
+                    secretAnimId = requestAnimationFrame(drawKington);
+                }
+                drawKington();
+            }
+            else if (themeId === 'rainbow') {
+                document.body.classList.add("theme-rainbow");
+            }
+            else {
+                document.body.classList.add(`theme-${themeId}`);
             }
         }
 
@@ -769,6 +896,7 @@
         }
 
         function setThemeColor(hex, glow, dotEl) {
+            stopSecretAnimation();
             document.documentElement.style.setProperty('--primary', hex);
             document.documentElement.style.setProperty('--primary-glow', glow);
             document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
@@ -817,7 +945,7 @@
 
         function resetCustomization() {
             localStorage.removeItem('vh_custom_settings');
-            document.body.classList.remove("rainbow-mode");
+            stopSecretAnimation();
             setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', document.querySelectorAll('.color-dot')[0]);
             document.getElementById('fog-count-slider').value = 5;
             document.getElementById('fog-speed-slider').value = 3;
