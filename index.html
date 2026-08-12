@@ -134,15 +134,18 @@
         .filter-options.active { display: block; animation: slideDown 0.25s ease; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ИКОНКА-УГОЛОК (CHEVRON) В ВЕРХНЕМ ЛЕВОМ УГЛУ ПАНЕЛИ */
+        /* КНОПКА СВОРАЧИВАНИЯ / РАЗВОРАЧИВАНИЯ С АНИМАЦИЕЙ СТРЕЛКИ */
         .panel-collapse-btn {
-            position: absolute; top: 8px; left: 10px;
             background: transparent; border: none;
             color: var(--text-muted); cursor: pointer;
-            padding: 4px; display: flex; align-items: center; justify-content: center;
-            opacity: 0.6; transition: 0.2s; border-radius: 6px;
+            padding: 4px 6px; display: flex; align-items: center; justify-content: center;
+            opacity: 0.8; transition: 0.2s; border-radius: 6px;
         }
         .panel-collapse-btn:hover { opacity: 1; color: #fff; background: rgba(255,255,255,0.08); }
+        .panel-collapse-btn svg { transition: transform 0.3s ease; }
+        .panel-collapse-btn.collapsed svg { transform: rotate(180deg); }
+
+        .setting-controls { display: flex; align-items: center; gap: 8px; }
 
         .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .filter-row:last-child { margin-bottom: 0; }
@@ -158,14 +161,13 @@
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* ИСТОРИЯ - ИСПРАВЛЕННЫЙ ТЕМНЫЙ ФОН БЕЗ ПОСТОЯННОГО КРАСНОГО */
+        /* ИСТОРИЯ - ТЕМНЫЙ ФОН И ДИНАМИЧЕСКИЙ СВАЙП */
         .history-wrapper {
             position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
-            background: transparent; /* Обычный прозрачный фон */
+            background: transparent;
             transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease, background 0.2s;
             max-height: 80px;
         }
-        /* Красный подслой проявляется только когда начинается свайп */
         .history-wrapper.swiping { background: rgba(239, 68, 68, 0.25); }
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
@@ -248,26 +250,26 @@
                     <span style="font-size: 1.2rem; color: var(--primary);">→</span>
                 </div>
 
-                <!-- ТУМБЛЕР КАСТОМИЗАЦИИ -->
+                <!-- ТУМБЛЕР И УПРАВЛЕНИЕ КАСТОМИЗАЦИЕЙ -->
                 <div class="setting-item">
                     <div class="setting-info">
                         <span class="setting-title">Кастомизация</span>
                         <span class="setting-desc">Тема, огоньки и эмодзи</span>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-custom" onchange="toggleCustomMenu(this)">
-                        <span class="slider"></span>
-                    </label>
+                    <div class="setting-controls">
+                        <button class="panel-collapse-btn" id="btn-toggle-custom-panel" style="display:none;" onclick="togglePanelVisibility('custom-menu', this)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        </button>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-custom" onchange="toggleCustomMenu(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- ВЫПАДАЮЩАЯ ПАНЕЛЬ КАСТОМИЗАЦИИ -->
                 <div class="filter-options" id="custom-menu">
-                    <!-- Галочка-уколок сворачивания -->
-                    <button class="panel-collapse-btn" onclick="collapsePanel('custom-menu')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    </button>
-
-                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; margin-top: 14px; color: var(--text-main);">Выбор темы (10 цветов)</div>
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Выбор темы (10 цветов)</div>
                     <div class="color-picker-grid">
                         <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', this)"></div>
                         <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', 'rgba(56, 189, 248, 0.25)', this)"></div>
@@ -294,16 +296,26 @@
 
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
 
-                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Летающие эмодзи</div>
-                    <input type="text" id="emoji-input" class="form-input" style="margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="updateEmojiSettings()">
-
+                    <!-- ТУМБЛЕР ВКЛЮЧЕНИЯ / ВЫКЛЮЧЕНИЯ ЛЕТАЮЩИХ ЭМОДЗИ -->
                     <div class="filter-row">
-                        <span style="font-size: 0.8rem; color: var(--text-main);">Размер эмодзи</span>
-                        <input type="range" class="range-slider" id="emoji-size-slider" min="12" max="36" value="20" onchange="updateEmojiSettings()">
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Включить летающие эмодзи</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-emoji" checked onchange="toggleEmojiFeature(this)">
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <div class="filter-row">
-                        <span style="font-size: 0.8rem; color: var(--text-main);">Скорость полёта</span>
-                        <input type="range" class="range-slider" id="emoji-speed-slider" min="1" max="10" value="4" onchange="updateEmojiSettings()">
+
+                    <div id="emoji-controls-box">
+                        <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎, 🚀" value="🔥, ⚡, 💎" onchange="updateEmojiSettings()">
+
+                        <div class="filter-row">
+                            <span style="font-size: 0.8rem; color: var(--text-main);">Размер эмодзи</span>
+                            <input type="range" class="range-slider" id="emoji-size-slider" min="12" max="36" value="20" onchange="updateEmojiSettings()">
+                        </div>
+                        <div class="filter-row">
+                            <span style="font-size: 0.8rem; color: var(--text-main);">Скорость полёта</span>
+                            <input type="range" class="range-slider" id="emoji-speed-slider" min="1" max="10" value="4" onchange="updateEmojiSettings()">
+                        </div>
                     </div>
 
                     <button class="btn-reset-custom" onclick="resetCustomization()">↺ Сброс настроек</button>
@@ -316,16 +328,16 @@
                 
                 <div class="setting-item">
                     <div class="setting-info"><span class="setting-title">Смарт-фильтр (AI)</span><span class="setting-desc">Короткие читаемые слова</span></div>
-                    <label class="switch"><input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)"><span class="slider"></span></label>
+                    <div class="setting-controls">
+                        <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        </button>
+                        <label class="switch"><input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)"><span class="slider"></span></label>
+                    </div>
                 </div>
 
                 <div class="filter-options" id="filter-menu">
-                    <!-- Галочка-уколок сворачивания -->
-                    <button class="panel-collapse-btn" onclick="collapsePanel('filter-menu')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    </button>
-
-                    <div class="filter-row" style="margin-top: 14px;">
+                    <div class="filter-row">
                         <span style="font-size: 0.85rem; color: var(--text-main);">Длина слова</span>
                         <select id="filter-len">
                             <option value="5-6">5-6 символов</option>
@@ -455,13 +467,36 @@
         let floatingEmojisList = [];
         let emojiElements = [];
 
+        function toggleEmojiFeature(cb) {
+            const controlsBox = document.getElementById('emoji-controls-box');
+            const layer = document.getElementById('emoji-layer');
+            
+            if (cb.checked) {
+                controlsBox.style.display = 'block';
+                updateEmojiSettings();
+            } else {
+                controlsBox.style.display = 'none';
+                layer.innerHTML = '';
+                emojiElements = [];
+            }
+            saveCustomization();
+        }
+
         function updateEmojiSettings() {
+            const isEnabled = document.getElementById('toggle-emoji').checked;
+            const layer = document.getElementById('emoji-layer');
+
+            if (!isEnabled) {
+                layer.innerHTML = '';
+                emojiElements = [];
+                return;
+            }
+
             const raw = document.getElementById('emoji-input').value;
             floatingEmojisList = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
             const size = document.getElementById('emoji-size-slider').value;
             const speed = document.getElementById('emoji-speed-slider').value;
 
-            const layer = document.getElementById('emoji-layer');
             layer.innerHTML = '';
             emojiElements = [];
 
@@ -517,28 +552,53 @@
             saveCustomization();
         }
 
+        /* ТУМБЛЕРЫ И УПРАВЛЕНИЕ СВОРАЧИВАНИЕМ */
         function toggleCustomMenu(cb) {
             const menu = document.getElementById('custom-menu');
-            if (cb.checked) menu.classList.add('active'); else menu.classList.remove('active');
+            const btn = document.getElementById('btn-toggle-custom-panel');
+            if (cb.checked) {
+                menu.classList.add('active');
+                btn.style.display = 'flex';
+                btn.classList.remove('collapsed');
+            } else {
+                menu.classList.remove('active');
+                btn.style.display = 'none';
+            }
             saveCustomization();
         }
 
         function toggleFilterMenu(cb) {
             const menu = document.getElementById('filter-menu');
-            if (cb.checked) menu.classList.add('active'); else menu.classList.remove('active');
+            const btn = document.getElementById('btn-toggle-filter-panel');
+            if (cb.checked) {
+                menu.classList.add('active');
+                btn.style.display = 'flex';
+                btn.classList.remove('collapsed');
+            } else {
+                menu.classList.remove('active');
+                btn.style.display = 'none';
+            }
         }
 
-        // Сворачивание панели без отключения функции
-        function collapsePanel(panelId) {
-            document.getElementById(panelId).classList.remove('active');
+        // ДВУСТОРОННЕЕ СВОРАЧИВАНИЕ / РАЗВОРАЧИВАНИЕ
+        function togglePanelVisibility(panelId, btnEl) {
+            const menu = document.getElementById(panelId);
+            if (menu.classList.contains('active')) {
+                menu.classList.remove('active');
+                btnEl.classList.add('collapsed');
+            } else {
+                menu.classList.add('active');
+                btnEl.classList.remove('collapsed');
+            }
         }
 
-        // Сброс настроек кастомизации до "заводских"
         function resetCustomization() {
             localStorage.removeItem('vh_custom_settings');
             setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', document.querySelectorAll('.color-dot')[0]);
             document.getElementById('fog-count-slider').value = 5;
             document.getElementById('fog-speed-slider').value = 3;
+            document.getElementById('toggle-emoji').checked = true;
+            document.getElementById('emoji-controls-box').style.display = 'block';
             document.getElementById('emoji-input').value = '🔥, ⚡, 💎';
             document.getElementById('emoji-size-slider').value = 20;
             document.getElementById('emoji-speed-slider').value = 4;
@@ -555,6 +615,7 @@
                 themeGlow: getComputedStyle(document.documentElement).getPropertyValue('--primary-glow').trim(),
                 fogCount: document.getElementById('fog-count-slider').value,
                 fogSpeed: document.getElementById('fog-speed-slider').value,
+                emojiEnabled: document.getElementById('toggle-emoji').checked,
                 emojis: document.getElementById('emoji-input').value,
                 emojiSize: document.getElementById('emoji-size-slider').value,
                 emojiSpeed: document.getElementById('emoji-speed-slider').value
@@ -570,6 +631,12 @@
             if(data.customEnabled) {
                 document.getElementById('toggle-custom').checked = true;
                 document.getElementById('custom-menu').classList.add('active');
+                document.getElementById('btn-toggle-custom-panel').style.display = 'flex';
+            }
+
+            if(data.emojiEnabled !== undefined) {
+                document.getElementById('toggle-emoji').checked = data.emojiEnabled;
+                document.getElementById('emoji-controls-box').style.display = data.emojiEnabled ? 'block' : 'none';
             }
 
             if(data.themeColor) setThemeColor(data.themeColor, data.themeGlow, null);
@@ -656,7 +723,7 @@
             cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
         }
 
-        // --- ИСТОРИЯ С ЧИСТЫМ ФОНОМ И ДИНАМИЧЕСКИМ КРАСНЫМ СВАЙПОМ ---
+        // --- ИСТОРИЯ С ЧИСТЫМ ФОНОМ И ДИНАМИЧЕСКИМ СВАЙПОМ ---
         function saveToHistory(item) {
             if (!item.user || item.user === "timeout" || item.user === "error") return;
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -729,7 +796,7 @@
 
             if (diffX > 10) {
                 isSwiping = true;
-                if(wrapper) wrapper.classList.add('swiping'); // Красный подслой включается ТОЛЬКО при свайпе
+                if(wrapper) wrapper.classList.add('swiping');
             }
 
             if (diffX > 0) {
