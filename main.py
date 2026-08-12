@@ -36,16 +36,19 @@ USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.3
 
 # =========================================================================
-# 📚 СЛОВАРЬ И ЗВУЧНЫЕ ПРЕФИКСЫ
+# 📚 БАЗЫ ДАННЫХ ДЛЯ БАЛАНСА КАТЕГОРИЙ
 # =========================================================================
-TOP_BRANDS = set([
+
+# 10% — Топовые Бренды и IT/Крипто термины
+TOP_BRANDS = list(set([
     "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
     "tesla", "bitcoin", "crypto", "pavel", "durov", "telegram", "starbucks", "prada",
     "gucci", "porsche", "bmw", "mercedes", "ferrari", "redbull", "steam", "roblox",
     "matrix", "cyber", "vortex", "shadow", "phantom", "legend", "oracle", "nexus"
-])
+]))
 
-PURE_WORDS = set((
+# 20% — Красивые Английские Словарные Слова
+PURE_WORDS = list(set((
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
     "spring sunset sunrise silent secret future vision wonder action energy galaxy cosmic "
@@ -60,17 +63,19 @@ PURE_WORDS = set((
     "aether legacy zenith cipher haven solace chronos hyperion helium cobalt iridium valkyrie "
     "astral eclipse titan solis kismet olympus paragon genesis seraph ravena vanguard horizon "
     "spectrum pulse tremor trident phantom prism siren zenith aegis solstice obsidian arcade"
-).split())
+).split()))
 
-HARMONIC_PREFIXES = [
+# 70% — Красиво звучащие неологизмы и бренд-звуки
+HARMONIC_ROOTS = [
     "astro", "cyber", "synth", "solis", "vortex", "aether", "nexus", "velvet", 
     "chroma", "verve", "lunar", "stellar", "zenith", "hyper", "crypto", "shadow",
-    "mirage", "pulse", "aurora", "zephyr", "solace", "kismet", "aegis", "prism"
+    "mirage", "pulse", "aurora", "zephyr", "solace", "kismet", "aegis", "prism",
+    "valen", "zoran", "orion", "krypto", "aero", "nova", "vindex", "alstra"
 ]
 
-HARMONIC_SUFFIXES = [
-    "x", "is", "os", "um", "ia", "or", "ix", "on", "ar", "al", 
-    "ic", "us", "ez", "eth", "ux", "ov", "ax", "io"
+HARMONIC_ENDINGS = [
+    "ix", "ex", "is", "os", "um", "ia", "or", "on", "ar", "al", 
+    "ic", "us", "ez", "eth", "ux", "ov", "ax", "io", "ora", "is"
 ]
 
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
@@ -139,6 +144,7 @@ def calculate_catch_score(username: str, is_free: bool):
 
     is_trash = (max_cons_streak >= 3)
 
+    # 💎 SSS+ РАНГ
     if (username in TOP_BRANDS) or (length == 5 and not is_trash):
         return {
             "rank": "SSS+", 
@@ -147,6 +153,7 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 100
         }
 
+    # 🥇 SS РАНГ
     if (username in PURE_WORDS) or (length == 6 and not is_trash):
         return {
             "rank": "SS", 
@@ -155,6 +162,7 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 85
         }
 
+    # 🥈 S РАНГ
     if length == 7 and not is_trash:
         return {
             "rank": "S", 
@@ -163,6 +171,7 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 65
         }
 
+    # 🥉 A РАНГ
     if length == 8 and not is_trash:
         return {
             "rank": "A", 
@@ -171,6 +180,7 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 40
         }
 
+    # ⚪ B РАНГ
     if not is_trash and length <= 12:
         return {
             "rank": "B", 
@@ -187,13 +197,9 @@ def calculate_catch_score(username: str, is_free: bool):
     }
 
 # =========================================================================
-# 🛡️ ПРЯМАЯ И ТОЧНАЯ ПРО ВЕРКА СВОБОДЕН/ЗАНЯТ
+# 🛡️ ПРЯМАЯ ПРО ВЕРКА СВОБОДЕН/ЗАНЯТ
 # =========================================================================
 async def check_username_telethon(username: str) -> bool:
-    """
-    Возвращает True ТОЛЬКО если юзернейм гарантированно свободен.
-    Любые исключения Telegram (занят, забанен, невалиден) возвращают False.
-    """
     username = username.replace("@", "").strip().lower()
     if len(username) < 5: 
         return False
@@ -207,33 +213,43 @@ async def check_username_telethon(username: str) -> bool:
         return False
 
 # =========================================================================
-# 🧬 ГЕНЕРАТОР ЗВУЧНЫХ НИКОВ
+# 🧬 УМНЫЙ ГЕНЕРАТОР С БАЛАНСОМ ШАНСОВ
 # =========================================================================
 def generate_smart_username(len_mode: str = "5-6") -> str:
-    if random.random() < 0.25:
-        return random.choice(list(TOP_BRANDS) + list(PURE_WORDS))
+    roll = random.random()
+    
+    # 1. 10% ШАНС: Известные бренды и IT-термины
+    if roll < 0.10:
+        return random.choice(TOP_BRANDS)
         
-    mode = random.choice(["harmonic", "phonetic"])
-    if mode == "harmonic":
-        pref = random.choice(HARMONIC_PREFIXES)
-        suf = random.choice(HARMONIC_SUFFIXES)
-        candidate = pref + suf
-        if len_mode == "5-6" and len(candidate) > 6:
-            candidate = candidate[:6]
-        return candidate
+    # 2. 20% ШАНС: Английские словарные слова
+    elif roll < 0.30:
+        return random.choice(PURE_WORDS)
+        
+    # 3. 70% ШАНС: Красиво звучащие неологизмы и сочные слова
     else:
-        target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
-        candidate = ""
-        start_with_consonant = random.choice([True, False])
-        for i in range(target_len):
-            if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
-                candidate += random.choice(CONSONANTS_EASY)
-            else:
-                candidate += random.choice(VOWELS_EASY)
-        return candidate
+        if random.random() < 0.60:
+            # Генерация из гармоничных корней и суффиксов
+            root = random.choice(HARMONIC_ROOTS)
+            ending = random.choice(HARMONIC_ENDINGS)
+            candidate = root + ending
+            if len_mode == "5-6" and len(candidate) > 6:
+                candidate = candidate[:6]
+            return candidate
+        else:
+            # Генерация мягко звучащих слогов
+            target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
+            candidate = ""
+            start_with_consonant = random.choice([True, False])
+            for i in range(target_len):
+                if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
+                    candidate += random.choice(CONSONANTS_EASY)
+                else:
+                    candidate += random.choice(VOWELS_EASY)
+            return candidate
 
 # =========================================================================
-# 📡 ЕДИНСТВЕННЫЙ ФОНОВЫЙ ВОРКЕР — РАДАР ОПОВЕЩЕНИЙ
+# 📡 РАДАР ОПОВЕЩЕНИЙ
 # =========================================================================
 def load_radar_db() -> dict:
     if os.path.exists(RADAR_DB_PATH):
@@ -295,7 +311,6 @@ async def lifespan(app: FastAPI):
     await telethon_client.start()
     print("✅ Telethon успешно запущен!")
     
-    # Только воркер Радара работает в фоне
     asyncio.create_task(radar_worker())
     
     if bot and dp:
@@ -329,8 +344,8 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # Делаем до 5 реальных проверок "на лету", чтобы сразу отдать юзеру 100% свободный ник
-    for _ in range(5):
+    # Делаем до 10 быстрых попыток нащупать именно свободный красивый ник
+    for _ in range(10):
         generated = generate_smart_username(len_mode)
         is_free = await check_username_telethon(generated)
         if is_free:
@@ -344,9 +359,9 @@ async def generate_username(
                 "is_free": True, 
                 "evaluation": eval_data
             }
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.05)
 
-    # Если 5 попыток подряд были заняты, отдаем честный результат прямой проверки
+    # Если 10 подряд были заняты, отдаем честную последнюю проверку
     fallback_nick = generate_smart_username(len_mode)
     is_free_fallback = await check_username_telethon(fallback_nick)
     eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
