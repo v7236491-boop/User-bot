@@ -9,7 +9,6 @@ from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher
 from telethon import TelegramClient
 from telethon.sessions import StringSession
-from telethon.errors import RPCError, FloodWaitError
 from telethon.tl.functions.account import CheckUsernameRequest
 import uvicorn
 
@@ -36,23 +35,6 @@ USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.3
 CHECK_CACHE = {}
 CACHE_TTL = 86400
-
-# --- LIFESPAN MANAGER ---
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("⏳ Запуск Telethon сессии...")
-    await telethon_client.start()
-    print("✅ Telethon сессия успешно запущена!")
-    
-    asyncio.create_task(radar_worker())
-    if bot and dp:
-        asyncio.create_task(dp.start_polling(bot))
-    
-    yield
-    print("🛑 Остановка Telethon...")
-    await telethon_client.disconnect()
-
-app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
 
 # --- БАЗА БРЕНДОВ И ТОПОВЫХ СЛОВ ---
 TOP_BRANDS = set([
@@ -147,10 +129,11 @@ def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: b
     
     return {"rank": "A", "status": "Обычный ник (~1-3 TON)", "color": "#3b82f6", "score": 30}
 
-# --- МАРШРУТЫ И ПРОВЕРКА TELETHON ---
+# --- ПРОВЕРКА ЧЕРЕЗ TELETHON ---
 async def check_username_telethon(username: str, ignore_cache: bool = False):
     username = username.replace("@", "").strip().lower()
-    if len(username) < 5: return False
+    if len(username) < 5: 
+        return False
     now = time.time()
 
     if not ignore_cache and username in CHECK_CACHE:
@@ -166,36 +149,86 @@ async def check_username_telethon(username: str, ignore_cache: bool = False):
     except Exception:
         return False
 
-# --- РАДАР ---
-def load_radar_db():
+# --- ХРАНИЛИЩЕ РАДАРА ---
+def load_radar_db() -> dict:
     if os.path.exists(RADAR_DB_PATH):
         try:
-            with open(RADAR_DB_PATH, "r", encoding="utf-8") as f: return json.load(f)
-        except Exception: return {}
+            with open(RADAR_DB_PATH, "r", encoding="utf-8") as f: 
+                return json.load(f)
+        except Exception: 
+            return {}
     return {}
 
-def save_radar_db(db):
+def save_radar_db(db: dict):
     try:
-        with open(RADAR_DB_PATH, "w", encoding="utf-8") as f: json.dump(db, f, ensure_ascii=False, indent=4)
-    except Exception: pass
+        with open(RADAR_DB_PATH, "w", encoding="utf-8") as f: 
+            json.dump(db, f, ensure_ascii=False, indent=4)
+    except Exception: 
+        pass
 
+# --- ВОРКЕР АВТОМАТИЧЕСКОГО РАДАРА ---
 async def radar_worker():
+    print("🚀 Автономный Турбо-Радар запущен!")
     while True:
         try:
             db = load_radar_db()
             if db and bot:
-                for chat_id, targets in list(db.items()):
-                    for username in targets:
-                        is_free = await check_username_telethon(username, ignore_cache=True)
-                        if is_free is True:
-                            try:
-                                await bot.send_message(chat_id=int(chat_id), text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nНикнейм: `@{username}`\nБыстрее забирай!", parse_mode="Markdown")
-                                db[chat_id].remove(username)
-                                save_radar_db(db)
-                            except Exception: pass
-                        await asyncio.sleep(3)
-        except Exception: pass
-        await asyncio.sleep(10)
+                # Собираем список всех уникальных отслеживаемых ников
+                all_targets = set()
+                for chat_id, targets in db.items():
+                    for target in targets:
+                        all_targets.add(target.lower())
+
+                for username in list(all_targets):
+                    is_free = await check_username_telethon(username, ignore_cache=True)
+                    if is_free is True:
+                        # Уведомляем каждого пользователя, у кого в списке был этот ник
+                        notified_chats = []
+                        for chat_id, targets in list(db.items()):
+                            if username in [t.lower() for t in targets]:
+                                try:
+                                    await bot.send_message(
+                                        chat_id=int(chat_id),
+                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nБыстрее забирай в Telegram!",
+                                        parse_mode="Markdown"
+                                    )
+                                    notified_chats.append(chat_id)
+                                except Exception as e:
+                                    print(f"Ошибка отправки уведомления в чат {chat_id}: {e}")
+
+                        # Удаляем сработавший ник из списков этих пользователей
+                        for chat_id in notified_chats:
+                            db[chat_id] = [t for t in db[chat_id] if t.lower() != username]
+                            if not db[chat_id]:
+                                del db[chat_id]
+                        
+                        save_radar_db(db)
+
+                    # Задержка 1.5 сек между проверками ников для защиты от бана
+                    await asyncio.sleep(1.5)
+
+        except Exception as err:
+            print(f"Ошибка в цикле Радара: {err}")
+
+        # Пауза 5 секунд перед следующим циклом сканирования
+        await asyncio.sleep(5)
+
+# --- LIFESPAN MANAGER ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("⏳ Запуск Telethon сессии...")
+    await telethon_client.start()
+    print("✅ Telethon сессия успешно запущена!")
+    
+    asyncio.create_task(radar_worker())
+    if bot and dp:
+        asyncio.create_task(dp.start_polling(bot))
+    
+    yield
+    print("🛑 Остановка Telethon...")
+    await telethon_client.disconnect()
+
+app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
 
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
 VOWELS_EASY = "aeiouy"
@@ -220,9 +253,11 @@ def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tupl
 
     return res, True, use_und
 
+# --- РУТЫ API ---
 @app.get("/")
 async def read_root():
-    if os.path.exists(INDEX_PATH): return FileResponse(INDEX_PATH, media_type="text/html")
+    if os.path.exists(INDEX_PATH): 
+        return FileResponse(INDEX_PATH, media_type="text/html")
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
 @app.get("/api/generate")
@@ -297,27 +332,42 @@ async def get_leaderboard(period: str = Query("all")):
 
     return {"status": "ok", "leaderboard": lb[:1000]}
 
+# --- ЭНДПОИНТЫ РАДАРА ---
 @app.get("/api/radar/add")
 async def radar_add(chat_id: str, username: str):
     db = load_radar_db()
-    if chat_id not in db: db[chat_id] = []
-    username = username.replace("@", "").strip()
+    chat_id = str(chat_id).strip()
+    username = username.replace("@", "").strip().lower()
+    
+    if not username:
+        return {"status": "error", "message": "Пустой юзернейм"}
+        
+    if chat_id not in db: 
+        db[chat_id] = []
+        
     if username not in db[chat_id]:
         db[chat_id].append(username)
         save_radar_db(db)
+        
     return {"status": "ok", "targets": db[chat_id]}
 
 @app.get("/api/radar/list")
 async def radar_list(chat_id: str):
+    chat_id = str(chat_id).strip()
     return {"targets": load_radar_db().get(chat_id, [])}
 
 @app.get("/api/radar/remove")
 async def radar_remove(chat_id: str, username: str):
     db = load_radar_db()
-    username = username.replace("@", "").strip()
+    chat_id = str(chat_id).strip()
+    username = username.replace("@", "").strip().lower()
+    
     if chat_id in db and username in db[chat_id]:
         db[chat_id].remove(username)
+        if not db[chat_id]:
+            del db[chat_id]
         save_radar_db(db)
+        
     return {"status": "ok", "targets": db.get(chat_id, [])}
 
 if __name__ == "__main__":
