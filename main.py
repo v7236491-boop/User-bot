@@ -115,7 +115,7 @@ async def check_username_telethon(username: str):
         print(f"Ошибка проверки {username}: {e}")
         return None
 
-# --- БАЗА СЛОВ И БРЕНДОВ ---
+# --- СЛОВАРЬ И БРЕНДЫ ДЛЯ СТАНДАРТНОГО РЕЖИМА ---
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
@@ -165,31 +165,58 @@ BRAND_CATEGORIES = {
     "fashion": {"names": ["nike", "adidas", "puma", "gucci", "prada", "dior", "chanel"], "contexts": ["style", "wear", "fit", "run", "shoes"]}
 }
 
+# --- БАЗА КРАСИВЫХ И ЗВУЧНЫХ СЛОГОВ ДЛЯ УМНОГО ФИЛЬТРА ---
+EASY_SYLLABLES = [
+    "ma", "re", "ki", "so", "lu", "ta", "ve", "zi", "no", "pa", "ro", "mi", "da", "bu",
+    "ne", "ly", "xo", "fa", "gi", "ka", "lo", "mu", "na", "ra", "se", "ti", "vo", "za",
+    "art", "ox", "ice", "sky", "pro", "zen", "neo", "fly", "lex", "vibe", "pulse", "crest",
+    "fay", "sol", "lum", "dex", "rix", "vaz", "miz", "zor", "vol", "xir", "val", "cor"
+]
+
+CONSONANTS_EASY = "bcdfgklmnprstvwz"
+VOWELS_EASY = "aeiouy"
+
+# --- УМНЫЙ ГЕНЕРАТОР ЧИТАЕМЫХ НИКНЕЙМОВ ---
 def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tuple[str, bool, bool]:
-    vowels = "aeiouy"
-    consonants = "bcdfghjklmnprstvwxz"
-    if len_mode == "5-6": target_len = random.choice([5, 6])
-    elif len_mode == "7-8": target_len = random.choice([7, 8])
-    else: target_len = random.choice([5, 6, 7])
+    # Установка целевой длины
+    if len_mode == "5-6":
+        target_len = random.choice([5, 6])
+    elif len_mode == "7-8":
+        target_len = random.choice([7, 8])
+    else:
+        target_len = random.choice([5, 6, 7])
 
-    chars_to_generate = target_len
-    if use_num: chars_to_generate -= random.choice([1, 2])
-    if use_und: chars_to_generate -= 1
-    chars_to_generate = max(3, chars_to_generate)
+    # 70% случаев — генерация из бренд-слогов, 30% — паттерн CVCVC (чередование)
+    if random.random() < 0.7:
+        res = ""
+        while len(res) < target_len:
+            syl = random.choice(EASY_SYLLABLES)
+            if len(res) + len(syl) <= target_len + 1:
+                res += syl
+            else:
+                break
+        while len(res) < target_len:
+            res += random.choice(VOWELS_EASY if len(res) % 2 == 1 else CONSONANTS_EASY)
+    else:
+        res = ""
+        start_with_consonant = random.choice([True, False])
+        for i in range(target_len):
+            if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
+                res += random.choice(CONSONANTS_EASY)
+            else:
+                res += random.choice(VOWELS_EASY)
 
-    res = ""
-    is_cons = random.choice([True, False])
-    for _ in range(chars_to_generate):
-        res += random.choice(consonants) if is_cons else random.choice(vowels)
-        is_cons = not is_cons
+    res = res[:target_len]
 
-    if use_und and len(res) >= 3:
-        insert_pos = random.randint(1, len(res) - 1)
-        res = res[:insert_pos] + "_" + res[insert_pos:]
+    # Добавление разделителей или цифр (если включено пользователем)
+    if use_und and len(res) >= 5:
+        pos = random.randint(2, len(res) - 2)
+        res = res[:pos] + "_" + res[pos+1:]
 
-    if use_num:
-        num = str(random.randint(0, 99)) if chars_to_generate >= 4 else str(random.randint(0, 9))
-        res = res + num if random.choice([True, False]) else num + res
+    if use_num and len(res) >= 5:
+        num = str(random.randint(1, 99))
+        res = res[:-len(num)] + num
+
     return res, True, use_und
 
 # --- ТОЧНАЯ ОЦЕНКА ЦЕННОСТИ НИКА ---
@@ -214,14 +241,14 @@ def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: b
     
     if is_pure: score += 20
     if not has_und and not has_num: score += 15
-    if 0.3 <= vowel_ratio <= 0.6: score += 10
+    if 0.3 <= vowel_ratio <= 0.6: score += 10  # Оптимальная читаемость
     
     if has_num: score -= 20
     if has_und: score -= 15
 
     if score >= 85:
         rank, color = "SSS+", "#29c75f"
-        price = "Fragment: High Value (~150+ TON)" if length <= 5 else "Fragment (~30-80 TON)"
+        price = "Fragment (~150+ TON)" if length <= 5 else "Fragment (~30-80 TON)"
     elif score >= 70:
         rank, color = "SS", "#eab308"
         price = "Fragment (~15-40 TON)" if length <= 5 else "Редкий актив (~5-15 TON)"
