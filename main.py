@@ -34,6 +34,11 @@ else:
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.3
 
+# --- КЭШ ПРОВЕРЕННЫХ НИКНЕЙМОВ (Память сервера) ---
+# Структура: {"username": (is_free_status, timestamp)}
+CHECK_CACHE = {}
+CACHE_TTL = 86400  # Хранить результат 24 часа (в секундах)
+
 # --- LIFESPAN MANAGER ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -79,7 +84,7 @@ async def radar_worker():
 
             for chat_id, targets in list(db.items()):
                 for username in targets:
-                    is_free = await check_username_telethon(username)
+                    is_free = await check_username_telethon(username, ignore_cache=True)
                     if is_free is True:
                         try:
                             await bot.send_message(
@@ -96,20 +101,34 @@ async def radar_worker():
             print(f"Ошибка воркера радара: {e}")
         await asyncio.sleep(10)
 
-# --- ПРОВЕРКА TELETHON ---
-async def check_username_telethon(username: str):
+# --- ПРОВЕРКА TELETHON С КЭШИРОВАНИЕМ ---
+async def check_username_telethon(username: str, ignore_cache: bool = False):
     username = username.replace("@", "").strip().lower()
     if len(username) < 5:
         return False
 
+    now = time.time()
+
+    # 1. Проверяем КЭШ (если не отключен для Радара)
+    if not ignore_cache and username in CHECK_CACHE:
+        cached_result, cached_time = CHECK_CACHE[username]
+        if now - cached_time < CACHE_TTL:
+            return cached_result  # Возвращаем мгновенно из памяти!
+
+    # 2. Запрос в Telegram API
     try:
         result = await telethon_client(CheckUsernameRequest(username=username))
-        return result
+        is_free = True if result is True else False
+        
+        # Записываем результат в КЭШ
+        CHECK_CACHE[username] = (is_free, now)
+        return is_free
     except FloodWaitError as e:
         print(f"FloodWait: ждем {e.seconds} сек.")
         return None
     except RPCError as e:
         print(f"RPC Ошибка: {e}")
+        CHECK_CACHE[username] = (False, now)
         return False
     except Exception as e:
         print(f"Ошибка проверки {username}: {e}")
@@ -165,7 +184,6 @@ BRAND_CATEGORIES = {
     "fashion": {"names": ["nike", "adidas", "puma", "gucci", "prada", "dior", "chanel"], "contexts": ["style", "wear", "fit", "run", "shoes"]}
 }
 
-# --- БАЗА КРАСИВЫХ И ЗВУЧНЫХ СЛОГОВ ДЛЯ УМНОГО ФИЛЬТРА ---
 EASY_SYLLABLES = [
     "ma", "re", "ki", "so", "lu", "ta", "ve", "zi", "no", "pa", "ro", "mi", "da", "bu",
     "ne", "ly", "xo", "fa", "gi", "ka", "lo", "mu", "na", "ra", "se", "ti", "vo", "za",
@@ -176,9 +194,7 @@ EASY_SYLLABLES = [
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
 VOWELS_EASY = "aeiouy"
 
-# --- УМНЫЙ ГЕНЕРАТОР ЧИТАЕМЫХ НИКНЕЙМОВ ---
 def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tuple[str, bool, bool]:
-    # Установка целевой длины
     if len_mode == "5-6":
         target_len = random.choice([5, 6])
     elif len_mode == "7-8":
@@ -186,7 +202,6 @@ def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tupl
     else:
         target_len = random.choice([5, 6, 7])
 
-    # 70% случаев — генерация из бренд-слогов, 30% — паттерн CVCVC (чередование)
     if random.random() < 0.7:
         res = ""
         while len(res) < target_len:
@@ -208,7 +223,6 @@ def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tupl
 
     res = res[:target_len]
 
-    # Добавление разделителей или цифр (если включено пользователем)
     if use_und and len(res) >= 5:
         pos = random.randint(2, len(res) - 2)
         res = res[:pos] + "_" + res[pos+1:]
@@ -241,7 +255,7 @@ def calculate_catch_score(username: str, check_result, is_pure: bool, has_und: b
     
     if is_pure: score += 20
     if not has_und and not has_num: score += 15
-    if 0.3 <= vowel_ratio <= 0.6: score += 10  # Оптимальная читаемость
+    if 0.3 <= vowel_ratio <= 0.6: score += 10
     
     if has_num: score -= 20
     if has_und: score -= 15
@@ -290,7 +304,7 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    for _ in range(3):
+    for _ in range(5):
         if use_filter:
             generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
         else:
@@ -320,7 +334,7 @@ async def generate_username(
                 "evaluation": calculate_catch_score(generated, check_result, is_pure, has_und)
             }
         
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.1)
 
     return JSONResponse(status_code=503, content={"error": "telethon_timeout"})
 
