@@ -110,15 +110,27 @@
         .nav-btn svg { opacity: 0.8; transition: 0.3s; }
         .nav-btn:hover svg { opacity: 1; filter: drop-shadow(0 0 5px var(--primary)); stroke: var(--primary); }
 
+        /* ПЛАВАЮЩИЕ КНОПКИ В НИЖНИХ УГЛАХ */
         .floating-achieving-btn {
             position: fixed; bottom: 20px; left: 20px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px);
+            background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--primary); color: var(--text-main);
             padding: 10px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer;
             box-shadow: 0 4px 20px var(--primary-glow); transition: 0.3s ease;
         }
         .floating-achieving-btn:active { transform: scale(0.92); }
+
+        .floating-leaderboard-btn {
+            position: fixed; bottom: 20px; right: 20px; z-index: 90;
+            background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
+            padding: 10px 16px; border-radius: 30px; font-size: 0.9rem; font-weight: 700;
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
+            box-shadow: 0 4px 20px rgba(234, 179, 8, 0.25); transition: all 0.3s ease;
+        }
+        .floating-leaderboard-btn:active { transform: scale(0.92); }
+        .floating-leaderboard-btn:hover { border-color: #eab308; box-shadow: 0 0 25px rgba(234, 179, 8, 0.45); }
 
         /* --- ГЛАВНЫЙ ЭКРАН --- */
         main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transform: translateY(-3vh); }
@@ -204,7 +216,7 @@
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* ИСТОРИЯ - ТЕМНЫЙ ФОН И ДИНАМИЧЕСКИЙ СВАЙП */
+        /* ИСТОРИЯ И ЛИДЕРБОРД КАРТОЧКИ */
         .history-wrapper {
             position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
             background: transparent;
@@ -216,14 +228,21 @@
 
         .history-card { 
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; 
+            border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; 
             align-items: center; transition: background 0.2s; position: relative; z-index: 2; 
             touch-action: pan-y; will-change: transform; user-select: none;
         }
         .history-card:hover { border-color: var(--primary); }
-        .radar-remove { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
-        .btn-clear-history { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .lb-rank-badge {
+            font-size: 1.1rem; font-weight: 800; min-width: 32px;
+            color: #eab308; text-align: center;
+        }
+
+        .lb-finder-btn {
+            background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-top: 4px; display: inline-block; text-decoration: none;
+        }
 
         /* КАРТОЧКА ДОСТИЖЕНИЯ */
         .achieve-card {
@@ -300,9 +319,14 @@
         </div>
     </main>
 
-    <!-- ПЛАВАЮЩАЯ КНОПКА ДОСТИЖЕНИЙ -->
+    <!-- ПЛАВАЮЩАЯ КНОПКА ДОСТИЖЕНИЙ (ЛЕВЫЙ УГОЛ) -->
     <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
         🏆 <span id="achieve-counter-badge">0/100</span>
+    </button>
+
+    <!-- ПЛАВАЮЩАЯ КНОПКА ЛИДЕРБОРДА (ПРАВЫЙ УГОЛ) -->
+    <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')" title="Рейтинг и улов">
+        📊 <span style="font-size:0.8rem; opacity:0.9;">Топ</span>
     </button>
 
     <div class="toast" id="global-toast">✨ Ник скопирован!<br>Примените в настройках.</div>
@@ -437,7 +461,29 @@
         </div>
     </div>
 
-    <!-- Модалка: Ввод Секретного Кода -->
+    <!-- Модалка: Глобальный Лидерборд -->
+    <div class="modal-overlay" id="modal-leaderboard">
+        <div class="modal-content glass-panel" style="max-width: 420px;">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: #eab308;">👑 ТОП-1000 Улова</h2>
+                <button class="btn-close" onclick="closeModal('modal-leaderboard')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="filter-row" style="margin-bottom: 12px;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Период:</span>
+                    <select id="lb-period-select" onchange="fetchLeaderboard(this.value)">
+                        <option value="day">За сегодня</option>
+                        <option value="week">За неделю</option>
+                        <option value="month">За месяц</option>
+                        <option value="all" selected>За всё время</option>
+                    </select>
+                </div>
+                <div id="leaderboard-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: Секретный код -->
     <div class="modal-overlay" id="modal-secret-code">
         <div class="modal-content glass-panel" style="max-width: 360px;">
             <div class="modal-header">
@@ -445,7 +491,7 @@
                 <button class="btn-close" onclick="closeModal('modal-secret-code')">✕</button>
             </div>
             <div class="modal-body" style="text-align:center;">
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите секретный промокод для разблокировки эксклюзивных локальных тем!</p>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите промокод для открытия тем!</p>
                 <input type="text" id="secret-code-input" class="form-input" style="text-align:center; font-weight:bold; letter-spacing:1px; margin-bottom:12px;" placeholder="ПРОМОКОД...">
                 <button class="form-btn" onclick="submitSecretCode()">Разблокировать</button>
             </div>
@@ -516,6 +562,7 @@
         let lastGenerated = "";
         let slotInterval;
         let tgChatId = "0";
+        let finderName = "Аноним";
         let autoParseCatches = [];
         
         let stats = {
@@ -525,6 +572,12 @@
             fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0'),
             secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
         };
+
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            tgChatId = user.id.toString();
+            finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
+        }
 
         let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
         const SECRET_PROMOS = {
@@ -539,10 +592,6 @@
 
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-            tgChatId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
-        }
-
         function saveStats() {
             localStorage.setItem('vh_stat_gen', stats.generations.toString());
             localStorage.setItem('vh_stat_radar', stats.radarAdded.toString());
@@ -550,6 +599,45 @@
             localStorage.setItem('vh_stat_fragment', stats.fragmentFound.toString());
             localStorage.setItem('vh_stat_secrets', stats.secretsFound.toString());
             checkAchievementProgress();
+        }
+
+        /* --- ГЛОБАЛЬНЫЙ ЛИДЕРБОРД --- */
+        async function fetchLeaderboard(period = 'all') {
+            const container = document.getElementById('leaderboard-list-container');
+            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка рейтинга...</div>';
+
+            try {
+                const res = await fetch(`/api/leaderboard?period=${period}`);
+                const data = await res.json();
+                
+                if (data.status === 'ok' && data.leaderboard.length > 0) {
+                    container.innerHTML = data.leaderboard.map((item, index) => {
+                        const rankMedal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+                        const userTgUrl = item.finder_id !== "0" ? `tg://user?id=${item.finder_id}` : "#";
+
+                        return `
+                            <div class="history-card" style="border-left: 3px solid ${item.color};">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div class="lb-rank-badge">${rankMedal}</div>
+                                    <div>
+                                        <div style="font-weight:bold; color:#fff;">@${item.username}</div>
+                                        <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: ${item.finder_name}</div>
+                                        ${item.finder_id !== "0" ? `<a href="${userTgUrl}" class="lb-finder-btn">💬 Написать ловцу</a>` : ''}
+                                    </div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="color:${item.color}; font-weight:bold; font-size:0.85rem;">${item.rank}</div>
+                                    <div style="font-size:0.7rem; color:#eab308; opacity:0.9;">${item.price}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">За выбранный период находок пока нет.</div>';
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px;">Ошибка загрузки топа</div>';
+            }
         }
 
         /* --- СЕКРЕТНЫЕ ТЕМЫ И ПРОМОКОДЫ --- */
@@ -599,7 +687,6 @@
             });
         }
 
-        // АНИМАЦИОННЫЙ ДВИЖОК ДЛЯ СЕКРЕТНЫХ ТЕМ
         let secretAnimId = null;
         const secretCanvas = document.getElementById('secret-canvas');
         const sCtx = secretCanvas.getContext('2d');
@@ -1055,6 +1142,7 @@
             if(id === 'modal-radar') fetchRadarList();
             if(id === 'modal-history') renderHistory();
             if(id === 'modal-achievements') renderAchievements();
+            if(id === 'modal-leaderboard') fetchLeaderboard('all');
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -1236,7 +1324,7 @@
             const useNum = document.getElementById('filter-num').checked;
             const useUnd = document.getElementById('filter-und').checked;
 
-            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}`;
+            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`;
 
             try {
                 const res = await fetch(url);
