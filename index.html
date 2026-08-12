@@ -241,7 +241,7 @@
 
         .lb-finder-btn {
             background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);
-            padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-top: 4px; display: inline-block; text-decoration: none;
+            padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; margin-top: 6px; display: inline-flex; align-items: center; gap: 4px;
         }
 
         /* КАРТОЧКА ДОСТИЖЕНИЯ */
@@ -601,6 +601,18 @@
             checkAchievementProgress();
         }
 
+        /* --- ПЕРЕХОД В ЛС Telegram ЛОВЦА --- */
+        function openUserChat(finderId) {
+            if (!finderId || finderId === "0") return;
+            vibrate('light');
+            const url = `tg://user?id=${finderId}`;
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+                window.Telegram.WebApp.openTelegramLink(url);
+            } else {
+                window.open(url, '_blank');
+            }
+        }
+
         /* --- ГЛОБАЛЬНЫЙ ЛИДЕРБОРД --- */
         async function fetchLeaderboard(period = 'all') {
             const container = document.getElementById('leaderboard-list-container');
@@ -613,7 +625,6 @@
                 if (data.status === 'ok' && data.leaderboard.length > 0) {
                     container.innerHTML = data.leaderboard.map((item, index) => {
                         const rankMedal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
-                        const userTgUrl = item.finder_id !== "0" ? `tg://user?id=${item.finder_id}` : "#";
 
                         return `
                             <div class="history-card" style="border-left: 3px solid ${item.color};">
@@ -622,7 +633,7 @@
                                     <div>
                                         <div style="font-weight:bold; color:#fff;">@${item.username}</div>
                                         <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: ${item.finder_name}</div>
-                                        ${item.finder_id !== "0" ? `<a href="${userTgUrl}" class="lb-finder-btn">💬 Написать ловцу</a>` : ''}
+                                        ${item.finder_id !== "0" ? `<button class="lb-finder-btn" onclick="openUserChat('${item.finder_id}')">💬 Написать пользователю</button>` : ''}
                                     </div>
                                 </div>
                                 <div style="text-align:right;">
