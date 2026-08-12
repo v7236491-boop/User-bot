@@ -216,14 +216,27 @@
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* ИСТОРИЯ И ЛИДЕРБОРД КАРТОЧКИ */
+        /* ИСТОРИЯ И ДВУСТОРОННИЙ СВАЙП */
         .history-wrapper {
             position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
             background: transparent;
             transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease, background 0.2s;
             max-height: 80px;
         }
-        .history-wrapper.swiping { background: rgba(239, 68, 68, 0.25); }
+        /* Подслои для динамического подсвечивания при свайпе */
+        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.25); } /* Красный - Удаление */
+        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.25); }  /* Голубой - Поделиться */
+        
+        /* Иконки подсказки при свайпе */
+        .swipe-icon-hint {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            font-size: 1.2rem; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 1;
+        }
+        .swipe-icon-left { left: 16px; color: #ef4444; }
+        .swipe-icon-right { right: 16px; color: #38bdf8; }
+        
+        .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
+        .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
         .history-card { 
@@ -239,7 +252,6 @@
             color: #eab308; text-align: center;
         }
 
-        /* КОМПАКТНАЯ КНОПКА «💬 НАПИСАТЬ» */
         .lb-finder-btn {
             background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);
             padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; 
@@ -604,7 +616,7 @@
             checkAchievementProgress();
         }
 
-        /* --- ПЕРЕХОД В ЛС Telegram ЛОВЦА (СВОРОВАНИЕ В ФОН) --- */
+        /* --- ПЕРЕХОД В ЛС Telegram ЛОВЦА --- */
         function openUserChat(finderId) {
             if (!finderId || finderId === "0") return;
             vibrate('light');
@@ -1183,7 +1195,7 @@
             cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
         }
 
-        // --- ИСТОРИЯ ---
+        // --- ИСТОРИЯ И СВАЙПЫ ---
         function saveToHistory(item) {
             if (!item.user || item.user === "timeout" || item.user === "error") return;
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -1207,10 +1219,13 @@
                 const div = document.createElement('div'); 
                 div.className = 'history-card';
                 div.setAttribute('data-index', index);
+                div.setAttribute('data-user', item.user);
                 
                 div.innerHTML = `
+                    <div class="swipe-icon-hint swipe-icon-left">🗑</div>
                     <div class="hist-left"><div class="hist-user" style="color: ${item.color}">@${item.user}</div><div class="hist-plat" style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div></div>
                     <div class="hist-right" style="text-align:right;"><div class="hist-rank" style="color: ${item.color}; font-weight:bold;">${item.rank}</div><div class="price-text" style="font-size:0.75rem; opacity:0.8;">${item.price}</div></div>
+                    <div class="swipe-icon-hint swipe-icon-right">🔗</div>
                 `;
 
                 div.ontouchstart = handleTouchStart;
@@ -1236,7 +1251,7 @@
             }
         }
 
-        /* --- СВАЙП ВПРАВО ДЛЯ УДАЛЕНИЯ КАРТОЧКИ --- */
+        /* --- ДВУСТОРОННИЙ СВАЙП КАРТОЧЕК В ИСТОРИИ --- */
         let startX = 0, currentX = 0, activeCard = null, isSwiping = false;
 
         function handleTouchStart(e) {
@@ -1254,24 +1269,35 @@
             const index = parseInt(activeCard.getAttribute('data-index'));
             const wrapper = document.getElementById(`hist-wrap-${index}`);
 
-            if (diffX > 10) {
-                isSwiping = true;
-                if(wrapper) wrapper.classList.add('swiping');
-            }
+            if (Math.abs(diffX) > 10) isSwiping = true;
 
             if (diffX > 0) {
-                activeCard.style.transform = `translateX(${diffX}px)`;
-                activeCard.style.opacity = `${1 - diffX / 250}`;
+                // Свайп ВПРАВО (Удаление / Красный)
+                if (wrapper) {
+                    wrapper.classList.add('swiping-right');
+                    wrapper.classList.remove('swiping-left');
+                }
+            } else if (diffX < 0) {
+                // Свайп ВЛЕВО (Поделиться / Голубой)
+                if (wrapper) {
+                    wrapper.classList.add('swiping-left');
+                    wrapper.classList.remove('swiping-right');
+                }
             }
+
+            activeCard.style.transform = `translateX(${diffX}px)`;
+            activeCard.style.opacity = `${1 - Math.abs(diffX) / 250}`;
         }
 
         function handleTouchEnd(e) {
             if (!activeCard) return;
             let diffX = currentX - startX;
             const index = parseInt(activeCard.getAttribute('data-index'));
+            const username = activeCard.getAttribute('data-user');
             const wrapper = document.getElementById(`hist-wrap-${index}`);
 
             if (diffX > 140) {
+                // ПОЛНЫЙ СВАЙП ВПРАВО -> УДАЛЕНИЕ
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translateX(100%)';
                 activeCard.style.opacity = '0';
@@ -1284,11 +1310,36 @@
                     localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
                     renderHistory();
                 }, 350);
-            } else {
+            } 
+            else if (diffX < -140) {
+                // ПОЛНЫЙ СВАЙП ВЛЕВО -> ПОДЕЛИЦИЯ В Telegram
+                activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+                activeCard.style.transform = 'translateX(-100%)';
+                activeCard.style.opacity = '0';
+
+                vibrate('success');
+                const botUsername = "selectionusername_bot";
+                const text = `🎯 Нашел свободный ник @${username} в боте @${botUsername}!`;
+                const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/' + botUsername)}&text=${encodeURIComponent(text)}`;
+                
+                setTimeout(() => {
+                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+                        window.Telegram.WebApp.openTelegramLink(url);
+                    } else {
+                        window.open(url, '_blank');
+                    }
+                    renderHistory();
+                }, 200);
+            } 
+            else {
+                // Возврат карточки на место
                 activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
                 activeCard.style.transform = 'translateX(0px)';
                 activeCard.style.opacity = '1';
-                if(wrapper) wrapper.classList.remove('swiping');
+                if(wrapper) {
+                    wrapper.classList.remove('swiping-right');
+                    wrapper.classList.remove('swiping-left');
+                }
             }
 
             startX = 0; currentX = 0; activeCard = null;
