@@ -129,10 +129,20 @@
         .color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; margin: 0 auto; }
         .color-dot.active { border-color: #fff; transform: scale(1.2); }
 
-        /* Выпадающие списки (Фильтры и Кастомизация) */
-        .filter-options { display: none; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-top: -4px; margin-bottom: 10px; }
+        /* Выпадающие панели */
+        .filter-options { display: none; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-top: -4px; margin-bottom: 10px; position: relative; }
         .filter-options.active { display: block; animation: slideDown 0.25s ease; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ИКОНКА-УГОЛОК (CHEVRON) В ВЕРХНЕМ ЛЕВОМ УГЛУ ПАНЕЛИ */
+        .panel-collapse-btn {
+            position: absolute; top: 8px; left: 10px;
+            background: transparent; border: none;
+            color: var(--text-muted); cursor: pointer;
+            padding: 4px; display: flex; align-items: center; justify-content: center;
+            opacity: 0.6; transition: 0.2s; border-radius: 6px;
+        }
+        .panel-collapse-btn:hover { opacity: 1; color: #fff; background: rgba(255,255,255,0.08); }
 
         .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .filter-row:last-child { margin-bottom: 0; }
@@ -141,13 +151,22 @@
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px; outline: none; font-family: inherit; font-size: 0.85rem; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
         
-        /* Свайп-карточка */
+        .btn-reset-custom {
+            width: 100%; background: transparent; border: 1px dashed rgba(255,255,255,0.2);
+            color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 0.75rem;
+            cursor: pointer; margin-top: 10px; transition: 0.2s;
+        }
+        .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
+
+        /* ИСТОРИЯ - ИСПРАВЛЕННЫЙ ТЕМНЫЙ ФОН БЕЗ ПОСТОЯННОГО КРАСНОГО */
         .history-wrapper {
             position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
-            background: rgba(239, 68, 68, 0.25);
-            transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease;
+            background: transparent; /* Обычный прозрачный фон */
+            transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease, background 0.2s;
             max-height: 80px;
         }
+        /* Красный подслой проявляется только когда начинается свайп */
+        .history-wrapper.swiping { background: rgba(239, 68, 68, 0.25); }
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
         .history-card { 
@@ -243,7 +262,12 @@
 
                 <!-- ВЫПАДАЮЩАЯ ПАНЕЛЬ КАСТОМИЗАЦИИ -->
                 <div class="filter-options" id="custom-menu">
-                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Выбор темы (10 цветов)</div>
+                    <!-- Галочка-уколок сворачивания -->
+                    <button class="panel-collapse-btn" onclick="collapsePanel('custom-menu')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    </button>
+
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; margin-top: 14px; color: var(--text-main);">Выбор темы (10 цветов)</div>
                     <div class="color-picker-grid">
                         <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', this)"></div>
                         <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', 'rgba(56, 189, 248, 0.25)', this)"></div>
@@ -281,6 +305,8 @@
                         <span style="font-size: 0.8rem; color: var(--text-main);">Скорость полёта</span>
                         <input type="range" class="range-slider" id="emoji-speed-slider" min="1" max="10" value="4" onchange="updateEmojiSettings()">
                     </div>
+
+                    <button class="btn-reset-custom" onclick="resetCustomization()">↺ Сброс настроек</button>
                 </div>
 
                 <div class="setting-item">
@@ -294,7 +320,12 @@
                 </div>
 
                 <div class="filter-options" id="filter-menu">
-                    <div class="filter-row">
+                    <!-- Галочка-уколок сворачивания -->
+                    <button class="panel-collapse-btn" onclick="collapsePanel('filter-menu')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    </button>
+
+                    <div class="filter-row" style="margin-top: 14px;">
                         <span style="font-size: 0.85rem; color: var(--text-main);">Длина слова</span>
                         <select id="filter-len">
                             <option value="5-6">5-6 символов</option>
@@ -497,6 +528,26 @@
             if (cb.checked) menu.classList.add('active'); else menu.classList.remove('active');
         }
 
+        // Сворачивание панели без отключения функции
+        function collapsePanel(panelId) {
+            document.getElementById(panelId).classList.remove('active');
+        }
+
+        // Сброс настроек кастомизации до "заводских"
+        function resetCustomization() {
+            localStorage.removeItem('vh_custom_settings');
+            setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', document.querySelectorAll('.color-dot')[0]);
+            document.getElementById('fog-count-slider').value = 5;
+            document.getElementById('fog-speed-slider').value = 3;
+            document.getElementById('emoji-input').value = '🔥, ⚡, 💎';
+            document.getElementById('emoji-size-slider').value = 20;
+            document.getElementById('emoji-speed-slider').value = 4;
+            
+            updateFogSettings();
+            updateEmojiSettings();
+            showToast('↺ Настройки сброшены!');
+        }
+
         function saveCustomization() {
             const customData = {
                 customEnabled: document.getElementById('toggle-custom').checked,
@@ -605,7 +656,7 @@
             cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
         }
 
-        // --- ИСТОРИЯ С СВАЙПОМ ДЛЯ УДАЛЕНИЯ ---
+        // --- ИСТОРИЯ С ЧИСТЫМ ФОНОМ И ДИНАМИЧЕСКИМ КРАСНЫМ СВАЙПОМ ---
         function saveToHistory(item) {
             if (!item.user || item.user === "timeout" || item.user === "error") return;
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -673,7 +724,13 @@
             currentX = e.touches[0].clientX;
             let diffX = currentX - startX;
 
-            if (diffX > 10) isSwiping = true;
+            const index = parseInt(activeCard.getAttribute('data-index'));
+            const wrapper = document.getElementById(`hist-wrap-${index}`);
+
+            if (diffX > 10) {
+                isSwiping = true;
+                if(wrapper) wrapper.classList.add('swiping'); // Красный подслой включается ТОЛЬКО при свайпе
+            }
 
             if (diffX > 0) {
                 activeCard.style.transform = `translateX(${diffX}px)`;
@@ -704,6 +761,7 @@
                 activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
                 activeCard.style.transform = 'translateX(0px)';
                 activeCard.style.opacity = '1';
+                if(wrapper) wrapper.classList.remove('swiping');
             }
 
             startX = 0; currentX = 0; activeCard = null;
