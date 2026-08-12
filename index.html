@@ -216,40 +216,48 @@
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* ИСТОРИЯ И ДВУСТОРОННИЙ СВАЙП */
+        /* --- ИСТОРИЯ И СТИЛЬНЫЕ СВАЙПЫ (ИКОНКИ НА ПОДЛОЖКЕ В УГЛАХ) --- */
         .history-wrapper {
             position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
             background: transparent;
-            transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease, background 0.2s;
+            transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease;
             max-height: 80px;
         }
-        /* Подслои для динамического подсвечивания при свайпе */
-        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.25); } /* Красный - Удаление */
-        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.25); }  /* Голубой - Поделиться */
-        
-        /* Иконки подсказки при свайпе */
-        .swipe-icon-hint {
+        /* Подложка свайпа */
+        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.35); } /* Красный для удаления */
+        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.35); }  /* Голубой для share */
+
+        /* Иконки на свободных местах фоновой подложки */
+        .swipe-action-icon {
             position: absolute; top: 50%; transform: translateY(-50%);
-            font-size: 1.2rem; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 1;
+            font-size: 1.25rem; opacity: 0; transition: opacity 0.2s ease; z-index: 1;
         }
-        .swipe-icon-left { left: 16px; color: #ef4444; }
-        .swipe-icon-right { right: 16px; color: #38bdf8; }
-        
+        .swipe-icon-left { left: 18px; }   /* Корзина слева, когда тянем вправо */
+        .swipe-icon-right { right: 18px; } /* Самолетик справа, когда тянем влево */
+
         .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
         .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
         .history-card { 
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); 
+            background: rgba(20, 26, 23, 0.92); border: 1px solid rgba(255,255,255,0.06); 
             border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; 
             align-items: center; transition: background 0.2s; position: relative; z-index: 2; 
             touch-action: pan-y; will-change: transform; user-select: none;
         }
         .history-card:hover { border-color: var(--primary); }
 
+        /* --- ПРЕМИУМ ДИЗАЙН ЛИДЕРБОРДА --- */
+        .lb-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between;
+            align-items: center; transition: 0.2s; margin-bottom: 8px;
+        }
+        .lb-card:hover { border-color: #eab308; background: rgba(234, 179, 8, 0.04); }
+        
         .lb-rank-badge {
-            font-size: 1.1rem; font-weight: 800; min-width: 32px;
-            color: #eab308; text-align: center;
+            font-size: 1.2rem; font-weight: 800; min-width: 36px;
+            text-align: center; display: flex; align-items: center; justify-content: center;
         }
 
         .lb-finder-btn {
@@ -334,12 +342,11 @@
         </div>
     </main>
 
-    <!-- ПЛАВАЮЩАЯ КНОПКА ДОСТИЖЕНИЙ (ЛЕВЫЙ УГОЛ) -->
+    <!-- ПЛАВАЮЩИЕ КНОПКИ В УГЛАХ -->
     <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
         🏆 <span id="achieve-counter-badge">0/100</span>
     </button>
 
-    <!-- ПЛАВАЮЩАЯ КНОПКА ЛИДЕРБОРДА (ПРАВЫЙ УГОЛ) -->
     <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')" title="Рейтинг и улов">
         📊 <span style="font-size:0.8rem; opacity:0.9;">Топ</span>
     </button>
@@ -628,7 +635,7 @@
             }
         }
 
-        /* --- ГЛОБАЛЬНЫЙ ЛИДЕРБОРД --- */
+        /* --- ГЛОБАЛЬНЫЙ ЛИДЕРБОРД С ПРЕМИУМ ДИЗАЙНОМ --- */
         async function fetchLeaderboard(period = 'all') {
             const container = document.getElementById('leaderboard-list-container');
             container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка рейтинга...</div>';
@@ -642,18 +649,18 @@
                         const rankMedal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
 
                         return `
-                            <div class="history-card" style="border-left: 3px solid ${item.color};">
-                                <div style="display:flex; align-items:center; gap:10px;">
+                            <div class="lb-card" style="border-left: 3px solid ${item.color};">
+                                <div style="display:flex; align-items:center; gap:12px;">
                                     <div class="lb-rank-badge">${rankMedal}</div>
                                     <div>
-                                        <div style="font-weight:bold; color:#fff;">@${item.username}</div>
-                                        <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: ${item.finder_name}</div>
+                                        <div style="font-weight:bold; color:#fff; font-size:0.95rem;">@${item.username}</div>
+                                        <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: <span style="color:#eab308;">${item.finder_name}</span></div>
                                         ${item.finder_id !== "0" ? `<button class="lb-finder-btn" onclick="openUserChat('${item.finder_id}')">💬 Написать</button>` : ''}
                                     </div>
                                 </div>
                                 <div style="text-align:right;">
                                     <div style="color:${item.color}; font-weight:bold; font-size:0.85rem;">${item.rank}</div>
-                                    <div style="font-size:0.7rem; color:#eab308; opacity:0.9;">${item.price}</div>
+                                    <div style="font-size:0.7rem; color:#eab308; opacity:0.9; margin-top:2px;">${item.price}</div>
                                 </div>
                             </div>
                         `;
@@ -1195,7 +1202,7 @@
             cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
         }
 
-        // --- ИСТОРИЯ И СВАЙПЫ ---
+        // --- ИСТОРИЯ ---
         function saveToHistory(item) {
             if (!item.user || item.user === "timeout" || item.user === "error") return;
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -1222,10 +1229,10 @@
                 div.setAttribute('data-user', item.user);
                 
                 div.innerHTML = `
-                    <div class="swipe-icon-hint swipe-icon-left">🗑</div>
+                    <div class="swipe-action-icon swipe-icon-left">🗑</div>
                     <div class="hist-left"><div class="hist-user" style="color: ${item.color}">@${item.user}</div><div class="hist-plat" style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div></div>
                     <div class="hist-right" style="text-align:right;"><div class="hist-rank" style="color: ${item.color}; font-weight:bold;">${item.rank}</div><div class="price-text" style="font-size:0.75rem; opacity:0.8;">${item.price}</div></div>
-                    <div class="swipe-icon-hint swipe-icon-right">🔗</div>
+                    <div class="swipe-action-icon swipe-icon-right">🔗</div>
                 `;
 
                 div.ontouchstart = handleTouchStart;
@@ -1251,7 +1258,7 @@
             }
         }
 
-        /* --- ДВУСТОРОННИЙ СВАЙП КАРТОЧЕК В ИСТОРИИ --- */
+        /* --- ДВУСТОРОННИЙ СВАЙП С ФОНОВЫМИ ИКОНКАМИ --- */
         let startX = 0, currentX = 0, activeCard = null, isSwiping = false;
 
         function handleTouchStart(e) {
@@ -1272,13 +1279,13 @@
             if (Math.abs(diffX) > 10) isSwiping = true;
 
             if (diffX > 0) {
-                // Свайп ВПРАВО (Удаление / Красный)
+                // Свайп ВПРАВО -> Красная подложка + Корзина слева
                 if (wrapper) {
                     wrapper.classList.add('swiping-right');
                     wrapper.classList.remove('swiping-left');
                 }
             } else if (diffX < 0) {
-                // Свайп ВЛЕВО (Поделиться / Голубой)
+                // Свайп ВЛЕВО -> Голубая подложка + Самолетик справа
                 if (wrapper) {
                     wrapper.classList.add('swiping-left');
                     wrapper.classList.remove('swiping-right');
@@ -1297,7 +1304,7 @@
             const wrapper = document.getElementById(`hist-wrap-${index}`);
 
             if (diffX > 140) {
-                // ПОЛНЫЙ СВАЙП ВПРАВО -> УДАЛЕНИЕ
+                // УДАЛЕНИЕ
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translateX(100%)';
                 activeCard.style.opacity = '0';
@@ -1312,7 +1319,7 @@
                 }, 350);
             } 
             else if (diffX < -140) {
-                // ПОЛНЫЙ СВАЙП ВЛЕВО -> ПОДЕЛИЦИЯ В Telegram
+                // ПОДЕЛИТЬСЯ
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translateX(-100%)';
                 activeCard.style.opacity = '0';
@@ -1332,7 +1339,7 @@
                 }, 200);
             } 
             else {
-                // Возврат карточки на место
+                // ВОЗВРАТ
                 activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
                 activeCard.style.transform = 'translateX(0px)';
                 activeCard.style.opacity = '1';
