@@ -25,10 +25,10 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column;
             overflow-x: hidden; position: relative;
-            transform: translateZ(0); /* Включаем аппаратный слой GPU для всего тела */
+            transform: translateZ(0);
         }
 
-        /* Оптимизация плавной прокрутки 120 Гц */
+        /* 120 Гц плавность */
         .scrolling-active #fog-canvas,
         .scrolling-active #emoji-layer {
             pointer-events: none;
@@ -129,7 +129,7 @@
         .btn-generate:active { transform: scale(0.94); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* ⚡ УЛЬТРА-ПЛАВНЫЕ АНИМАЦИИ МОДАЛОК (120 ГЦ) ⚡ */
+        /* ⚡ МОДАЛКИ (120 ГЦ) ⚡ */
         .modal-overlay { 
             position: fixed; inset: 0; 
             background: rgba(3, 7, 6, 0.82); 
@@ -149,22 +149,14 @@
             will-change: transform, opacity;
             transition: transform 0.35s cubic-bezier(0.34, 1.25, 0.64, 1);
         }
-        .modal-overlay.active .modal-content {
-            transform: scale(1) translateY(0);
-        }
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
 
         .modal-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
         .modal-title { margin: 0; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: justify; cursor: pointer; transition: transform 0.2s ease; }
+        .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s ease; }
         .btn-close:active { transform: scale(0.85); }
 
-        .modal-body { 
-            padding: 20px; 
-            overflow-y: auto; 
-            flex: 1; 
-            -webkit-overflow-scrolling: touch; 
-            contain: content;
-        }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; contain: content; }
 
         .setting-item { background: rgba(255,255,255,0.03); padding: 14px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
         .setting-info { display: flex; flex-direction: column; gap: 3px; }
@@ -177,6 +169,24 @@
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
+
+        /* 🌟 ФИКС ИКОНКИ СВОРАЧИВАНИЯ СТРЕЛОЧКИ 🌟 */
+        .panel-collapse-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+        }
+        .panel-collapse-btn:active { transform: scale(0.88); }
+        .panel-collapse-btn svg { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .panel-collapse-btn.collapsed svg { transform: rotate(180deg); }
 
         .range-slider { width: 90px; accent-color: var(--primary); }
         .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
@@ -228,10 +238,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.03);
         }
         .custom-option:last-child { border-bottom: none; }
-        .custom-option:hover, .custom-option.selected {
-            background: var(--primary-glow);
-            color: #fff;
-        }
+        .custom-option:hover, .custom-option.selected { background: var(--primary-glow); color: #fff; }
 
         .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
         .filter-row:last-child { margin-bottom: 0; }
@@ -360,6 +367,7 @@
                     </div>
                 </div>
 
+                <!-- 🌟 ПОЛНАЯ ПАЛИТРА ИЗ 10 ТЕМ 🌟 -->
                 <div class="filter-options" id="custom-menu">
                     <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Тема акцента</div>
                     <div class="color-picker-grid" id="theme-dots-grid">
@@ -368,6 +376,11 @@
                         <div class="color-dot" style="background:#6366f1;" onclick="setThemeColor('#6366f1', 'rgba(99, 102, 241, 0.25)', this)"></div>
                         <div class="color-dot" style="background:#a855f7;" onclick="setThemeColor('#a855f7', 'rgba(168, 85, 247, 0.25)', this)"></div>
                         <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', 'rgba(236, 72, 153, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#ef4444;" onclick="setThemeColor('#ef4444', 'rgba(239, 68, 68, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#f97316;" onclick="setThemeColor('#f97316', 'rgba(249, 115, 22, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', 'rgba(234, 179, 8, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#14b8a6;" onclick="setThemeColor('#14b8a6', 'rgba(20, 184, 166, 0.25)', this)"></div>
+                        <div class="color-dot" style="background:#f43f5e;" onclick="setThemeColor('#f43f5e', 'rgba(244, 63, 94, 0.25)', this)"></div>
                     </div>
 
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
@@ -408,6 +421,7 @@
                         <span class="setting-desc">Выбор логики и приставки к вашему слову</span>
                     </div>
                     <div class="setting-controls">
+                        <!-- 🌟 ИСПРАВЛЕННАЯ СТЕКЛЯННАЯ КНОПКА СВОРАЧИВАНИЯ 🌟 -->
                         <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
                         </button>
@@ -796,6 +810,7 @@
             document.body.className = '';
         }
 
+        /* 🌟 ВОССТАНОВЛЕНИЕ ВСЕХ СЕКРЕТНЫХ АНИМАЦИОННЫХ ТЕМ 🌟 */
         function activateSecretEffect(themeId, colorHex, glowHex, emojis) {
             stopSecretAnimation();
             setThemeColor(colorHex, glowHex, null);
@@ -826,6 +841,50 @@
                 }
                 drawMatrix();
             } 
+            else if (themeId === 'durov') {
+                secretCanvas.style.display = 'block';
+                let planes = Array.from({ length: 18 }, () => ({
+                    x: Math.random() * secretCanvas.width,
+                    y: Math.random() * secretCanvas.height,
+                    speed: 1 + Math.random() * 2, size: 15 + Math.random() * 10
+                }));
+
+                function drawDurov() {
+                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
+                    sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    planes.forEach(p => {
+                        sCtx.save();
+                        sCtx.translate(p.x, p.y);
+                        sCtx.beginPath();
+                        sCtx.moveTo(0, 0); sCtx.lineTo(-p.size, -p.size/2); sCtx.lineTo(-p.size/2, 0); sCtx.lineTo(-p.size, p.size/2);
+                        sCtx.closePath(); sCtx.fill();
+                        sCtx.restore();
+                        p.x -= p.speed; p.y -= p.speed * 0.5;
+                        if (p.x < -30 || p.y < -30) { p.x = secretCanvas.width + 30; p.y = Math.random() * secretCanvas.height; }
+                    });
+                    secretAnimId = requestAnimationFrame(drawDurov);
+                }
+                drawDurov();
+            }
+            else if (themeId === 'kington') {
+                secretCanvas.style.display = 'block';
+                let goldList = Array.from({ length: 45 }, () => ({
+                    x: Math.random() * secretCanvas.width, y: Math.random() * secretCanvas.height,
+                    size: Math.random() * 3 + 1.5, speed: Math.random() * 1.5 + 0.5, op: Math.random()
+                }));
+
+                function drawKington() {
+                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
+                    goldList.forEach(g => {
+                        sCtx.fillStyle = `rgba(255, 215, 0, ${g.op})`;
+                        sCtx.beginPath(); sCtx.arc(g.x, g.y, g.size, 0, Math.PI * 2); sCtx.fill();
+                        g.y += g.speed;
+                        if (g.y > secretCanvas.height) { g.y = 0; g.x = Math.random() * secretCanvas.width; }
+                    });
+                    secretAnimId = requestAnimationFrame(drawKington);
+                }
+                drawKington();
+            }
             else if (themeId === 'rainbow') {
                 document.body.classList.add("theme-rainbow");
             }
