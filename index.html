@@ -30,13 +30,13 @@
             transform: translateZ(0);
         }
 
-        /* 120 Гц Оптимизация */
+        /* 120 Гц Оптимизация скролла */
         .scrolling-active #fog-canvas,
         .scrolling-active #emoji-layer {
             pointer-events: none; opacity: 0.2;
         }
 
-        /* ТЕМЫ ОФОРМЛЕНИЯ */
+        /* ТЕМЫ ОФОРМЛЕНИЯ (CSS) */
         body.theme-terminal { background-color: #050b05 !important; color: #00ff66 !important; font-family: 'Courier New', monospace !important; }
         body.theme-glitch { background-color: #0d021a !important; color: #00f0ff !important; }
         body.theme-vapor { background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important; color: #fff !important; }
@@ -79,7 +79,7 @@
         .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 12px; }
         .nav-btn:active { transform: scale(0.92); }
 
-        /* 🌟 НИЖНЯЯ ПАНЕЛЬ С КНОПКОЙ ИГРАТЬ ПОСЕРЕДИНЕ 🌟 */
+        /* 🌟 НИЖНЯЯ ПАНЕЛЬ С КНОПКАМИ (ЛЕВО - ЦЕНТР - ПРАВО) 🌟 */
         .floating-achieving-btn {
             position: fixed; bottom: 20px; left: 16px; z-index: 90;
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -144,7 +144,7 @@
         .btn-generate:active { transform: scale(0.94); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* МОДАЛКИ И ИНТЕРФЕЙС */
+        /* МОДАЛЬНЫЕ ОКНА */
         .modal-overlay { 
             position: fixed; inset: 0; 
             background: rgba(3, 7, 6, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
@@ -184,7 +184,7 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* ИСПРАВЛЕННАЯ СТРЕЛОЧКА СВОРАЧИВАНИЯ */
+        /* ИСПРАВЛЕННАЯ СТРЕЛОЧКА СВОРАЧИВАНИЯ МЕНЮ */
         .panel-collapse-btn {
             background: transparent; border: none; color: var(--text-muted);
             width: 26px; height: 26px; padding: 0; cursor: pointer;
@@ -205,7 +205,7 @@
         .filter-options.active { display: block; animation: slideDown 0.3s cubic-bezier(0.34, 1.25, 0.64, 1); }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        /* КАСТОМНЫЕ СЕЛЕКТЫ */
+        /* КАСТОМНЫЕ СЕТЧАТЫЕ СЕЛЕКТЫ */
         .custom-select-wrapper { position: relative; width: 100%; }
         .custom-select-trigger {
             background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
@@ -321,7 +321,7 @@
         .shop-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .shop-btn { background: #eab308; color: #000; border: none; font-weight: bold; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; }
 
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 18px 16px; width: 80%; max-width: 240px; text-align: center; font-weight: 600; font-size: 0.85rem; opacity: 0; pointer-events: none; transition: 0.4s ease; z-index: 3000; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 18px 16px; width: 80%; max-width: 240px; text-align: center; font-weight: 600; font-size: 0.85rem; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.25, 0.8, 0.3, 1); z-index: 3000; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
@@ -689,7 +689,7 @@
             }, 120);
         }
 
-        /* 🌟 ПОЛНОЭКРАННАЯ 3D ИГРА (ОТКРЫТИЕИ ЗАКРЫТИЕ) 🌟 */
+        /* 🌟 ПОЛНОЭКРАННАЯ 3D ИГРА (ОТКРЫТИЕ И ЗАКРЫТИЕ) 🌟 */
         function openGame3DFullscreen() {
             vibrate('light');
             document.getElementById('game-modal-overlay').classList.add('active');
@@ -1342,10 +1342,10 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         // =========================================================================
-        // 🏃‍♂️ ПОЛНОЕ 3D НА THREE.JS (ПАРКУР, ПОЕЗДА, ТРАМПЛИНЫ И 3D-МОНЕТЫ)
+        // 🏃‍♂️ 3D ДВИЖОК С ПОЕЗДАМИ, ТРАМПЛИНАМИ И БУСТЕРАМИ (THREE.JS)
         // =========================================================================
         let scene, camera, renderer;
-        let player3D;
+        let playerGroup, playerBody, head;
         let isGame3DActive = false;
         let animFrameId = null;
 
@@ -1353,16 +1353,20 @@
         let currentLane = 1;
         let targetX = 0;
 
-        let playerY = 0.6;
+        let playerY = 0.8;
         let jumpVel = 0;
         let isJumping3D = false;
         let isSliding3D = false;
         let slideTimer = 0;
+        let currentTrainRoof = null;
 
         let obstacles3D = [];
         let coins3D = [];
+        let powerups3D = [];
         let distance3D = 0;
         let sessionCoins3D = 0;
+
+        let activePowerups = { magnet: 0, double: 0, shield: false };
 
         function init3DScene() {
             const container = document.getElementById('canvas-3d-container');
@@ -1370,35 +1374,50 @@
 
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x040805);
-            scene.fog = new THREE.FogExp2(0x040805, 0.035);
+            scene.fog = new THREE.FogExp2(0x040805, 0.025);
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, 3.2, 5);
-            camera.rotation.x = -0.25;
+            camera.position.set(0, 3.8, 6.0);
+            camera.rotation.x = -0.22;
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
 
-            const ambLight = new THREE.AmbientLight(0xffffff, 0.6);
+            const ambLight = new THREE.AmbientLight(0xffffff, 0.8);
             scene.add(ambLight);
-            const dirLight = new THREE.DirectionalLight(0x29c75f, 1.2);
-            dirLight.position.set(5, 10, 5);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(5, 12, 8);
+            dirLight.castShadow = true;
             scene.add(dirLight);
 
             const trackGeo = new THREE.PlaneGeometry(8, 200);
-            const trackMat = new THREE.MeshBasicMaterial({ color: 0x08120a });
+            const trackMat = new THREE.MeshStandardMaterial({ color: 0x0a140d, roughness: 0.8 });
             const track = new THREE.Mesh(trackGeo, trackMat);
             track.rotation.x = -Math.PI / 2;
             track.position.z = -80;
             scene.add(track);
 
-            const playerGeo = new THREE.SphereGeometry(0.5, 16, 16);
-            const playerMat = new THREE.MeshPhongMaterial({ color: 0x29c75f, emissive: 0x12542a, shininess: 100 });
-            player3D = new THREE.Mesh(playerGeo, playerMat);
-            player3D.position.set(0, playerY, 0);
-            scene.add(player3D);
+            // 🤖 3D Человечек
+            playerGroup = new THREE.Group();
+            
+            const bodyGeo = new THREE.CylinderGeometry(0.35, 0.25, 0.9, 12);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x29c75f, roughness: 0.3, metalness: 0.2 });
+            playerBody = new THREE.Mesh(bodyGeo, bodyMat);
+            playerBody.position.y = 0.45;
+            playerGroup.add(playerBody);
+
+            const headGeo = new THREE.SphereGeometry(0.28, 16, 16);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
+            head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.05;
+            playerGroup.add(head);
+
+            playerGroup.position.set(0, playerY, 0);
+            scene.add(playerGroup);
         }
 
         function start3DGame() {
@@ -1406,14 +1425,17 @@
             isGame3DActive = true;
             currentLane = 1;
             targetX = 0;
-            playerY = 0.6;
+            playerY = 0.0;
             distance3D = 0;
             sessionCoins3D = 0;
+            currentTrainRoof = null;
+
+            activePowerups = { magnet: 0, double: 0, shield: false };
 
             obstacles3D.forEach(o => scene.remove(o.mesh));
             coins3D.forEach(c => scene.remove(c.mesh));
-            obstacles3D = [];
-            coins3D = [];
+            powerups3D.forEach(p => scene.remove(p.mesh));
+            obstacles3D = []; coins3D = []; powerups3D = [];
 
             if (animFrameId) cancelAnimationFrame(animFrameId);
             game3DLoop();
@@ -1441,71 +1463,132 @@
                 if (diffX < -30 && currentLane > 0) currentLane--;
                 targetX = laneX[currentLane];
             } else {
-                if (diffY < -30 && !isJumping3D) { isJumping3D = true; jumpVel = 0.22; }
-                if (diffY > 30 && !isSliding3D) { isSliding3D = true; slideTimer = 20; }
+                if (diffY < -30 && !isJumping3D) { 
+                    isJumping3D = true; 
+                    jumpVel = 0.22; 
+                }
+                if (diffY > 30 && !isSliding3D) { 
+                    isSliding3D = true; 
+                    slideTimer = 22; 
+                }
             }
         });
 
         function game3DLoop() {
             if (!isGame3DActive) return;
 
-            let speed = Math.min(0.35 + (distance3D / 5000), 0.7);
+            let speed = Math.min(0.38 + (distance3D / 8000), 0.75);
 
-            player3D.position.x += (targetX - player3D.position.x) * 0.25;
+            playerGroup.position.x += (targetX - playerGroup.position.x) * 0.25;
+
+            if (activePowerups.magnet > 0) activePowerups.magnet--;
+            if (activePowerups.double > 0) activePowerups.double--;
+
+            let floorY = currentTrainRoof ? 2.3 : 0.0;
 
             if (isJumping3D) {
                 playerY += jumpVel;
                 jumpVel -= 0.012;
-                if (playerY <= 0.6) { playerY = 0.6; isJumping3D = false; }
+                if (playerY <= floorY) { 
+                    playerY = floorY; 
+                    isJumping3D = false; 
+                }
+            } else {
+                if (playerY > floorY) {
+                    playerY -= 0.12;
+                    if (playerY < floorY) playerY = floorY;
+                }
             }
 
             if (isSliding3D) {
                 slideTimer--;
-                player3D.scale.set(1, 0.4, 1);
-                if (slideTimer <= 0) { isSliding3D = false; player3D.scale.set(1, 1, 1); }
+                playerGroup.scale.set(1, 0.45, 1);
+                if (slideTimer <= 0) { isSliding3D = false; playerGroup.scale.set(1, 1, 1); }
             }
 
-            player3D.position.y = playerY;
+            playerGroup.position.y = playerY;
 
-            if (Math.random() < 0.04) {
+            // 1. Поезда и Рампы
+            if (Math.random() < 0.025) {
                 let lane = Math.floor(Math.random() * 3);
-                let isTrain = Math.random() < 0.5;
+                let randType = Math.random();
 
-                let geo = isTrain ? new THREE.BoxGeometry(1.6, 2.2, 8) : new THREE.BoxGeometry(1.6, 1.0, 1.5);
-                let mat = new THREE.MeshPhongMaterial({ color: isTrain ? 0x1e293b : 0xef4444, shininess: 80 });
-                let mesh = new THREE.Mesh(geo, mat);
-
-                let startY = isTrain ? 1.1 : 0.5;
-                mesh.position.set(laneX[lane], startY, -60);
-                scene.add(mesh);
-                obstacles3D.push({ mesh, lane, isTrain });
+                if (randType < 0.5) {
+                    const trainGeo = new THREE.BoxGeometry(1.8, 2.3, 10);
+                    const trainMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.5 });
+                    const train = new THREE.Mesh(trainGeo, trainMat);
+                    train.position.set(laneX[lane], 1.15, -80);
+                    scene.add(train);
+                    obstacles3D.push({ mesh: train, lane, type: 'train', zLen: 10 });
+                } else if (randType < 0.75) {
+                    const rampGeo = new THREE.BoxGeometry(1.6, 0.8, 3.5);
+                    const rampMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2 });
+                    const ramp = new THREE.Mesh(rampGeo, rampMat);
+                    ramp.rotation.x = 0.2;
+                    ramp.position.set(laneX[lane], 0.3, -80);
+                    scene.add(ramp);
+                    obstacles3D.push({ mesh: ramp, lane, type: 'ramp', zLen: 3.5 });
+                }
             }
 
-            if (Math.random() < 0.08) {
+            // 2. Монеты
+            if (Math.random() < 0.05) {
                 let lane = Math.floor(Math.random() * 3);
-                let geo = new THREE.CylinderGeometry(0.3, 0.3, 0.08, 12);
-                let mat = new THREE.MeshPhongMaterial({ color: 0xeab308, emissive: 0x523e03 });
-                let mesh = new THREE.Mesh(geo, mat);
-                mesh.rotation.x = Math.PI / 2;
-                mesh.position.set(laneX[lane], 0.7, -60);
-                scene.add(mesh);
-                coins3D.push({ mesh, lane });
+                const coinGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.08, 16);
+                const coinMat = new THREE.MeshStandardMaterial({ color: 0xeab308, metalness: 0.8, roughness: 0.2 });
+                const coin = new THREE.Mesh(coinGeo, coinMat);
+                coin.rotation.x = Math.PI / 2;
+                coin.position.set(laneX[lane], 0.8, -80);
+                scene.add(coin);
+                coins3D.push({ mesh: coin, lane });
             }
 
+            // 3. Бустеры
+            if (Math.random() < 0.008) {
+                let lane = Math.floor(Math.random() * 3);
+                let pType = Math.random() < 0.5 ? 'magnet' : 'double';
+                const pGeo = new THREE.SphereGeometry(0.4, 16, 16);
+                const pMat = new THREE.MeshStandardMaterial({ color: pType === 'magnet' ? 0x38bdf8 : 0xa855f7, emissive: 0x112244 });
+                const pMesh = new THREE.Mesh(pGeo, pMat);
+                pMesh.position.set(laneX[lane], 0.9, -80);
+                scene.add(pMesh);
+                powerups3D.push({ mesh: pMesh, lane, type: pType });
+            }
+
+            currentTrainRoof = null;
             for (let i = obstacles3D.length - 1; i >= 0; i--) {
                 let obs = obstacles3D[i];
                 obs.mesh.position.z += speed;
 
-                if (obs.lane === currentLane && Math.abs(obs.mesh.position.z - player3D.position.z) < 1.2) {
-                    if (playerY < (obs.isTrain ? 2.0 : 1.2)) {
-                        stop3DGame();
-                        addCoinsToServer(sessionCoins3D);
-                        showToast(`💥 Столкновение! Набрано: +${sessionCoins3D} 🟡`);
-                        return;
+                if (obs.lane === currentLane) {
+                    let zDiff = Math.abs(obs.mesh.position.z - playerGroup.position.z);
+                    
+                    if (obs.type === 'train') {
+                        if (zDiff < 5.0 && playerY >= 2.1) {
+                            currentTrainRoof = obs;
+                        } 
+                        else if (zDiff < 4.5 && playerY < 2.0) {
+                            if (activePowerups.shield) {
+                                activePowerups.shield = false;
+                                scene.remove(obs.mesh);
+                                obstacles3D.splice(i, 1);
+                                showToast('🛡️ Щит спас от удара!');
+                                continue;
+                            }
+                            stop3DGame();
+                            addCoinsToServer(sessionCoins3D);
+                            showToast(`💥 Столкновение! Собрано: +${sessionCoins3D} 🟡`);
+                            return;
+                        }
+                    } else if (obs.type === 'ramp') {
+                        if (zDiff < 1.8 && playerY < 1.5) {
+                            isJumping3D = true;
+                            jumpVel = 0.28;
+                        }
                     }
                 }
 
-                if (obs.mesh.position.z > 5) {
+                if (obs.mesh.position.z > 8) {
                     scene.remove(obs.mesh);
                     obstacles3D.splice(i, 1);
                 }
@@ -1516,14 +1599,37 @@
                 coin.mesh.position.z += speed;
                 coin.mesh.rotation.z += 0.08;
 
-                if (coin.lane === currentLane && Math.abs(coin.mesh.position.z - player3D.position.z) < 1.0 && playerY < 1.5) {
-                    sessionCoins3D += 10;
+                if (activePowerups.magnet > 0 && coin.mesh.position.z > -15) {
+                    coin.mesh.position.x += (playerGroup.position.x - coin.mesh.position.x) * 0.2;
+                    coin.mesh.position.y += (playerGroup.position.y - coin.mesh.position.y) * 0.2;
+                }
+
+                let distToPlayer = playerGroup.position.distanceTo(coin.mesh.position);
+                if (distToPlayer < 1.2) {
+                    let gain = activePowerups.double > 0 ? 2 : 1;
+                    sessionCoins3D += gain;
                     document.getElementById('coins-3d').innerText = userCoins + sessionCoins3D;
                     scene.remove(coin.mesh);
                     coins3D.splice(i, 1);
-                } else if (coin.mesh.position.z > 5) {
+                } else if (coin.mesh.position.z > 8) {
                     scene.remove(coin.mesh);
                     coins3D.splice(i, 1);
+                }
+            }
+
+            for (let i = powerups3D.length - 1; i >= 0; i--) {
+                let p = powerups3D[i];
+                p.mesh.position.z += speed;
+                p.mesh.rotation.y += 0.05;
+
+                if (p.lane === currentLane && Math.abs(p.mesh.position.z - playerGroup.position.z) < 1.2) {
+                    if (p.type === 'magnet') { activePowerups.magnet = 300; showToast('🧲 Магнит активирован!'); }
+                    if (p.type === 'double') { activePowerups.double = 300; showToast('⚡ Удвоитель x2 активирован!'); }
+                    scene.remove(p.mesh);
+                    powerups3D.splice(i, 1);
+                } else if (p.mesh.position.z > 8) {
+                    scene.remove(p.mesh);
+                    powerups3D.splice(i, 1);
                 }
             }
 
