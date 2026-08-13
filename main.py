@@ -4,7 +4,7 @@ import asyncio
 import time
 import json
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher
 from telethon import TelegramClient
@@ -18,8 +18,15 @@ INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 
-# --- ГЛОБАЛЬНАЯ ПАМЯТЬ СЕРВЕРА (Исключает любые повторы уловов) ---
+# --- ГЛОБАЛЬНАЯ ПАМЯТЬ СЕРВЕРА ---
 GENERATED_HISTORY = set()
+MAX_HISTORY_SIZE = 15000
+
+# --- ЗАЩИТА ОТ DDOS / RATE LIMITING ---
+IP_REQUEST_HISTORY = {}
+MAX_REQUESTS_PER_MINUTE = 25
+USER_COOLDOWNS = {}
+COOLDOWN_SECONDS = 0.4
 
 # --- ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -35,58 +42,88 @@ if SESSION_STRING:
 else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
-USER_COOLDOWNS = {}
-COOLDOWN_SECONDS = 0.3
-
 # =========================================================================
-# 💎 ПРЕМИУМ-КОНСТРУКТОР БРЕНДОВ И СЛОВАРИ
+# 💎 МИЛЛИОННАЯ КОМБИНАТОРНАЯ МАТРИЦА И ПРЕМИУМ-СОСТАВНЫЕ НИКИ
 # =========================================================================
-TOP_BRANDS = list(set([
-    "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
-    "tesla", "bitcoin", "crypto", "pavel", "durov", "telegram", "starbucks", "prada",
-    "gucci", "porsche", "bmw", "mercedes", "ferrari", "redbull", "steam", "roblox"
-]))
 
-PURE_WORDS = list(set((
-    "velvet aurora zenith vortex nebula horizon starlight crystal phoenix freedom "
-    "infinity eternity paradise solitude serenity genesis paragon solstice obsidian "
-    "valkyrie hyperion titanium cobalt specter vanguard solis aether kismet "
-    "solace chronos tempest sapphire emerald olympus trident"
-).split()))
+# Базовые бренды и слова для составных 5% сочетаний (Subway Fresh style)
+CORE_BRANDS = [
+    "subway", "matrix", "crypto", "cyber", "orbit", "vortex", "nexus", "shadow",
+    "phantom", "vector", "signal", "pulse", "aether", "solaris", "velvet", "zenith",
+    "qubit", "prisma", "apex", "vertex", "sigma", "hyper", "titan", "astro"
+]
 
+PREMIUM_MODIFIERS = [
+    "fresh", "club", "lab", "hub", "space", "vibe", "zone", "prime", "pro",
+    "one", "base", "core", "link", "wave", "flow", "spot", "vault", "mind"
+]
+
+# Топовые сонорные корни (50+)
 BRAND_ROOTS = [
-    "aeth", "chron", "solis", "vort", "lum", "phos", "zeph", "celest", "aegis",
-    "crest", "vanguard", "valer", "kismet", "astral", "spect", "temp", "titan",
-    "mirag", "auror", "prism", "orion", "verve", "lunar", "stell", "zenith",
-    "hyper", "myth", "noble", "penn", "quant", "rhod", "siren", "solac"
+    "aeth", "chron", "sol", "vort", "lum", "phos", "zeph", "celest", "aeg", "crest",
+    "val", "kism", "ast", "spect", "temp", "tit", "mir", "aur", "prism", "orion",
+    "verv", "lun", "stell", "zen", "hyp", "myth", "nobl", "quant", "rhod", "sir",
+    "solac", "krypt", "nebul", "synth", "neor", "vax", "zoran", "velv", "aero", "omni",
+    "dusk", "dawn", "echo", "flux", "rift", "glow", "pulse", "crest", "vark", "zene"
 ]
 
-BRAND_SUFFIXES = [
-    "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"
+# Связующие элементы для богатства звучания (16)
+BRAND_MIDDLES = [
+    "o", "a", "i", "e", "u", "ar", "or", "in", "is", "ex", "an", "el", "on", "al", "ev", "ix"
 ]
+
+# Сочные суффиксы (24)
+BRAND_SUFFIXES = [
+    "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth",
+    "is", "ux", "ax", "era", "ita", "ys", "en", "op", "ez", "os", "id"
+]
+
+TOP_BRANDS_EVAL = set(CORE_BRANDS)
+PURE_WORDS_EVAL = set(PREMIUM_MODIFIERS)
 
 def generate_brand_username(len_mode: str = "5-6") -> str:
-    """Генерирует уникальный красивый никнейм без повторов в истории."""
-    for _ in range(50):
+    """Генерирует уникальный, сочный никнейм из миллиона вариантов."""
+    global GENERATED_HISTORY
+    
+    if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE:
+        GENERATED_HISTORY.clear()
+
+    for _ in range(20):
         roll = random.random()
-        if roll < 0.10:
-            candidate = random.choice(TOP_BRANDS)
-        elif roll < 0.25:
-            candidate = random.choice(PURE_WORDS)
+        
+        # 🌟 5% ШАНС: Составной Ультра-дорогой никнейм (Subway Fresh style)
+        if roll < 0.05:
+            brand = random.choice(CORE_BRANDS)
+            modifier = random.choice(PREMIUM_MODIFIERS)
+            candidate = brand + modifier
+        
+        # 🌟 95% ШАНС: Трехсложные или двухсложные миллионные неологизмы
         else:
             root = random.choice(BRAND_ROOTS)
             suf = random.choice(BRAND_SUFFIXES)
-            candidate = (root + suf).replace("nn", "n").replace("ss", "s").replace("rr", "r").replace("oo", "o")
+            
+            # 40% шанс добавить связующую медиаль для усложнения и сочности
+            if random.random() < 0.40 and len_mode != "5-6":
+                mid = random.choice(BRAND_MIDDLES)
+                candidate = root + mid + suf
+            else:
+                candidate = root + suf
+                
+            # Очистка сложных стыков
+            candidate = (candidate.replace("nn", "n")
+                                 .replace("ss", "s")
+                                 .replace("rr", "r")
+                                 .replace("oo", "o")
+                                 .replace("ee", "e"))
+            
             if len_mode == "5-6" and len(candidate) > 6:
                 candidate = candidate[:6]
-        
-        # Гарантируем, что этот ник не выпадал ранее
-        if candidate not in GENERATED_HISTORY:
+
+        if candidate not in GENERATED_HISTORY and len(candidate) >= 5:
             return candidate
-            
-    # Запасной вариант на редчайший случай исчерпания
-    fallback_root = random.choice(BRAND_ROOTS)
-    return (fallback_root + random.choice(BRAND_SUFFIXES))[:6]
+
+    root = random.choice(BRAND_ROOTS)
+    return (root + random.choice(BRAND_SUFFIXES))[:6]
 
 # --- ХРАНИЛИЩЕ ЛИДЕРБОРДА ---
 def load_leaderboard():
@@ -151,18 +188,21 @@ def calculate_catch_score(username: str, is_free: bool):
 
     is_trash = (max_cons_streak >= 3)
 
-    if (username in TOP_BRANDS) or (length == 5 and not is_trash):
+    # Двухсоставные топовые брендовые уловы (SubwayFresh стиль)
+    is_composite_premium = any(brand in username for brand in CORE_BRANDS) and any(mod in username for mod in PREMIUM_MODIFIERS)
+
+    if is_composite_premium or (length == 5 and not is_trash):
         return {
             "rank": "SSS+", 
-            "status": "Эксклюзивный актив (~150-600+ TON)", 
+            "status": "Эксклюзивный актив (~200-800+ TON)", 
             "color": "#29c75f", 
             "score": 100
         }
 
-    if (username in PURE_WORDS) or (length == 6 and not is_trash):
+    if length == 6 and not is_trash:
         return {
             "rank": "SS", 
-            "status": "Редкий элитный ник (~40-150 TON)", 
+            "status": "Редкий элитный ник (~50-200 TON)", 
             "color": "#eab308", 
             "score": 85
         }
@@ -170,36 +210,28 @@ def calculate_catch_score(username: str, is_free: bool):
     if length == 7 and not is_trash:
         return {
             "rank": "S", 
-            "status": "Премиум бренд (~10-40 TON)", 
+            "status": "Премиум бренд (~15-50 TON)", 
             "color": "#a855f7", 
             "score": 65
         }
 
-    if length == 8 and not is_trash:
+    if length <= 10 and not is_trash:
         return {
             "rank": "A", 
-            "status": "Стандартный красивый ник (~2-10 TON)", 
+            "status": "Стандартный красивый ник (~3-15 TON)", 
             "color": "#3b82f6", 
             "score": 40
         }
 
-    if not is_trash and length <= 12:
-        return {
-            "rank": "B", 
-            "status": "Для личного пользования (~1 TON)", 
-            "color": "#64748b", 
-            "score": 20
-        }
-
     return {
-        "rank": "F", 
-        "status": "Низкая ценность (0 TON)", 
-        "color": "#ef4444", 
-        "score": 5
+        "rank": "B", 
+        "status": "Для личного пользования (~1 TON)", 
+        "color": "#64748b", 
+        "score": 20
     }
 
 # =========================================================================
-# 🛡️ ПРЯМАЯ ПРОВЕРКА ЧЕРЕЗ TELETHON
+# 🛡️ ПРОВЕРКА ЧЕРЕЗ TELETHON
 # =========================================================================
 async def check_username_telethon(username: str) -> bool:
     username = username.replace("@", "").strip().lower()
@@ -287,6 +319,33 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
 
+# =========================================================================
+# 🛡️ MIDDLEWARE ЗАЩИТЫ ОТ DDOS / БОТОВ
+# =========================================================================
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host if request.client else "global"
+    now = time.time()
+
+    if request.url.path in ["/", "/index.html"]:
+        return await call_next(request)
+
+    if client_ip not in IP_REQUEST_HISTORY:
+        IP_REQUEST_HISTORY[client_ip] = []
+
+    IP_REQUEST_HISTORY[client_ip] = [
+        t for t in IP_REQUEST_HISTORY[client_ip] if now - t < 60
+    ]
+
+    if len(IP_REQUEST_HISTORY[client_ip]) >= MAX_REQUESTS_PER_MINUTE:
+        return JSONResponse(
+            status_code=429,
+            content={"status": "error", "message": "Слишком много запросов! Подождите минуту."}
+        )
+
+    IP_REQUEST_HISTORY[client_ip].append(now)
+    return await call_next(request)
+
 # --- API ROUTING ---
 @app.get("/")
 async def read_root():
@@ -304,20 +363,19 @@ async def generate_username(
 ):
     client_ip = request.client.host if request.client else "global"
     now = time.time()
+    
     if client_ip in USER_COOLDOWNS:
         elapsed = now - USER_COOLDOWNS[client_ip]
         if elapsed < COOLDOWN_SECONDS:
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # Делаем до 25 проверок в секунду, пока не найдем 100% свободный никнейм
-    for _ in range(25):
+    # До 8 точечных быстрых проверок
+    for _ in range(8):
         generated = generate_brand_username(len_mode)
         is_free = await check_username_telethon(generated)
         if is_free:
-            # Заносим найденный свободный ник в глобальную память
             GENERATED_HISTORY.add(generated)
-            
             eval_data = calculate_catch_score(generated, True)
             if eval_data["score"] >= 40:
                 add_to_leaderboard(generated, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
@@ -328,7 +386,7 @@ async def generate_username(
                 "is_free": True, 
                 "evaluation": eval_data
             }
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0.04)
 
     fallback_nick = generate_brand_username(len_mode)
     is_free_fallback = await check_username_telethon(fallback_nick)
