@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Username Scanner PRO</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- 3D Движок Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
             --bg-app: #060b08;
@@ -28,11 +30,13 @@
             transform: translateZ(0);
         }
 
+        /* 120 Гц Оптимизация */
         .scrolling-active #fog-canvas,
         .scrolling-active #emoji-layer {
             pointer-events: none; opacity: 0.2;
         }
 
+        /* ТЕМЫ ОФОРМЛЕНИЯ */
         body.theme-terminal { background-color: #050b05 !important; color: #00ff66 !important; font-family: 'Courier New', monospace !important; }
         body.theme-glitch { background-color: #0d021a !important; color: #00f0ff !important; }
         body.theme-vapor { background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important; color: #fff !important; }
@@ -75,7 +79,7 @@
         .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 12px; }
         .nav-btn:active { transform: scale(0.92); }
 
-        /* 🌟 ПЛАВАЮЩИЕ КНОПКИ ВНИЗУ (ДОСТИЖЕНИЯ, ИГРАТЬ, ТОП) 🌟 */
+        /* 🌟 НИЖНЯЯ ПАНЕЛЬ С КНОПКОЙ ИГРАТЬ ПОСЕРЕДИНЕ 🌟 */
         .floating-achieving-btn {
             position: fixed; bottom: 20px; left: 16px; z-index: 90;
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -87,7 +91,6 @@
         }
         .floating-achieving-btn:active { transform: scale(0.9); }
 
-        /* 🔥 ЦЕНТРАЛЬНАЯ ПЕРЕЛИВАЮЩАЯСЯ КНОПКА ИГРАТЬ 🔥 */
         .floating-play-btn {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90;
             background: linear-gradient(135deg, rgba(41, 199, 95, 0.45), rgba(56, 189, 248, 0.45));
@@ -141,7 +144,7 @@
         .btn-generate:active { transform: scale(0.94); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* МОДАЛКИ */
+        /* МОДАЛКИ И ИНТЕРФЕЙС */
         .modal-overlay { 
             position: fixed; inset: 0; 
             background: rgba(3, 7, 6, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
@@ -160,35 +163,8 @@
         }
         .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
 
-        /* 📱 ПОЛНОЭКРАННЫЙ РЕЖИМ ДЛЯ ИГРЫ 📱 */
-        .modal-overlay.fullscreen-game .modal-content {
-            max-width: 100vw !important;
-            max-height: 100vh !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            border-radius: 0 !important;
-            border: none !important;
-        }
-
         .modal-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
         .modal-title { margin: 0; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        
-        .btn-exit-game {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: transform 0.2s ease;
-        }
-        .btn-exit-game:active { transform: scale(0.92); }
-
         .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s ease; }
         .btn-close:active { transform: scale(0.85); }
 
@@ -208,6 +184,7 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
+        /* ИСПРАВЛЕННАЯ СТРЕЛОЧКА СВОРАЧИВАНИЯ */
         .panel-collapse-btn {
             background: transparent; border: none; color: var(--text-muted);
             width: 26px; height: 26px; padding: 0; cursor: pointer;
@@ -228,6 +205,7 @@
         .filter-options.active { display: block; animation: slideDown 0.3s cubic-bezier(0.34, 1.25, 0.64, 1); }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
+        /* КАСТОМНЫЕ СЕЛЕКТЫ */
         .custom-select-wrapper { position: relative; width: 100%; }
         .custom-select-trigger {
             background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
@@ -307,27 +285,43 @@
         .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; position: relative; }
         .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.4s ease; }
 
-        /* 🏃‍♂️ СТИЛИ ПОЛНОЭКРАННОЙ ИГРЫ 🏃‍♂️ */
-        #game-canvas {
-            width: 100%;
-            height: calc(100vh - 230px);
-            min-height: 280px;
-            background: radial-gradient(circle at center, #0b1a11 0%, #030604 100%);
-            border-radius: 20px;
-            border: 1px solid rgba(41, 199, 95, 0.35);
-            display: block;
-            margin-bottom: 12px;
-            touch-action: none;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+        /* 📱 ПОЛНОЭКРАННАЯ 3D ИГРА (THREE.JS) 📱 */
+        #game-modal-overlay {
+            position: fixed; inset: 0; background: #030604; z-index: 2000;
+            display: none; flex-direction: column;
+        }
+        #game-modal-overlay.active { display: flex; }
+
+        #canvas-3d-container { width: 100vw; height: 100vh; position: absolute; inset: 0; z-index: 1; }
+        #canvas-3d-container canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+
+        .game-hud-3d {
+            position: absolute; top: 20px; left: 20px; right: 20px; z-index: 2001;
+            display: flex; justify-content: space-between; align-items: center;
+            pointer-events: none;
+        }
+        .btn-exit-game {
+            background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff; padding: 8px 16px; border-radius: 14px; font-size: 0.85rem; font-weight: bold;
+            cursor: pointer; pointer-events: auto; backdrop-filter: blur(10px);
         }
 
-        .game-hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: bold; font-size: 0.95rem; }
-        .coin-badge { color: #eab308; display: flex; align-items: center; gap: 4px; font-size: 1rem; }
-        
+        .game-overlay-controls {
+            position: absolute; bottom: 35px; left: 20px; right: 20px; z-index: 2001;
+            display: flex; justify-content: center; pointer-events: none;
+        }
+        .btn-start-3d {
+            background: var(--primary); color: #000; border: none; padding: 16px 36px;
+            border-radius: 24px; font-weight: 800; font-size: 1.1rem; cursor: pointer;
+            pointer-events: auto; box-shadow: 0 0 30px var(--primary-glow);
+            transition: transform 0.2s ease;
+        }
+        .btn-start-3d:active { transform: scale(0.92); }
+
         .shop-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .shop-btn { background: #eab308; color: #000; border: none; font-weight: bold; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; }
 
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 18px 16px; width: 80%; max-width: 240px; text-align: center; font-weight: 600; font-size: 0.85rem; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.25, 0.8, 0.3, 1); z-index: 2000; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 18px 16px; width: 80%; max-width: 240px; text-align: center; font-weight: 600; font-size: 0.85rem; opacity: 0; pointer-events: none; transition: 0.4s ease; z-index: 3000; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
@@ -374,7 +368,7 @@
     </button>
 
     <!-- 🔥 ЦЕНТРАЛЬНАЯ КНОПКА ИГРАТЬ 🔥 -->
-    <button class="floating-play-btn" onclick="openGameFullscreen()">
+    <button class="floating-play-btn" onclick="openGame3DFullscreen()">
         🎮 Играть
     </button>
 
@@ -384,55 +378,22 @@
 
     <div class="toast" id="global-toast">✨ Скопировано!</div>
 
-    <!-- 🎮 ПОЛНОЭКРАННОЕ ОКНО ИГРЫ И МАГАЗИНА 🎮 -->
-    <div class="modal-overlay fullscreen-game" id="modal-game">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <button class="btn-exit-game" onclick="closeGameFullscreen()">◀ Выход</button>
-                <h2 class="modal-title">🏃‍♂️ Cyber Run: Паркур</h2>
-                <div style="width:60px;"></div>
-            </div>
-            <div class="modal-body">
-                <div class="game-hud">
-                    <span>Дистанция: <span id="game-dist" style="color:var(--primary);">0</span>m</span>
-                    <span class="coin-badge">🟡 <span id="user-coins">0</span></span>
-                </div>
+    <!-- 🏃‍♂️ ПОЛНОЭКРАННОЕ 3D-ОКНО ИГРЫ (THREE.JS) 🏃‍♂️ -->
+    <div id="game-modal-overlay">
+        <div class="game-hud-3d">
+            <button class="btn-exit-game" onclick="closeGame3DFullscreen()">◀ Выход</button>
+            <div style="font-size:1.1rem; font-weight:800;">Дистанция: <span id="dist-3d" style="color:var(--primary);">0</span>m</div>
+            <div style="font-size:1.1rem; font-weight:800; color:#eab308;">🟡 <span id="coins-3d">0</span></div>
+        </div>
 
-                <canvas id="game-canvas"></canvas>
+        <div id="canvas-3d-container"></div>
 
-                <button class="form-btn" id="start-game-btn" onclick="startGame()">Старт Забега</button>
-
-                <!-- 🛒 МАГАЗИН ВОЗНАГРАЖДЕНИЙ -->
-                <h3 style="font-size:1rem; margin-top:20px; margin-bottom:10px;">🛒 Магазин Наград</h3>
-                
-                <div class="shop-item">
-                    <div>
-                        <div style="font-weight:bold; font-size:0.85rem;">🎯 +1 Слот на Радаре</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Слежка за редким ником</div>
-                    </div>
-                    <button class="shop-btn" onclick="buyShopItem('radar', 1500)">1500 🟡</button>
-                </div>
-
-                <div class="shop-item">
-                    <div>
-                        <div style="font-weight:bold; font-size:0.85rem;">🚀 Фаст-Парс (x2 Speed)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускорение поиска на 15 мин</div>
-                    </div>
-                    <button class="shop-btn" onclick="buyShopItem('speed', 800)">800 🟡</button>
-                </div>
-
-                <div class="shop-item">
-                    <div>
-                        <div style="font-weight:bold; font-size:0.85rem;">🔑 Секретная Тема</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Промокод темы Cyberpunk</div>
-                    </div>
-                    <button class="shop-btn" onclick="buyShopItem('theme', 3000)">3000 🟡</button>
-                </div>
-            </div>
+        <div class="game-overlay-controls" id="start-btn-container-3d">
+            <button class="btn-start-3d" onclick="start3DGame()">СТАРТ ЗАБЕГА</button>
         </div>
     </div>
 
-    <!-- Модалка: Настройки -->
+    <!-- МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -473,6 +434,7 @@
                     </div>
                 </div>
 
+                <!-- 🌟 ПОЛНАЯ ПАЛИТРА ИЗ 10 ТЕМ 🌟 -->
                 <div class="filter-options" id="custom-menu">
                     <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Тема акцента</div>
                     <div class="color-picker-grid" id="theme-dots-grid">
@@ -526,6 +488,7 @@
                         <span class="setting-desc">Выбор логики и приставки к вашему слову</span>
                     </div>
                     <div class="setting-controls">
+                        <!-- ИСПРАВЛЕННАЯ СТРЕЛОЧКА СВОРАЧИВАНИЯ -->
                         <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
                         </button>
@@ -726,17 +689,17 @@
             }, 120);
         }
 
-        /* 🌟 ЗАПУСК И ЗАКРЫТИЕ ПОЛНОЭКРАННОЙ ИГРЫ 🌟 */
-        function openGameFullscreen() {
+        /* 🌟 ПОЛНОЭКРАННАЯ 3D ИГРА (ОТКРЫТИЕИ ЗАКРЫТИЕ) 🌟 */
+        function openGame3DFullscreen() {
             vibrate('light');
-            openModal('modal-game');
-            initGameCanvas();
+            document.getElementById('game-modal-overlay').classList.add('active');
+            init3DScene();
         }
 
-        function closeGameFullscreen() {
+        function closeGame3DFullscreen() {
             vibrate('light');
-            stopGame();
-            closeModal('modal-game');
+            stop3DGame();
+            document.getElementById('game-modal-overlay').classList.remove('active');
         }
 
         function toggleCustomSelect(wrapperId) {
@@ -792,8 +755,7 @@
             secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
         };
 
-        let userCoins = parseInt(localStorage.getItem('vh_user_coins') || '0');
-        document.getElementById('user-coins').innerText = userCoins;
+        let userCoins = 0;
 
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
             const user = window.Telegram.WebApp.initDataUnsafe.user;
@@ -801,8 +763,34 @@
             finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
         }
 
+        // Загрузка баланса с сервера
+        async function loadServerCoins() {
+            try {
+                const res = await fetch(`/api/game/balance?user_id=${tgChatId}`);
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userCoins = data.coins;
+                    document.getElementById('coins-3d').innerText = userCoins;
+                }
+            } catch(e){}
+        }
+        loadServerCoins();
+
+        async function addCoinsToServer(amount) {
+            userCoins += amount;
+            document.getElementById('coins-3d').innerText = userCoins;
+            try {
+                await fetch(`/api/game/save_coins`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, coins: amount })
+                });
+            } catch(e){}
+        }
+
         let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
         
+        /* 🌟 ВСЕ СЕКРЕТНЫЕ ТЕМЫ 🌟 */
         const SECRET_PROMOS = {
             'REDPILL': { id: 'matrix', icon: '💻', colorHex: '#29c75f', glowHex: 'rgba(41, 199, 95, 0.4)', emojis: '0, 1, ⚡, 💻', msg: '🟢 MATRIX' },
             'DUROV360': { id: 'durov', icon: '✈️', colorHex: '#1e3c72', glowHex: 'rgba(30, 60, 114, 0.4)', emojis: '💎, 👑, ✈️, 💰', msg: '✈️ DUROV SKY' },
@@ -930,6 +918,7 @@
             document.body.className = '';
         }
 
+        /* 🌟 ВСЕ СЕКРЕТНЫЕ АНИМАЦИИ 🌟 */
         function activateSecretEffect(themeId, colorHex, glowHex, emojis) {
             stopSecretAnimation();
             setThemeColor(colorHex, glowHex, null);
@@ -1353,244 +1342,204 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         // =========================================================================
-        // 🏃‍♂️ БЕСКОНЕЧНЫЙ ИГРОВОЙ ДВИЖОК CYBER RUN С ПАРКУРОМ
+        // 🏃‍♂️ ПОЛНОЕ 3D НА THREE.JS (ПАРКУР, ПОЕЗДА, ТРАМПЛИНЫ И 3D-МОНЕТЫ)
         // =========================================================================
-        const gCanvas = document.getElementById('game-canvas');
-        const gCtx = gCanvas.getContext('2d');
-        let gameLoopId = null;
-        let gameActive = false;
+        let scene, camera, renderer;
+        let player3D;
+        let isGame3DActive = false;
+        let animFrameId = null;
 
-        let playerLane = 1; // 0: Левая, 1: Средняя, 2: Правая
-        let playerYOffset = 0;
-        let jumpVelocity = 0;
-        let isJumping = false;
-        let isSliding = false;
+        let laneX = [-2.2, 0, 2.2];
+        let currentLane = 1;
+        let targetX = 0;
+
+        let playerY = 0.6;
+        let jumpVel = 0;
+        let isJumping3D = false;
+        let isSliding3D = false;
         let slideTimer = 0;
-        let isOnPlatform = false;
 
-        let distanceMeters = 0;
-        let sessionCoins = 0;
+        let obstacles3D = [];
+        let coins3D = [];
+        let distance3D = 0;
+        let sessionCoins3D = 0;
 
-        let obstacles = [];
-        let coins = [];
+        function init3DScene() {
+            const container = document.getElementById('canvas-3d-container');
+            container.innerHTML = "";
 
-        function initGameCanvas() {
-            gCanvas.width = gCanvas.offsetWidth;
-            gCanvas.height = gCanvas.offsetHeight || 320;
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x040805);
+            scene.fog = new THREE.FogExp2(0x040805, 0.035);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 3.2, 5);
+            camera.rotation.x = -0.25;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const ambLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambLight);
+            const dirLight = new THREE.DirectionalLight(0x29c75f, 1.2);
+            dirLight.position.set(5, 10, 5);
+            scene.add(dirLight);
+
+            const trackGeo = new THREE.PlaneGeometry(8, 200);
+            const trackMat = new THREE.MeshBasicMaterial({ color: 0x08120a });
+            const track = new THREE.Mesh(trackGeo, trackMat);
+            track.rotation.x = -Math.PI / 2;
+            track.position.z = -80;
+            scene.add(track);
+
+            const playerGeo = new THREE.SphereGeometry(0.5, 16, 16);
+            const playerMat = new THREE.MeshPhongMaterial({ color: 0x29c75f, emissive: 0x12542a, shininess: 100 });
+            player3D = new THREE.Mesh(playerGeo, playerMat);
+            player3D.position.set(0, playerY, 0);
+            scene.add(player3D);
         }
 
-        function startGame() {
-            initGameCanvas();
-            gameActive = true;
-            playerLane = 1;
-            playerYOffset = 0;
-            jumpVelocity = 0;
-            isJumping = false;
-            isSliding = false;
-            isOnPlatform = false;
+        function start3DGame() {
+            document.getElementById('start-btn-container-3d').style.display = 'none';
+            isGame3DActive = true;
+            currentLane = 1;
+            targetX = 0;
+            playerY = 0.6;
+            distance3D = 0;
+            sessionCoins3D = 0;
 
-            distanceMeters = 0;
-            sessionCoins = 0;
-            obstacles = [];
-            coins = [];
+            obstacles3D.forEach(o => scene.remove(o.mesh));
+            coins3D.forEach(c => scene.remove(c.mesh));
+            obstacles3D = [];
+            coins3D = [];
 
-            document.getElementById('start-game-btn').style.display = 'none';
-
-            if (gameLoopId) cancelAnimationFrame(gameLoopId);
-            gameLoop();
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            game3DLoop();
         }
 
-        function stopGame() {
-            gameActive = false;
-            if (gameLoopId) cancelAnimationFrame(gameLoopId);
-            document.getElementById('start-game-btn').style.display = 'block';
-            document.getElementById('start-game-btn').innerText = 'Заново';
+        function stop3DGame() {
+            isGame3DActive = false;
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            document.getElementById('start-btn-container-3d').style.display = 'flex';
         }
 
-        // ЖЕСТЫ: СВАЙПЫ
-        let touchStartX = 0, touchStartY = 0;
-        gCanvas.addEventListener('touchstart', e => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
+        let touchStartX3D = 0, touchStartY3D = 0;
+        window.addEventListener('touchstart', e => {
+            touchStartX3D = e.touches[0].clientX;
+            touchStartY3D = e.touches[0].clientY;
         });
 
-        gCanvas.addEventListener('touchend', e => {
-            let diffX = e.changedTouches[0].clientX - touchStartX;
-            let diffY = e.changedTouches[0].clientY - touchStartY;
+        window.addEventListener('touchend', e => {
+            if (!isGame3DActive) return;
+            let diffX = e.changedTouches[0].clientX - touchStartX3D;
+            let diffY = e.changedTouches[0].clientY - touchStartY3D;
 
             if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 30 && playerLane < 2) playerLane++;
-                if (diffX < -30 && playerLane > 0) playerLane--;
+                if (diffX > 30 && currentLane < 2) currentLane++;
+                if (diffX < -30 && currentLane > 0) currentLane--;
+                targetX = laneX[currentLane];
             } else {
-                if (diffY < -30 && !isJumping) {
-                    isJumping = true;
-                    jumpVelocity = 11;
-                }
-                if (diffY > 30 && !isSliding) {
-                    isSliding = true;
-                    slideTimer = 25;
-                }
+                if (diffY < -30 && !isJumping3D) { isJumping3D = true; jumpVel = 0.22; }
+                if (diffY > 30 && !isSliding3D) { isSliding3D = true; slideTimer = 20; }
             }
         });
 
-        function gameLoop() {
-            if (!gameActive) return;
+        function game3DLoop() {
+            if (!isGame3DActive) return;
 
-            gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
-            let laneWidth = gCanvas.width / 3;
+            let speed = Math.min(0.35 + (distance3D / 5000), 0.7);
 
-            let baseSpeed = Math.min(4.5 + (distanceMeters / 1500), 9.0);
+            player3D.position.x += (targetX - player3D.position.x) * 0.25;
 
-            // 1. Отрисовка полос
-            gCtx.strokeStyle = 'rgba(41, 199, 95, 0.2)';
-            gCtx.lineWidth = 2;
-            gCtx.beginPath();
-            gCtx.moveTo(laneWidth, 0); gCtx.lineTo(laneWidth, gCanvas.height);
-            gCtx.moveTo(laneWidth * 2, 0); gCtx.lineTo(laneWidth * 2, gCanvas.height);
-            gCtx.stroke();
-
-            // 2. Физика
-            if (isJumping) {
-                playerYOffset += jumpVelocity;
-                jumpVelocity -= 0.65;
-
-                if (playerYOffset <= (isOnPlatform ? 35 : 0)) {
-                    playerYOffset = isOnPlatform ? 35 : 0;
-                    isJumping = false;
-                }
+            if (isJumping3D) {
+                playerY += jumpVel;
+                jumpVel -= 0.012;
+                if (playerY <= 0.6) { playerY = 0.6; isJumping3D = false; }
             }
 
-            if (isSliding) {
+            if (isSliding3D) {
                 slideTimer--;
-                if (slideTimer <= 0) isSliding = false;
+                player3D.scale.set(1, 0.4, 1);
+                if (slideTimer <= 0) { isSliding3D = false; player3D.scale.set(1, 1, 1); }
             }
 
-            // 3. Персонаж
-            let playerX = playerLane * laneWidth + laneWidth / 2;
-            let playerBaseY = (gCanvas.height - 50) - playerYOffset;
+            player3D.position.y = playerY;
 
-            gCtx.save();
-            gCtx.fillStyle = isSliding ? '#38bdf8' : '#29c75f';
-            gCtx.shadowColor = '#29c75f';
-            gCtx.shadowBlur = 15;
-
-            if (isSliding) {
-                gCtx.beginPath();
-                gCtx.ellipse(playerX, playerBaseY + 10, 22, 10, 0, 0, Math.PI * 2);
-                gCtx.fill();
-            } else {
-                gCtx.beginPath();
-                gCtx.arc(playerX, playerBaseY, 16, 0, Math.PI * 2);
-                gCtx.fill();
-            }
-            gCtx.restore();
-
-            // 4. Препятствия
-            if (Math.random() < 0.03) {
-                let typeRoll = Math.random();
-                let type = 'wall';
-                if (typeRoll < 0.35) type = 'slide';
-                else if (typeRoll < 0.70) type = 'platform';
-
+            if (Math.random() < 0.04) {
                 let lane = Math.floor(Math.random() * 3);
-                obstacles.push({ lane, y: -40, type, length: type === 'platform' ? 120 : 30 });
+                let isTrain = Math.random() < 0.5;
+
+                let geo = isTrain ? new THREE.BoxGeometry(1.6, 2.2, 8) : new THREE.BoxGeometry(1.6, 1.0, 1.5);
+                let mat = new THREE.MeshPhongMaterial({ color: isTrain ? 0x1e293b : 0xef4444, shininess: 80 });
+                let mesh = new THREE.Mesh(geo, mat);
+
+                let startY = isTrain ? 1.1 : 0.5;
+                mesh.position.set(laneX[lane], startY, -60);
+                scene.add(mesh);
+                obstacles3D.push({ mesh, lane, isTrain });
             }
 
-            if (Math.random() < 0.06) {
+            if (Math.random() < 0.08) {
                 let lane = Math.floor(Math.random() * 3);
-                coins.push({ lane, y: -20 });
+                let geo = new THREE.CylinderGeometry(0.3, 0.3, 0.08, 12);
+                let mat = new THREE.MeshPhongMaterial({ color: 0xeab308, emissive: 0x523e03 });
+                let mesh = new THREE.Mesh(geo, mat);
+                mesh.rotation.x = Math.PI / 2;
+                mesh.position.set(laneX[lane], 0.7, -60);
+                scene.add(mesh);
+                coins3D.push({ mesh, lane });
             }
 
-            // 5. Обработка Препятствий
-            isOnPlatform = false;
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                let obs = obstacles[i];
-                obs.y += baseSpeed;
-                let obsX = obs.lane * laneWidth + laneWidth / 2;
+            for (let i = obstacles3D.length - 1; i >= 0; i--) {
+                let obs = obstacles3D[i];
+                obs.mesh.position.z += speed;
 
-                if (obs.type === 'wall') {
-                    gCtx.fillStyle = '#ef4444';
-                    gCtx.fillRect(obsX - 25, obs.y, 50, 35);
-
-                    if (obs.lane === playerLane && Math.abs(obs.y - playerBaseY) < 22) {
-                        if (playerYOffset < 28) {
-                            stopGame();
-                            saveCoins(sessionCoins);
-                            showToast(`💥 Забег: ${Math.floor(distanceMeters)}m`);
-                            return;
-                        }
-                    }
-                } 
-                else if (obs.type === 'slide') {
-                    gCtx.fillStyle = '#f97316';
-                    gCtx.fillRect(obsX - 28, obs.y, 56, 15);
-
-                    if (obs.lane === playerLane && Math.abs(obs.y - playerBaseY) < 20) {
-                        if (!isSliding && playerYOffset < 15) {
-                            stopGame();
-                            saveCoins(sessionCoins);
-                            showToast(`💥 Забег: ${Math.floor(distanceMeters)}m`);
-                            return;
-                        }
-                    }
-                }
-                else if (obs.type === 'platform') {
-                    gCtx.fillStyle = '#38bdf8';
-                    gCtx.fillRect(obsX - 30, obs.y, 60, obs.length);
-
-                    if (obs.lane === playerLane && obs.y <= playerBaseY && (obs.y + obs.length) >= playerBaseY) {
-                        if (playerYOffset >= 25) {
-                            isOnPlatform = true;
-                        } else if (playerYOffset < 20) {
-                            stopGame();
-                            saveCoins(sessionCoins);
-                            showToast(`💥 Врезался в платформу!`);
-                            return;
-                        }
+                if (obs.lane === currentLane && Math.abs(obs.mesh.position.z - player3D.position.z) < 1.2) {
+                    if (playerY < (obs.isTrain ? 2.0 : 1.2)) {
+                        stop3DGame();
+                        addCoinsToServer(sessionCoins3D);
+                        showToast(`💥 Столкновение! Набрано: +${sessionCoins3D} 🟡`);
+                        return;
                     }
                 }
 
-                if (obs.y > gCanvas.height + 150) obstacles.splice(i, 1);
-            }
-
-            // 6. Монетки
-            for (let i = coins.length - 1; i >= 0; i--) {
-                let coin = coins[i];
-                coin.y += baseSpeed;
-                let coinX = coin.lane * laneWidth + laneWidth / 2;
-
-                gCtx.fillStyle = '#eab308';
-                gCtx.beginPath();
-                gCtx.arc(coinX, coin.y, 8, 0, Math.PI * 2);
-                gCtx.fill();
-
-                if (coin.lane === playerLane && Math.abs(coin.y - playerBaseY) < 22) {
-                    sessionCoins += 10;
-                    coins.splice(i, 1);
-                } else if (coin.y > gCanvas.height + 30) {
-                    coins.splice(i, 1);
+                if (obs.mesh.position.z > 5) {
+                    scene.remove(obs.mesh);
+                    obstacles3D.splice(i, 1);
                 }
             }
 
-            distanceMeters += baseSpeed / 10;
-            document.getElementById('game-dist').innerText = Math.floor(distanceMeters);
+            for (let i = coins3D.length - 1; i >= 0; i--) {
+                let coin = coins3D[i];
+                coin.mesh.position.z += speed;
+                coin.mesh.rotation.z += 0.08;
 
-            gameLoopId = requestAnimationFrame(gameLoop);
+                if (coin.lane === currentLane && Math.abs(coin.mesh.position.z - player3D.position.z) < 1.0 && playerY < 1.5) {
+                    sessionCoins3D += 10;
+                    document.getElementById('coins-3d').innerText = userCoins + sessionCoins3D;
+                    scene.remove(coin.mesh);
+                    coins3D.splice(i, 1);
+                } else if (coin.mesh.position.z > 5) {
+                    scene.remove(coin.mesh);
+                    coins3D.splice(i, 1);
+                }
+            }
+
+            distance3D += speed * 2;
+            document.getElementById('dist-3d').innerText = Math.floor(distance3D);
+
+            renderer.render(scene, camera);
+            animFrameId = requestAnimationFrame(game3DLoop);
         }
 
-        function saveCoins(amount) {
-            userCoins += amount;
-            localStorage.setItem('vh_user_coins', userCoins.toString());
-            document.getElementById('user-coins').innerText = userCoins;
-        }
-
-        function buyShopItem(itemType, cost) {
+        async function buyShopItem(itemType, cost) {
             if (userCoins < cost) {
                 showToast('❌ Недостаточно CyberCoins!');
                 return;
             }
-            userCoins -= cost;
-            saveCoins(0);
+            await addCoinsToServer(-cost);
 
             if (itemType === 'radar') showToast('🎯 +1 Слот Радара разблокирован!');
             if (itemType === 'speed') showToast('🚀 Фаст-Парс активирован!');
