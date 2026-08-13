@@ -28,11 +28,9 @@
             transform: translateZ(0);
         }
 
-        /* 120 Гц плавность */
         .scrolling-active #fog-canvas,
         .scrolling-active #emoji-layer {
-            pointer-events: none;
-            opacity: 0.2;
+            pointer-events: none; opacity: 0.2;
         }
 
         body.theme-terminal { background-color: #050b05 !important; color: #00ff66 !important; font-family: 'Courier New', monospace !important; }
@@ -68,11 +66,8 @@
         }
 
         .glass-panel {
-            background: var(--glass-bg); 
-            backdrop-filter: blur(18px); 
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid var(--glass-border); 
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+            background: var(--glass-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--glass-border); box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
             will-change: transform, opacity;
         }
 
@@ -86,8 +81,7 @@
             border: 1px solid var(--primary); color: var(--text-main);
             padding: 10px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer;
-            box-shadow: 0 4px 20px var(--primary-glow); 
-            will-change: transform;
+            box-shadow: 0 4px 20px var(--primary-glow); will-change: transform;
             transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .floating-achieving-btn:active { transform: scale(0.9); }
@@ -98,8 +92,7 @@
             border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
             padding: 10px 16px; border-radius: 30px; font-size: 0.9rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer;
-            box-shadow: 0 4px 20px rgba(234, 179, 8, 0.25);
-            will-change: transform;
+            box-shadow: 0 4px 20px rgba(234, 179, 8, 0.25); will-change: transform;
             transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .floating-leaderboard-btn:active { transform: scale(0.9); }
@@ -129,12 +122,10 @@
         .btn-generate:active { transform: scale(0.94); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* ⚡ МОДАЛКИ (120 ГЦ) ⚡ */
+        /* МОДАЛКИ И ИНТЕРФЕЙС */
         .modal-overlay { 
             position: fixed; inset: 0; 
-            background: rgba(3, 7, 6, 0.82); 
-            backdrop-filter: blur(10px); 
-            -webkit-backdrop-filter: blur(10px); 
+            background: rgba(3, 7, 6, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
             z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; 
             opacity: 0; visibility: hidden; pointer-events: none; 
             will-change: opacity, visibility;
@@ -145,8 +136,7 @@
         .modal-content { 
             width: 100%; max-width: 420px; max-height: 82vh; 
             display: flex; flex-direction: column; position: relative; border-radius: 24px; overflow: hidden;
-            transform: scale(0.88) translateY(20px);
-            will-change: transform, opacity;
+            transform: scale(0.88) translateY(20px); will-change: transform, opacity;
             transition: transform 0.35s cubic-bezier(0.34, 1.25, 0.64, 1);
         }
         .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
@@ -159,33 +149,27 @@
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; contain: content; }
 
         .setting-item { background: rgba(255,255,255,0.03); padding: 14px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
-        .setting-info { display: flex; flex-direction: column; gap: 3px; }
+        .setting-info { display: flex; flex-direction: column; gap: 3px; flex: 1; padding-right: 10px; }
         .setting-title { font-weight: 600; font-size: 0.9rem; }
         .setting-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.25; }
         
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .setting-controls { display: flex; align-items: center; gap: 10px; }
+
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* 🌟 ФИКС ИКОНКИ СВОРАЧИВАНИЯ СТРЕЛОЧКИ 🌟 */
         .panel-collapse-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+            background: transparent; border: none; color: var(--text-muted);
+            width: 26px; height: 26px; padding: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0.7; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, color 0.2s ease;
         }
-        .panel-collapse-btn:active { transform: scale(0.88); }
-        .panel-collapse-btn svg { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .panel-collapse-btn:hover, .panel-collapse-btn:active { opacity: 1; color: #fff; }
+        .panel-collapse-btn svg { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: rotate(0deg); }
         .panel-collapse-btn.collapsed svg { transform: rotate(180deg); }
 
         .range-slider { width: 90px; accent-color: var(--primary); }
@@ -198,45 +182,24 @@
         .filter-options.active { display: block; animation: slideDown 0.3s cubic-bezier(0.34, 1.25, 0.64, 1); }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        /* 🌟 СТЕКЛЯННЫЕ КАСТОМНЫЕ СЕЛЕКТЫ 🌟 */
         .custom-select-wrapper { position: relative; width: 100%; }
         .custom-select-trigger {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 14px;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px; border-radius: 12px; color: #fff; font-size: 0.85rem;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
             transition: transform 0.2s ease, border-color 0.2s ease;
         }
         .custom-select-trigger:active { transform: scale(0.98); }
         .custom-select-trigger:after { content: '▾'; font-size: 0.8rem; color: var(--text-muted); }
         .custom-select-options {
             position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-            background: rgba(15, 22, 18, 0.96);
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 14px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 100;
-            display: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            contain: content;
+            background: rgba(15, 22, 18, 0.96); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px;
+            max-height: 200px; overflow-y: auto; z-index: 100; display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); contain: content;
         }
         .custom-select-options.open { display: block; animation: slideDown 0.25s cubic-bezier(0.34, 1.25, 0.64, 1); }
-        .custom-option {
-            padding: 10px 14px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: background 0.15s ease, color 0.15s ease;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-        }
+        .custom-option { padding: 10px 14px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .custom-option:last-child { border-bottom: none; }
         .custom-option:hover, .custom-option.selected { background: var(--primary-glow); color: #fff; }
 
@@ -249,9 +212,10 @@
 
         .btn-reset-custom { width: 100%; background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; margin-top: 10px; transition: 0.2s; }
 
-        .history-wrapper { position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease; max-height: 80px; }
-        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.4); }
-        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.4); }
+        /* 🌟 ОБНОВЛЕННЫЙ ОБЛИК ИСТОРИИ И ЛИДЕРБОРДА (LIQUID GLASS) 🌟 */
+        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease; max-height: 85px; }
+        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.35); }
+        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.35); }
         .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.25rem; opacity: 0; transition: opacity 0.2s ease; z-index: 1; }
         .swipe-icon-left { left: 18px; color: #fff; }
         .swipe-icon-right { right: 18px; color: #fff; }
@@ -259,10 +223,41 @@
         .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
-        .history-card { background: rgba(20, 26, 23, 0.95); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; position: relative; z-index: 2; touch-action: pan-y; user-select: none; }
+        .history-card { 
+            background: rgba(18, 25, 21, 0.85);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08); 
+            border-radius: 16px; padding: 14px 16px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: relative; z-index: 2; touch-action: pan-y; user-select: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .history-card:active { transform: scale(0.98); }
 
-        .lb-rank-badge { font-size: 1.1rem; font-weight: 800; min-width: 32px; text-align: center; display: flex; align-items: center; justify-content: center; }
-        .lb-finder-btn { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .lb-card {
+            background: rgba(18, 25, 21, 0.8);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px; padding: 12px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            transition: transform 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .lb-card-top1 { border: 1px solid rgba(255, 215, 0, 0.4); box-shadow: 0 0 25px rgba(255, 215, 0, 0.15); }
+        .lb-card-top2 { border: 1px solid rgba(192, 192, 192, 0.4); }
+        .lb-card-top3 { border: 1px solid rgba(205, 127, 50, 0.4); }
+
+        .lb-rank-badge { font-size: 1.15rem; font-weight: 800; min-width: 36px; text-align: center; display: flex; align-items: center; justify-content: center; }
+        .lb-finder-btn { 
+            background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); 
+            padding: 4px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 600; cursor: pointer; 
+            margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+            transition: transform 0.2s ease;
+        }
+        .lb-finder-btn:active { transform: scale(0.92); }
 
         .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; opacity: 0.6; filter: grayscale(0.8); transition: 0.3s; }
         .achieve-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); background: rgba(41, 199, 95, 0.06); box-shadow: 0 0 15px rgba(41, 199, 95, 0.1); }
@@ -326,7 +321,7 @@
 
     <div class="toast" id="global-toast">✨ Скопировано!</div>
 
-    <!-- МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ С ПОНЯТНЫМИ НАЗВАНИЯМИ И СТЕКЛЯННЫМИ МЕНЮ -->
+    <!-- МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -358,7 +353,7 @@
                     </div>
                     <div class="setting-controls">
                         <button class="panel-collapse-btn" id="btn-toggle-custom-panel" style="display:none;" onclick="togglePanelVisibility('custom-menu', this)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
                         </button>
                         <label class="switch">
                             <input type="checkbox" id="toggle-custom" onchange="toggleCustomMenu(this)">
@@ -367,7 +362,6 @@
                     </div>
                 </div>
 
-                <!-- 🌟 ПОЛНАЯ ПАЛИТРА ИЗ 10 ТЕМ 🌟 -->
                 <div class="filter-options" id="custom-menu">
                     <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Тема акцента</div>
                     <div class="color-picker-grid" id="theme-dots-grid">
@@ -421,15 +415,14 @@
                         <span class="setting-desc">Выбор логики и приставки к вашему слову</span>
                     </div>
                     <div class="setting-controls">
-                        <!-- 🌟 ИСПРАВЛЕННАЯ СТЕКЛЯННАЯ КНОПКА СВОРАЧИВАНИЯ 🌟 -->
+                        <!-- 🌟 ИСПРАВЛЕННАЯ СТРЕЛОЧКА 🌟 -->
                         <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
                         </button>
                         <label class="switch"><input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)"><span class="slider"></span></label>
                     </div>
                 </div>
 
-                <!-- 🌟 ПОНЯТНЫЕ И КРАСИВЫЕ КАСТОМНЫЕ СЕЛЕКТЫ 🌟 -->
                 <div class="filter-options" id="filter-menu">
                     <div style="margin-bottom: 12px;">
                         <span style="font-size: 0.85rem; font-weight:600; color: var(--text-main); display:block; margin-bottom:6px;">Что подбираем?</span>
@@ -450,7 +443,6 @@
                         </div>
                     </div>
 
-                    <!-- МОДУЛЬ ПРИСТАВКИ К СЛОВУ -->
                     <div id="prefix-master-box" style="display:none; border-top: 1px dashed rgba(255,255,255,0.1); padding-top:12px; margin-top:12px;">
                         <span style="font-size: 0.8rem; color: var(--primary); font-weight:600; display:block; margin-bottom: 6px;">Ваше слово или имя</span>
                         <input type="text" id="prefix-user-input" class="form-input" style="margin-bottom:10px;" placeholder="Впишите слово (например: spiderman, apple)">
@@ -684,14 +676,16 @@
         }
 
         let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
+        
+        /* 🌟 ВСЕ СЕКРЕТНЫЕ ТЕМЫ 🌟 */
         const SECRET_PROMOS = {
             'REDPILL': { id: 'matrix', icon: '💻', colorHex: '#29c75f', glowHex: 'rgba(41, 199, 95, 0.4)', emojis: '0, 1, ⚡, 💻', msg: '🟢 MATRIX' },
             'DUROV360': { id: 'durov', icon: '✈️', colorHex: '#1e3c72', glowHex: 'rgba(30, 60, 114, 0.4)', emojis: '💎, 👑, ✈️, 💰', msg: '✈️ DUROV SKY' },
-            'CROWN_KING': { id: 'kington', icon: '👑', colorHex: '#eab308', glowHex: 'rgba(234, 179, 8, 0.4)', emojis: '👑, 💎, ✨, 🔱', msg: '👑 KINGTON' },
+            'CROWN_KING': { id: 'kington', icon: '👑', colorHex: '#eab308', glowHex: 'rgba(234, 179, 8, 0.4)', emojis: '👑, 💎, ✨, 🔱', msg: '👑 KINGTON GOLD' },
+            'CYBER_PUNK': { id: 'cyber', icon: '⚡', colorHex: '#f97316', glowHex: 'rgba(249, 115, 22, 0.4)', emojis: '⚡, 🤖, 🔮', msg: '⚡ CYBERPUNK' },
+            'NEBULA_DEEP': { id: 'nebula', icon: '🪐', colorHex: '#6366f1', glowHex: 'rgba(99, 102, 241, 0.4)', emojis: '🪐, 🌌, ✨', msg: '🪐 NEBULA' },
             'SUDO_RM_RF': { id: 'terminal', icon: '📟', colorHex: '#00ff66', glowHex: 'rgba(0, 255, 102, 0.4)', emojis: '👾, 💾, 📟, 🤖', msg: '📟 TERMINAL' },
-            '404_FOUND': { id: 'glitch', icon: '👾', colorHex: '#00f0ff', glowHex: 'rgba(0, 240, 255, 0.4)', emojis: '👾, ⚠️, ❌, 👁️', msg: '👾 GLITCH' },
-            'SYNTH_1984': { id: 'vapor', icon: '🌆', colorHex: '#ec4899', glowHex: 'rgba(236, 72, 153, 0.4)', emojis: '🌆, 🌴, 📼, 💖', msg: '🌆 VAPORWAVE' },
-            'IDDQD': { id: 'rainbow', icon: '🌈', colorHex: '#f43f5e', glowHex: 'rgba(244, 63, 94, 0.4)', emojis: '🌈, ✨, 🔥, 💥', msg: '🌈 GOD MODE' }
+            'SYNTH_1984': { id: 'vapor', icon: '🌆', colorHex: '#ec4899', glowHex: 'rgba(236, 72, 153, 0.4)', emojis: '🌆, 🌴, 📼, 💖', msg: '🌆 VAPORWAVE' }
         };
 
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
@@ -727,9 +721,10 @@
                 if (data.status === 'ok' && data.leaderboard.length > 0) {
                     container.innerHTML = data.leaderboard.map((item, index) => {
                         const rankMedal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+                        const topClass = index === 0 ? "lb-card-top1" : index === 1 ? "lb-card-top2" : index === 2 ? "lb-card-top3" : "";
 
                         return `
-                            <div class="lb-card" style="border-left: 3px solid ${item.color}; border-radius:12px; padding:10px; background:rgba(255,255,255,0.03);">
+                            <div class="lb-card ${topClass}" style="border-left: 4px solid ${item.color};">
                                 <div style="display:flex; align-items:center; gap:12px;">
                                     <div class="lb-rank-badge">${rankMedal}</div>
                                     <div>
@@ -810,7 +805,7 @@
             document.body.className = '';
         }
 
-        /* 🌟 ВОССТАНОВЛЕНИЕ ВСЕХ СЕКРЕТНЫХ АНИМАЦИОННЫХ ТЕМ 🌟 */
+        /* 🌟 ВОССТАНОВЛЕНИЕ ВСЕХ СЕКРЕТНЫХ АНИМАЦИОННЫХ ЭФФЕКТОВ 🌟 */
         function activateSecretEffect(themeId, colorHex, glowHex, emojis) {
             stopSecretAnimation();
             setThemeColor(colorHex, glowHex, null);
@@ -885,8 +880,8 @@
                 }
                 drawKington();
             }
-            else if (themeId === 'rainbow') {
-                document.body.classList.add("theme-rainbow");
+            else if (themeId === 'vapor') {
+                document.body.classList.add("theme-vapor");
             }
             else {
                 document.body.classList.add(`theme-${themeId}`);
