@@ -13,15 +13,22 @@ from telethon.tl.functions.account import CheckUsernameRequest
 from telethon.errors import RPCError
 import uvicorn
 
+# =========================================================================
+# 📂 ПУТИ И ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
+# =========================================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
 
-# --- ГЛОБАЛЬНАЯ ПАМЯТЬ СЕРВЕРА ---
 GENERATED_HISTORY = set()
 MAX_HISTORY_SIZE = 25000
+
+IP_REQUEST_HISTORY = {}
+MAX_REQUESTS_PER_MINUTE = 60
+USER_COOLDOWNS = {}
+COOLDOWN_SECONDS = 0.1
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID", "38162572"))
@@ -37,7 +44,7 @@ else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
 # =========================================================================
-# 💾 ИГРОВАЯ БАЗА ДАННЫХ И ОФФЛАЙН-ФАРМ
+# 💾 ИГРОВАЯ БАЗА ДАННЫХ И ЭКОНОМИКА
 # =========================================================================
 def load_game_db() -> dict:
     if os.path.exists(GAME_DB_PATH):
@@ -63,7 +70,7 @@ def get_user_profile(db: dict, user_id: str) -> dict:
             "energy": 1000,
             "max_energy": 1000,
             "multi_tap": 1,
-            "energy_regen": 1, # Жесткий баланс: 1 энергия в секунду
+            "energy_regen": 1,  # Строгий баланс: +1 энергия в секунду
             "offline_miner_lvl": 0,
             "last_seen": now,
             "unlocked_themes": [],
@@ -74,7 +81,6 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     
     user = db[user_id]
     time_passed = now - user.get("last_seen", now)
-    # Восстанавливаем энергию за время отсутствия
     if time_passed > 0 and user["energy"] < user["max_energy"]:
         regen_amount = time_passed * user.get("energy_regen", 1)
         user["energy"] = min(user["max_energy"], user["energy"] + regen_amount)
@@ -82,7 +88,7 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     return user
 
 # =========================================================================
-# 📚 ПОЛНАЯ БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВ
+# 📚 ПОЛНАЯ БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВИ СЛОВ (15 КАТЕГОРИЙ)
 # =========================================================================
 AFFIX_DATABASE = {
     "personal": ["official", "real", "prime", "live", "blog", "vibe", "zone", "one", "daily", "fan", "hq", "club"],
@@ -102,124 +108,205 @@ AFFIX_DATABASE = {
     "auto_detect": ["my", "get", "go", "hq", "one", "vibe", "space", "zone", "core", "hub", "lab", "pro"]
 }
 
-TRANSLIT_WORDS = ["vostok", "imperia", "pobeda", "bereg", "kultura", "sovet", "otklik", "zvezda", "priboy", "vektor", "osnova", "sokol", "buran"]
+TRANSLIT_WORDS = [
+    "vostok", "imperia", "pobeda", "bereg", "kultura", "sovet", "otklik", "zvezda", 
+    "priboy", "vektor", "osnova", "nasledie", "prikaz", "tishina", "mira", "groza", 
+    "iskra", "metel", "shelest", "luch", "prostor", "vremya", "sfora", "sokol", 
+    "kedr", "buran", "tayga", "skala", "utes", "volna", "plamya", "argon", "granit"
+]
+
 TRANSLIT_AFFIXES = ["space", "lab", "vibe", "club", "one", "media", "hub", "zone", "core", "hq"]
-BRAND_ROOTS = ["aeth", "chron", "sol", "vort", "lum", "phos", "zeph", "celest", "aeg", "crest", "val", "kism", "ast", "spect"]
-BRAND_SUFFIXES = ["is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"]
+
+BRAND_ROOTS = [
+    "aeth", "chron", "sol", "vort", "lum", "phos", "zeph", "celest", "aeg", "crest",
+    "val", "kism", "ast", "spect", "temp", "tit", "mir", "aur", "prism", "orion",
+    "verv", "lun", "stell", "zen", "hyp", "myth", "nobl", "quant", "rhod", "sir"
+]
+
+BRAND_SUFFIXES = [
+    "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"
+]
 
 def generate_prefix_master(user_input: str, category: str = "auto_detect", position: str = "mix") -> str:
     clean_input = user_input.lower().strip().replace("@", "")
     affixes = AFFIX_DATABASE.get(category, AFFIX_DATABASE["auto_detect"])
     chosen_affix = random.choice(affixes)
-    if position == "prefix": return f"{chosen_affix}{clean_input}"
-    elif position == "suffix": return f"{clean_input}{chosen_affix}"
-    else: return f"{clean_input}{chosen_affix}" if random.random() < 0.6 else f"{chosen_affix}{clean_input}"
+
+    if position == "prefix":
+        return f"{chosen_affix}{clean_input}"
+    elif position == "suffix":
+        return f"{clean_input}{chosen_affix}"
+    else:
+        return f"{clean_input}{chosen_affix}" if random.random() < 0.6 else f"{chosen_affix}{clean_input}"
 
 def generate_translit_brand() -> str:
     base_word = random.choice(TRANSLIT_WORDS)
-    if random.random() < 0.35: return f"{base_word}{random.choice(TRANSLIT_AFFIXES)}"
+    if random.random() < 0.35:
+        affix = random.choice(TRANSLIT_AFFIXES)
+        return f"{base_word}{affix}"
     return base_word
 
 def generate_standard_brand(len_mode: str = "5-6") -> str:
     root = random.choice(BRAND_ROOTS)
     suf = random.choice(BRAND_SUFFIXES)
-    candidate = (root + suf).replace("nn", "n").replace("ss", "s").replace("rr", "r")
-    if len_mode == "5-6" and len(candidate) > 6: candidate = candidate[:6]
+    candidate = (root + suf).replace("nn", "n").replace("ss", "s").replace("rr", "r").replace("oo", "o")
+    if len_mode == "5-6" and len(candidate) > 6:
+        candidate = candidate[:6]
     return candidate
 
 def load_leaderboard():
     if os.path.exists(LEADERBOARD_PATH):
         try:
-            with open(LEADERBOARD_PATH, "r", encoding="utf-8") as f: return json.load(f)
-        except Exception: return []
+            with open(LEADERBOARD_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
     return []
 
 def save_leaderboard(data):
     try:
         data = sorted(data, key=lambda x: x.get("score", 0), reverse=True)[:1000]
-        with open(LEADERBOARD_PATH, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
-    except Exception: pass
+        with open(LEADERBOARD_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
 
 def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_id):
     lb = load_leaderboard()
-    if any(item["username"].lower() == username.lower() for item in lb): return
+    if any(item["username"].lower() == username.lower() for item in lb):
+        return
+    
     lb.append({
-        "username": username, "rank": rank, "price": price, "score": score,
-        "color": color, "finder_name": finder_name or "Аноним",
-        "finder_id": finder_id or "0", "timestamp": int(time.time())
+        "username": username,
+        "rank": rank,
+        "price": price,
+        "score": score,
+        "color": color,
+        "finder_name": finder_name or "Аноним",
+        "finder_id": finder_id or "0",
+        "timestamp": int(time.time())
     })
     save_leaderboard(lb)
 
 def calculate_catch_score(username: str, is_free: bool):
-    if not is_free: return {"rank": "F", "status": "Занят", "color": "#ef4444", "score": 0}
+    if not is_free:
+        return {"rank": "F", "status": "Занят пользователем или каналом", "color": "#ef4444", "score": 0}
+    
     username = username.lower().replace("@", "").strip()
     length = len(username)
-    if length < 5: return {"rank": "F", "status": "Меньше 5 символов", "color": "#ef4444", "score": 0}
-    if any(char.isdigit() or char == "_" for char in username): return {"rank": "F", "status": "Символы/Цифры", "color": "#ef4444", "score": 0}
+    
+    if length < 5:
+        return {"rank": "F", "status": "Короче 5 символов (Только Fragment)", "color": "#ef4444", "score": 0}
 
-    is_trash = False
+    if any(char.isdigit() or char == "_" for char in username):
+        return {"rank": "F", "status": "Содержит цифры или символы", "color": "#ef4444", "score": 0}
+
     vowels = set("aeiouy")
     cons_streak = 0
+    max_cons_streak = 0
     for char in username:
         if char not in vowels:
             cons_streak += 1
-            if cons_streak >= 3: is_trash = True
-        else: cons_streak = 0
+            max_cons_streak = max(max_cons_streak, cons_streak)
+        else:
+            cons_streak = 0
 
-    if length == 5 and not is_trash: return {"rank": "SSS+", "status": "Эксклюзив (~200-800+ TON)", "color": "#29c75f", "score": 100}
-    if length == 6 and not is_trash: return {"rank": "SS", "status": "Редкий ник (~50-200 TON)", "color": "#eab308", "score": 85}
-    if length == 7 and not is_trash: return {"rank": "S", "status": "Премиум бренд (~15-50 TON)", "color": "#a855f7", "score": 65}
-    if length <= 10 and not is_trash: return {"rank": "A", "status": "Красивый ник (~3-15 TON)", "color": "#3b82f6", "score": 40}
-    return {"rank": "B", "status": "Для себя (~1 TON)", "color": "#64748b", "score": 20}
+    is_trash = (max_cons_streak >= 3)
+
+    if length == 5 and not is_trash:
+        return {"rank": "SSS+", "status": "Эксклюзивный актив (~200-800+ TON)", "color": "#29c75f", "score": 100}
+
+    if length == 6 and not is_trash:
+        return {"rank": "SS", "status": "Редкий элитный ник (~50-200 TON)", "color": "#eab308", "score": 85}
+
+    if length == 7 and not is_trash:
+        return {"rank": "S", "status": "Премиум бренд (~15-50 TON)", "color": "#a855f7", "score": 65}
+
+    if length <= 10 and not is_trash:
+        return {"rank": "A", "status": "Стандартный красивый ник (~3-15 TON)", "color": "#3b82f6", "score": 40}
+
+    return {"rank": "B", "status": "Для личного пользования (~1 TON)", "color": "#64748b", "score": 20}
 
 async def check_username_telethon(username: str) -> bool:
     username = username.replace("@", "").strip().lower()
-    if len(username) < 5: return False
+    if len(username) < 5: 
+        return False
+
     try:
         result = await telethon_client(CheckUsernameRequest(username=username))
         return True if result is True else False
-    except Exception: return False
+    except RPCError:
+        return False
+    except Exception:
+        return False
 
 def load_radar_db() -> dict:
     if os.path.exists(RADAR_DB_PATH):
         try:
-            with open(RADAR_DB_PATH, "r", encoding="utf-8") as f: return json.load(f)
-        except Exception: return {}
+            with open(RADAR_DB_PATH, "r", encoding="utf-8") as f: 
+                return json.load(f)
+        except Exception: 
+            return {}
     return {}
 
 def save_radar_db(db: dict):
     try:
-        with open(RADAR_DB_PATH, "w", encoding="utf-8") as f: json.dump(db, f, ensure_ascii=False, indent=4)
-    except Exception: pass
+        with open(RADAR_DB_PATH, "w", encoding="utf-8") as f: 
+            json.dump(db, f, ensure_ascii=False, indent=4)
+    except Exception: 
+        pass
 
+# =========================================================================
+# 🎯 АВТОНОМНЫЙ РАДАР (ФОНОВЫЙ ВОРКЕР)
+# =========================================================================
 async def radar_worker():
+    print("🚀 Автономный Радар запущен!")
     while True:
         try:
             db = load_radar_db()
             if db and bot:
                 all_targets = set()
                 for chat_id, targets in db.items():
-                    for target in targets: all_targets.add(target.lower())
+                    for target in targets: 
+                        all_targets.add(target.lower())
 
                 for username in list(all_targets):
-                    if await check_username_telethon(username):
+                    is_free = await check_username_telethon(username)
+                    if is_free is True:
+                        notified_chats = []
                         for chat_id, targets in list(db.items()):
                             if username in [t.lower() for t in targets]:
-                                try: await bot.send_message(chat_id=int(chat_id), text=f"🚨 **РАДАР:** Ник `@{username}` свободен!", parse_mode="Markdown")
-                                except Exception: pass
-                        for chat_id in list(db.keys()):
+                                try:
+                                    await bot.send_message(
+                                        chat_id=int(chat_id), 
+                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nБыстрее забирай!", 
+                                        parse_mode="Markdown"
+                                    )
+                                    notified_chats.append(chat_id)
+                                except Exception: 
+                                    pass
+
+                        for chat_id in notified_chats:
                             db[chat_id] = [t for t in db[chat_id] if t.lower() != username]
-                            if not db[chat_id]: del db[chat_id]
+                            if not db[chat_id]: 
+                                del db[chat_id]
                         save_radar_db(db)
                     await asyncio.sleep(1.5)
-        except Exception: pass
+        except Exception: 
+            pass
         await asyncio.sleep(5)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    print("⏳ Запуск Telethon...")
     await telethon_client.start()
+    print("✅ Telethon успешно запущен!")
+    
     asyncio.create_task(radar_worker())
-    if bot and dp: asyncio.create_task(dp.start_polling(bot))
+    
+    if bot and dp:
+        asyncio.create_task(dp.start_polling(bot))
+    
     yield
     await telethon_client.disconnect()
 
@@ -239,7 +326,7 @@ async def get_game_state(user_id: str):
     time_diff = now - user["last_seen"]
     offline_earned = 0
     if time_diff > 60 and user["offline_miner_lvl"] > 0:
-        clamped_time = min(time_diff, 10800) # Максимум 3 часа
+        clamped_time = min(time_diff, 10800)  # Максимум 3 часа
         rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
         offline_earned = int(clamped_time * rate_per_sec)
         user["coins"] += offline_earned
@@ -253,7 +340,6 @@ async def get_game_state(user_id: str):
         "offline_earned": offline_earned
     }
 
-# 🟢 ИДЕАЛЬНЫЙ СИНК ТАПОВ: Больше НИКАКИХ списаний монет!
 @app.post("/api/game/sync_tap")
 async def sync_tap(request: Request):
     data = await request.json()
@@ -264,15 +350,13 @@ async def sync_tap(request: Request):
     user = get_user_profile(db, user_id)
     
     if taps > 0:
-        actual_taps = min(taps, user["energy"]) # Снимаем энергию, только если она есть
-        if actual_taps > 0:
-            earned = actual_taps * user["multi_tap"]
-            user["coins"] += earned
-            user["energy"] = max(0, user["energy"] - actual_taps)
-            user["last_seen"] = int(time.time())
-            save_game_db(db)
+        # Честное начисление монет без откатов баланса
+        earned = taps * user["multi_tap"]
+        user["coins"] += earned
+        user["energy"] = max(0, user["energy"] - taps)
+        user["last_seen"] = int(time.time())
+        save_game_db(db)
         
-    # Мы возвращаем только серверную энергию, клиент сам ведет монеты, чтобы не было визуальных сбросов
     return {"status": "ok", "server_energy": user["energy"]}
 
 @app.post("/api/game/buy")
@@ -289,7 +373,8 @@ async def buy_item(request: Request):
         if user["coins"] >= cost and user["multi_tap"] < 20:
             user["coins"] -= cost
             user["multi_tap"] += 1
-        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        else:
+            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
     elif item_id == "max_energy":
         lvl = (user["max_energy"] - 1000) // 500
@@ -298,7 +383,8 @@ async def buy_item(request: Request):
             user["coins"] -= cost
             user["max_energy"] += 500
             user["energy"] = user["max_energy"]
-        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        else:
+            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
     elif item_id == "offline_miner":
         lvl = user["offline_miner_lvl"]
@@ -306,36 +392,44 @@ async def buy_item(request: Request):
         if user["coins"] >= cost and lvl < 10:
             user["coins"] -= cost
             user["offline_miner_lvl"] += 1
-        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        else:
+            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
     elif item_id == "radar_slot":
         if user["coins"] >= 5000:
             user["coins"] -= 5000
             user["radar_extra_slots"] += 1
-        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        else:
+            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
     elif item_id == "turbo_parse":
         if user["coins"] >= 3500:
             user["coins"] -= 3500
             user["has_turbo"] = True
-        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        else:
+            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
     elif item_id == "theme_cyberpunk":
         if user["coins"] >= 40000 and "cyberpunk" not in user["unlocked_themes"]:
             user["coins"] -= 40000
             user["unlocked_themes"].append("cyberpunk")
-        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        else:
+            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
     elif item_id == "rank_legend":
         if user["coins"] >= 100000:
             user["coins"] -= 100000
             user["rank"] = "👑 Легендарный Ловец"
-        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        else:
+            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
     user["last_seen"] = int(time.time())
     save_game_db(db)
     return {"status": "ok", "profile": user}
 
+# =========================================================================
+# 🌐 ОСНОВНЫЕ МАРШРУТЫ ГЕНЕРАЦИИ И ДАННЫХ
+# =========================================================================
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH): 
@@ -354,12 +448,25 @@ async def generate_username(
     finder_name: str = Query("Аноним"),
     finder_id: str = Query("0")
 ):
-    if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE: GENERATED_HISTORY.clear()
+    client_ip = request.client.host if request.client else "global"
+    now = time.time()
+    
+    if client_ip in USER_COOLDOWNS:
+        elapsed = now - USER_COOLDOWNS[client_ip]
+        if elapsed < COOLDOWN_SECONDS:
+            await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
+    USER_COOLDOWNS[client_ip] = time.time()
+
+    if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE:
+        GENERATED_HISTORY.clear()
 
     for _ in range(15):
-        if mode == "prefix_master" and user_input.strip(): generated = generate_prefix_master(user_input, category, position)
-        elif mode == "translit": generated = generate_translit_brand()
-        else: generated = generate_standard_brand(len_mode)
+        if mode == "prefix_master" and user_input.strip():
+            generated = generate_prefix_master(user_input, category, position)
+        elif mode == "translit":
+            generated = generate_translit_brand()
+        else:
+            generated = generate_standard_brand(len_mode)
 
         if generated not in GENERATED_HISTORY and len(generated) >= 5:
             is_free = await check_username_telethon(generated)
@@ -368,26 +475,61 @@ async def generate_username(
                 eval_data = calculate_catch_score(generated, True)
                 if eval_data["score"] >= 40:
                     add_to_leaderboard(generated, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
-                return {"status": "success", "generated_username": generated, "platform": platform, "is_free": True, "evaluation": eval_data}
+                return {
+                    "status": "success", 
+                    "generated_username": generated, 
+                    "platform": platform, 
+                    "is_free": True, 
+                    "evaluation": eval_data
+                }
             await asyncio.sleep(0.08)
 
-    fallback_nick = generate_standard_brand(len_mode)
+    if mode == "prefix_master" and user_input.strip():
+        fallback_nick = generate_prefix_master(user_input, category, "suffix")
+    elif mode == "translit":
+        fallback_nick = generate_translit_brand()
+    else:
+        fallback_nick = generate_standard_brand(len_mode)
+
     is_free_fallback = await check_username_telethon(fallback_nick)
     eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
-    return {"status": "success", "generated_username": fallback_nick, "platform": platform, "is_free": is_free_fallback, "evaluation": eval_data}
+    
+    if is_free_fallback:
+        GENERATED_HISTORY.add(fallback_nick)
+        if eval_data["score"] >= 40:
+            add_to_leaderboard(fallback_nick, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
+
+    return {
+        "status": "success", 
+        "generated_username": fallback_nick, 
+        "platform": platform, 
+        "is_free": is_free_fallback, 
+        "evaluation": eval_data
+    }
 
 @app.get("/api/leaderboard")
 async def get_leaderboard(period: str = Query("all")):
     lb = load_leaderboard()
+    now = int(time.time())
+    if period == "day": 
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 86400]
+    elif period == "week": 
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 604800]
+    elif period == "month": 
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 2592000]
     return {"status": "ok", "leaderboard": lb[:1000]}
 
 @app.get("/api/radar/add")
 async def radar_add(chat_id: str, username: str):
     db = load_radar_db()
     chat_id, username = str(chat_id).strip(), username.replace("@", "").strip().lower()
-    if not username: return {"status": "error", "message": "Пустой юзернейм"}
-    if chat_id not in db: db[chat_id] = []
-    if username not in db[chat_id]: db[chat_id].append(username); save_radar_db(db)
+    if not username: 
+        return {"status": "error", "message": "Пустой юзернейм"}
+    if chat_id not in db: 
+        db[chat_id] = []
+    if username not in db[chat_id]: 
+        db[chat_id].append(username)
+        save_radar_db(db)
     return {"status": "ok", "targets": db[chat_id]}
 
 @app.get("/api/radar/list")
@@ -400,7 +542,8 @@ async def radar_remove(chat_id: str, username: str):
     chat_id, username = str(chat_id).strip(), username.replace("@", "").strip().lower()
     if chat_id in db and username in db[chat_id]:
         db[chat_id].remove(username)
-        if not db[chat_id]: del db[chat_id]
+        if not db[chat_id]: 
+            del db[chat_id]
         save_radar_db(db)
     return {"status": "ok", "targets": db.get(chat_id, [])}
 
