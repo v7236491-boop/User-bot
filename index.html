@@ -7,12 +7,12 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-app: #030706;
+            --bg-app: #060b08;
             --primary: #29c75f;
             --primary-hover: #22a94f;
             --text-main: #ffffff;
             --text-muted: #829288;
-            --glass-bg: rgba(18, 25, 21, 0.55);
+            --glass-bg: rgba(18, 25, 21, 0.7);
             --glass-border: rgba(255, 255, 255, 0.08);
             --glass-highlight: rgba(255, 255, 255, 0.04);
             --primary-glow: rgba(41, 199, 95, 0.22);
@@ -25,33 +25,28 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column;
             overflow-x: hidden; position: relative;
-            transition: background-color 0.5s ease, color 0.5s ease;
+            transform: translateZ(0); /* Включаем аппаратный слой GPU для всего тела */
         }
 
-        body.theme-terminal {
-            background-color: #050b05 !important; color: #00ff66 !important;
-            font-family: 'Courier New', monospace !important; text-shadow: 0 0 5px #00ff66;
-        }
-        body.theme-terminal::after {
-            content: " "; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px; pointer-events: none; z-index: 10;
+        /* Оптимизация плавной прокрутки 120 Гц */
+        .scrolling-active #fog-canvas,
+        .scrolling-active #emoji-layer {
+            pointer-events: none;
+            opacity: 0.2;
         }
 
-        body.theme-glitch { background-color: #0d021a !important; color: #00f0ff !important; animation: glitch-bg 2s infinite alternate; }
-        @keyframes glitch-bg { 0% { box-shadow: inset 0 0 50px #ff0055; } 100% { box-shadow: inset 0 0 100px #00f0ff; } }
-
+        body.theme-terminal { background-color: #050b05 !important; color: #00ff66 !important; font-family: 'Courier New', monospace !important; }
+        body.theme-glitch { background-color: #0d021a !important; color: #00f0ff !important; }
         body.theme-vapor { background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important; color: #fff !important; }
-
         body.theme-rainbow {
             background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8) !important;
             background-size: 400% 400% !important; animation: rainbow-bg 8s ease infinite !important;
         }
         @keyframes rainbow-bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        #fog-canvas, #secret-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; }
+        #fog-canvas, #secret-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; transition: opacity 0.3s ease; }
         #secret-canvas { display: none; z-index: -8; }
-        #emoji-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -5; pointer-events: none; overflow: hidden; }
+        #emoji-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -5; pointer-events: none; overflow: hidden; transition: opacity 0.3s ease; }
         .floating-emoji { position: absolute; user-select: none; will-change: transform; opacity: 0.7; }
 
         .screen-ripple {
@@ -64,6 +59,7 @@
 
         .jackpot-particle {
             position: fixed; font-size: 2rem; pointer-events: none; z-index: 9999;
+            will-change: transform, opacity;
             animation: explode 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
         @keyframes explode {
@@ -72,15 +68,17 @@
         }
 
         .glass-panel {
-            background: var(--glass-bg); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-            border: 1px solid var(--glass-border); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 var(--glass-highlight);
+            background: var(--glass-bg); 
+            backdrop-filter: blur(18px); 
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--glass-border); 
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+            will-change: transform, opacity;
         }
 
         header { display: flex; justify-content: space-between; padding: 15px 20px; z-index: 50; width: 100%; max-width: 600px; margin: 0 auto; }
-        .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: 0.3s; border-radius: 12px; }
-        .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--primary); }
-        .nav-btn svg { opacity: 0.8; transition: 0.3s; }
-        .nav-btn:hover svg { opacity: 1; filter: drop-shadow(0 0 5px var(--primary)); stroke: var(--primary); }
+        .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 12px; }
+        .nav-btn:active { transform: scale(0.92); }
 
         .floating-achieving-btn {
             position: fixed; bottom: 20px; left: 20px; z-index: 90;
@@ -88,9 +86,11 @@
             border: 1px solid var(--primary); color: var(--text-main);
             padding: 10px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer;
-            box-shadow: 0 4px 20px var(--primary-glow); transition: 0.3s ease;
+            box-shadow: 0 4px 20px var(--primary-glow); 
+            will-change: transform;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .floating-achieving-btn:active { transform: scale(0.92); }
+        .floating-achieving-btn:active { transform: scale(0.9); }
 
         .floating-leaderboard-btn {
             position: fixed; bottom: 20px; right: 20px; z-index: 90;
@@ -98,79 +98,149 @@
             border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
             padding: 10px 16px; border-radius: 30px; font-size: 0.9rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer;
-            box-shadow: 0 4px 20px rgba(234, 179, 8, 0.25); transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(234, 179, 8, 0.25);
+            will-change: transform;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .floating-leaderboard-btn:active { transform: scale(0.92); }
+        .floating-leaderboard-btn:active { transform: scale(0.9); }
 
         main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transform: translateY(-2vh); }
         .app-container { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
 
         .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
-        .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.25s ease; }
         .platform-btn.active { background: var(--primary-glow); color: var(--primary); box-shadow: 0 4px 15px var(--primary-glow); }
 
-        .result-field { border-radius: 24px; padding: 30px 20px; text-align: center; min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; }
-        .result-field:hover { border-color: var(--primary); box-shadow: 0 15px 40px var(--primary-glow); }
+        .result-field { border-radius: 24px; padding: 30px 20px; text-align: center; min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: transform 0.3s ease, border-color 0.3s ease; position: relative; }
         .username-text { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); word-break: break-all; font-family: monospace; }
         .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
         .price-text { font-size: 0.85rem; opacity: 0.7; }
-        .golden-mode { border-color: #FFD700 !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.1) !important; animation: goldPulse 2s infinite alternate; }
-        @keyframes goldPulse { 0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); } 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.5); } }
+        .golden-mode { border-color: #FFD700 !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.3) !important; }
 
-        .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .action-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        .action-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; border: 1px solid transparent; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .action-btn:active { transform: scale(0.93); }
         .btn-take { background: var(--primary-glow); color: var(--primary); border-color: var(--primary); }
         .btn-story { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
 
-        .btn-generate { background: var(--primary); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; box-shadow: 0 8px 25px var(--primary-glow); position: relative; overflow: hidden; }
-        .btn-generate:active { transform: scale(0.96); }
-        .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; border: 1px solid var(--border-color); cursor: not-allowed; }
+        .btn-generate { background: var(--primary); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease; width: 100%; box-shadow: 0 8px 25px var(--primary-glow); }
+        .btn-generate:active { transform: scale(0.94); }
+        .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        .modal-overlay { position: fixed; inset: 0; background: rgba(3, 7, 6, 0.85); backdrop-filter: blur(10px); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s ease; }
+        /* ⚡ УЛЬТРА-ПЛАВНЫЕ АНИМАЦИИ МОДАЛОК (120 ГЦ) ⚡ */
+        .modal-overlay { 
+            position: fixed; inset: 0; 
+            background: rgba(3, 7, 6, 0.82); 
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px); 
+            z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; 
+            opacity: 0; visibility: hidden; pointer-events: none; 
+            will-change: opacity, visibility;
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
         .modal-overlay.active { opacity: 1; visibility: visible; pointer-events: auto; }
-        .modal-content { width: 100%; max-width: 420px; max-height: 85vh; display: flex; flex-direction: column; position: relative; border-radius: 20px; }
-        .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
-        .modal-title { margin: 0; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .btn-close { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-        .btn-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
-        .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+        
+        .modal-content { 
+            width: 100%; max-width: 420px; max-height: 82vh; 
+            display: flex; flex-direction: column; position: relative; border-radius: 24px; overflow: hidden;
+            transform: scale(0.88) translateY(20px);
+            will-change: transform, opacity;
+            transition: transform 0.35s cubic-bezier(0.34, 1.25, 0.64, 1);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
 
-        .setting-item { background: rgba(255,255,255,0.03); padding: 14px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
+        .modal-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { margin: 0; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: justify; cursor: pointer; transition: transform 0.2s ease; }
+        .btn-close:active { transform: scale(0.85); }
+
+        .modal-body { 
+            padding: 20px; 
+            overflow-y: auto; 
+            flex: 1; 
+            -webkit-overflow-scrolling: touch; 
+            contain: content;
+        }
+
+        .setting-item { background: rgba(255,255,255,0.03); padding: 14px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
         .setting-info { display: flex; flex-direction: column; gap: 3px; }
         .setting-title { font-weight: 600; font-size: 0.9rem; }
         .setting-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.25; }
         
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
         .range-slider { width: 90px; accent-color: var(--primary); }
         .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
-        .color-dot { width: 26px; height: 26px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-        .color-dot.active { border-color: #fff; transform: scale(1.15); }
+        .color-dot { width: 28px; height: 28px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+        .color-dot:active { transform: scale(0.85); }
+        .color-dot.active { border-color: #fff; transform: scale(1.1); }
 
-        .filter-options { display: none; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 16px; margin-top: -4px; margin-bottom: 10px; position: relative; }
-        .filter-options.active { display: block; animation: slideDown 0.25s ease; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .filter-options { display: none; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; margin-top: -4px; margin-bottom: 12px; }
+        .filter-options.active { display: block; animation: slideDown 0.3s cubic-bezier(0.34, 1.25, 0.64, 1); }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        .panel-collapse-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 6px; display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: 0.2s; border-radius: 6px; }
-        .panel-collapse-btn:hover { opacity: 1; color: #fff; background: rgba(255,255,255,0.08); }
-        .panel-collapse-btn.collapsed svg { transform: rotate(180deg); }
+        /* 🌟 СТЕКЛЯННЫЕ КАСТОМНЫЕ СЕЛЕКТЫ 🌟 */
+        .custom-select-wrapper { position: relative; width: 100%; }
+        .custom-select-trigger {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .custom-select-trigger:active { transform: scale(0.98); }
+        .custom-select-trigger:after { content: '▾'; font-size: 0.8rem; color: var(--text-muted); }
+        .custom-select-options {
+            position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+            background: rgba(15, 22, 18, 0.96);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            contain: content;
+        }
+        .custom-select-options.open { display: block; animation: slideDown 0.25s cubic-bezier(0.34, 1.25, 0.64, 1); }
+        .custom-option {
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .custom-option:last-child { border-bottom: none; }
+        .custom-option:hover, .custom-option.selected {
+            background: var(--primary-glow);
+            color: #fff;
+        }
 
-        .setting-controls { display: flex; align-items: center; gap: 8px; }
-        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
         .filter-row:last-child { margin-bottom: 0; }
-        select { background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.12); padding: 8px 10px; border-radius: 10px; outline: none; font-family: inherit; font-size: 0.85rem;}
 
-        .form-input { width: 100%; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.12); padding: 10px 12px; border-radius: 10px; outline: none; font-family: inherit; font-size: 0.85rem; }
-        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
-        
+        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 12px; outline: none; font-family: inherit; font-size: 0.85rem; }
+        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: transform 0.2s ease; }
+        .form-btn:active { transform: scale(0.96); }
+
         .btn-reset-custom { width: 100%; background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
         .history-wrapper { position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease; max-height: 80px; }
         .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.4); }
@@ -183,7 +253,6 @@
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
         .history-card { background: rgba(20, 26, 23, 0.95); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; position: relative; z-index: 2; touch-action: pan-y; user-select: none; }
-        .history-card:hover { border-color: var(--primary); }
 
         .lb-rank-badge { font-size: 1.1rem; font-weight: 800; min-width: 32px; text-align: center; display: flex; align-items: center; justify-content: center; }
         .lb-finder-btn { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
@@ -199,7 +268,7 @@
         .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; position: relative; }
         .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.4s ease; }
 
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 18px 16px; width: 80%; max-width: 240px; text-align: center; font-weight: 600; font-size: 0.85rem; line-height: 1.3; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 2000; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 18px 16px; width: 80%; max-width: 240px; text-align: center; font-weight: 600; font-size: 0.85rem; line-height: 1.3; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.25, 0.8, 0.3, 1); z-index: 2000; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
@@ -211,10 +280,10 @@
 
     <header>
         <button class="nav-btn" onclick="openModal('modal-history')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> История
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> История
         </button>
         <button class="nav-btn" onclick="openModal('modal-settings')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Настройки
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Настройки
         </button>
     </header>
 
@@ -248,37 +317,37 @@
         📊 <span style="font-size:0.8rem; opacity:0.9;">Топ</span>
     </button>
 
-    <div class="toast" id="global-toast">✨ Ник скопирован!</div>
+    <div class="toast" id="global-toast">✨ Скопировано!</div>
 
-    <!-- МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ СМОДУЛЯМИ -->
+    <!-- МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ С ПОНЯТНЫМИ НАЗВАНИЯМИ И СТЕКЛЯННЫМИ МЕНЮ -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 class="modal-title">Параметры и Фильтры</h2>
+                <h2 class="modal-title">Настройки и Фильтры</h2>
                 <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" onscroll="handleModalScroll()">
                 
                 <div class="setting-item" style="cursor: pointer; border-color: var(--primary); background: rgba(41,199,95,0.05);" onclick="openModal('modal-radar')">
                     <div class="setting-info">
-                        <span class="setting-title" style="color: var(--primary);">🎯 Мониторинг освобождения (Радар)</span>
-                        <span class="setting-desc">Автоматическое уведомление при освобождении юзернейма</span>
+                        <span class="setting-title" style="color: var(--primary);">🎯 Радар (Уведомление в ЛС)</span>
+                        <span class="setting-desc">Бот напишет вам, как только ник освободится</span>
                     </div>
                     <span style="font-size: 1.2rem; color: var(--primary);">→</span>
                 </div>
 
                 <div class="setting-item" style="cursor: pointer; border-color: #a855f7; background: rgba(168, 85, 247, 0.05);" onclick="openModal('modal-secret-code')">
                     <div class="setting-info">
-                        <span class="setting-title" style="color: #a855f7;">🔑 Активация ключа доступности</span>
-                        <span class="setting-desc">Ввод специального промокода для смены интерфейса</span>
+                        <span class="setting-title" style="color: #a855f7;">🔑 Ввести секретный код</span>
+                        <span class="setting-desc">Разблокировка уникальных тем оформления</span>
                     </div>
                     <span style="font-size: 1.2rem; color: #a855f7;">→</span>
                 </div>
 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <span class="setting-title">Визуальное оформление</span>
-                        <span class="setting-desc">Настройка темы, фона и динамических элементов</span>
+                        <span class="setting-title">Внешний вид</span>
+                        <span class="setting-desc">Цвета, огоньки и летающие значки</span>
                     </div>
                     <div class="setting-controls">
                         <button class="panel-collapse-btn" id="btn-toggle-custom-panel" style="display:none;" onclick="togglePanelVisibility('custom-menu', this)">
@@ -304,18 +373,14 @@
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
 
                     <div class="filter-row">
-                        <span style="font-size: 0.8rem; color: var(--text-main);">Плотность тумана</span>
+                        <span style="font-size: 0.8rem; color: var(--text-main);">Количество тумана</span>
                         <input type="range" class="range-slider" id="fog-count-slider" min="2" max="15" value="5" onchange="updateFogSettings()">
-                    </div>
-                    <div class="filter-row">
-                        <span style="font-size: 0.8rem; color: var(--text-main);">Скорость движения</span>
-                        <input type="range" class="range-slider" id="fog-speed-slider" min="1" max="10" value="3" onchange="updateFogSettings()">
                     </div>
 
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
 
                     <div class="filter-row">
-                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Анимированные символы</span>
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Летающие иконки</span>
                         <label class="switch">
                             <input type="checkbox" id="toggle-emoji" checked onchange="toggleEmojiFeature(this)">
                             <span class="slider"></span>
@@ -324,27 +389,23 @@
 
                     <div id="emoji-controls-box">
                         <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎" value="🔥, ⚡, 💎" onchange="updateEmojiSettings()">
-                        <div class="filter-row">
-                            <span style="font-size: 0.8rem; color: var(--text-main);">Масштаб</span>
-                            <input type="range" class="range-slider" id="emoji-size-slider" min="12" max="36" value="20" onchange="updateEmojiSettings()">
-                        </div>
                     </div>
 
-                    <button class="btn-reset-custom" onclick="resetCustomization()">↺ Сброс параметров</button>
+                    <button class="btn-reset-custom" onclick="resetCustomization()">↺ Сбросить вид</button>
                 </div>
 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <span class="setting-title">Автоматический парсинг</span>
-                        <span class="setting-desc">Непрерывный фоновый поиск свободных юзернеймов</span>
+                        <span class="setting-title">Автопарсер</span>
+                        <span class="setting-desc">Непрерывный авто-поиск свободных ников</span>
                     </div>
                     <label class="switch"><input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)"><span class="slider"></span></label>
                 </div>
                 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <span class="setting-title">Модули генерации</span>
-                        <span class="setting-desc">Настройка логики формирования и аффиксов</span>
+                        <span class="setting-title">Режим генератора</span>
+                        <span class="setting-desc">Выбор логики и приставки к вашему слову</span>
                     </div>
                     <div class="setting-controls">
                         <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
@@ -354,64 +415,84 @@
                     </div>
                 </div>
 
-                <!-- 🌟 СТРОГИЕ И ПОНЯТНЫЕ МОДУЛИ 🌟 -->
+                <!-- 🌟 ПОНЯТНЫЕ И КРАСИВЫЕ КАСТОМНЫЕ СЕЛЕКТЫ 🌟 -->
                 <div class="filter-options" id="filter-menu">
                     <div style="margin-bottom: 12px;">
-                        <span style="font-size: 0.85rem; font-weight:600; color: var(--text-main); display:block; margin-bottom:4px;">Алгоритм подбора</span>
-                        <select id="gen-mode-select" style="width:100%;" onchange="updateGenModeUI()">
-                            <option value="standard">Синтезатор неологизмов</option>
-                            <option value="prefix_master">Конструктор модификаторов</option>
-                            <option value="translit">Транслитерационный генератор</option>
-                        </select>
+                        <span style="font-size: 0.85rem; font-weight:600; color: var(--text-main); display:block; margin-bottom:6px;">Что подбираем?</span>
+                        
+                        <div class="custom-select-wrapper" id="select-gen-mode">
+                            <div class="custom-select-trigger" onclick="toggleCustomSelect('select-gen-mode')">
+                                <span id="label-gen-mode">✨ Красивое имя (Неологизм)</span>
+                            </div>
+                            <div class="custom-select-options">
+                                <div class="custom-option selected" onclick="selectOption('select-gen-mode', 'standard', '✨ Красивое имя (Неологизм)')">✨ Красивое имя (Неологизм)</div>
+                                <div class="custom-option" onclick="selectOption('select-gen-mode', 'prefix_master', '🎯 Приставка к вашему слову')">🎯 Приставка к вашему слову</div>
+                                <div class="custom-option" onclick="selectOption('select-gen-mode', 'translit', '🇷🇺 Ники на латинице (Транслит)')">🇷🇺 Ники на латинице (Транслит)</div>
+                            </div>
+                        </div>
+
                         <div id="mode-desc-text" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">
-                            Генерация 5–6 буквенных бренд-имен с сонорной балансировкой и высокой свободоемкостью.
+                            Придумывает уникальные бренд-ники из 5–6 букв с высоким шансом свободы.
                         </div>
                     </div>
 
-                    <!-- МОДУЛЬ: КОНСТРУКТОР МОДИФИКАТОРОВ -->
+                    <!-- МОДУЛЬ ПРИСТАВКИ К СЛОВУ -->
                     <div id="prefix-master-box" style="display:none; border-top: 1px dashed rgba(255,255,255,0.1); padding-top:12px; margin-top:12px;">
-                        <span style="font-size: 0.8rem; color: var(--primary); font-weight:600; display:block; margin-bottom: 6px;">Ключевое слово</span>
-                        <input type="text" id="prefix-user-input" class="form-input" style="margin-bottom:10px;" placeholder="Впишите бренд или имя (spiderman, general)">
+                        <span style="font-size: 0.8rem; color: var(--primary); font-weight:600; display:block; margin-bottom: 6px;">Ваше слово или имя</span>
+                        <input type="text" id="prefix-user-input" class="form-input" style="margin-bottom:10px;" placeholder="Впишите слово (например: spiderman, apple)">
                         
-                        <div class="filter-row">
-                            <span style="font-size: 0.8rem; color: var(--text-main);">Тематика</span>
-                            <select id="prefix-category-select">
-                                <option value="auto_detect">Автоматическое определение</option>
-                                <option value="personal">Персональные и Публичные</option>
-                                <option value="military">Военные, Звания и Статус</option>
-                                <option value="media">Кино, Персонажи и Медиа</option>
-                                <option value="tech">IT, Разработка и Софт</option>
-                                <option value="crypto">Финансы, Web3 и Крипта</option>
-                                <option value="gaming">Киберспорт и Игры</option>
-                                <option value="sports">Спорт, Атлетика и Фитнес</option>
-                                <option value="business">Коммерция и Ритейл</option>
-                                <option value="auto">Авто, Мото и Инженерия</option>
-                                <option value="design">Дизайн, Арт и Архитектура</option>
-                                <option value="food">Гастрономия и Сервис</option>
-                                <option value="music">Музыка и Аудиопроизводство</option>
-                                <option value="education">Образование и Наука</option>
-                                <option value="estate">Недвижимость и Пространства</option>
-                            </select>
+                        <div style="margin-bottom:10px;">
+                            <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Тематика канала/проекта</span>
+                            <div class="custom-select-wrapper" id="select-category">
+                                <div class="custom-select-trigger" onclick="toggleCustomSelect('select-category')">
+                                    <span id="label-category">🌐 Авто-подбор тематики</span>
+                                </div>
+                                <div class="custom-select-options">
+                                    <div class="custom-option selected" onclick="selectOption('select-category', 'auto_detect', '🌐 Авто-подбор тематики')">🌐 Авто-подбор тематики</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'personal', '👤 Блогеры и Звезды')">👤 Блогеры и Звезды</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'gaming', '🎮 Игры и Киберспорт')">🎮 Игры и Киберспорт</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'crypto', '📈 Крипта и NFT')">📈 Крипта и NFT</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'tech', '💻 IT и Софт')">💻 IT и Софт</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'sports', '⚽ Спорт и Фитнес')">⚽ Спорт и Фитнес</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'business', '🛍️ Бизнес и Магазины')">🛍️ Бизнес и Магазины</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'music', '🎵 Музыка и Звук')">🎵 Музыка и Звук</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'auto', '🚗 Авто и Скорость')">🚗 Авто и Скорость</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'media', '🎬 Фильмы и Герои')">🎬 Фильмы и Герои</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'military', '🎖️ Военные и Звания')">🎖️ Военные и Звания</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'design', '🎨 Дизайн и Арт')">🎨 Дизайн и Арт</div>
+                                    <div class="custom-option" onclick="selectOption('select-category', 'food', '🍔 Еда и Кафе')">🍔 Еда и Кафе</div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="filter-row">
-                            <span style="font-size: 0.8rem; color: var(--text-main);">Позиция аффикса</span>
-                            <select id="prefix-position-select">
-                                <option value="mix">Автоматическая позиция</option>
-                                <option value="suffix">Суффикс (После слова)</option>
-                                <option value="prefix">Префикс (Перед словом)</option>
-                            </select>
+                        <div>
+                            <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Куда ставить приставку?</span>
+                            <div class="custom-select-wrapper" id="select-position">
+                                <div class="custom-select-trigger" onclick="toggleCustomSelect('select-position')">
+                                    <span id="label-position">🔀 Автоматически (Как лучше звучит)</span>
+                                </div>
+                                <div class="custom-select-options">
+                                    <div class="custom-option selected" onclick="selectOption('select-position', 'mix', '🔀 Автоматически (Как лучше звучит)')">🔀 Автоматически (Как лучше)</div>
+                                    <div class="custom-option" onclick="selectOption('select-position', 'suffix', '➡️ В конец (spidermanofficial)')">➡️ В конец (spidermanofficial)</div>
+                                    <div class="custom-option" onclick="selectOption('select-position', 'prefix', '⬅️ В начало (realspiderman)')">⬅️ В начало (realspiderman)</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
 
-                    <div class="filter-row">
-                        <span style="font-size: 0.85rem; color: var(--text-main);">Длина имени</span>
-                        <select id="filter-len">
-                            <option value="5-6">5–6 символов (Короткие)</option>
-                            <option value="7-8">7–8 символов (Стандарт)</option>
-                        </select>
+                    <div>
+                        <span style="font-size: 0.85rem; color: var(--text-main); display:block; margin-bottom:4px;">Длина ника</span>
+                        <div class="custom-select-wrapper" id="select-len">
+                            <div class="custom-select-trigger" onclick="toggleCustomSelect('select-len')">
+                                <span id="label-len">5–6 букв (Короткие)</span>
+                            </div>
+                            <div class="custom-select-options">
+                                <div class="custom-option selected" onclick="selectOption('select-len', '5-6', '5–6 букв (Короткие)')">5–6 букв (Короткие)</div>
+                                <div class="custom-option" onclick="selectOption('select-len', '7-8', '7–8 букв (Обычные)')">7–8 букв (Обычные)</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -423,19 +504,10 @@
     <div class="modal-overlay" id="modal-leaderboard">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 class="modal-title" style="color: #eab308;">👑 ТОП-1000 Улова</h2>
+                <h2 class="modal-title" style="color: #eab308;">👑 ТОП Улова</h2>
                 <button class="btn-close" onclick="closeModal('modal-leaderboard')">✕</button>
             </div>
-            <div class="modal-body">
-                <div class="filter-row" style="margin-bottom: 12px;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">Интервал:</span>
-                    <select id="lb-period-select" onchange="fetchLeaderboard(this.value)">
-                        <option value="day">За последние 24 часа</option>
-                        <option value="week">За текущую неделю</option>
-                        <option value="month">За месяц</option>
-                        <option value="all" selected>За весь период</option>
-                    </select>
-                </div>
+            <div class="modal-body" onscroll="handleModalScroll()">
                 <div id="leaderboard-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
             </div>
         </div>
@@ -445,13 +517,13 @@
     <div class="modal-overlay" id="modal-secret-code">
         <div class="modal-content glass-panel" style="max-width: 360px;">
             <div class="modal-header">
-                <h2 class="modal-title">🔑 Ключи Доступа</h2>
+                <h2 class="modal-title">🔑 Ввод кода</h2>
                 <button class="btn-close" onclick="closeModal('modal-secret-code')">✕</button>
             </div>
             <div class="modal-body" style="text-align:center;">
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите авторизационный ключ для применения специальной темы оформления.</p>
-                <input type="text" id="secret-code-input" class="form-input" style="text-align:center; font-weight:bold; letter-spacing:1px; margin-bottom:12px;" placeholder="ВВЕДИТЕ КЛЮЧ...">
-                <button class="form-btn" onclick="submitSecretCode()">Подтвердить</button>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите промокод для открывания секретных тем!</p>
+                <input type="text" id="secret-code-input" class="form-input" style="text-align:center; font-weight:bold; letter-spacing:1px; margin-bottom:12px;" placeholder="ПРОМОКОД...">
+                <button class="form-btn" onclick="submitSecretCode()">Применить</button>
             </div>
         </div>
     </div>
@@ -460,13 +532,13 @@
     <div class="modal-overlay" id="modal-radar">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 class="modal-title">🎯 Мониторинг (Радар)</h2>
+                <h2 class="modal-title">🎯 Радар (Слежка)</h2>
                 <button class="btn-close" onclick="closeModal('modal-radar')">✕</button>
             </div>
-            <div class="modal-body">
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Укажите занятый юзернейм. Сервер отправит вам личное сообщение сразу после его освобождения.</div>
+            <div class="modal-body" onscroll="handleModalScroll()">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Введите занятый ник. Бот напишет в ЛС, как только он станет свободным!</div>
                 <input type="text" id="radar-input" class="form-input" placeholder="@username">
-                <button class="form-btn" style="margin-top:10px;" onclick="addRadarTarget()">Добавить в мониторинг</button>
+                <button class="form-btn" style="margin-top:10px;" onclick="addRadarTarget()">Следить за ником</button>
                 <div id="radar-list" style="margin-top: 20px;"></div>
             </div>
         </div>
@@ -476,10 +548,10 @@
     <div class="modal-overlay" id="modal-achievements">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 class="modal-title">🏆 Индекс Активности (<span id="achieve-count-modal">0</span>/100)</h2>
+                <h2 class="modal-title">🏆 Ваши награды (<span id="achieve-count-modal">0</span>/100)</h2>
                 <button class="btn-close" onclick="closeModal('modal-achievements')">✕</button>
             </div>
-            <div class="modal-body" id="achievements-list-container"></div>
+            <div class="modal-body" id="achievements-list-container" onscroll="handleModalScroll()"></div>
         </div>
     </div>
 
@@ -487,11 +559,11 @@
     <div class="modal-overlay" id="modal-history">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 class="modal-title">Журнал Улова</h2>
+                <h2 class="modal-title">История улова</h2>
                 <button class="btn-clear-history" style="background:transparent; border:none; color:#ef4444; font-size:0.8rem; cursor:pointer;" onclick="clearHistory()">🗑 Очистить</button>
                 <button class="btn-close" onclick="closeModal('modal-history')">✕</button>
             </div>
-            <div class="modal-body"><div class="history-list" id="history-container"></div></div>
+            <div class="modal-body" onscroll="handleModalScroll()"><div class="history-list" id="history-container"></div></div>
         </div>
     </div>
 
@@ -499,15 +571,15 @@
     <div class="modal-overlay" id="modal-summary">
         <div class="modal-content glass-panel" style="text-align: center; max-width: 400px;">
             <div class="modal-header">
-                <h2 class="modal-title" style="color: var(--primary);">🎯 Результаты Парсинга</h2>
+                <h2 class="modal-title" style="color: var(--primary);">🎯 Итоги поиска</h2>
                 <button class="btn-close" onclick="closeModal('modal-summary')">✕</button>
             </div>
             <div class="modal-body">
                 <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 12px;">
-                    Выловлено доступных имен: <b id="summary-count" style="color: var(--primary);">0</b>
+                    Найдено свободных ников: <b id="summary-count" style="color: var(--primary);">0</b>
                 </p>
                 <div id="summary-list" style="text-align:left; max-height:280px; overflow-y:auto; margin-bottom: 15px; display:flex; flex-direction:column; gap:8px;"></div>
-                <button class="form-btn" onclick="closeModal('modal-summary')">Завершить</button>
+                <button class="form-btn" onclick="closeModal('modal-summary')">Отлично</button>
             </div>
         </div>
     </div>
@@ -521,7 +593,68 @@
         let tgChatId = "0";
         let finderName = "Аноним";
         let autoParseCatches = [];
-        
+
+        let selectedValues = {
+            'select-gen-mode': 'standard',
+            'select-category': 'auto_detect',
+            'select-position': 'mix',
+            'select-len': '5-6'
+        };
+
+        let scrollTimer = null;
+        function handleModalScroll() {
+            document.body.classList.add('scrolling-active');
+            clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(() => {
+                document.body.classList.remove('scrolling-active');
+            }, 120);
+        }
+
+        function toggleCustomSelect(wrapperId) {
+            const wrapper = document.getElementById(wrapperId);
+            const options = wrapper.querySelector('.custom-select-options');
+            const isOpen = options.classList.contains('open');
+
+            document.querySelectorAll('.custom-select-options').forEach(el => el.classList.remove('open'));
+
+            if (!isOpen) options.classList.add('open');
+        }
+
+        function selectOption(wrapperId, value, labelText) {
+            selectedValues[wrapperId] = value;
+            document.getElementById(`label-${wrapperId.replace('select-', '')}`).innerText = labelText;
+
+            const wrapper = document.getElementById(wrapperId);
+            wrapper.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+            event.target.classList.add('selected');
+            wrapper.querySelector('.custom-select-options').classList.remove('open');
+
+            if (wrapperId === 'select-gen-mode') updateGenModeUI();
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-select-wrapper')) {
+                document.querySelectorAll('.custom-select-options').forEach(el => el.classList.remove('open'));
+            }
+        });
+
+        function updateGenModeUI() {
+            const mode = selectedValues['select-gen-mode'];
+            const pBox = document.getElementById('prefix-master-box');
+            const descEl = document.getElementById('mode-desc-text');
+            
+            if (mode === 'prefix_master') {
+                pBox.style.display = 'block';
+                descEl.innerText = "Подставляет официальные слова (Real, Official, Team) к вашему имени.";
+            } else if (mode === 'translit') {
+                pBox.style.display = 'none';
+                descEl.innerText = "Подбирает созвучные слова из русского языка на латинице (Vostok, Zarya).";
+            } else {
+                pBox.style.display = 'none';
+                descEl.innerText = "Придумывает уникальные бренд-ники из 5–6 букв с высоким шансом свободы.";
+            }
+        }
+
         let stats = {
             generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
             radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
@@ -549,23 +682,6 @@
 
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
-        function updateGenModeUI() {
-            const mode = document.getElementById('gen-mode-select').value;
-            const pBox = document.getElementById('prefix-master-box');
-            const descEl = document.getElementById('mode-desc-text');
-            
-            if (mode === 'prefix_master') {
-                pBox.style.display = 'block';
-                descEl.innerText = "Формирование статусных комбинаций на основе вашего ключевого слова с использованием тематических аффиксов.";
-            } else if (mode === 'translit') {
-                pBox.style.display = 'none';
-                descEl.innerText = "Подбор созвучных латинизированных наименований из международного и кириллического лексического фонда.";
-            } else {
-                pBox.style.display = 'none';
-                descEl.innerText = "Генерация 5–6 буквенных бренд-имен с сонорной балансировкой и высокой свободоемкостью.";
-            }
-        }
-
         function saveStats() {
             localStorage.setItem('vh_stat_gen', stats.generations.toString());
             localStorage.setItem('vh_stat_radar', stats.radarAdded.toString());
@@ -588,7 +704,7 @@
 
         async function fetchLeaderboard(period = 'all') {
             const container = document.getElementById('leaderboard-list-container');
-            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка рейтинга...</div>';
+            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка топа...</div>';
 
             try {
                 const res = await fetch(`/api/leaderboard?period=${period}`);
@@ -616,10 +732,10 @@
                         `;
                     }).join('');
                 } else {
-                    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">За выбранный период находок пока нет.</div>';
+                    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Находок пока нет.</div>';
                 }
             } catch (e) {
-                container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px;">Ошибка загрузки топа</div>';
+                container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px;">Ошибка загрузки</div>';
             }
         }
 
@@ -631,10 +747,10 @@
             if (SECRET_PROMOS[code]) {
                 const p = SECRET_PROMOS[code];
                 unlockSecretTheme(p.id, p.icon, p.colorHex, p.glowHex, p.emojis);
-                showToast(`✨ Разблокировано: ${p.msg}!`);
+                showToast(`✨ Открыто: ${p.msg}!`);
                 stats.secretsFound++; saveStats();
             } else {
-                showToast("❌ Неверный промокод");
+                showToast("❌ Неверный код");
                 return;
             }
             closeModal('modal-secret-code');
@@ -710,50 +826,6 @@
                 }
                 drawMatrix();
             } 
-            else if (themeId === 'durov') {
-                secretCanvas.style.display = 'block';
-                let planes = Array.from({ length: 20 }, () => ({
-                    x: Math.random() * secretCanvas.width,
-                    y: Math.random() * secretCanvas.height,
-                    speed: 1 + Math.random() * 2, size: 15 + Math.random() * 10
-                }));
-
-                function drawDurov() {
-                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
-                    sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    planes.forEach(p => {
-                        sCtx.save();
-                        sCtx.translate(p.x, p.y);
-                        sCtx.beginPath();
-                        sCtx.moveTo(0, 0); sCtx.lineTo(-p.size, -p.size/2); sCtx.lineTo(-p.size/2, 0); sCtx.lineTo(-p.size, p.size/2);
-                        sCtx.closePath(); sCtx.fill();
-                        sCtx.restore();
-                        p.x -= p.speed; p.y -= p.speed * 0.5;
-                        if (p.x < -30 || p.y < -30) { p.x = secretCanvas.width + 30; p.y = Math.random() * secretCanvas.height; }
-                    });
-                    secretAnimId = requestAnimationFrame(drawDurov);
-                }
-                drawDurov();
-            }
-            else if (themeId === 'kington') {
-                secretCanvas.style.display = 'block';
-                let goldList = Array.from({ length: 50 }, () => ({
-                    x: Math.random() * secretCanvas.width, y: Math.random() * secretCanvas.height,
-                    size: Math.random() * 3 + 1, speed: Math.random() * 1.5 + 0.5, op: Math.random()
-                }));
-
-                function drawKington() {
-                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
-                    goldList.forEach(g => {
-                        sCtx.fillStyle = `rgba(255, 215, 0, ${g.op})`;
-                        sCtx.beginPath(); sCtx.arc(g.x, g.y, g.size, 0, Math.PI * 2); sCtx.fill();
-                        g.y += g.speed;
-                        if (g.y > secretCanvas.height) { g.y = 0; g.x = Math.random() * secretCanvas.width; }
-                    });
-                    secretAnimId = requestAnimationFrame(drawKington);
-                }
-                drawKington();
-            }
             else if (themeId === 'rainbow') {
                 document.body.classList.add("theme-rainbow");
             }
@@ -766,22 +838,18 @@
         const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
         
         for (let i = 1; i <= 100; i++) {
-            let title = `Достижение #${i}`;
+            let title = `Уровень #${i}`;
             let desc = `Выполните условия для уровня ${i}.`;
             let icon = EMOJI_LIST[i % EMOJI_LIST.length];
             let statKey = "generations";
             let target = i * 10;
 
-            if (i === 1) { title = "Первый спин"; desc = "Сделать 1 генерацию."; icon = "🎲"; target = 1; statKey = "generations"; }
-            else if (i === 2) { title = "Любитель спинов"; desc = "Сделать 10 генераций."; icon = "🎰"; target = 10; statKey = "generations"; }
-            else if (i === 3) { title = "Мастер прокрутки"; desc = "Сделать 50 генераций."; icon = "⚡"; target = 50; statKey = "generations"; }
-            else if (i === 4) { title = "1,000 Спинов"; desc = "Совершить 1000 прокруток!"; icon = "🔥"; target = 1000; statKey = "generations"; }
+            if (i === 1) { title = "Первый поиск"; desc = "Сделать 1 генерацию."; icon = "🎲"; target = 1; statKey = "generations"; }
+            else if (i === 2) { title = "Любитель поиска"; desc = "Сделать 10 генераций."; icon = "🎰"; target = 10; statKey = "generations"; }
+            else if (i === 3) { title = "Мастер спинов"; desc = "Сделать 50 генераций."; icon = "⚡"; target = 50; statKey = "generations"; }
             else if (i === 5) { title = "Наводчик радара"; desc = "Поставить 1 ник на Радар."; icon = "🎯"; target = 1; statKey = "radarAdded"; }
-            else if (i === 6) { title = "Дизайнер стиля"; desc = "Сменить тему 3 раза."; icon = "🎨"; target = 3; statKey = "themesChanged"; }
-            else if (i === 7) { title = "Охотник Fragment"; desc = "Выловить 1 ценный Fragment ник."; icon = "💎"; target = 1; statKey = "fragmentFound"; }
-            else if (i === 8) { title = "Детектив"; desc = "Активировать 1 секретный код."; icon = "🕵️"; target = 1; statKey = "secretsFound"; }
             else {
-                title = `Мастер сканирования Lvl.${i}`;
+                title = `Индекс поиска Lvl.${i}`;
                 desc = `Сделать ${i * 15} успешных проверок.`;
                 target = i * 15;
                 statKey = "generations";
@@ -798,7 +866,7 @@
                 if (currentVal >= ach.target && !unlockedAchievements.includes(ach.id)) {
                     unlockedAchievements.push(ach.id);
                     localStorage.setItem('vh_unlocked_achievements', JSON.stringify(unlockedAchievements));
-                    showToast(`🏆 Достижение: ${ach.title}!`);
+                    showToast(`🏆 Награда: ${ach.title}!`);
                     vibrate('success');
                 }
             });
@@ -841,15 +909,10 @@
         const ctx = canvas.getContext('2d');
         let width, height;
         let particles = [];
-        let mouseX = 0, mouseY = 0;
         let fogSpeedFactor = 1.5;
 
         function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
-        mouseX = width / 2; mouseY = height / 2;
-
-        window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
-        window.addEventListener('touchmove', e => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; });
 
         function initParticles(count) {
             particles = [];
@@ -858,7 +921,7 @@
                 particles.push({
                     x: Math.random() * width, y: Math.random() * height,
                     vx: (Math.random() - 0.5) * fogSpeedFactor, vy: (Math.random() - 0.5) * fogSpeedFactor,
-                    radius: Math.random() * 150 + 120, color: primaryColor
+                    radius: Math.random() * 140 + 100, color: primaryColor
                 });
             }
         }
@@ -867,14 +930,13 @@
         function drawFog() {
             ctx.clearRect(0, 0, width, height);
             const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            particles.forEach((p, i) => {
-                if (i === 0 || i === 1) { p.x += (mouseX - p.x) * 0.02 * (fogSpeedFactor/1.5); p.y += (mouseY - p.y) * 0.02 * (fogSpeedFactor/1.5); } 
-                else { p.x += p.vx; p.y += p.vy; }
+            particles.forEach((p) => {
+                p.x += p.vx; p.y += p.vy;
                 if(p.x < 0 || p.x > width) p.vx *= -1;
                 if(p.y < 0 || p.y > height) p.vy *= -1;
 
                 let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-                grad.addColorStop(0, primaryColor + '25'); grad.addColorStop(1, 'transparent');
+                grad.addColorStop(0, primaryColor + '20'); grad.addColorStop(1, 'transparent');
                 ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
             });
             requestAnimationFrame(drawFog);
@@ -911,23 +973,22 @@
 
             const raw = document.getElementById('emoji-input').value;
             floatingEmojisList = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
-            const size = document.getElementById('emoji-size-slider').value;
 
             layer.innerHTML = '';
             emojiElements = [];
 
             if (floatingEmojisList.length === 0) return;
 
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 5; i++) {
                 const el = document.createElement('div');
                 el.className = 'floating-emoji';
                 el.innerText = floatingEmojisList[i % floatingEmojisList.length];
-                el.style.fontSize = `${size}px`;
+                el.style.fontSize = `20px`;
                 
                 let posX = Math.random() * window.innerWidth;
                 let posY = Math.random() * window.innerHeight;
-                let speedX = (Math.random() - 0.5) * 1.5;
-                let speedY = (Math.random() - 0.5) * 1.5;
+                let speedX = (Math.random() - 0.5) * 1.2;
+                let speedY = (Math.random() - 0.5) * 1.2;
 
                 layer.appendChild(el);
                 emojiElements.push({ el, posX, posY, speedX, speedY });
@@ -946,7 +1007,7 @@
                 if (item.posY < -30) item.posY = window.innerHeight + 10;
                 if (item.posY > window.innerHeight + 30) item.posY = -10;
 
-                item.el.style.transform = `translate(${item.posX}px, ${item.posY}px)`;
+                item.el.style.transform = `translate3d(${item.posX}px, ${item.posY}px, 0)`;
             });
             requestAnimationFrame(animateEmojis);
         }
@@ -954,8 +1015,6 @@
 
         function updateFogSettings() {
             const count = parseInt(document.getElementById('fog-count-slider').value);
-            const speed = parseInt(document.getElementById('fog-speed-slider').value);
-            fogSpeedFactor = speed * 0.5;
             initParticles(count);
             saveCustomization();
         }
@@ -1013,11 +1072,9 @@
             stopSecretAnimation();
             setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', document.querySelectorAll('.color-dot')[0]);
             document.getElementById('fog-count-slider').value = 5;
-            document.getElementById('fog-speed-slider').value = 3;
             document.getElementById('toggle-emoji').checked = true;
             document.getElementById('emoji-controls-box').style.display = 'block';
             document.getElementById('emoji-input').value = '🔥, ⚡, 💎';
-            document.getElementById('emoji-size-slider').value = 20;
             
             updateFogSettings();
             updateEmojiSettings();
@@ -1030,10 +1087,8 @@
                 themeColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
                 themeGlow: getComputedStyle(document.documentElement).getPropertyValue('--primary-glow').trim(),
                 fogCount: document.getElementById('fog-count-slider').value,
-                fogSpeed: document.getElementById('fog-speed-slider').value,
                 emojiEnabled: document.getElementById('toggle-emoji').checked,
-                emojis: document.getElementById('emoji-input').value,
-                emojiSize: document.getElementById('emoji-size-slider').value
+                emojis: document.getElementById('emoji-input').value
             };
             localStorage.setItem('vh_custom_settings', JSON.stringify(customData));
         }
@@ -1058,9 +1113,7 @@
 
             if(data.themeColor) setThemeColor(data.themeColor, data.themeGlow, null);
             if(data.fogCount) document.getElementById('fog-count-slider').value = data.fogCount;
-            if(data.fogSpeed) document.getElementById('fog-speed-slider').value = data.fogSpeed;
             if(data.emojis) document.getElementById('emoji-input').value = data.emojis;
-            if(data.emojiSize) document.getElementById('emoji-size-slider').value = data.emojiSize;
 
             updateFogSettings();
             updateEmojiSettings();
@@ -1078,7 +1131,7 @@
             document.getElementById('result-box').classList.add('golden-mode');
             stats.fragmentFound++; saveStats();
             const emojis = ['⚡', '✨', '🔥', '💎', '🚀'];
-            for(let i=0; i<30; i++) {
+            for(let i=0; i<25; i++) {
                 const p = document.createElement('div'); p.innerText = emojis[Math.floor(Math.random() * emojis.length)]; p.className = 'jackpot-particle'; document.body.appendChild(p);
                 const rect = document.getElementById('result-box').getBoundingClientRect();
                 p.style.left = (rect.left + rect.width / 2) + 'px'; p.style.top = (rect.top + rect.height / 2) + 'px';
@@ -1192,7 +1245,7 @@
         }
 
         function clearHistory() {
-            if (confirm("Очистить всю историю проверок?")) {
+            if (confirm("Очистить историю?")) {
                 localStorage.removeItem('vpn_parser_history');
                 renderHistory();
             }
@@ -1229,7 +1282,7 @@
                 }
             }
 
-            activeCard.style.transform = `translateX(${diffX}px)`;
+            activeCard.style.transform = `translate3d(${diffX}px, 0, 0)`;
             activeCard.style.opacity = `${1 - Math.abs(diffX) / 250}`;
         }
 
@@ -1242,7 +1295,7 @@
 
             if (diffX > 140) {
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
-                activeCard.style.transform = 'translateX(100%)';
+                activeCard.style.transform = 'translate3d(100%, 0, 0)';
                 activeCard.style.opacity = '0';
 
                 setTimeout(() => { if (wrapper) wrapper.classList.add('deleting'); }, 120);
@@ -1256,7 +1309,7 @@
             } 
             else if (diffX < -140) {
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
-                activeCard.style.transform = 'translateX(-100%)';
+                activeCard.style.transform = 'translate3d(-100%, 0, 0)';
                 activeCard.style.opacity = '0';
 
                 vibrate('success');
@@ -1275,7 +1328,7 @@
             } 
             else {
                 activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-                activeCard.style.transform = 'translateX(0px)';
+                activeCard.style.transform = 'translate3d(0px, 0, 0)';
                 activeCard.style.opacity = '1';
                 if(wrapper) {
                     wrapper.classList.remove('swiping-right');
@@ -1324,11 +1377,11 @@
             stats.generations++;
             saveStats();
 
-            const mode = document.getElementById('gen-mode-select').value;
+            const mode = selectedValues['select-gen-mode'];
             const userInput = document.getElementById('prefix-user-input').value;
-            const category = document.getElementById('prefix-category-select').value;
-            const position = document.getElementById('prefix-position-select').value;
-            const lenMode = document.getElementById('filter-len').value;
+            const category = selectedValues['select-category'];
+            const position = selectedValues['select-position'];
+            const lenMode = selectedValues['select-len'];
 
             const url = `/api/generate?platform=${currentPlatform}&mode=${mode}&user_input=${encodeURIComponent(userInput)}&category=${category}&position=${position}&len_mode=${lenMode}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`;
 
@@ -1362,7 +1415,7 @@
 
         function showSummaryModal() {
             if (autoParseCatches.length === 0) {
-                showToast("Доступных юзернеймов не обнаружено");
+                showToast("Свободных ников не найдено");
                 return;
             }
 
