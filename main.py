@@ -4,7 +4,7 @@ import asyncio
 import time
 import json
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Query, Request, HTTPException
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher
 from telethon import TelegramClient
@@ -17,6 +17,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
+GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
 
 # --- ГЛОБАЛЬНАЯ ПАМЯТЬ СЕРВЕРА ---
 GENERATED_HISTORY = set()
@@ -41,6 +42,25 @@ if SESSION_STRING:
     telethon_client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
+
+# =========================================================================
+# 💾 БАЗА ДАННЫХ МОНЕТ И ИГРОВОГО ПРОГРЕССА
+# =========================================================================
+def load_game_db() -> dict:
+    if os.path.exists(GAME_DB_PATH):
+        try:
+            with open(GAME_DB_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_game_db(db: dict):
+    try:
+        with open(GAME_DB_PATH, "w", encoding="utf-8") as f:
+            json.dump(db, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
 
 # =========================================================================
 # 📚 БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВ (15 КАТЕГОРИЙ)
@@ -81,10 +101,6 @@ BRAND_ROOTS = [
 BRAND_SUFFIXES = [
     "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"
 ]
-
-# =========================================================================
-# 🧬 АЛГОРИТМЫ ГЕНЕРАЦИИ (БЕЗ СБРОСА ФИЛЬТРА)
-# =========================================================================
 
 def generate_prefix_master(user_input: str, category: str = "auto_detect", position: str = "mix") -> str:
     clean_input = user_input.lower().strip().replace("@", "")
@@ -298,6 +314,31 @@ async def read_root():
         return FileResponse(INDEX_PATH, media_type="text/html")
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
+# --- API ИГРОВОГО БАЛАНСА ---
+@app.get("/api/game/balance")
+async def get_game_balance(user_id: str):
+    db = load_game_db()
+    return {"status": "ok", "coins": db.get(user_id, 0)}
+
+@app.post("/api/game/save_coins")
+async def save_game_coins(request: Request):
+    try:
+        data = await request.json()
+        user_id = str(data.get("user_id", "0"))
+        add_coins = int(data.get("coins", 0))
+        
+        if add_coins < 0 or add_coins > 5000: # Базовая защита от взлома
+            return JSONResponse(status_code=400, content={"error": "invalid_amount"})
+
+        db = load_game_db()
+        current = db.get(user_id, 0)
+        db[user_id] = current + add_coins
+        save_game_db(db)
+        
+        return {"status": "ok", "total_coins": db[user_id]}
+    except Exception:
+        return JSONResponse(status_code=500, content={"error": "server_error"})
+
 @app.get("/api/generate")
 async def generate_username(
     request: Request, 
@@ -322,7 +363,6 @@ async def generate_username(
     if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE:
         GENERATED_HISTORY.clear()
 
-    # СТРОГАЯ ГЕНЕРАЦИЯ БЕЗ СБРОСА ФИЛЬТРА
     for _ in range(15):
         if mode == "prefix_master" and user_input.strip():
             generated = generate_prefix_master(user_input, category, position)
@@ -347,7 +387,6 @@ async def generate_username(
                 }
             await asyncio.sleep(0.08)
 
-    # Если за 15 попыток все сгенерированные аффиксы были заняты, делаем доп-круг СТРОГО по выбранному модулю
     if mode == "prefix_master" and user_input.strip():
         fallback_nick = generate_prefix_master(user_input, category, "suffix")
     elif mode == "translit":
