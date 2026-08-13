@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & Cosmic Core</title>
+    <title>Username Scanner PRO & Cosmic Core 3D</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- 3D Движок Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
             --bg-app: #060b08;
@@ -30,8 +32,7 @@
 
         /* 120 Гц Оптимизация */
         .scrolling-active #fog-canvas,
-        .scrolling-active #emoji-layer,
-        .scrolling-active #space-canvas {
+        .scrolling-active #emoji-layer {
             pointer-events: none; opacity: 0.2;
         }
 
@@ -45,7 +46,7 @@
         }
         @keyframes rainbow-bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        #fog-canvas, #secret-canvas, #space-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; transition: opacity 0.3s ease; }
+        #fog-canvas, #secret-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; transition: opacity 0.3s ease; }
         #secret-canvas { display: none; z-index: -8; }
         #emoji-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -5; pointer-events: none; overflow: hidden; }
         .floating-emoji { position: absolute; user-select: none; will-change: transform; opacity: 0.7; }
@@ -133,17 +134,17 @@
         .btn-generate:active { transform: scale(0.94); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* 🔮 ЭКРАН МАЙНИНГА (COSMIC CORE) 🔮 */
-        #tycoon-overlay { position: fixed; inset: 0; background: #020408; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; }
+        /* 🔮 ПОЛНОЭКРАННЫЙ ЭКРАН МАЙНИНГА И КОСМОСА 🔮 */
+        #tycoon-overlay { position: fixed; inset: 0; background: #010306; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; overflow: hidden; }
         #tycoon-overlay.active { display: flex; }
+
+        #space-canvas-inside { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        #three-earth-container { position: relative; width: 320px; height: 320px; z-index: 5; touch-action: none; cursor: grab; }
 
         .tycoon-header { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
         .coin-balance-badge { font-size: 1.8rem; font-weight: 900; color: #eab308; display: flex; align-items: center; gap: 8px; }
 
-        .core-click-area { position: relative; width: 320px; height: 320px; display: flex; justify-content: center; align-items: center; }
-        #core-canvas { width: 320px; height: 320px; touch-action: none; cursor: pointer; }
-
-        .floating-number { position: absolute; font-size: 1.8rem; font-weight: 900; color: #29c75f; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 0 10px rgba(41,199,95,0.8); }
+        .floating-number { position: absolute; font-size: 1.8rem; font-weight: 900; color: #29c75f; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 0 10px rgba(41,199,95,0.8); z-index: 20; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
 
         .energy-bar-container { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
@@ -244,7 +245,6 @@
 
     <canvas id="fog-canvas"></canvas>
     <canvas id="secret-canvas"></canvas>
-    <canvas id="space-canvas"></canvas>
     <div id="emoji-layer"></div>
 
     <header>
@@ -280,22 +280,23 @@
 
     <!-- ПЛАВАЮЩИЕ КНОПКИ -->
     <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">🏆 <span id="achieve-counter-badge">0/100</span></button>
-    <button class="floating-play-btn" onclick="openTycoonScreen()">⚡ Майнинг</button>
+    <button class="floating-play-btn" onclick="openTycoonScreen()">⚡ Майнинг 3D</button>
     <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')">📊 Топ</button>
 
     <div class="toast" id="global-toast">✨ Скопировано!</div>
 
-    <!-- 🔮 ЭКРАН МАЙНИНГА (COSMIC CORE) 🔮 -->
+    <!-- 🔮 ПОЛНОЭКРАННЫЙ 3D ЭКРАН МАЙНИНГА И КОСМОСА 🔮 -->
     <div id="tycoon-overlay">
+        <!-- ФОНОВЫЙ КОСМОС (СТРОГО ВНУТРИ КЛИКЕРА) -->
+        <canvas id="space-canvas-inside"></canvas>
+
         <div class="tycoon-header">
             <button class="tab-btn" style="width: auto; padding: 8px 16px;" onclick="closeTycoonScreen()">◀ Выход</button>
             <div class="coin-balance-badge">🟡 <span id="tycoon-coins">0</span></div>
             <div style="width: 60px;"></div>
         </div>
 
-        <div class="core-click-area" id="click-area">
-            <canvas id="core-canvas" width="320" height="320"></canvas>
-        </div>
+        <div id="three-earth-container"></div>
 
         <div class="energy-bar-container">
             <div class="energy-text-row">
@@ -313,7 +314,7 @@
         </div>
     </div>
 
-    <!-- 🛒 МАГА3ИН 🛒 -->
+    <!-- 🛒 МАГАЗИН 🛒 -->
     <div class="modal-overlay" id="modal-shop">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -384,16 +385,16 @@
         </div>
     </div>
 
-    <!-- 🎁 МОДАЛКА: ПРИВЕТСТВИЕ ОФФЛАЙН-ФАРМА 🎁 -->
+    <!-- 🎁 МОДАЛКА: ОФФЛАЙН-ФАРМ 🎁 -->
     <div class="modal-overlay" id="modal-welcome-offline">
         <div class="modal-content glass-panel" style="text-align: center;">
             <div class="modal-header">
                 <h2 class="modal-title" style="color: #eab308;">🤖 Автосборщик поработал!</h2>
             </div>
             <div class="modal-body">
-                <p style="font-size: 0.9rem; color: var(--text-muted);">Вас не было в игре какое-то время. Ваш Майнер нафармил:</p>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Вас не было в игре. Ваш Майнер нафармил:</p>
                 <div style="font-size: 2.2rem; font-weight: 900; color: #eab308; margin: 15px 0;">+<span id="offline-earned-val">0</span> 🟡</div>
-                <button class="form-btn" onclick="closeModal('modal-welcome-offline')">Отлично, Забрать!</button>
+                <button class="form-btn" onclick="closeModal('modal-welcome-offline')">Забрать Награду!</button>
             </div>
         </div>
     </div>
@@ -678,7 +679,7 @@
 
         let userProfile = {
             coins: 0, energy: 1000, max_energy: 1000,
-            multi_tap: 1, energy_regen: 3, offline_miner_lvl: 0,
+            multi_tap: 1, energy_regen: 1, offline_miner_lvl: 0,
             rank: "Ловец"
         };
 
@@ -744,6 +745,7 @@
             document.getElementById('cost-miner').innerText = userProfile.offline_miner_lvl === 0 ? 3000 : Math.floor(3000 * (2.2 ** userProfile.offline_miner_lvl));
         }
 
+        // РЕГЕНЕРАЦИЯ ЭНЕРГИИ (+1 ед/сек)
         setInterval(() => {
             if (userProfile.energy < userProfile.max_energy) {
                 userProfile.energy = Math.min(userProfile.max_energy, userProfile.energy + userProfile.energy_regen);
@@ -752,27 +754,27 @@
         }, 1000);
 
         // =========================================================================
-        // 🌌 ЗВЕЗДНЫЙ КОСМОС И КОМЕТЫ НА ФОНЕ 🌌
+        // 🌌 ЗВЕЗДНЫЙ КОСМОС С СИЯЮЩИМИ КОМЕТАМИ (СТРОГО ВНУТРИ КЛИКЕРА)
         // =========================================================================
-        const spCanvas = document.getElementById('space-canvas');
+        const spCanvas = document.getElementById('space-canvas-inside');
         const spCtx = spCanvas.getContext('2d');
-        let stars = [];
-        let comets = [];
+        let stars = [], comets = [];
 
-        function initSpace() {
+        function initInsideSpace() {
             spCanvas.width = window.innerWidth;
             spCanvas.height = window.innerHeight;
-            stars = Array.from({ length: 60 }, () => ({
-                x: Math.random() * spCanvas.width,
-                y: Math.random() * spCanvas.height,
-                size: Math.random() * 2 + 1,
-                opacity: Math.random(),
-                speed: Math.random() * 0.02 + 0.005
+            stars = Array.from({ length: 70 }, () => ({
+                x: Math.random() * spCanvas.width, y: Math.random() * spCanvas.height,
+                size: Math.random() * 2 + 1, opacity: Math.random(), speed: Math.random() * 0.02 + 0.005
             }));
         }
-        initSpace();
 
-        function drawSpace() {
+        function drawInsideSpace() {
+            if (!document.getElementById('tycoon-overlay').classList.contains('active')) {
+                requestAnimationFrame(drawInsideSpace);
+                return;
+            }
+
             spCtx.clearRect(0, 0, spCanvas.width, spCanvas.height);
 
             stars.forEach(s => {
@@ -782,38 +784,198 @@
                 spCtx.beginPath(); spCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2); spCtx.fill();
             });
 
-            if (Math.random() < 0.015) {
-                comets.push({
-                    x: Math.random() * spCanvas.width, y: 0,
-                    length: Math.random() * 80 + 40, speed: Math.random() * 8 + 4
-                });
+            if (Math.random() < 0.02) {
+                comets.push({ x: Math.random() * spCanvas.width, y: 0, length: Math.random() * 90 + 40, speed: Math.random() * 8 + 4 });
             }
 
             for (let i = comets.length - 1; i >= 0; i--) {
                 let c = comets[i];
                 c.x += c.speed; c.y += c.speed * 0.8;
                 let grad = spCtx.createLinearGradient(c.x, c.y, c.x - c.length, c.y - c.length * 0.8);
-                grad.addColorStop(0, 'rgba(56, 189, 248, 0.8)');
+                grad.addColorStop(0, 'rgba(56, 189, 248, 0.9)');
                 grad.addColorStop(1, 'transparent');
-                spCtx.strokeStyle = grad; spCtx.lineWidth = 2;
+                spCtx.strokeStyle = grad; spCtx.lineWidth = 2.5;
                 spCtx.beginPath(); spCtx.moveTo(c.x, c.y); spCtx.lineTo(c.x - c.length, c.y - c.length * 0.8); spCtx.stroke();
 
                 if (c.y > spCanvas.height || c.x > spCanvas.width) comets.splice(i, 1);
             }
 
-            requestAnimationFrame(drawSpace);
+            requestAnimationFrame(drawInsideSpace);
         }
-        drawSpace();
+        initInsideSpace();
+        drawInsideSpace();
+
+        // =========================================================================
+        // 🌍 REAL 3D ЗЕМЛЯ С ОБЪЕМНЫМИ ЦЕПЯМИ И ТЕКСТУРОЙ (THREE.JS)
+        // =========================================================================
+        let sceneEarth, cameraEarth, rendererEarth, earthMesh, chainGroup;
+        let isThreeEarthInit = false;
+
+        function init3DEarth() {
+            if (isThreeEarthInit) return;
+            const container = document.getElementById('three-earth-container');
+            container.innerHTML = "";
+
+            sceneEarth = new THREE.Scene();
+            cameraEarth = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            cameraEarth.position.z = 4.2;
+
+            rendererEarth = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            rendererEarth.setSize(320, 320);
+            rendererEarth.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(rendererEarth.domElement);
+
+            const ambLight = new THREE.AmbientLight(0xffffff, 0.9);
+            sceneEarth.add(ambLight);
+            const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.5);
+            dirLight.position.set(5, 5, 5);
+            sceneEarth.add(dirLight);
+
+            // Текстурный Глобус Земли
+            const earthGeo = new THREE.SphereGeometry(1.2, 32, 32);
+            
+            // Генерация процедурной текстуры океанов и суши
+            const canvasTex = document.createElement('canvas');
+            canvasTex.width = 512; canvasTex.height = 256;
+            const ctxTex = canvasTex.getContext('2d');
+            ctxTex.fillStyle = '#0f3854'; ctxTex.fillRect(0,0,512,256);
+            ctxTex.fillStyle = '#10b981';
+            for(let i=0; i<40; i++) {
+                ctxTex.beginPath();
+                ctxTex.arc(Math.random()*512, Math.random()*256, Math.random()*40+20, 0, Math.PI*2);
+                ctxTex.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvasTex);
+            const earthMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6, metalness: 0.1 });
+            earthMesh = new THREE.Mesh(earthGeo, earthMat);
+            sceneEarth.add(earthMesh);
+
+            // 3D Объемные Цепи
+            chainGroup = new THREE.Group();
+            const ringGeo = new THREE.TorusGeometry(1.5, 0.04, 8, 30);
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0xeab308, metalness: 0.8, roughness: 0.2 });
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            ringMesh.rotation.x = Math.PI / 3;
+            chainGroup.add(ringMesh);
+            sceneEarth.add(chainGroup);
+
+            // Интерактивное вращение мышкой/пальцем
+            let isDragging = false, previousMouseX = 0, previousMouseY = 0;
+            container.addEventListener('pointerdown', e => { isDragging = true; previousMouseX = e.clientX; previousMouseY = e.clientY; });
+            window.addEventListener('pointermove', e => {
+                if (!isDragging || !earthMesh) return;
+                let deltaX = e.clientX - previousMouseX;
+                let deltaY = e.clientY - previousMouseY;
+                earthMesh.rotation.y += deltaX * 0.01;
+                earthMesh.rotation.x += deltaY * 0.01;
+                previousMouseX = e.clientX; previousMouseY = e.clientY;
+            });
+            window.addEventListener('pointerup', () => isDragging = false);
+
+            isThreeEarthInit = true;
+            animateEarth();
+        }
+
+        function animateEarth() {
+            if (document.getElementById('tycoon-overlay').classList.contains('active')) {
+                if (earthMesh) earthMesh.rotation.y += 0.003;
+                if (chainGroup) chainGroup.rotation.z -= 0.008;
+                rendererEarth.render(sceneEarth, cameraEarth);
+            }
+            requestAnimationFrame(animateEarth);
+        }
 
         function openTycoonScreen() {
-            vibrate('light');
             document.getElementById('tycoon-overlay').classList.add('active');
-            initCoreCanvas();
+            init3DEarth();
         }
 
         function closeTycoonScreen() {
-            vibrate('light');
             document.getElementById('tycoon-overlay').classList.remove('active');
+        }
+
+        // ТАП И ВЫЛЕТАЮЩИЕ 3D-МОНЕТЫ И ЧИСЛА
+        const earthContainer = document.getElementById('three-earth-container');
+        
+        function handleEarthTap(e) {
+            e.preventDefault();
+            let touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
+
+            touches.forEach(touch => {
+                if (userProfile.energy < 1) {
+                    showToast('⚡ Энергия на нуле! Подождите зарядки.');
+                    return;
+                }
+
+                userProfile.energy -= 1;
+                userProfile.coins += userProfile.multi_tap;
+                pendingTaps++;
+
+                // Вылетающий текст +1
+                const rect = earthContainer.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+
+                const floatNum = document.createElement('div');
+                floatNum.className = 'floating-number';
+                floatNum.innerText = `+${userProfile.multi_tap} 🟡`;
+                floatNum.style.left = `${x - 20}px`;
+                floatNum.style.top = `${y - 20}px`;
+                earthContainer.appendChild(floatNum);
+
+                setTimeout(() => floatNum.remove(), 800);
+            });
+
+            updateTycoonUI();
+
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(syncTapsWithServer, 600);
+        }
+
+        earthContainer.addEventListener('touchstart', handleEarthTap, { passive: false });
+        earthContainer.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'mouse') handleEarthTap(e);
+        });
+
+        async function syncTapsWithServer() {
+            if (pendingTaps === 0) return;
+            let tapsToSend = pendingTaps;
+            pendingTaps = 0;
+
+            try {
+                const res = await fetch('/api/game/sync_tap', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userProfile.coins = data.coins;
+                    userProfile.energy = data.energy;
+                    updateTycoonUI();
+                }
+            } catch(e){}
+        }
+
+        async function buyItem(itemId) {
+            try {
+                const res = await fetch('/api/game/buy', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, item_id: itemId })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userProfile = data.profile;
+                    updateTycoonUI();
+                    showToast('✅ Успешно куплено!');
+                } else {
+                    showToast('❌ Недостаточно монет!');
+                }
+            } catch(e) {
+                showToast('Ошибка покупки');
+            }
         }
 
         function toggleCustomSelect(wrapperId) {
@@ -877,7 +1039,7 @@
             'CYBER_PUNK': { id: 'cyber', icon: '⚡', colorHex: '#f97316', glowHex: 'rgba(249, 115, 22, 0.4)', emojis: '⚡, 🤖, 🔮', msg: '⚡ CYBERPUNK' },
             'NEBULA_DEEP': { id: 'nebula', icon: '🪐', colorHex: '#6366f1', glowHex: 'rgba(99, 102, 241, 0.4)', emojis: '🪐, 🌌, ✨', msg: '🪐 NEBULA' },
             'SUDO_RM_RF': { id: 'terminal', icon: '📟', colorHex: '#00ff66', glowHex: 'rgba(0, 255, 102, 0.4)', emojis: '👾, 💾, 📟, 🤖', msg: '📟 TERMINAL' },
-            'SYNTH_1984': { id: 'vapor', icon: '🌆', colorHex: '#ec4899', glowHex: 'rgba(236, 72, 153, 0.4)', emojis: '🌆, 🌴, 📼, 💖', msg: '🌆 VAPORWAVE' }
+            'SYNTH_1984': { id: 'vapor', icon: '🌆 VAPORWAVE' }
         };
 
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
@@ -1418,158 +1580,6 @@
             if(id === 'modal-leaderboard') fetchLeaderboard('all');
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-        // =========================================================================
-        // 🔮 АНИМАЦИОННАЯ ПЛАНЕТА И ЦЕПИ (COSMIC CORE)
-        // =========================================================================
-        const cCanvas = document.getElementById('core-canvas');
-        const cCtx = cCanvas.getContext('2d');
-        let coreAngle = 0;
-        let coreHealth = 100;
-        let crackRays = [];
-
-        function initCoreCanvas() { drawCore(); }
-
-        function drawCore() {
-            cCtx.clearRect(0, 0, 320, 320);
-            let centerX = 160, centerY = 160, radius = 85;
-
-            // 1. Атмосферный ореол
-            let glowGrad = cCtx.createRadialGradient(centerX, centerY, radius, centerX, centerY, radius + 25);
-            glowGrad.addColorStop(0, 'rgba(41, 199, 95, 0.4)');
-            glowGrad.addColorStop(1, 'transparent');
-            cCtx.fillStyle = glowGrad;
-            cCtx.beginPath(); cCtx.arc(centerX, centerY, radius + 25, 0, Math.PI * 2); cCtx.fill();
-
-            // 2. Тело Планеты
-            let planetGrad = cCtx.createRadialGradient(centerX - 25, centerY - 25, 10, centerX, centerY, radius);
-            planetGrad.addColorStop(0, '#38bdf8');
-            planetGrad.addColorStop(0.6, '#10b981');
-            planetGrad.addColorStop(1, '#022c22');
-            cCtx.fillStyle = planetGrad;
-            cCtx.beginPath(); cCtx.arc(centerX, centerY, radius, 0, Math.PI * 2); cCtx.fill();
-
-            // Кратеры
-            cCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-            cCtx.beginPath(); cCtx.arc(centerX - 30, centerY - 20, 18, 0, Math.PI * 2); cCtx.fill();
-            cCtx.beginPath(); cCtx.arc(centerX + 35, centerY + 25, 12, 0, Math.PI * 2); cCtx.fill();
-
-            // 3. Вращающиеся Металлические Цепи
-            coreAngle += 0.012;
-            cCtx.save();
-            cCtx.translate(centerX, centerY);
-            cCtx.rotate(coreAngle);
-            cCtx.strokeStyle = 'rgba(234, 179, 8, 0.8)';
-            cCtx.lineWidth = 5;
-            cCtx.setLineDash([20, 12]);
-            cCtx.beginPath(); cCtx.arc(0, 0, radius + 14, 0, Math.PI * 2); cCtx.stroke();
-            cCtx.restore();
-
-            // 4. Трещины при ударах
-            cCtx.strokeStyle = '#ffffff';
-            cCtx.lineWidth = 2.5;
-            crackRays.forEach(ray => {
-                cCtx.beginPath();
-                cCtx.moveTo(centerX, centerY);
-                cCtx.lineTo(centerX + Math.cos(ray) * radius, centerY + Math.sin(ray) * radius);
-                cCtx.stroke();
-            });
-
-            requestAnimationFrame(drawCore);
-        }
-
-        // МНОГОПАЛЬЦЕВЫЙ ТАП (MULTITOUCH)
-        const clickArea = document.getElementById('click-area');
-        
-        function handleTapEvent(e) {
-            e.preventDefault();
-            let touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
-
-            touches.forEach(touch => {
-                if (userProfile.energy < 1) {
-                    showToast('⚡ Энергия на нуле! Подождите зарядки.');
-                    return;
-                }
-
-                userProfile.energy -= 1;
-                userProfile.coins += userProfile.multi_tap;
-                pendingTaps++;
-
-                coreHealth -= 3;
-                if (crackRays.length < 15) crackRays.push(Math.random() * Math.PI * 2);
-
-                if (coreHealth <= 0) {
-                    coreHealth = 100;
-                    crackRays = [];
-                    userProfile.coins += userProfile.multi_tap * 10;
-                    showToast('💥 Слой защиты взломан! Бонус +10х 🟡');
-                }
-
-                // Всплывающее неоновое число (+1 / +2)
-                const rect = clickArea.getBoundingClientRect();
-                const x = touch.clientX - rect.left;
-                const y = touch.clientY - rect.top;
-
-                const floatNum = document.createElement('div');
-                floatNum.className = 'floating-number';
-                floatNum.innerText = `+${userProfile.multi_tap}`;
-                floatNum.style.left = `${x - 15}px`;
-                floatNum.style.top = `${y - 20}px`;
-                clickArea.appendChild(floatNum);
-
-                setTimeout(() => floatNum.remove(), 800);
-            });
-
-            updateTycoonUI();
-
-            clearTimeout(syncTimer);
-            syncTimer = setTimeout(syncTapsWithServer, 800);
-        }
-
-        clickArea.addEventListener('touchstart', handleTapEvent, { passive: false });
-        clickArea.addEventListener('pointerdown', (e) => {
-            if (e.pointerType === 'mouse') handleTapEvent(e);
-        });
-
-        async function syncTapsWithServer() {
-            if (pendingTaps === 0) return;
-            let tapsToSend = pendingTaps;
-            pendingTaps = 0;
-
-            try {
-                const res = await fetch('/api/game/sync_tap', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend, energy: userProfile.energy })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile.coins = data.coins;
-                    userProfile.energy = data.energy;
-                    updateTycoonUI();
-                }
-            } catch(e){}
-        }
-
-        async function buyItem(itemId) {
-            try {
-                const res = await fetch('/api/game/buy', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, item_id: itemId })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile = data.profile;
-                    updateTycoonUI();
-                    showToast('✅ Успешно куплено!');
-                } else {
-                    showToast('❌ Недостаточно монет!');
-                }
-            } catch(e) {
-                showToast('Ошибка покупки');
-            }
-        }
 
         async function fetchRadarList() {
             const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
