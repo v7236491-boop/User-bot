@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO</title>
+    <title>Username Scanner PRO & Cyber Tycoon</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- 3D Движок Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
             --bg-app: #060b08;
@@ -26,17 +24,17 @@
             background-color: var(--bg-app); color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column;
-            overflow-x: hidden; position: relative;
+            overflow-x: hidden; position: relative; user-select: none;
             transform: translateZ(0);
         }
 
-        /* 120 Гц Оптимизация скролла */
+        /* 120 Гц Оптимизация */
         .scrolling-active #fog-canvas,
         .scrolling-active #emoji-layer {
             pointer-events: none; opacity: 0.2;
         }
 
-        /* ТЕМЫ ОФОРМЛЕНИЯ (CSS) */
+        /* ТЕМЫ ОФОРМЛЕНИЯ */
         body.theme-terminal { background-color: #050b05 !important; color: #00ff66 !important; font-family: 'Courier New', monospace !important; }
         body.theme-glitch { background-color: #0d021a !important; color: #00f0ff !important; }
         body.theme-vapor { background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important; color: #fff !important; }
@@ -48,7 +46,7 @@
 
         #fog-canvas, #secret-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; transition: opacity 0.3s ease; }
         #secret-canvas { display: none; z-index: -8; }
-        #emoji-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -5; pointer-events: none; overflow: hidden; transition: opacity 0.3s ease; }
+        #emoji-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -5; pointer-events: none; overflow: hidden; }
         .floating-emoji { position: absolute; user-select: none; will-change: transform; opacity: 0.7; }
 
         .screen-ripple {
@@ -72,50 +70,42 @@
         .glass-panel {
             background: var(--glass-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
             border: 1px solid var(--glass-border); box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
-            will-change: transform, opacity;
         }
 
         header { display: flex; justify-content: space-between; padding: 15px 20px; z-index: 50; width: 100%; max-width: 600px; margin: 0 auto; }
-        .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 12px; }
+        .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-radius: 12px; }
         .nav-btn:active { transform: scale(0.92); }
 
-        /* 🌟 НИЖНЯЯ ПАНЕЛЬ С КНОПКАМИ (ЛЕВО - ЦЕНТР - ПРАВО) 🌟 */
+        /* 🌟 НИЖНЯЯ ПАНЕЛЬ С КНОПКАМИ 🌟 */
         .floating-achieving-btn {
             position: fixed; bottom: 20px; left: 16px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--primary); color: var(--text-main);
+            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--primary); color: var(--text-main);
             padding: 10px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer;
             box-shadow: 0 4px 20px var(--primary-glow);
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .floating-achieving-btn:active { transform: scale(0.9); }
 
         .floating-play-btn {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90;
             background: linear-gradient(135deg, rgba(41, 199, 95, 0.45), rgba(56, 189, 248, 0.45));
-            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(41, 199, 95, 0.8); color: var(--text-main);
+            backdrop-filter: blur(18px); border: 1px solid rgba(41, 199, 95, 0.8); color: var(--text-main);
             padding: 11px 22px; border-radius: 30px; font-size: 0.95rem; font-weight: 800;
-            display: flex; align-items: center; gap: 8px; cursor: pointer;
-            animation: shimmerGlow 2.5s infinite alternate;
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer; animation: shimmerGlow 2.5s infinite alternate;
         }
         .floating-play-btn:active { transform: translateX(-50%) scale(0.91); }
 
         @keyframes shimmerGlow {
-            0% { box-shadow: 0 4px 20px rgba(41, 199, 95, 0.35), inset 0 0 10px rgba(255,255,255,0.1); border-color: rgba(41, 199, 95, 0.8); }
-            100% { box-shadow: 0 4px 30px rgba(56, 189, 248, 0.65), inset 0 0 20px rgba(255,255,255,0.3); border-color: rgba(56, 189, 248, 0.8); }
+            0% { box-shadow: 0 4px 20px rgba(41, 199, 95, 0.35); }
+            100% { box-shadow: 0 4px 30px rgba(56, 189, 248, 0.65); }
         }
 
         .floating-leaderboard-btn {
             position: fixed; bottom: 20px; right: 16px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
+            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
             padding: 10px 16px; border-radius: 30px; font-size: 0.9rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer;
             box-shadow: 0 4px 20px rgba(234, 179, 8, 0.25);
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .floating-leaderboard-btn:active { transform: scale(0.9); }
 
@@ -123,205 +113,129 @@
         .app-container { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
 
         .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
-        .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.25s ease; }
+        .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
         .platform-btn.active { background: var(--primary-glow); color: var(--primary); box-shadow: 0 4px 15px var(--primary-glow); }
 
-        .result-field { border-radius: 24px; padding: 30px 20px; text-align: center; min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: transform 0.3s ease, border-color 0.3s ease; position: relative; }
-        .username-text { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); word-break: break-all; font-family: monospace; }
+        .result-field { border-radius: 24px; padding: 30px 20px; text-align: center; min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        .username-text { font-size: 1.8rem; font-weight: 800; color: var(--text-muted); word-break: break-all; font-family: monospace; }
         .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
         .price-text { font-size: 0.85rem; opacity: 0.7; }
         .golden-mode { border-color: #FFD700 !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.3) !important; }
 
-        .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(12px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        
-        .action-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; border: 1px solid transparent; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; }
+        .action-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; display: flex; justify-content: center; align-items: center; gap: 6px; }
         .action-btn:active { transform: scale(0.93); }
         .btn-take { background: var(--primary-glow); color: var(--primary); border-color: var(--primary); }
         .btn-story { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
 
-        .btn-generate { background: var(--primary); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease; width: 100%; box-shadow: 0 8px 25px var(--primary-glow); }
+        .btn-generate { background: var(--primary); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; width: 100%; box-shadow: 0 8px 25px var(--primary-glow); }
         .btn-generate:active { transform: scale(0.94); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* МОДАЛЬНЫЕ ОКНА */
+        /* 🔮 ЭКРАН МАЙНИНГА (CYBER TYCOON) 🔮 */
+        #tycoon-overlay { position: fixed; inset: 0; background: #030604; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; }
+        #tycoon-overlay.active { display: flex; }
+
+        .tycoon-header { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .coin-balance-badge { font-size: 1.8rem; font-weight: 900; color: #eab308; display: flex; align-items: center; gap: 8px; }
+
+        .core-click-area { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
+        #core-canvas { width: 300px; height: 300px; touch-action: none; cursor: pointer; }
+
+        .floating-number { position: absolute; font-size: 1.8rem; font-weight: 900; color: #29c75f; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 0 10px rgba(41,199,95,0.8); }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
+
+        .energy-bar-container { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+        .energy-text-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; }
+        .energy-progress-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .energy-progress-fill { height: 100%; background: linear-gradient(90deg, #29c75f, #38bdf8); border-radius: 10px; transition: width 0.2s ease; }
+
+        .tycoon-nav-tabs { display: flex; gap: 10px; width: 100%; max-width: 320px; z-index: 10; }
+        .tab-btn { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer; }
+        .tab-btn.active { background: var(--primary); color: #000; }
+
+        /* МОДАЛЬНЫЕ ОКНА И НАСТРОЙКИ */
         .modal-overlay { 
             position: fixed; inset: 0; 
             background: rgba(3, 7, 6, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
-            z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; 
-            opacity: 0; visibility: hidden; pointer-events: none; 
-            will-change: opacity, visibility;
-            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s cubic-bezier(0.16, 1, 0.3, 1); 
+            z-index: 2500; display: flex; justify-content: center; align-items: center; padding: 20px; 
+            opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.35s ease;
         }
         .modal-overlay.active { opacity: 1; visibility: visible; pointer-events: auto; }
         
         .modal-content { 
             width: 100%; max-width: 420px; max-height: 82vh; 
-            display: flex; flex-direction: column; position: relative; border-radius: 24px; overflow: hidden;
-            transform: scale(0.88) translateY(20px); will-change: transform, opacity;
-            transition: transform 0.35s cubic-bezier(0.34, 1.25, 0.64, 1);
+            display: flex; flex-direction: column; border-radius: 24px; overflow: hidden;
         }
-        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
-
         .modal-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
         .modal-title { margin: 0; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s ease; }
-        .btn-close:active { transform: scale(0.85); }
+        .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-        .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; contain: content; }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
 
         .setting-item { background: rgba(255,255,255,0.03); padding: 14px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
         .setting-info { display: flex; flex-direction: column; gap: 3px; flex: 1; padding-right: 10px; }
         .setting-title { font-weight: 600; font-size: 0.9rem; }
         .setting-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.25; }
-        
-        .setting-controls { display: flex; align-items: center; gap: 10px; }
 
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* ИСПРАВЛЕННАЯ СТРЕЛОЧКА СВОРАЧИВАНИЯ МЕНЮ */
         .panel-collapse-btn {
             background: transparent; border: none; color: var(--text-muted);
-            width: 26px; height: 26px; padding: 0; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0.7; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, color 0.2s ease;
+            width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            opacity: 0.7; transition: transform 0.3s ease;
         }
-        .panel-collapse-btn:hover, .panel-collapse-btn:active { opacity: 1; color: #fff; }
-        .panel-collapse-btn svg { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform: rotate(0deg); }
+        .panel-collapse-btn svg { transform: rotate(0deg); }
         .panel-collapse-btn.collapsed svg { transform: rotate(180deg); }
 
         .range-slider { width: 90px; accent-color: var(--primary); }
         .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
-        .color-dot { width: 28px; height: 28px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-        .color-dot:active { transform: scale(0.85); }
+        .color-dot { width: 28px; height: 28px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
         .color-dot.active { border-color: #fff; transform: scale(1.1); }
 
         .filter-options { display: none; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; margin-top: -4px; margin-bottom: 12px; }
-        .filter-options.active { display: block; animation: slideDown 0.3s cubic-bezier(0.34, 1.25, 0.64, 1); }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .filter-options.active { display: block; }
 
-        /* КАСТОМНЫЕ СЕТЧАТЫЕ СЕЛЕКТЫ */
         .custom-select-wrapper { position: relative; width: 100%; }
-        .custom-select-trigger {
-            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 14px; border-radius: 12px; color: #fff; font-size: 0.85rem;
-            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-            transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-        .custom-select-trigger:active { transform: scale(0.98); }
+        .custom-select-trigger { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 10px 14px; border-radius: 12px; color: #fff; font-size: 0.85rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .custom-select-trigger:after { content: '▾'; font-size: 0.8rem; color: var(--text-muted); }
-        .custom-select-options {
-            position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-            background: rgba(15, 22, 18, 0.96); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px;
-            max-height: 200px; overflow-y: auto; z-index: 100; display: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); contain: content;
-        }
-        .custom-select-options.open { display: block; animation: slideDown 0.25s cubic-bezier(0.34, 1.25, 0.64, 1); }
-        .custom-option { padding: 10px 14px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .custom-option:last-child { border-bottom: none; }
+        .custom-select-options { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: rgba(15, 22, 18, 0.96); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; }
+        .custom-select-options.open { display: block; }
+        .custom-option { padding: 10px 14px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .custom-option:hover, .custom-option.selected { background: var(--primary-glow); color: #fff; }
 
         .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
-        .filter-row:last-child { margin-bottom: 0; }
+        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 12px; outline: none; font-size: 0.85rem; }
+        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; }
+        .btn-reset-custom { width: 100%; background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; margin-top: 10px; }
 
-        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 12px; outline: none; font-family: inherit; font-size: 0.85rem; }
-        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: transform 0.2s ease; }
-        .form-btn:active { transform: scale(0.96); }
-
-        .btn-reset-custom { width: 100%; background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-
-        /* ИСТОРИЯ И ЛИДЕРБОРД */
-        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease; max-height: 85px; }
+        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease; max-height: 85px; }
         .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.35); }
         .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.35); }
-        .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.25rem; opacity: 0; transition: opacity 0.2s ease; z-index: 1; }
+        .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.25rem; opacity: 0; z-index: 1; }
         .swipe-icon-left { left: 18px; color: #fff; }
         .swipe-icon-right { right: 18px; color: #fff; }
         .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
         .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
 
-        .history-card { 
-            background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            position: relative; z-index: 2; touch-action: pan-y; user-select: none;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.2s ease;
-        }
-        .history-card:active { transform: scale(0.98); }
+        .history-card { background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; touch-action: pan-y; }
+        .lb-card { background: rgba(18, 25, 21, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 
-        .lb-card {
-            background: rgba(18, 25, 21, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 12px 16px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.35); margin-bottom: 8px;
-        }
+        .shop-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .shop-buy-btn { background: #eab308; color: #000; border: none; font-weight: 800; padding: 10px 14px; border-radius: 12px; cursor: pointer; }
 
-        .lb-card-top1 { border: 1px solid rgba(255, 215, 0, 0.4); box-shadow: 0 0 25px rgba(255, 215, 0, 0.15); }
-        .lb-card-top2 { border: 1px solid rgba(192, 192, 192, 0.4); }
-        .lb-card-top3 { border: 1px solid rgba(205, 127, 50, 0.4); }
+        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; opacity: 0.6; filter: grayscale(0.8); }
+        .achieve-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
+        .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 10px; }
 
-        .lb-rank-badge { font-size: 1.15rem; font-weight: 800; min-width: 36px; text-align: center; display: flex; align-items: center; justify-content: center; }
-        .lb-finder-btn { 
-            background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); 
-            padding: 4px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 600; cursor: pointer; 
-            margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
-        }
-
-        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; opacity: 0.6; filter: grayscale(0.8); transition: 0.3s; }
-        .achieve-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); background: rgba(41, 199, 95, 0.06); box-shadow: 0 0 15px rgba(41, 199, 95, 0.1); }
-        .achieve-header-row { display: flex; align-items: center; gap: 12px; }
-        .achieve-icon { font-size: 1.8rem; }
-        .achieve-info { flex: 1; }
-        .achieve-title { font-size: 0.9rem; font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
-        .achieve-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-        
-        .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; position: relative; }
-        .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.4s ease; }
-
-        /* 📱 ПОЛНОЭКРАННАЯ 3D ИГРА (THREE.JS) 📱 */
-        #game-modal-overlay {
-            position: fixed; inset: 0; background: #030604; z-index: 2000;
-            display: none; flex-direction: column;
-        }
-        #game-modal-overlay.active { display: flex; }
-
-        #canvas-3d-container { width: 100vw; height: 100vh; position: absolute; inset: 0; z-index: 1; }
-        #canvas-3d-container canvas { width: 100%; height: 100%; display: block; touch-action: none; }
-
-        .game-hud-3d {
-            position: absolute; top: 20px; left: 20px; right: 20px; z-index: 2001;
-            display: flex; justify-content: space-between; align-items: center;
-            pointer-events: none;
-        }
-        .btn-exit-game {
-            background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff; padding: 8px 16px; border-radius: 14px; font-size: 0.85rem; font-weight: bold;
-            cursor: pointer; pointer-events: auto; backdrop-filter: blur(10px);
-        }
-
-        .game-overlay-controls {
-            position: absolute; bottom: 35px; left: 20px; right: 20px; z-index: 2001;
-            display: flex; justify-content: center; pointer-events: none;
-        }
-        .btn-start-3d {
-            background: var(--primary); color: #000; border: none; padding: 16px 36px;
-            border-radius: 24px; font-weight: 800; font-size: 1.1rem; cursor: pointer;
-            pointer-events: auto; box-shadow: 0 0 30px var(--primary-glow);
-            transition: transform 0.2s ease;
-        }
-        .btn-start-3d:active { transform: scale(0.92); }
-
-        .shop-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .shop-btn { background: #eab308; color: #000; border: none; font-weight: bold; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; }
-
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 18px 16px; width: 80%; max-width: 240px; text-align: center; font-weight: 600; font-size: 0.85rem; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.25, 0.8, 0.3, 1); z-index: 3000; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 16px; text-align: center; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.4s; z-index: 4000; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
@@ -362,38 +276,127 @@
         </div>
     </main>
 
-    <!-- 🌟 ПЛАВАЮЩИЕ КНОПКИ ВНИЗУ (ЛЕВО - ЦЕНТР - ПРАВО) 🌟 -->
-    <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
-        🏆 <span id="achieve-counter-badge">0/100</span>
-    </button>
-
-    <!-- 🔥 ЦЕНТРАЛЬНАЯ КНОПКА ИГРАТЬ 🔥 -->
-    <button class="floating-play-btn" onclick="openGame3DFullscreen()">
-        🎮 Играть
-    </button>
-
-    <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')" title="Рейтинг улова">
-        📊 <span style="font-size:0.8rem; opacity:0.9;">Топ</span>
-    </button>
+    <!-- ПЛАВАЮЩИЕ КНОПКИ -->
+    <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">🏆 <span id="achieve-counter-badge">0/100</span></button>
+    <button class="floating-play-btn" onclick="openTycoonScreen()">⚡ Майнинг</button>
+    <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')">📊 Топ</button>
 
     <div class="toast" id="global-toast">✨ Скопировано!</div>
 
-    <!-- 🏃‍♂️ ПОЛНОЭКРАННОЕ 3D-ОКНО ИГРЫ (THREE.JS) 🏃‍♂️ -->
-    <div id="game-modal-overlay">
-        <div class="game-hud-3d">
-            <button class="btn-exit-game" onclick="closeGame3DFullscreen()">◀ Выход</button>
-            <div style="font-size:1.1rem; font-weight:800;">Дистанция: <span id="dist-3d" style="color:var(--primary);">0</span>m</div>
-            <div style="font-size:1.1rem; font-weight:800; color:#eab308;">🟡 <span id="coins-3d">0</span></div>
+    <!-- 🔮 ПОЛНОЭКРАННЫЙ ЭКРАН МАЙНИНГА (CYBER TYCOON) 🔮 -->
+    <div id="tycoon-overlay">
+        <div class="tycoon-header">
+            <button class="tab-btn" style="width: auto; padding: 8px 16px;" onclick="closeTycoonScreen()">◀ Выход</button>
+            <div class="coin-balance-badge">🟡 <span id="tycoon-coins">0</span></div>
+            <div style="width: 60px;"></div>
         </div>
 
-        <div id="canvas-3d-container"></div>
+        <div class="core-click-area" id="click-area">
+            <canvas id="core-canvas" width="300" height="300"></canvas>
+        </div>
 
-        <div class="game-overlay-controls" id="start-btn-container-3d">
-            <button class="btn-start-3d" onclick="start3DGame()">СТАРТ ЗАБЕГА</button>
+        <div class="energy-bar-container">
+            <div class="energy-text-row">
+                <span>⚡ Энергия</span>
+                <span><span id="energy-val">1000</span> / <span id="max-energy-val">1000</span></span>
+            </div>
+            <div class="energy-progress-bg">
+                <div class="energy-progress-fill" id="energy-fill" style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <div class="tycoon-nav-tabs">
+            <button class="tab-btn active" onclick="openModal('modal-shop')">🛒 Магазин</button>
+            <button class="tab-btn" onclick="openModal('modal-leaderboard')">👑 <span id="user-rank-text">Ловец</span></button>
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ -->
+    <!-- 🛒 МОДАЛКА: КИБЕР-МАГА3ИН 🛒 -->
+    <div class="modal-overlay" id="modal-shop">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 class="modal-title">🛒 Кибер-Магазин</h2>
+                <button class="btn-close" onclick="closeModal('modal-shop')">✕</button>
+            </div>
+            <div class="modal-body">
+                <h3 style="font-size: 0.95rem; color: var(--primary); margin-bottom: 8px;">⚡ Прокачка Кликера</h3>
+                
+                <div class="shop-card">
+                    <div>
+                        <div style="font-weight:bold;">👆 Мульти-Тап (Lvl. <span id="lvl-multitap">1</span>)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">+1 монета за клик</div>
+                    </div>
+                    <button class="shop-buy-btn" onclick="buyItem('multi_tap')"><span id="cost-multitap">200</span> 🟡</button>
+                </div>
+
+                <div class="shop-card">
+                    <div>
+                        <div style="font-weight:bold;">🔋 Запас Батареи (Lvl. <span id="lvl-energy">1</span>)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">+500 к макс. энергии</div>
+                    </div>
+                    <button class="shop-buy-btn" onclick="buyItem('max_energy')"><span id="cost-energy">150</span> 🟡</button>
+                </div>
+
+                <div class="shop-card">
+                    <div>
+                        <div style="font-weight:bold;">🚜 Автосборщик (Lvl. <span id="lvl-miner">0</span>)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Пассивный фарм (3 часа макс)</div>
+                    </div>
+                    <button class="shop-buy-btn" onclick="buyItem('offline_miner')"><span id="cost-miner">3000</span> 🟡</button>
+                </div>
+
+                <h3 style="font-size: 0.95rem; color: #eab308; margin-top: 15px; margin-bottom: 8px;">🎯 Апгрейды Парсера</h3>
+
+                <div class="shop-card">
+                    <div>
+                        <div style="font-weight:bold;">🎯 +1 Слот Радара</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Слежка за редкими никами</div>
+                    </div>
+                    <button class="shop-buy-btn" onclick="buyItem('radar_slot')">5000 🟡</button>
+                </div>
+
+                <div class="shop-card">
+                    <div>
+                        <div style="font-weight:bold;">🚀 Турбо-Парсер (x2 Speed)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускорение поиска на 15 мин</div>
+                    </div>
+                    <button class="shop-buy-btn" onclick="buyItem('turbo_parse')">3500 🟡</button>
+                </div>
+
+                <div class="shop-card">
+                    <div>
+                        <div style="font-weight:bold;">🔑 Секретная Тема Cyberpunk</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Уникальный вид приложения</div>
+                    </div>
+                    <button class="shop-buy-btn" onclick="buyItem('theme_cyberpunk')">40000 🟡</button>
+                </div>
+
+                <div class="shop-card">
+                    <div>
+                        <div style="font-weight:bold;">👑 Ранг «Легендарный Ловец»</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Золотой статус в Топе</div>
+                    </div>
+                    <button class="shop-buy-btn" onclick="buyItem('rank_legend')">100000 🟡</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🎁 МОДАЛКА: ПРИВЕТСТВИЕ ОФФЛАЙН-ФАРМА 🎁 -->
+    <div class="modal-overlay" id="modal-welcome-offline">
+        <div class="modal-content glass-panel" style="text-align: center;">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: #eab308;">🤖 Автосборщик поработал!</h2>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Вас не было в игре какое-то время. Ваш Майнер нафармил:</p>
+                <div style="font-size: 2.2rem; font-weight: 900; color: #eab308; margin: 15px 0;">+<span id="offline-earned-val">0</span> 🟡</div>
+                <button class="form-btn" onclick="closeModal('modal-welcome-offline')">Отлично, Забрать!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: НАСТРОЙКИ -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -434,7 +437,6 @@
                     </div>
                 </div>
 
-                <!-- 🌟 ПОЛНАЯ ПАЛИТРА ИЗ 10 ТЕМ 🌟 -->
                 <div class="filter-options" id="custom-menu">
                     <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Тема акцента</div>
                     <div class="color-picker-grid" id="theme-dots-grid">
@@ -488,7 +490,6 @@
                         <span class="setting-desc">Выбор логики и приставки к вашему слову</span>
                     </div>
                     <div class="setting-controls">
-                        <!-- ИСПРАВЛЕННАЯ СТРЕЛОЧКА СВОРАЧИВАНИЯ -->
                         <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
                         </button>
@@ -579,20 +580,7 @@
         </div>
     </div>
 
-    <!-- Модалка: Лидерборд -->
-    <div class="modal-overlay" id="modal-leaderboard">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 class="modal-title" style="color: #eab308;">👑 ТОП Улова</h2>
-                <button class="btn-close" onclick="closeModal('modal-leaderboard')">✕</button>
-            </div>
-            <div class="modal-body" onscroll="handleModalScroll()">
-                <div id="leaderboard-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модалка: Секретный код -->
+    <!-- МОДАЛКА: СЕКРЕТНЫЙ КОД -->
     <div class="modal-overlay" id="modal-secret-code">
         <div class="modal-content glass-panel" style="max-width: 360px;">
             <div class="modal-header">
@@ -607,7 +595,7 @@
         </div>
     </div>
 
-    <!-- Модалка: Радар -->
+    <!-- МОДАЛКА: РАДАР -->
     <div class="modal-overlay" id="modal-radar">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -623,18 +611,7 @@
         </div>
     </div>
 
-    <!-- Модалка: Достижения -->
-    <div class="modal-overlay" id="modal-achievements">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 class="modal-title">🏆 Ваши награды (<span id="achieve-count-modal">0</span>/100)</h2>
-                <button class="btn-close" onclick="closeModal('modal-achievements')">✕</button>
-            </div>
-            <div class="modal-body" id="achievements-list-container" onscroll="handleModalScroll()"></div>
-        </div>
-    </div>
-
-    <!-- Модалка: История -->
+    <!-- МОДАЛКА: ИСТОРИЯ -->
     <div class="modal-overlay" id="modal-history">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -646,7 +623,31 @@
         </div>
     </div>
 
-    <!-- Модалка: Итоги Автопарса -->
+    <!-- МОДАЛКА: ЛИДЕРБОРД -->
+    <div class="modal-overlay" id="modal-leaderboard">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: #eab308;">👑 ТОП Улова</h2>
+                <button class="btn-close" onclick="closeModal('modal-leaderboard')">✕</button>
+            </div>
+            <div class="modal-body" onscroll="handleModalScroll()">
+                <div id="leaderboard-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: ДОСТИЖЕНИЯ -->
+    <div class="modal-overlay" id="modal-achievements">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 class="modal-title">🏆 Ваши награды (<span id="achieve-count-modal">0</span>/100)</h2>
+                <button class="btn-close" onclick="closeModal('modal-achievements')">✕</button>
+            </div>
+            <div class="modal-body" id="achievements-list-container" onscroll="handleModalScroll()"></div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: ИТОГИ АВТОПАРСА -->
     <div class="modal-overlay" id="modal-summary">
         <div class="modal-content glass-panel" style="text-align: center; max-width: 400px;">
             <div class="modal-header">
@@ -673,6 +674,15 @@
         let finderName = "Аноним";
         let autoParseCatches = [];
 
+        let userProfile = {
+            coins: 0, energy: 1000, max_energy: 1000,
+            multi_tap: 1, energy_regen: 3, offline_miner_lvl: 0,
+            rank: "Ловец"
+        };
+
+        let pendingTaps = 0;
+        let syncTimer = null;
+
         let selectedValues = {
             'select-gen-mode': 'standard',
             'select-category': 'auto_detect',
@@ -689,17 +699,67 @@
             }, 120);
         }
 
-        /* 🌟 ПОЛНОЭКРАННАЯ 3D ИГРА (ОТКРЫТИЕ И ЗАКРЫТИЕ) 🌟 */
-        function openGame3DFullscreen() {
-            vibrate('light');
-            document.getElementById('game-modal-overlay').classList.add('active');
-            init3DScene();
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            tgChatId = user.id.toString();
+            finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
         }
 
-        function closeGame3DFullscreen() {
+        // Загрузка данных кликера и баланса с сервера
+        async function loadGameState() {
+            try {
+                const res = await fetch(`/api/game/state?user_id=${tgChatId}`);
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userProfile = data.profile;
+                    updateTycoonUI();
+
+                    if (data.offline_earned > 0) {
+                        document.getElementById('offline-earned-val').innerText = data.offline_earned;
+                        openModal('modal-welcome-offline');
+                    }
+                }
+            } catch(e){}
+        }
+        loadGameState();
+
+        function updateTycoonUI() {
+            document.getElementById('tycoon-coins').innerText = userProfile.coins;
+            document.getElementById('energy-val').innerText = userProfile.energy;
+            document.getElementById('max-energy-val').innerText = userProfile.max_energy;
+            document.getElementById('user-rank-text').innerText = userProfile.rank;
+
+            let fillPercent = Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
+            document.getElementById('energy-fill').style.width = fillPercent + "%";
+
+            document.getElementById('lvl-multitap').innerText = userProfile.multi_tap;
+            document.getElementById('cost-multitap').innerText = Math.floor(200 * (1.8 ** (userProfile.multi_tap - 1)));
+
+            let energyLvl = (userProfile.max_energy - 1000) / 500;
+            document.getElementById('lvl-energy').innerText = energyLvl + 1;
+            document.getElementById('cost-energy').innerText = Math.floor(150 * (1.6 ** energyLvl));
+
+            document.getElementById('lvl-miner').innerText = userProfile.offline_miner_lvl;
+            document.getElementById('cost-miner').innerText = userProfile.offline_miner_lvl === 0 ? 3000 : Math.floor(3000 * (2.2 ** userProfile.offline_miner_lvl));
+        }
+
+        // Авто-регенерация энергии каждую секунду
+        setInterval(() => {
+            if (userProfile.energy < userProfile.max_energy) {
+                userProfile.energy = Math.min(userProfile.max_energy, userProfile.energy + userProfile.energy_regen);
+                updateTycoonUI();
+            }
+        }, 1000);
+
+        function openTycoonScreen() {
             vibrate('light');
-            stop3DGame();
-            document.getElementById('game-modal-overlay').classList.remove('active');
+            document.getElementById('tycoon-overlay').classList.add('active');
+            initCoreCanvas();
+        }
+
+        function closeTycoonScreen() {
+            vibrate('light');
+            document.getElementById('tycoon-overlay').classList.remove('active');
         }
 
         function toggleCustomSelect(wrapperId) {
@@ -708,7 +768,6 @@
             const isOpen = options.classList.contains('open');
 
             document.querySelectorAll('.custom-select-options').forEach(el => el.classList.remove('open'));
-
             if (!isOpen) options.classList.add('open');
         }
 
@@ -755,42 +814,8 @@
             secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
         };
 
-        let userCoins = 0;
-
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-            const user = window.Telegram.WebApp.initDataUnsafe.user;
-            tgChatId = user.id.toString();
-            finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
-        }
-
-        // Загрузка баланса с сервера
-        async function loadServerCoins() {
-            try {
-                const res = await fetch(`/api/game/balance?user_id=${tgChatId}`);
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userCoins = data.coins;
-                    document.getElementById('coins-3d').innerText = userCoins;
-                }
-            } catch(e){}
-        }
-        loadServerCoins();
-
-        async function addCoinsToServer(amount) {
-            userCoins += amount;
-            document.getElementById('coins-3d').innerText = userCoins;
-            try {
-                await fetch(`/api/game/save_coins`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, coins: amount })
-                });
-            } catch(e){}
-        }
-
         let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
         
-        /* 🌟 ВСЕ СЕКРЕТНЫЕ ТЕМЫ 🌟 */
         const SECRET_PROMOS = {
             'REDPILL': { id: 'matrix', icon: '💻', colorHex: '#29c75f', glowHex: 'rgba(41, 199, 95, 0.4)', emojis: '0, 1, ⚡, 💻', msg: '🟢 MATRIX' },
             'DUROV360': { id: 'durov', icon: '✈️', colorHex: '#1e3c72', glowHex: 'rgba(30, 60, 114, 0.4)', emojis: '💎, 👑, ✈️, 💰', msg: '✈️ DUROV SKY' },
@@ -918,7 +943,6 @@
             document.body.className = '';
         }
 
-        /* 🌟 ВСЕ СЕКРЕТНЫЕ АНИМАЦИИ 🌟 */
         function activateSecretEffect(themeId, colorHex, glowHex, emojis) {
             stopSecretAnimation();
             setThemeColor(colorHex, glowHex, null);
@@ -1054,14 +1078,14 @@
 
                 return `
                     <div class="achieve-card ${isUnlocked ? 'unlocked' : ''}">
-                        <div class="achieve-header-row">
-                            <div class="achieve-icon">${item.icon}</div>
-                            <div class="achieve-info">
-                                <div class="achieve-title">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="font-size:1.8rem;">${item.icon}</div>
+                            <div style="flex:1;">
+                                <div style="font-size:0.9rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
                                     <span>${item.title}</span>
                                     <span style="font-size:0.75rem; color:var(--primary);">${currentVal}/${item.target}</span>
                                 </div>
-                                <div class="achieve-desc">${item.desc}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${item.desc}</div>
                             </div>
                         </div>
                         <div class="progress-bar-bg">
@@ -1342,314 +1366,140 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         // =========================================================================
-        // 🏃‍♂️ 3D ДВИЖОК С ПОЕЗДАМИ, ТРАМПЛИНАМИ И БУСТЕРАМИ (THREE.JS)
+        // 🔮 АНИМАЦИОННОЕ КВАНТОВОЕ ЯДРО (CANVAS 2D)
         // =========================================================================
-        let scene, camera, renderer;
-        let playerGroup, playerBody, head;
-        let isGame3DActive = false;
-        let animFrameId = null;
+        const cCanvas = document.getElementById('core-canvas');
+        const cCtx = cCanvas.getContext('2d');
+        let coreAngle = 0;
+        let coreHealth = 100;
+        let crackRays = [];
 
-        let laneX = [-2.2, 0, 2.2];
-        let currentLane = 1;
-        let targetX = 0;
-
-        let playerY = 0.8;
-        let jumpVel = 0;
-        let isJumping3D = false;
-        let isSliding3D = false;
-        let slideTimer = 0;
-        let currentTrainRoof = null;
-
-        let obstacles3D = [];
-        let coins3D = [];
-        let powerups3D = [];
-        let distance3D = 0;
-        let sessionCoins3D = 0;
-
-        let activePowerups = { magnet: 0, double: 0, shield: false };
-
-        function init3DScene() {
-            const container = document.getElementById('canvas-3d-container');
-            container.innerHTML = "";
-
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x040805);
-            scene.fog = new THREE.FogExp2(0x040805, 0.025);
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, 3.8, 6.0);
-            camera.rotation.x = -0.22;
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.shadowMap.enabled = true;
-            container.appendChild(renderer.domElement);
-
-            const ambLight = new THREE.AmbientLight(0xffffff, 0.8);
-            scene.add(ambLight);
-            
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-            dirLight.position.set(5, 12, 8);
-            dirLight.castShadow = true;
-            scene.add(dirLight);
-
-            const trackGeo = new THREE.PlaneGeometry(8, 200);
-            const trackMat = new THREE.MeshStandardMaterial({ color: 0x0a140d, roughness: 0.8 });
-            const track = new THREE.Mesh(trackGeo, trackMat);
-            track.rotation.x = -Math.PI / 2;
-            track.position.z = -80;
-            scene.add(track);
-
-            // 🤖 3D Человечек
-            playerGroup = new THREE.Group();
-            
-            const bodyGeo = new THREE.CylinderGeometry(0.35, 0.25, 0.9, 12);
-            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x29c75f, roughness: 0.3, metalness: 0.2 });
-            playerBody = new THREE.Mesh(bodyGeo, bodyMat);
-            playerBody.position.y = 0.45;
-            playerGroup.add(playerBody);
-
-            const headGeo = new THREE.SphereGeometry(0.28, 16, 16);
-            const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
-            head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 1.05;
-            playerGroup.add(head);
-
-            playerGroup.position.set(0, playerY, 0);
-            scene.add(playerGroup);
+        function initCoreCanvas() {
+            drawCore();
         }
 
-        function start3DGame() {
-            document.getElementById('start-btn-container-3d').style.display = 'none';
-            isGame3DActive = true;
-            currentLane = 1;
-            targetX = 0;
-            playerY = 0.0;
-            distance3D = 0;
-            sessionCoins3D = 0;
-            currentTrainRoof = null;
+        function drawCore() {
+            cCtx.clearRect(0, 0, 300, 300);
 
-            activePowerups = { magnet: 0, double: 0, shield: false };
+            let centerX = 150, centerY = 150, radius = 80;
 
-            obstacles3D.forEach(o => scene.remove(o.mesh));
-            coins3D.forEach(c => scene.remove(c.mesh));
-            powerups3D.forEach(p => scene.remove(p.mesh));
-            obstacles3D = []; coins3D = []; powerups3D = [];
+            // Вращающиеся цепи/кольца
+            coreAngle += 0.015;
+            cCtx.save();
+            cCtx.translate(centerX, centerY);
+            cCtx.rotate(coreAngle);
 
-            if (animFrameId) cancelAnimationFrame(animFrameId);
-            game3DLoop();
+            cCtx.strokeStyle = 'rgba(41, 199, 95, 0.6)';
+            cCtx.lineWidth = 4;
+            cCtx.setLineDash([15, 10]);
+            cCtx.beginPath();
+            cCtx.arc(0, 0, radius + 15, 0, Math.PI * 2);
+            cCtx.stroke();
+            cCtx.restore();
+
+            // Внутреннее пульсирующее Ядро
+            let grad = cCtx.createRadialGradient(centerX, centerY, 10, centerX, centerY, radius);
+            grad.addColorStop(0, '#38bdf8');
+            grad.addColorStop(0.7, '#29c75f');
+            grad.addColorStop(1, '#030604');
+
+            cCtx.fillStyle = grad;
+            cCtx.beginPath();
+            cCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            cCtx.fill();
+
+            // Рисование трещин при ударе
+            cCtx.strokeStyle = '#ffffff';
+            cCtx.lineWidth = 2;
+            crackRays.forEach(ray => {
+                cCtx.beginPath();
+                cCtx.moveTo(centerX, centerY);
+                cCtx.lineTo(centerX + Math.cos(ray) * radius, centerY + Math.sin(ray) * radius);
+                cCtx.stroke();
+            });
+
+            requestAnimationFrame(drawCore);
         }
 
-        function stop3DGame() {
-            isGame3DActive = false;
-            if (animFrameId) cancelAnimationFrame(animFrameId);
-            document.getElementById('start-btn-container-3d').style.display = 'flex';
-        }
-
-        let touchStartX3D = 0, touchStartY3D = 0;
-        window.addEventListener('touchstart', e => {
-            touchStartX3D = e.touches[0].clientX;
-            touchStartY3D = e.touches[0].clientY;
-        });
-
-        window.addEventListener('touchend', e => {
-            if (!isGame3DActive) return;
-            let diffX = e.changedTouches[0].clientX - touchStartX3D;
-            let diffY = e.changedTouches[0].clientY - touchStartY3D;
-
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 30 && currentLane < 2) currentLane++;
-                if (diffX < -30 && currentLane > 0) currentLane--;
-                targetX = laneX[currentLane];
-            } else {
-                if (diffY < -30 && !isJumping3D) { 
-                    isJumping3D = true; 
-                    jumpVel = 0.22; 
-                }
-                if (diffY > 30 && !isSliding3D) { 
-                    isSliding3D = true; 
-                    slideTimer = 22; 
-                }
-            }
-        });
-
-        function game3DLoop() {
-            if (!isGame3DActive) return;
-
-            let speed = Math.min(0.38 + (distance3D / 8000), 0.75);
-
-            playerGroup.position.x += (targetX - playerGroup.position.x) * 0.25;
-
-            if (activePowerups.magnet > 0) activePowerups.magnet--;
-            if (activePowerups.double > 0) activePowerups.double--;
-
-            let floorY = currentTrainRoof ? 2.3 : 0.0;
-
-            if (isJumping3D) {
-                playerY += jumpVel;
-                jumpVel -= 0.012;
-                if (playerY <= floorY) { 
-                    playerY = floorY; 
-                    isJumping3D = false; 
-                }
-            } else {
-                if (playerY > floorY) {
-                    playerY -= 0.12;
-                    if (playerY < floorY) playerY = floorY;
-                }
-            }
-
-            if (isSliding3D) {
-                slideTimer--;
-                playerGroup.scale.set(1, 0.45, 1);
-                if (slideTimer <= 0) { isSliding3D = false; playerGroup.scale.set(1, 1, 1); }
-            }
-
-            playerGroup.position.y = playerY;
-
-            // 1. Поезда и Рампы
-            if (Math.random() < 0.025) {
-                let lane = Math.floor(Math.random() * 3);
-                let randType = Math.random();
-
-                if (randType < 0.5) {
-                    const trainGeo = new THREE.BoxGeometry(1.8, 2.3, 10);
-                    const trainMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.5 });
-                    const train = new THREE.Mesh(trainGeo, trainMat);
-                    train.position.set(laneX[lane], 1.15, -80);
-                    scene.add(train);
-                    obstacles3D.push({ mesh: train, lane, type: 'train', zLen: 10 });
-                } else if (randType < 0.75) {
-                    const rampGeo = new THREE.BoxGeometry(1.6, 0.8, 3.5);
-                    const rampMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2 });
-                    const ramp = new THREE.Mesh(rampGeo, rampMat);
-                    ramp.rotation.x = 0.2;
-                    ramp.position.set(laneX[lane], 0.3, -80);
-                    scene.add(ramp);
-                    obstacles3D.push({ mesh: ramp, lane, type: 'ramp', zLen: 3.5 });
-                }
-            }
-
-            // 2. Монеты
-            if (Math.random() < 0.05) {
-                let lane = Math.floor(Math.random() * 3);
-                const coinGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.08, 16);
-                const coinMat = new THREE.MeshStandardMaterial({ color: 0xeab308, metalness: 0.8, roughness: 0.2 });
-                const coin = new THREE.Mesh(coinGeo, coinMat);
-                coin.rotation.x = Math.PI / 2;
-                coin.position.set(laneX[lane], 0.8, -80);
-                scene.add(coin);
-                coins3D.push({ mesh: coin, lane });
-            }
-
-            // 3. Бустеры
-            if (Math.random() < 0.008) {
-                let lane = Math.floor(Math.random() * 3);
-                let pType = Math.random() < 0.5 ? 'magnet' : 'double';
-                const pGeo = new THREE.SphereGeometry(0.4, 16, 16);
-                const pMat = new THREE.MeshStandardMaterial({ color: pType === 'magnet' ? 0x38bdf8 : 0xa855f7, emissive: 0x112244 });
-                const pMesh = new THREE.Mesh(pGeo, pMat);
-                pMesh.position.set(laneX[lane], 0.9, -80);
-                scene.add(pMesh);
-                powerups3D.push({ mesh: pMesh, lane, type: pType });
-            }
-
-            currentTrainRoof = null;
-            for (let i = obstacles3D.length - 1; i >= 0; i--) {
-                let obs = obstacles3D[i];
-                obs.mesh.position.z += speed;
-
-                if (obs.lane === currentLane) {
-                    let zDiff = Math.abs(obs.mesh.position.z - playerGroup.position.z);
-                    
-                    if (obs.type === 'train') {
-                        if (zDiff < 5.0 && playerY >= 2.1) {
-                            currentTrainRoof = obs;
-                        } 
-                        else if (zDiff < 4.5 && playerY < 2.0) {
-                            if (activePowerups.shield) {
-                                activePowerups.shield = false;
-                                scene.remove(obs.mesh);
-                                obstacles3D.splice(i, 1);
-                                showToast('🛡️ Щит спас от удара!');
-                                continue;
-                            }
-                            stop3DGame();
-                            addCoinsToServer(sessionCoins3D);
-                            showToast(`💥 Столкновение! Собрано: +${sessionCoins3D} 🟡`);
-                            return;
-                        }
-                    } else if (obs.type === 'ramp') {
-                        if (zDiff < 1.8 && playerY < 1.5) {
-                            isJumping3D = true;
-                            jumpVel = 0.28;
-                        }
-                    }
-                }
-
-                if (obs.mesh.position.z > 8) {
-                    scene.remove(obs.mesh);
-                    obstacles3D.splice(i, 1);
-                }
-            }
-
-            for (let i = coins3D.length - 1; i >= 0; i--) {
-                let coin = coins3D[i];
-                coin.mesh.position.z += speed;
-                coin.mesh.rotation.z += 0.08;
-
-                if (activePowerups.magnet > 0 && coin.mesh.position.z > -15) {
-                    coin.mesh.position.x += (playerGroup.position.x - coin.mesh.position.x) * 0.2;
-                    coin.mesh.position.y += (playerGroup.position.y - coin.mesh.position.y) * 0.2;
-                }
-
-                let distToPlayer = playerGroup.position.distanceTo(coin.mesh.position);
-                if (distToPlayer < 1.2) {
-                    let gain = activePowerups.double > 0 ? 2 : 1;
-                    sessionCoins3D += gain;
-                    document.getElementById('coins-3d').innerText = userCoins + sessionCoins3D;
-                    scene.remove(coin.mesh);
-                    coins3D.splice(i, 1);
-                } else if (coin.mesh.position.z > 8) {
-                    scene.remove(coin.mesh);
-                    coins3D.splice(i, 1);
-                }
-            }
-
-            for (let i = powerups3D.length - 1; i >= 0; i--) {
-                let p = powerups3D[i];
-                p.mesh.position.z += speed;
-                p.mesh.rotation.y += 0.05;
-
-                if (p.lane === currentLane && Math.abs(p.mesh.position.z - playerGroup.position.z) < 1.2) {
-                    if (p.type === 'magnet') { activePowerups.magnet = 300; showToast('🧲 Магнит активирован!'); }
-                    if (p.type === 'double') { activePowerups.double = 300; showToast('⚡ Удвоитель x2 активирован!'); }
-                    scene.remove(p.mesh);
-                    powerups3D.splice(i, 1);
-                } else if (p.mesh.position.z > 8) {
-                    scene.remove(p.mesh);
-                    powerups3D.splice(i, 1);
-                }
-            }
-
-            distance3D += speed * 2;
-            document.getElementById('dist-3d').innerText = Math.floor(distance3D);
-
-            renderer.render(scene, camera);
-            animFrameId = requestAnimationFrame(game3DLoop);
-        }
-
-        async function buyShopItem(itemType, cost) {
-            if (userCoins < cost) {
-                showToast('❌ Недостаточно CyberCoins!');
+        // ТАП ПО ЯДРУ
+        const clickArea = document.getElementById('click-area');
+        clickArea.addEventListener('pointerdown', (e) => {
+            if (userProfile.energy < 1) {
+                showToast('⚡ Энергия на нуле! Подождите зарядки.');
                 return;
             }
-            await addCoinsToServer(-cost);
 
-            if (itemType === 'radar') showToast('🎯 +1 Слот Радара разблокирован!');
-            if (itemType === 'speed') showToast('🚀 Фаст-Парс активирован!');
-            if (itemType === 'theme') showToast('🔑 Промокод темы: CYBER_PUNK');
+            vibrate('light');
+            userProfile.energy -= 1;
+            userProfile.coins += userProfile.multi_tap;
+            pendingTaps++;
+
+            coreHealth -= 4;
+            if (crackRays.length < 12) crackRays.push(Math.random() * Math.PI * 2);
+
+            if (coreHealth <= 0) {
+                coreHealth = 100;
+                crackRays = [];
+                userProfile.coins += userProfile.multi_tap * 10;
+                showToast('💥 Слой защиты взломан! Бонус +10х 🟡');
+            }
+
+            // Всплывающая цифра (+1 / +2)
+            const rect = clickArea.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const floatNum = document.createElement('div');
+            floatNum.className = 'floating-number';
+            floatNum.innerText = `+${userProfile.multi_tap}`;
+            floatNum.style.left = `${x - 15}px`;
+            floatNum.style.top = `${y - 20}px`;
+            clickArea.appendChild(floatNum);
+
+            setTimeout(() => floatNum.remove(), 800);
+            updateTycoonUI();
+
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(syncTapsWithServer, 1000);
+        });
+
+        async function syncTapsWithServer() {
+            if (pendingTaps === 0) return;
+            let tapsToSend = pendingTaps;
+            pendingTaps = 0;
+
+            try {
+                const res = await fetch('/api/game/sync_tap', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userProfile.coins = data.coins;
+                    updateTycoonUI();
+                }
+            } catch(e){}
+        }
+
+        async function buyItem(itemId) {
+            try {
+                const res = await fetch('/api/game/buy', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, item_id: itemId })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userProfile = data.profile;
+                    updateTycoonUI();
+                    showToast('✅ Успешно куплено!');
+                } else {
+                    showToast('❌ Недостаточно монет!');
+                }
+            } catch(e) {
+                showToast('Ошибка покупки');
+            }
         }
 
         async function fetchRadarList() {
