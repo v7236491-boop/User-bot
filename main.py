@@ -36,7 +36,7 @@ USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.3
 
 # =========================================================================
-# 👑 ПРЕМИАЛЬНАЯ ЛАТИНСКАЯ И ЭЛЛИНСКАЯ БАЗА (ВЫСОКАЯ ЦЕННОСТЬ)
+# 💎 ЛИНГВИСТИЧЕСКАЯ МАТРИЦА БРЕНД-НЕЙМИНГА (ОРФОЭПИЯ И СОНОРНОСТЬ)
 # =========================================================================
 TOP_BRANDS = list(set([
     "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
@@ -51,17 +51,41 @@ PURE_WORDS = list(set((
     "solace chronos tempest sapphire emerald olympus trident"
 ).split()))
 
-# Премиум-корни высокой ценности (звучат дорого и солидно)
-LUXURY_ROOTS = [
-    "aeth", "chron", "solis", "vort", "lum", "phos", "zeph", "celest", "aegis",
-    "crest", "vanguard", "valer", "kismet", "astral", "spect", "temp", "titan",
-    "mirag", "auror", "prism", "orion", "verve", "lunar", "stell", "zenith",
-    "hyper", "myth", "noble", "penn", "quant", "rhod", "siren", "solac"
+# 1. Сонорные префиксы (легко выговариваются, звучат дорого и приятно)
+BRAND_ROOTS = [
+    "aeth", "aero", "ast", "chrom", "cyb", "hyp", "kism", "lum", "lun", 
+    "mir", "nex", "orion", "phos", "prism", "sol", "spec", "stell", "temp", 
+    "tit", "velv", "verv", "vort", "zeph", "zen", "valen", "zoran", "celest"
 ]
 
-LUXURY_SUFFIXES = [
+# 2. Окончания премиум-класса
+BRAND_SUFFIXES = [
     "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"
 ]
+
+CONSONANTS_SOFT = "bdfklmnprstvz"
+VOWELS_SOFT = "aeiouy"
+
+def generate_brand_username(len_mode: str = "5-6") -> str:
+    """Генерирует звучный, легко запоминающийся ник по правилам орфоэпии."""
+    roll = random.random()
+    
+    # 85% — Сочные бренд-неологизмы (префикс + премиум суффикс)
+    if roll < 0.85 or len_mode == "5-6":
+        root = random.choice(BRAND_ROOTS)
+        suf = random.choice(BRAND_SUFFIXES)
+        candidate = root + suf
+        
+        # Корректируем двойные буквы для идеального произношения
+        candidate = candidate.replace("nn", "n").replace("ss", "s").replace("rr", "r").replace("oo", "o")
+        
+        if len_mode == "5-6" and len(candidate) > 6:
+            candidate = candidate[:6]
+        return candidate
+
+    # 15% — Словарный эксклюзив
+    else:
+        return random.choice(PURE_WORDS)
 
 # --- ХРАНИЛИЩЕ ЛИДЕРБОРДА ---
 def load_leaderboard():
@@ -99,7 +123,7 @@ def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_
     save_leaderboard(lb)
 
 # =========================================================================
-# 🇷🇺 ПРЕМИАЛЬНАЯ ОЦЕНКА РАНГОВ И СТОИМОСТИ
+# 🇷🇺 ЭКСПЕРТНАЯ ОЦЕНКА РАНГОВ И СТОИМОСТИ НА РУССКОМ
 # =========================================================================
 def calculate_catch_score(username: str, is_free: bool):
     if not is_free:
@@ -126,7 +150,7 @@ def calculate_catch_score(username: str, is_free: bool):
 
     is_trash = (max_cons_streak >= 3)
 
-    # 💎 SSS+ РАНГ: Эксклюзивные 5-буквенники или бренды
+    # 💎 SSS+ РАНГ: Эксклюзивные 5-буквенные активы
     if (username in TOP_BRANDS) or (length == 5 and not is_trash):
         return {
             "rank": "SSS+", 
@@ -135,7 +159,7 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 100
         }
 
-    # 🥇 SS РАНГ: Сочные 6-буквенные словарные/брендовые ники
+    # 🥇 SS РАНГ: Сочные 6-буквенные бренды
     if (username in PURE_WORDS) or (length == 6 and not is_trash):
         return {
             "rank": "SS", 
@@ -144,7 +168,7 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 85
         }
 
-    # 🥈 S РАНГ: Дорогие 7-буквенные неологизмы
+    # 🥈 S РАНГ: Дорогие 7-буквенники
     if length == 7 and not is_trash:
         return {
             "rank": "S", 
@@ -195,27 +219,6 @@ async def check_username_telethon(username: str) -> bool:
         return False
 
 # =========================================================================
-# 🧬 ГЕНЕРАТОР ВЫСОКОЦЕННЫХ ПРЕМИУМ-НИКНЕЙМОВ
-# =========================================================================
-def generate_smart_username(len_mode: str = "5-6") -> str:
-    roll = random.random()
-    
-    # 1. 85% — Генерация премиальных благородных бренд-имен (сочность + высокая свободоемкость)
-    if roll < 0.85 or len_mode == "5-6":
-        root = random.choice(LUXURY_ROOTS)
-        suf = random.choice(LUXURY_SUFFIXES)
-        candidate = root + suf
-        
-        # Если включен режим 5-6, строго следим за длиной
-        if len_mode == "5-6" and len(candidate) > 6:
-            candidate = candidate[:6]
-        return candidate
-
-    # 2. 15% — Попытка выбить популярные словарные слова
-    else:
-        return random.choice(PURE_WORDS)
-
-# =========================================================================
 # 📡 РАДАР
 # =========================================================================
 def load_radar_db() -> dict:
@@ -235,7 +238,7 @@ def save_radar_db(db: dict):
         pass
 
 async def radar_worker():
-    print("🚀 Радар запущен!")
+    print("🚀 Автономный Радар запущен!")
     while True:
         try:
             db = load_radar_db()
@@ -254,7 +257,7 @@ async def radar_worker():
                                 try:
                                     await bot.send_message(
                                         chat_id=int(chat_id), 
-                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nЗабирай!", 
+                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nБыстрее забирай!", 
                                         parse_mode="Markdown"
                                     )
                                     notified_chats.append(chat_id)
@@ -311,9 +314,9 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # Делаем до 15 быстрых проверок в секунду
+    # До 15 быстрых проверок в секунду для мгновенного поиска свободного бренд-ника
     for _ in range(15):
-        generated = generate_smart_username(len_mode)
+        generated = generate_brand_username(len_mode)
         is_free = await check_username_telethon(generated)
         if is_free:
             eval_data = calculate_catch_score(generated, True)
@@ -328,7 +331,7 @@ async def generate_username(
             }
         await asyncio.sleep(0.05)
 
-    fallback_nick = generate_smart_username(len_mode)
+    fallback_nick = generate_brand_username(len_mode)
     is_free_fallback = await check_username_telethon(fallback_nick)
     eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
     
