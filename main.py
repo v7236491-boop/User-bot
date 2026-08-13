@@ -18,6 +18,9 @@ INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 
+# --- ГЛОБАЛЬНАЯ ПАМЯТЬ СЕРВЕРА (Исключает любые повторы уловов) ---
+GENERATED_HISTORY = set()
+
 # --- ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID", "38162572"))
@@ -36,7 +39,7 @@ USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.3
 
 # =========================================================================
-# 💎 ЛИНГВИСТИЧЕСКАЯ МАТРИЦА БРЕНД-НЕЙМИНГА (ОРФОЭПИЯ И СОНОРНОСТЬ)
+# 💎 ПРЕМИУМ-КОНСТРУКТОР БРЕНДОВ И СЛОВАРИ
 # =========================================================================
 TOP_BRANDS = list(set([
     "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
@@ -51,41 +54,39 @@ PURE_WORDS = list(set((
     "solace chronos tempest sapphire emerald olympus trident"
 ).split()))
 
-# 1. Сонорные префиксы (легко выговариваются, звучат дорого и приятно)
 BRAND_ROOTS = [
-    "aeth", "aero", "ast", "chrom", "cyb", "hyp", "kism", "lum", "lun", 
-    "mir", "nex", "orion", "phos", "prism", "sol", "spec", "stell", "temp", 
-    "tit", "velv", "verv", "vort", "zeph", "zen", "valen", "zoran", "celest"
+    "aeth", "chron", "solis", "vort", "lum", "phos", "zeph", "celest", "aegis",
+    "crest", "vanguard", "valer", "kismet", "astral", "spect", "temp", "titan",
+    "mirag", "auror", "prism", "orion", "verve", "lunar", "stell", "zenith",
+    "hyper", "myth", "noble", "penn", "quant", "rhod", "siren", "solac"
 ]
 
-# 2. Окончания премиум-класса
 BRAND_SUFFIXES = [
     "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"
 ]
 
-CONSONANTS_SOFT = "bdfklmnprstvz"
-VOWELS_SOFT = "aeiouy"
-
 def generate_brand_username(len_mode: str = "5-6") -> str:
-    """Генерирует звучный, легко запоминающийся ник по правилам орфоэпии."""
-    roll = random.random()
-    
-    # 85% — Сочные бренд-неологизмы (префикс + премиум суффикс)
-    if roll < 0.85 or len_mode == "5-6":
-        root = random.choice(BRAND_ROOTS)
-        suf = random.choice(BRAND_SUFFIXES)
-        candidate = root + suf
+    """Генерирует уникальный красивый никнейм без повторов в истории."""
+    for _ in range(50):
+        roll = random.random()
+        if roll < 0.10:
+            candidate = random.choice(TOP_BRANDS)
+        elif roll < 0.25:
+            candidate = random.choice(PURE_WORDS)
+        else:
+            root = random.choice(BRAND_ROOTS)
+            suf = random.choice(BRAND_SUFFIXES)
+            candidate = (root + suf).replace("nn", "n").replace("ss", "s").replace("rr", "r").replace("oo", "o")
+            if len_mode == "5-6" and len(candidate) > 6:
+                candidate = candidate[:6]
         
-        # Корректируем двойные буквы для идеального произношения
-        candidate = candidate.replace("nn", "n").replace("ss", "s").replace("rr", "r").replace("oo", "o")
-        
-        if len_mode == "5-6" and len(candidate) > 6:
-            candidate = candidate[:6]
-        return candidate
-
-    # 15% — Словарный эксклюзив
-    else:
-        return random.choice(PURE_WORDS)
+        # Гарантируем, что этот ник не выпадал ранее
+        if candidate not in GENERATED_HISTORY:
+            return candidate
+            
+    # Запасной вариант на редчайший случай исчерпания
+    fallback_root = random.choice(BRAND_ROOTS)
+    return (fallback_root + random.choice(BRAND_SUFFIXES))[:6]
 
 # --- ХРАНИЛИЩЕ ЛИДЕРБОРДА ---
 def load_leaderboard():
@@ -150,7 +151,6 @@ def calculate_catch_score(username: str, is_free: bool):
 
     is_trash = (max_cons_streak >= 3)
 
-    # 💎 SSS+ РАНГ: Эксклюзивные 5-буквенные активы
     if (username in TOP_BRANDS) or (length == 5 and not is_trash):
         return {
             "rank": "SSS+", 
@@ -159,7 +159,6 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 100
         }
 
-    # 🥇 SS РАНГ: Сочные 6-буквенные бренды
     if (username in PURE_WORDS) or (length == 6 and not is_trash):
         return {
             "rank": "SS", 
@@ -168,7 +167,6 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 85
         }
 
-    # 🥈 S РАНГ: Дорогие 7-буквенники
     if length == 7 and not is_trash:
         return {
             "rank": "S", 
@@ -177,16 +175,14 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 65
         }
 
-    # 🥉 A РАНГ: Солидные 8-буквенники
     if length == 8 and not is_trash:
         return {
             "rank": "A", 
-            "status": "Стандартный красивый ник (~2-8 TON)", 
+            "status": "Стандартный красивый ник (~2-10 TON)", 
             "color": "#3b82f6", 
             "score": 40
         }
 
-    # ⚪ B РАНГ
     if not is_trash and length <= 12:
         return {
             "rank": "B", 
@@ -203,7 +199,7 @@ def calculate_catch_score(username: str, is_free: bool):
     }
 
 # =========================================================================
-# 🛡️ ПРОВЕРКА ЧЕРЕЗ TELETHON
+# 🛡️ ПРЯМАЯ ПРОВЕРКА ЧЕРЕЗ TELETHON
 # =========================================================================
 async def check_username_telethon(username: str) -> bool:
     username = username.replace("@", "").strip().lower()
@@ -291,7 +287,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
 
-# --- API ---
+# --- API ROUTING ---
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH): 
@@ -314,11 +310,14 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # До 15 быстрых проверок в секунду для мгновенного поиска свободного бренд-ника
-    for _ in range(15):
+    # Делаем до 25 проверок в секунду, пока не найдем 100% свободный никнейм
+    for _ in range(25):
         generated = generate_brand_username(len_mode)
         is_free = await check_username_telethon(generated)
         if is_free:
+            # Заносим найденный свободный ник в глобальную память
+            GENERATED_HISTORY.add(generated)
+            
             eval_data = calculate_catch_score(generated, True)
             if eval_data["score"] >= 40:
                 add_to_leaderboard(generated, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
@@ -335,8 +334,10 @@ async def generate_username(
     is_free_fallback = await check_username_telethon(fallback_nick)
     eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
     
-    if is_free_fallback and eval_data["score"] >= 40:
-        add_to_leaderboard(fallback_nick, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
+    if is_free_fallback:
+        GENERATED_HISTORY.add(fallback_nick)
+        if eval_data["score"] >= 40:
+            add_to_leaderboard(fallback_nick, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
 
     return {
         "status": "success", 
