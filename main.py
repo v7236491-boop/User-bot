@@ -20,7 +20,7 @@ LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 
 # --- ГЛОБАЛЬНАЯ ПАМЯТЬ СЕРВЕРА ---
 GENERATED_HISTORY = set()
-MAX_HISTORY_SIZE = 20000
+MAX_HISTORY_SIZE = 25000
 
 # --- ЗАЩИТА ОТ DDOS / RATE LIMITING ---
 IP_REQUEST_HISTORY = {}
@@ -43,18 +43,23 @@ else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
 # =========================================================================
-# 📚 БАЗЫ ДАННЫХ ДЛЯ МОДУЛЕЙ ФИЛЬТРАЦИИ
+# 📚 БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВ (15 КАТЕГОРИЙ)
 # =========================================================================
-
 AFFIX_DATABASE = {
     "personal": ["official", "real", "prime", "live", "blog", "vibe", "zone", "one", "daily", "fan", "hq", "club"],
-    "sports": ["fit", "run", "pro", "team", "cup", "champ", "sport", "gym", "league", "arena", "flex", "power"],
+    "military": ["core", "tactics", "force", "unit", "prime", "zone", "command", "shield", "squad", "base", "lead"],
+    "media": ["media", "universe", "zone", "hero", "studio", "space", "channel", "feed", "vision", "press", "cast"],
     "tech": ["lab", "hub", "space", "core", "app", "dev", "tech", "base", "net", "cloud", "desk", "code", "bot"],
     "crypto": ["vault", "pay", "trade", "node", "coin", "drop", "capital", "cash", "chain", "pool", "dex", "mint"],
     "gaming": ["play", "zone", "clan", "gg", "craft", "squad", "hero", "skill", "arena", "guild", "win", "rush"],
+    "sports": ["fit", "run", "pro", "team", "cup", "champ", "sport", "gym", "league", "arena", "flex", "power"],
     "business": ["store", "shop", "brand", "market", "line", "boutique", "supply", "group", "co", "outlet", "style"],
-    "media": ["media", "news", "press", "feed", "sound", "wave", "beat", "cast", "stream", "vision", "studio"],
     "auto": ["drive", "garage", "motors", "auto", "speed", "custom", "track", "power", "racing", "club"],
+    "design": ["art", "studio", "design", "space", "lab", "craft", "visual", "frame", "gallery", "concept"],
+    "food": ["fresh", "food", "cafe", "kitchen", "supply", "lounge", "taste", "craft", "market", "bar"],
+    "music": ["sound", "beat", "wave", "records", "fm", "audio", "track", "vibe", "studio", "label"],
+    "education": ["academy", "study", "hub", "mind", "center", "pioneer", "lab", "learn", "skill", "base"],
+    "estate": ["estate", "realty", "place", "loft", "space", "house", "group", "park", "point", "living"],
     "auto_detect": ["my", "get", "go", "hq", "one", "vibe", "space", "zone", "core", "hub", "lab", "pro"]
 }
 
@@ -78,7 +83,7 @@ BRAND_SUFFIXES = [
 ]
 
 # =========================================================================
-# 🧬 ГЕНЕРАТОРЫ
+# 🧬 АЛГОРИТМЫ ГЕНЕРАЦИИ (БЕЗ СБРОСА ФИЛЬТРА)
 # =========================================================================
 
 def generate_prefix_master(user_input: str, category: str = "auto_detect", position: str = "mix") -> str:
@@ -87,17 +92,15 @@ def generate_prefix_master(user_input: str, category: str = "auto_detect", posit
     chosen_affix = random.choice(affixes)
 
     if position == "prefix":
-        candidate = f"{chosen_affix}{clean_input}"
+        return f"{chosen_affix}{clean_input}"
     elif position == "suffix":
-        candidate = f"{clean_input}{chosen_affix}"
+        return f"{clean_input}{chosen_affix}"
     else:
-        candidate = f"{clean_input}{chosen_affix}" if random.random() < 0.6 else f"{chosen_affix}{clean_input}"
-
-    return candidate
+        return f"{clean_input}{chosen_affix}" if random.random() < 0.6 else f"{chosen_affix}{clean_input}"
 
 def generate_translit_brand() -> str:
     base_word = random.choice(TRANSLIT_WORDS)
-    if random.random() < 0.30:
+    if random.random() < 0.35:
         affix = random.choice(TRANSLIT_AFFIXES)
         return f"{base_word}{affix}"
     return base_word
@@ -319,7 +322,8 @@ async def generate_username(
     if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE:
         GENERATED_HISTORY.clear()
 
-    for _ in range(12):
+    # СТРОГАЯ ГЕНЕРАЦИЯ БЕЗ СБРОСА ФИЛЬТРА
+    for _ in range(15):
         if mode == "prefix_master" and user_input.strip():
             generated = generate_prefix_master(user_input, category, position)
         elif mode == "translit":
@@ -341,9 +345,16 @@ async def generate_username(
                     "is_free": True, 
                     "evaluation": eval_data
                 }
-            await asyncio.sleep(0.04)
+            await asyncio.sleep(0.08)
 
-    fallback_nick = generate_standard_brand(len_mode)
+    # Если за 15 попыток все сгенерированные аффиксы были заняты, делаем доп-круг СТРОГО по выбранному модулю
+    if mode == "prefix_master" and user_input.strip():
+        fallback_nick = generate_prefix_master(user_input, category, "suffix")
+    elif mode == "translit":
+        fallback_nick = generate_translit_brand()
+    else:
+        fallback_nick = generate_standard_brand(len_mode)
+
     is_free_fallback = await check_username_telethon(fallback_nick)
     eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
     
