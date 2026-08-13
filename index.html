@@ -24,7 +24,7 @@
             background-color: var(--bg-app); color: var(--text-main);
             font-family: 'Inter', -apple-system, sans-serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column;
-            overflow: hidden; position: relative;
+            overflow-x: hidden; position: relative;
             transition: background-color 0.5s ease, color 0.5s ease;
         }
 
@@ -67,7 +67,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* --- ИНТЕРАКТИВНЫЕ ХОЛСТЫ И СЛОИ --- */
         #fog-canvas, #secret-canvas {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: -10; pointer-events: none;
@@ -103,14 +102,12 @@
             border: 1px solid var(--glass-border); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--glass-highlight);
         }
 
-        /* --- НАВИГАЦИЯ --- */
         header { display: flex; justify-content: space-between; padding: 15px 20px; z-index: 50; width: 100%; max-width: 600px; margin: 0 auto; }
         .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: 0.3s; border-radius: 12px; }
         .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--primary); }
         .nav-btn svg { opacity: 0.8; transition: 0.3s; }
         .nav-btn:hover svg { opacity: 1; filter: drop-shadow(0 0 5px var(--primary)); stroke: var(--primary); }
 
-        /* ПЛАВАЮЩИЕ КНОПКИ В НИЖНИХ УГЛАХ */
         .floating-achieving-btn {
             position: fixed; bottom: 20px; left: 20px; z-index: 90;
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -132,15 +129,14 @@
         .floating-leaderboard-btn:active { transform: scale(0.92); }
         .floating-leaderboard-btn:hover { border-color: #eab308; box-shadow: 0 0 25px rgba(234, 179, 8, 0.45); }
 
-        /* --- ГЛАВНЫЙ ЭКРАН --- */
-        main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transform: translateY(-3vh); }
-        .app-container { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 14px; }
+        main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transform: translateY(-2vh); }
+        .app-container { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
 
         .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
         .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .platform-btn.active { background: var(--primary-glow); color: var(--primary); box-shadow: 0 4px 15px var(--primary-glow); }
 
-        .result-field { border-radius: 24px; padding: 35px 20px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; }
+        .result-field { border-radius: 24px; padding: 30px 20px; text-align: center; min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; }
         .result-field:hover { border-color: var(--primary); box-shadow: 0 15px 40px var(--primary-glow); }
         .username-text { font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); word-break: break-all; font-family: monospace; }
         .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
@@ -158,10 +154,9 @@
         .btn-generate:active { transform: scale(0.96); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; border: 1px solid var(--border-color); cursor: not-allowed; }
 
-        /* --- МОДАЛЬНЫЕ ОКНА --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(4, 8, 6, 0.85); backdrop-filter: blur(8px); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s ease; }
         .modal-overlay.active { opacity: 1; visibility: visible; pointer-events: auto; }
-        .modal-content { width: 100%; max-width: 380px; max-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .modal-content { width: 100%; max-width: 400px; max-height: 85vh; display: flex; flex-direction: column; position: relative; }
         .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
         .modal-title { margin: 0; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
         .btn-close { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
@@ -216,24 +211,21 @@
         }
         .btn-reset-custom:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* --- ИСТОРИЯ И СВАЙПЫ С ФОНОВЫМИ ИКОНКАМИ В УГЛАХ --- */
         .history-wrapper {
             position: relative; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
             background: transparent;
             transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease;
             max-height: 80px;
         }
-        /* Подложка фонов при свайпе */
-        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.4); } /* Красный фон (справа налево / тянем вправо) */
-        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.4); }  /* Голубой фон (слева направо / тянем влево) */
+        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.4); }
+        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.4); }
 
-        /* Фиксированные иконки на открывающемся свободном пространстве фона */
         .swipe-action-icon {
             position: absolute; top: 50%; transform: translateY(-50%);
             font-size: 1.25rem; opacity: 0; transition: opacity 0.2s ease; z-index: 1;
         }
-        .swipe-icon-left { left: 18px; color: #fff; }   /* Корзина слева (появляется при свайпе вправо) */
-        .swipe-icon-right { right: 18px; color: #fff; } /* Иконка Share справа (появляется при свайпе влево) */
+        .swipe-icon-left { left: 18px; color: #fff; }
+        .swipe-icon-right { right: 18px; color: #fff; }
 
         .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
         .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
@@ -259,7 +251,6 @@
         }
         .lb-finder-btn:active { transform: scale(0.95); }
 
-        /* КАРТОЧКА ДОСТИЖЕНИЯ */
         .achieve-card {
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
             border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;
@@ -334,12 +325,10 @@
         </div>
     </main>
 
-    <!-- ПЛАВАЮЩАЯ КНОПКА ДОСТИЖЕНИЙ (ЛЕВЫЙ УГОЛ) -->
     <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
         🏆 <span id="achieve-counter-badge">0/100</span>
     </button>
 
-    <!-- ПЛАВАЮЩАЯ КНОПКА ЛИДЕРБОРДА (ПРАВЫЙ УГОЛ) -->
     <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')" title="Рейтинг и улов">
         📊 <span style="font-size:0.8rem; opacity:0.9;">Топ</span>
     </button>
@@ -445,7 +434,7 @@
                 </div>
                 
                 <div class="setting-item">
-                    <div class="setting-info"><span class="setting-title">Смарт-фильтр (AI)</span><span class="setting-desc">Короткие читаемые слова</span></div>
+                    <div class="setting-info"><span class="setting-title">Смарт-Фильтры и Модули</span><span class="setting-desc">Префикс-Мастер, Транслит</span></div>
                     <div class="setting-controls">
                         <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
@@ -454,21 +443,55 @@
                     </div>
                 </div>
 
+                <!-- 🌟 ВНЕДРЕННЫЕ УМНЫЕ МОДУЛИ 🌟 -->
                 <div class="filter-options" id="filter-menu">
                     <div class="filter-row">
-                        <span style="font-size: 0.85rem; color: var(--text-main);">Длина слова</span>
+                        <span style="font-size: 0.85rem; color: var(--text-main);">Режим генератора</span>
+                        <select id="gen-mode-select" onchange="updateGenModeUI()">
+                            <option value="standard">Стандартный неологизм</option>
+                            <option value="prefix_master">👑 Префикс-Мастер</option>
+                            <option value="translit">🇷🇺 Стильный Транслит</option>
+                        </select>
+                    </div>
+
+                    <!-- ПОЛЯ ДЛЯ МОДУЛЯ ПРЕФИКС-МАСТЕР -->
+                    <div id="prefix-master-box" style="display:none; margin-top:10px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top:10px;">
+                        <div style="font-size: 0.75rem; color: var(--primary); font-weight:600; margin-bottom: 6px;">Настройка Префикс-Мастера:</div>
+                        <input type="text" id="prefix-user-input" class="form-input" style="margin-bottom:8px;" placeholder="Введи ник (ronaldo, apple...)">
+                        
+                        <div class="filter-row">
+                            <span style="font-size: 0.8rem; color: var(--text-main);">Контекст</span>
+                            <select id="prefix-category-select">
+                                <option value="auto_detect">Авто-определение</option>
+                                <option value="personal">👤 Личность / Блогер</option>
+                                <option value="tech">💻 IT / Софт</option>
+                                <option value="crypto">📈 Крипта / Web3</option>
+                                <option value="sports">⚽ Спорт / Фитнес</option>
+                                <option value="gaming">🎮 Игры / Киберспорт</option>
+                                <option value="business">🛍️ Бизнес / Магазин</option>
+                                <option value="media">🎬 Медиа / Музыка</option>
+                                <option value="auto">🚗 Авто / Мото</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-row">
+                            <span style="font-size: 0.8rem; color: var(--text-main);">Позиция приставки</span>
+                            <select id="prefix-position-select">
+                                <option value="mix">Микс (Авто-подбор)</option>
+                                <option value="suffix">Суффикс (В конец)</option>
+                                <option value="prefix">Префикс (В начало)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 10px 0;">
+
+                    <div class="filter-row">
+                        <span style="font-size: 0.85rem; color: var(--text-main);">Длина символов</span>
                         <select id="filter-len">
                             <option value="5-6">5-6 символов</option>
                             <option value="7-8">7-8 символов</option>
                         </select>
-                    </div>
-                    <div class="filter-row">
-                        <span style="font-size: 0.85rem; color: var(--text-main);">Добавить цифры</span>
-                        <label class="switch"><input type="checkbox" id="filter-num"><span class="slider"></span></label>
-                    </div>
-                    <div class="filter-row">
-                        <span style="font-size: 0.85rem; color: var(--text-main);">Разрешить "_"</span>
-                        <label class="switch"><input type="checkbox" id="filter-und"><span class="slider"></span></label>
                     </div>
                 </div>
 
@@ -607,6 +630,12 @@
 
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
+        function updateGenModeUI() {
+            const mode = document.getElementById('gen-mode-select').value;
+            const pBox = document.getElementById('prefix-master-box');
+            pBox.style.display = (mode === 'prefix_master') ? 'block' : 'none';
+        }
+
         function saveStats() {
             localStorage.setItem('vh_stat_gen', stats.generations.toString());
             localStorage.setItem('vh_stat_radar', stats.radarAdded.toString());
@@ -616,7 +645,6 @@
             checkAchievementProgress();
         }
 
-        /* --- ПЕРЕХОД В ЛС Telegram ЛОВЦА --- */
         function openUserChat(finderId) {
             if (!finderId || finderId === "0") return;
             vibrate('light');
@@ -628,7 +656,6 @@
             }
         }
 
-        /* --- ГЛОБАЛЬНЫЙ ЛИДЕРБОРД --- */
         async function fetchLeaderboard(period = 'all') {
             const container = document.getElementById('leaderboard-list-container');
             container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка рейтинга...</div>';
@@ -642,7 +669,7 @@
                         const rankMedal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
 
                         return `
-                            <div class="lb-card" style="border-left: 3px solid ${item.color};">
+                            <div class="lb-card" style="border-left: 3px solid ${item.color}; border-radius:12px; padding:10px; background:rgba(255,255,255,0.03);">
                                 <div style="display:flex; align-items:center; gap:12px;">
                                     <div class="lb-rank-badge">${rankMedal}</div>
                                     <div>
@@ -666,7 +693,6 @@
             }
         }
 
-        /* --- СЕКРЕТНЫЕ ТЕМЫ И ПРОМОКОДЫ --- */
         function submitSecretCode() {
             const input = document.getElementById('secret-code-input');
             const code = input.value.trim().toUpperCase();
@@ -806,7 +832,6 @@
             }
         }
 
-        /* --- БАЗА 100 ДОСТИЖЕНИЙ --- */
         const ACHIEVEMENTS_DATA = [];
         const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
         
@@ -882,7 +907,6 @@
             }).join('');
         }
 
-        /* --- ИНТЕРАКТИВНЫЙ ТУМАН --- */
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
         let width, height;
@@ -927,7 +951,6 @@
         }
         drawFog();
 
-        /* --- ЛЕТАЮЩИЕ ЭМОДЗИ --- */
         let floatingEmojisList = [];
         let emojiElements = [];
 
@@ -1172,7 +1195,6 @@
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        // --- РАДАР ---
         async function fetchRadarList() {
             const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
             const data = await res.json(); renderRadar(data.targets);
@@ -1195,7 +1217,6 @@
             cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" onclick="removeRadarTarget('${t}')">Отменить</button></div>`).join('');
         }
 
-        // --- ИСТОРИЯ ---
         function saveToHistory(item) {
             if (!item.user || item.user === "timeout" || item.user === "error") return;
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -1232,7 +1253,6 @@
                 div.ontouchmove = handleTouchMove;
                 div.ontouchend = handleTouchEnd;
 
-                // КЛИК ТЕПЕРЬ ТОЛЬКО КОПИРУЕТ (НИКАКИХ СЛУЧАЙНЫХ ШАРОВ)
                 div.onclick = (e) => {
                     if (isSwiping) return;
                     navigator.clipboard.writeText(item.user); 
@@ -1252,7 +1272,6 @@
             }
         }
 
-        /* --- СВАЙПЫ С ПОДЛОЖКОЙ И ИКОНКАМИ В УГЛАХ --- */
         let startX = 0, currentX = 0, activeCard = null, isSwiping = false;
 
         function handleTouchStart(e) {
@@ -1273,13 +1292,11 @@
             if (Math.abs(diffX) > 10) isSwiping = true;
 
             if (diffX > 0) {
-                // Свайп ВПРАВО -> Красный фон (Корзина слева)
                 if (wrapper) {
                     wrapper.classList.add('swiping-right');
                     wrapper.classList.remove('swiping-left');
                 }
             } else if (diffX < 0) {
-                // Свайп ВЛЕВО -> Голубой фон (Самолетик справа)
                 if (wrapper) {
                     wrapper.classList.add('swiping-left');
                     wrapper.classList.remove('swiping-right');
@@ -1298,7 +1315,6 @@
             const wrapper = document.getElementById(`hist-wrap-${index}`);
 
             if (diffX > 140) {
-                // ПОЛНЫЙ СВАЙП ВПРАВО -> УДАЛЕНИЕ
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translateX(100%)';
                 activeCard.style.opacity = '0';
@@ -1313,7 +1329,6 @@
                 }, 350);
             } 
             else if (diffX < -140) {
-                // ПОЛНЫЙ СВАЙП ВЛЕВО -> ПОДЕЛИТЬСЯ В ТЕЛЕГРАМ
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translateX(-100%)';
                 activeCard.style.opacity = '0';
@@ -1333,7 +1348,6 @@
                 }, 200);
             } 
             else {
-                // ВОЗВРАТ КАРТОЧКИ
                 activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
                 activeCard.style.transform = 'translateX(0px)';
                 activeCard.style.opacity = '1';
@@ -1347,7 +1361,6 @@
             setTimeout(() => { isSwiping = false; }, 50);
         }
 
-        // --- СЛОТ МАШИНА И ГЕНЕРАЦИЯ ---
         function startSlotMachine() {
             const el = document.getElementById('res-username'); const chars = "abcdefghijklmnopqrstuvwxyz";
             document.getElementById('res-market').style.display = 'none'; document.getElementById('result-box').classList.remove('golden-mode');
@@ -1379,18 +1392,20 @@
             await fetchUsername(); btn.textContent = "Сгенерировать"; btn.disabled = false;
         }
 
+        /* --- ЗАПРОС К backend API С ПОДДЕРЖКОЙ НОВЫХ МОДУЛЕЙ --- */
         async function fetchUsername() {
             isFetching = true; startSlotMachine();
             
             stats.generations++;
             saveStats();
 
-            const useFilter = document.getElementById('toggle-filter').checked;
+            const mode = document.getElementById('gen-mode-select').value;
+            const userInput = document.getElementById('prefix-user-input').value;
+            const category = document.getElementById('prefix-category-select').value;
+            const position = document.getElementById('prefix-position-select').value;
             const lenMode = document.getElementById('filter-len').value;
-            const useNum = document.getElementById('filter-num').checked;
-            const useUnd = document.getElementById('filter-und').checked;
 
-            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`;
+            const url = `/api/generate?platform=${currentPlatform}&mode=${mode}&user_input=${encodeURIComponent(userInput)}&category=${category}&position=${position}&len_mode=${lenMode}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`;
 
             try {
                 const res = await fetch(url);
@@ -1409,7 +1424,7 @@
                     saveToHistory(catchItem);
                     if (isAuto) autoParseCatches.push(catchItem);
 
-                    if (data.evaluation.status.includes("Fragment")) {
+                    if (data.evaluation.status.includes("Fragment") || data.evaluation.rank === "SSS+") {
                         mEl.style.display = 'inline-block'; mEl.textContent = data.evaluation.status; triggerJackpot();
                     } else { vibrate('light'); }
                 }
@@ -1420,7 +1435,6 @@
             } finally { isFetching = false; }
         }
 
-        // --- ИТОГИ АВТОПАРСА ---
         function showSummaryModal() {
             if (autoParseCatches.length === 0) {
                 showToast("За автопарс свободных ников не найдено");
@@ -1458,7 +1472,6 @@
             showToast(`✨ @${username} скопирован!`);
         }
 
-        // --- ДЕЙСТВИЯ: ПОДЕЛИТЬСЯ И ЗАНЯТЬ ---
         function shareToFriends() {
             vibrate('light');
             const botUsername = "selectionusername_bot";
