@@ -20,13 +20,13 @@ LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 
 # --- ГЛОБАЛЬНАЯ ПАМЯТЬ СЕРВЕРА ---
 GENERATED_HISTORY = set()
-MAX_HISTORY_SIZE = 15000
+MAX_HISTORY_SIZE = 20000
 
 # --- ЗАЩИТА ОТ DDOS / RATE LIMITING ---
 IP_REQUEST_HISTORY = {}
-MAX_REQUESTS_PER_MINUTE = 25
+MAX_REQUESTS_PER_MINUTE = 30
 USER_COOLDOWNS = {}
-COOLDOWN_SECONDS = 0.4
+COOLDOWN_SECONDS = 0.3
 
 # --- ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -43,89 +43,73 @@ else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
 # =========================================================================
-# 💎 МИЛЛИОННАЯ КОМБИНАТОРНАЯ МАТРИЦА И ПРЕМИУМ-СОСТАВНЫЕ НИКИ
+# 📚 БАЗЫ ДАННЫХ ДЛЯ МОДУЛЕЙ ФИЛЬТРАЦИИ
 # =========================================================================
 
-# Базовые бренды и слова для составных 5% сочетаний (Subway Fresh style)
-CORE_BRANDS = [
-    "subway", "matrix", "crypto", "cyber", "orbit", "vortex", "nexus", "shadow",
-    "phantom", "vector", "signal", "pulse", "aether", "solaris", "velvet", "zenith",
-    "qubit", "prisma", "apex", "vertex", "sigma", "hyper", "titan", "astro"
+AFFIX_DATABASE = {
+    "personal": ["official", "real", "prime", "live", "blog", "vibe", "zone", "one", "daily", "fan", "hq", "club"],
+    "sports": ["fit", "run", "pro", "team", "cup", "champ", "sport", "gym", "league", "arena", "flex", "power"],
+    "tech": ["lab", "hub", "space", "core", "app", "dev", "tech", "base", "net", "cloud", "desk", "code", "bot"],
+    "crypto": ["vault", "pay", "trade", "node", "coin", "drop", "capital", "cash", "chain", "pool", "dex", "mint"],
+    "gaming": ["play", "zone", "clan", "gg", "craft", "squad", "hero", "skill", "arena", "guild", "win", "rush"],
+    "business": ["store", "shop", "brand", "market", "line", "boutique", "supply", "group", "co", "outlet", "style"],
+    "media": ["media", "news", "press", "feed", "sound", "wave", "beat", "cast", "stream", "vision", "studio"],
+    "auto": ["drive", "garage", "motors", "auto", "speed", "custom", "track", "power", "racing", "club"],
+    "auto_detect": ["my", "get", "go", "hq", "one", "vibe", "space", "zone", "core", "hub", "lab", "pro"]
+}
+
+TRANSLIT_WORDS = [
+    "vostok", "imperia", "pobeda", "bereg", "kultura", "sovet", "otklik", "zvezda", 
+    "priboy", "vektor", "osnova", "nasledie", "prikaz", "tishina", "mira", "groza", 
+    "iskra", "metel", "shelest", "luch", "prostor", "vremya", "sfora", "sokol", 
+    "kedr", "buran", "tayga", "skala", "utes", "volna", "plamya", "argon", "granit"
 ]
 
-PREMIUM_MODIFIERS = [
-    "fresh", "club", "lab", "hub", "space", "vibe", "zone", "prime", "pro",
-    "one", "base", "core", "link", "wave", "flow", "spot", "vault", "mind"
-]
+TRANSLIT_AFFIXES = ["space", "lab", "vibe", "club", "one", "media", "hub", "zone", "core", "hq"]
 
-# Топовые сонорные корни (50+)
 BRAND_ROOTS = [
     "aeth", "chron", "sol", "vort", "lum", "phos", "zeph", "celest", "aeg", "crest",
     "val", "kism", "ast", "spect", "temp", "tit", "mir", "aur", "prism", "orion",
-    "verv", "lun", "stell", "zen", "hyp", "myth", "nobl", "quant", "rhod", "sir",
-    "solac", "krypt", "nebul", "synth", "neor", "vax", "zoran", "velv", "aero", "omni",
-    "dusk", "dawn", "echo", "flux", "rift", "glow", "pulse", "crest", "vark", "zene"
+    "verv", "lun", "stell", "zen", "hyp", "myth", "nobl", "quant", "rhod", "sir"
 ]
 
-# Связующие элементы для богатства звучания (16)
-BRAND_MIDDLES = [
-    "o", "a", "i", "e", "u", "ar", "or", "in", "is", "ex", "an", "el", "on", "al", "ev", "ix"
-]
-
-# Сочные суффиксы (24)
 BRAND_SUFFIXES = [
-    "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth",
-    "is", "ux", "ax", "era", "ita", "ys", "en", "op", "ez", "os", "id"
+    "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"
 ]
 
-TOP_BRANDS_EVAL = set(CORE_BRANDS)
-PURE_WORDS_EVAL = set(PREMIUM_MODIFIERS)
+# =========================================================================
+# 🧬 ГЕНЕРАТОРЫ
+# =========================================================================
 
-def generate_brand_username(len_mode: str = "5-6") -> str:
-    """Генерирует уникальный, сочный никнейм из миллиона вариантов."""
-    global GENERATED_HISTORY
-    
-    if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE:
-        GENERATED_HISTORY.clear()
+def generate_prefix_master(user_input: str, category: str = "auto_detect", position: str = "mix") -> str:
+    clean_input = user_input.lower().strip().replace("@", "")
+    affixes = AFFIX_DATABASE.get(category, AFFIX_DATABASE["auto_detect"])
+    chosen_affix = random.choice(affixes)
 
-    for _ in range(20):
-        roll = random.random()
-        
-        # 🌟 5% ШАНС: Составной Ультра-дорогой никнейм (Subway Fresh style)
-        if roll < 0.05:
-            brand = random.choice(CORE_BRANDS)
-            modifier = random.choice(PREMIUM_MODIFIERS)
-            candidate = brand + modifier
-        
-        # 🌟 95% ШАНС: Трехсложные или двухсложные миллионные неологизмы
-        else:
-            root = random.choice(BRAND_ROOTS)
-            suf = random.choice(BRAND_SUFFIXES)
-            
-            # 40% шанс добавить связующую медиаль для усложнения и сочности
-            if random.random() < 0.40 and len_mode != "5-6":
-                mid = random.choice(BRAND_MIDDLES)
-                candidate = root + mid + suf
-            else:
-                candidate = root + suf
-                
-            # Очистка сложных стыков
-            candidate = (candidate.replace("nn", "n")
-                                 .replace("ss", "s")
-                                 .replace("rr", "r")
-                                 .replace("oo", "o")
-                                 .replace("ee", "e"))
-            
-            if len_mode == "5-6" and len(candidate) > 6:
-                candidate = candidate[:6]
+    if position == "prefix":
+        candidate = f"{chosen_affix}{clean_input}"
+    elif position == "suffix":
+        candidate = f"{clean_input}{chosen_affix}"
+    else:
+        candidate = f"{clean_input}{chosen_affix}" if random.random() < 0.6 else f"{chosen_affix}{clean_input}"
 
-        if candidate not in GENERATED_HISTORY and len(candidate) >= 5:
-            return candidate
+    return candidate
 
+def generate_translit_brand() -> str:
+    base_word = random.choice(TRANSLIT_WORDS)
+    if random.random() < 0.30:
+        affix = random.choice(TRANSLIT_AFFIXES)
+        return f"{base_word}{affix}"
+    return base_word
+
+def generate_standard_brand(len_mode: str = "5-6") -> str:
     root = random.choice(BRAND_ROOTS)
-    return (root + random.choice(BRAND_SUFFIXES))[:6]
+    suf = random.choice(BRAND_SUFFIXES)
+    candidate = (root + suf).replace("nn", "n").replace("ss", "s").replace("rr", "r").replace("oo", "o")
+    if len_mode == "5-6" and len(candidate) > 6:
+        candidate = candidate[:6]
+    return candidate
 
-# --- ХРАНИЛИЩЕ ЛИДЕРБОРДА ---
 def load_leaderboard():
     if os.path.exists(LEADERBOARD_PATH):
         try:
@@ -160,9 +144,6 @@ def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_
     })
     save_leaderboard(lb)
 
-# =========================================================================
-# 🇷🇺 ЭКСПЕРТНАЯ ОЦЕНКА РАНГОВ И СТОИМОСТИ НА РУССКОМ
-# =========================================================================
 def calculate_catch_score(username: str, is_free: bool):
     if not is_free:
         return {"rank": "F", "status": "Занят пользователем или каналом", "color": "#ef4444", "score": 0}
@@ -188,51 +169,20 @@ def calculate_catch_score(username: str, is_free: bool):
 
     is_trash = (max_cons_streak >= 3)
 
-    # Двухсоставные топовые брендовые уловы (SubwayFresh стиль)
-    is_composite_premium = any(brand in username for brand in CORE_BRANDS) and any(mod in username for mod in PREMIUM_MODIFIERS)
-
-    if is_composite_premium or (length == 5 and not is_trash):
-        return {
-            "rank": "SSS+", 
-            "status": "Эксклюзивный актив (~200-800+ TON)", 
-            "color": "#29c75f", 
-            "score": 100
-        }
+    if length == 5 and not is_trash:
+        return {"rank": "SSS+", "status": "Эксклюзивный актив (~200-800+ TON)", "color": "#29c75f", "score": 100}
 
     if length == 6 and not is_trash:
-        return {
-            "rank": "SS", 
-            "status": "Редкий элитный ник (~50-200 TON)", 
-            "color": "#eab308", 
-            "score": 85
-        }
+        return {"rank": "SS", "status": "Редкий элитный ник (~50-200 TON)", "color": "#eab308", "score": 85}
 
     if length == 7 and not is_trash:
-        return {
-            "rank": "S", 
-            "status": "Премиум бренд (~15-50 TON)", 
-            "color": "#a855f7", 
-            "score": 65
-        }
+        return {"rank": "S", "status": "Премиум бренд (~15-50 TON)", "color": "#a855f7", "score": 65}
 
     if length <= 10 and not is_trash:
-        return {
-            "rank": "A", 
-            "status": "Стандартный красивый ник (~3-15 TON)", 
-            "color": "#3b82f6", 
-            "score": 40
-        }
+        return {"rank": "A", "status": "Стандартный красивый ник (~3-15 TON)", "color": "#3b82f6", "score": 40}
 
-    return {
-        "rank": "B", 
-        "status": "Для личного пользования (~1 TON)", 
-        "color": "#64748b", 
-        "score": 20
-    }
+    return {"rank": "B", "status": "Для личного пользования (~1 TON)", "color": "#64748b", "score": 20}
 
-# =========================================================================
-# 🛡️ ПРОВЕРКА ЧЕРЕЗ TELETHON
-# =========================================================================
 async def check_username_telethon(username: str) -> bool:
     username = username.replace("@", "").strip().lower()
     if len(username) < 5: 
@@ -246,9 +196,6 @@ async def check_username_telethon(username: str) -> bool:
     except Exception:
         return False
 
-# =========================================================================
-# 📡 РАДАР
-# =========================================================================
 def load_radar_db() -> dict:
     if os.path.exists(RADAR_DB_PATH):
         try:
@@ -302,7 +249,6 @@ async def radar_worker():
             pass
         await asyncio.sleep(5)
 
-# --- LIFESPAN MANAGER ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("⏳ Запуск Telethon...")
@@ -319,9 +265,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
 
-# =========================================================================
-# 🛡️ MIDDLEWARE ЗАЩИТЫ ОТ DDOS / БОТОВ
-# =========================================================================
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host if request.client else "global"
@@ -346,7 +289,6 @@ async def rate_limit_middleware(request: Request, call_next):
     IP_REQUEST_HISTORY[client_ip].append(now)
     return await call_next(request)
 
-# --- API ROUTING ---
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH): 
@@ -358,6 +300,10 @@ async def generate_username(
     request: Request, 
     platform: str = Query("telegram"),
     len_mode: str = Query("5-6"),
+    mode: str = Query("standard"),
+    user_input: str = Query(""),
+    category: str = Query("auto_detect"),
+    position: str = Query("mix"),
     finder_name: str = Query("Аноним"),
     finder_id: str = Query("0")
 ):
@@ -370,25 +316,34 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # До 8 точечных быстрых проверок
-    for _ in range(8):
-        generated = generate_brand_username(len_mode)
-        is_free = await check_username_telethon(generated)
-        if is_free:
-            GENERATED_HISTORY.add(generated)
-            eval_data = calculate_catch_score(generated, True)
-            if eval_data["score"] >= 40:
-                add_to_leaderboard(generated, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
-            return {
-                "status": "success", 
-                "generated_username": generated, 
-                "platform": platform, 
-                "is_free": True, 
-                "evaluation": eval_data
-            }
-        await asyncio.sleep(0.04)
+    if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE:
+        GENERATED_HISTORY.clear()
 
-    fallback_nick = generate_brand_username(len_mode)
+    for _ in range(12):
+        if mode == "prefix_master" and user_input.strip():
+            generated = generate_prefix_master(user_input, category, position)
+        elif mode == "translit":
+            generated = generate_translit_brand()
+        else:
+            generated = generate_standard_brand(len_mode)
+
+        if generated not in GENERATED_HISTORY and len(generated) >= 5:
+            is_free = await check_username_telethon(generated)
+            if is_free:
+                GENERATED_HISTORY.add(generated)
+                eval_data = calculate_catch_score(generated, True)
+                if eval_data["score"] >= 40:
+                    add_to_leaderboard(generated, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
+                return {
+                    "status": "success", 
+                    "generated_username": generated, 
+                    "platform": platform, 
+                    "is_free": True, 
+                    "evaluation": eval_data
+                }
+            await asyncio.sleep(0.04)
+
+    fallback_nick = generate_standard_brand(len_mode)
     is_free_fallback = await check_username_telethon(fallback_nick)
     eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
     
