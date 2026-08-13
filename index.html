@@ -1,1802 +1,537 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & Cyber Tycoon</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-app: #060b08;
-            --primary: #29c75f;
-            --primary-hover: #22a94f;
-            --text-main: #ffffff;
-            --text-muted: #829288;
-            --glass-bg: rgba(18, 25, 21, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.04);
-            --primary-glow: rgba(41, 199, 95, 0.22);
-        }
+import os
+import random
+import asyncio
+import time
+import json
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import FileResponse, JSONResponse
+from aiogram import Bot, Dispatcher
+from telethon import TelegramClient
+from telethon.sessions import StringSession
+from telethon.tl.functions.account import CheckUsernameRequest
+from telethon.errors import RPCError
+import uvicorn
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+INDEX_PATH = os.path.join(BASE_DIR, "index.html")
+RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
+LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
+GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
+
+# --- ГЛОБАЛЬНАЯ ПАМЯТЬ СЕРВЕРА ---
+GENERATED_HISTORY = set()
+MAX_HISTORY_SIZE = 25000
+
+IP_REQUEST_HISTORY = {}
+MAX_REQUESTS_PER_MINUTE = 60
+USER_COOLDOWNS = {}
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+API_ID = int(os.getenv("API_ID", "38162572"))
+API_HASH = os.getenv("API_HASH", "71b8ecb44bddc1ae0a802f4a0f6628ba")
+SESSION_STRING = os.getenv("TELEGRAM_SESSION")
+
+bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
+dp = Dispatcher() if BOT_TOKEN else None
+
+if SESSION_STRING:
+    telethon_client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
+else:
+    telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
+
+# =========================================================================
+# 💾 ИГРОВАЯ БАЗА ДАННЫХ И ОФФЛАЙН-ФАРМ
+# =========================================================================
+def load_game_db() -> dict:
+    if os.path.exists(GAME_DB_PATH):
+        try:
+            with open(GAME_DB_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_game_db(db: dict):
+    try:
+        with open(GAME_DB_PATH, "w", encoding="utf-8") as f:
+            json.dump(db, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
+
+def get_user_profile(db: dict, user_id: str) -> dict:
+    now = int(time.time())
+    if user_id not in db:
+        db[user_id] = {
+            "coins": 0,
+            "energy": 1000,
+            "max_energy": 1000,
+            "multi_tap": 1,
+            "energy_regen": 3,
+            "offline_miner_lvl": 0,
+            "last_seen": now,
+            "unlocked_themes": [],
+            "radar_extra_slots": 0,
+            "has_turbo": False,
+            "rank": "Ловец"
+        }
+    
+    user = db[user_id]
+    time_passed = now - user.get("last_seen", now)
+    if time_passed > 0 and user["energy"] < user["max_energy"]:
+        regen_amount = time_passed * user.get("energy_regen", 3)
+        user["energy"] = min(user["max_energy"], user["energy"] + regen_amount)
+
+    return user
+
+# =========================================================================
+# 📚 ПОЛНАЯ БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВ (15 КАТЕГОРИЙ)
+# =========================================================================
+AFFIX_DATABASE = {
+    "personal": ["official", "real", "prime", "live", "blog", "vibe", "zone", "one", "daily", "fan", "hq", "club"],
+    "military": ["core", "tactics", "force", "unit", "prime", "zone", "command", "shield", "squad", "base", "lead"],
+    "media": ["media", "universe", "zone", "hero", "studio", "space", "channel", "feed", "vision", "press", "cast"],
+    "tech": ["lab", "hub", "space", "core", "app", "dev", "tech", "base", "net", "cloud", "desk", "code", "bot"],
+    "crypto": ["vault", "pay", "trade", "node", "coin", "drop", "capital", "cash", "chain", "pool", "dex", "mint"],
+    "gaming": ["play", "zone", "clan", "gg", "craft", "squad", "hero", "skill", "arena", "guild", "win", "rush"],
+    "sports": ["fit", "run", "pro", "team", "cup", "champ", "sport", "gym", "league", "arena", "flex", "power"],
+    "business": ["store", "shop", "brand", "market", "line", "boutique", "supply", "group", "co", "outlet", "style"],
+    "auto": ["drive", "garage", "motors", "auto", "speed", "custom", "track", "power", "racing", "club"],
+    "design": ["art", "studio", "design", "space", "lab", "craft", "visual", "frame", "gallery", "concept"],
+    "food": ["fresh", "food", "cafe", "kitchen", "supply", "lounge", "taste", "craft", "market", "bar"],
+    "music": ["sound", "beat", "wave", "records", "fm", "audio", "track", "vibe", "studio", "label"],
+    "education": ["academy", "study", "hub", "mind", "center", "pioneer", "lab", "learn", "skill", "base"],
+    "estate": ["estate", "realty", "place", "loft", "space", "house", "group", "park", "point", "living"],
+    "auto_detect": ["my", "get", "go", "hq", "one", "vibe", "space", "zone", "core", "hub", "lab", "pro"]
+}
+
+TRANSLIT_WORDS = [
+    "vostok", "imperia", "pobeda", "bereg", "kultura", "sovet", "otklik", "zvezda", 
+    "priboy", "vektor", "osnova", "nasledie", "prikaz", "tishina", "mira", "groza", 
+    "iskra", "metel", "shelest", "luch", "prostor", "vremya", "sfora", "sokol", 
+    "kedr", "buran", "tayga", "skala", "utes", "volna", "plamya", "argon", "granit"
+]
+
+TRANSLIT_AFFIXES = ["space", "lab", "vibe", "club", "one", "media", "hub", "zone", "core", "hq"]
+
+BRAND_ROOTS = [
+    "aeth", "chron", "sol", "vort", "lum", "phos", "zeph", "celest", "aeg", "crest",
+    "val", "kism", "ast", "spect", "temp", "tit", "mir", "aur", "prism", "orion",
+    "verv", "lun", "stell", "zen", "hyp", "myth", "nobl", "quant", "rhod", "sir"
+]
+
+BRAND_SUFFIXES = [
+    "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"
+]
+
+def generate_prefix_master(user_input: str, category: str = "auto_detect", position: str = "mix") -> str:
+    clean_input = user_input.lower().strip().replace("@", "")
+    affixes = AFFIX_DATABASE.get(category, AFFIX_DATABASE["auto_detect"])
+    chosen_affix = random.choice(affixes)
+
+    if position == "prefix":
+        return f"{chosen_affix}{clean_input}"
+    elif position == "suffix":
+        return f"{clean_input}{chosen_affix}"
+    else:
+        return f"{clean_input}{chosen_affix}" if random.random() < 0.6 else f"{chosen_affix}{clean_input}"
+
+def generate_translit_brand() -> str:
+    base_word = random.choice(TRANSLIT_WORDS)
+    if random.random() < 0.35:
+        affix = random.choice(TRANSLIT_AFFIXES)
+        return f"{base_word}{affix}"
+    return base_word
+
+def generate_standard_brand(len_mode: str = "5-6") -> str:
+    root = random.choice(BRAND_ROOTS)
+    suf = random.choice(BRAND_SUFFIXES)
+    candidate = (root + suf).replace("nn", "n").replace("ss", "s").replace("rr", "r").replace("oo", "o")
+    if len_mode == "5-6" and len(candidate) > 6:
+        candidate = candidate[:6]
+    return candidate
+
+def load_leaderboard():
+    if os.path.exists(LEADERBOARD_PATH):
+        try:
+            with open(LEADERBOARD_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def save_leaderboard(data):
+    try:
+        data = sorted(data, key=lambda x: x.get("score", 0), reverse=True)[:1000]
+        with open(LEADERBOARD_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
+
+def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_id):
+    lb = load_leaderboard()
+    if any(item["username"].lower() == username.lower() for item in lb):
+        return
+    
+    lb.append({
+        "username": username,
+        "rank": rank,
+        "price": price,
+        "score": score,
+        "color": color,
+        "finder_name": finder_name or "Аноним",
+        "finder_id": finder_id or "0",
+        "timestamp": int(time.time())
+    })
+    save_leaderboard(lb)
+
+def calculate_catch_score(username: str, is_free: bool):
+    if not is_free:
+        return {"rank": "F", "status": "Занят пользователем или каналом", "color": "#ef4444", "score": 0}
+    
+    username = username.lower().replace("@", "").strip()
+    length = len(username)
+    
+    if length < 5:
+        return {"rank": "F", "status": "Короче 5 символов (Только Fragment)", "color": "#ef4444", "score": 0}
+
+    if any(char.isdigit() or char == "_" for char in username):
+        return {"rank": "F", "status": "Содержит цифры или символы", "color": "#ef4444", "score": 0}
+
+    vowels = set("aeiouy")
+    cons_streak = 0
+    max_cons_streak = 0
+    for char in username:
+        if char not in vowels:
+            cons_streak += 1
+            max_cons_streak = max(max_cons_streak, cons_streak)
+        else:
+            cons_streak = 0
+
+    is_trash = (max_cons_streak >= 3)
+
+    if length == 5 and not is_trash:
+        return {"rank": "SSS+", "status": "Эксклюзивный актив (~200-800+ TON)", "color": "#29c75f", "score": 100}
+
+    if length == 6 and not is_trash:
+        return {"rank": "SS", "status": "Редкий элитный ник (~50-200 TON)", "color": "#eab308", "score": 85}
+
+    if length == 7 and not is_trash:
+        return {"rank": "S", "status": "Премиум бренд (~15-50 TON)", "color": "#a855f7", "score": 65}
+
+    if length <= 10 and not is_trash:
+        return {"rank": "A", "status": "Стандартный красивый ник (~3-15 TON)", "color": "#3b82f6", "score": 40}
+
+    return {"rank": "B", "status": "Для личного пользования (~1 TON)", "color": "#64748b", "score": 20}
+
+async def check_username_telethon(username: str) -> bool:
+    username = username.replace("@", "").strip().lower()
+    if len(username) < 5: 
+        return False
+
+    try:
+        result = await telethon_client(CheckUsernameRequest(username=username))
+        return True if result is True else False
+    except RPCError:
+        return False
+    except Exception:
+        return False
+
+def load_radar_db() -> dict:
+    if os.path.exists(RADAR_DB_PATH):
+        try:
+            with open(RADAR_DB_PATH, "r", encoding="utf-8") as f: 
+                return json.load(f)
+        except Exception: 
+            return {}
+    return {}
+
+def save_radar_db(db: dict):
+    try:
+        with open(RADAR_DB_PATH, "w", encoding="utf-8") as f: 
+            json.dump(db, f, ensure_ascii=False, indent=4)
+    except Exception: 
+        pass
+
+async def radar_worker():
+    print("🚀 Автономный Радар запущен!")
+    while True:
+        try:
+            db = load_radar_db()
+            if db and bot:
+                all_targets = set()
+                for chat_id, targets in db.items():
+                    for target in targets: 
+                        all_targets.add(target.lower())
+
+                for username in list(all_targets):
+                    is_free = await check_username_telethon(username)
+                    if is_free is True:
+                        notified_chats = []
+                        for chat_id, targets in list(db.items()):
+                            if username in [t.lower() for t in targets]:
+                                try:
+                                    await bot.send_message(
+                                        chat_id=int(chat_id), 
+                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nБыстрее забирай!", 
+                                        parse_mode="Markdown"
+                                    )
+                                    notified_chats.append(chat_id)
+                                except Exception: 
+                                    pass
+
+                        for chat_id in notified_chats:
+                            db[chat_id] = [t for t in db[chat_id] if t.lower() != username]
+                            if not db[chat_id]: 
+                                del db[chat_id]
+                        save_radar_db(db)
+                    await asyncio.sleep(1.5)
+        except Exception: 
+            pass
+        await asyncio.sleep(5)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("⏳ Запуск Telethon...")
+    await telethon_client.start()
+    print("✅ Telethon успешно запущен!")
+    
+    asyncio.create_task(radar_worker())
+    
+    if bot and dp:
+        asyncio.create_task(dp.start_polling(bot))
+    
+    yield
+    await telethon_client.disconnect()
+
+app = FastAPI(title="Username Scanner PRO", lifespan=lifespan)
+
+# =========================================================================
+# 🎮 ЭНДПОИНТЫ КЛИКЕРА И ЭКОНОМИКИ
+# =========================================================================
+OFFLINE_RATES = {0: 0, 1: 500, 2: 1200, 3: 2500, 4: 4500, 5: 8000, 6: 14000, 7: 22000, 8: 32000, 9: 45000, 10: 60000}
+
+@app.get("/api/game/state")
+async def get_game_state(user_id: str):
+    db = load_game_db()
+    user = get_user_profile(db, user_id)
+    now = int(time.time())
+    
+    time_diff = now - user["last_seen"]
+    offline_earned = 0
+    if time_diff > 60 and user["offline_miner_lvl"] > 0:
+        clamped_time = min(time_diff, 10800) # Максимум 3 часа
+        rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
+        offline_earned = int(clamped_time * rate_per_sec)
+        user["coins"] += offline_earned
+
+    user["last_seen"] = now
+    save_game_db(db)
+    
+    return {
+        "status": "ok",
+        "profile": user,
+        "offline_earned": offline_earned
+    }
+
+@app.post("/api/game/sync_tap")
+async def sync_tap(request: Request):
+    data = await request.json()
+    user_id = str(data.get("user_id", "0"))
+    taps = int(data.get("taps", 0))
+    
+    db = load_game_db()
+    user = get_user_profile(db, user_id)
+    
+    if taps > 0:
+        actual_taps = min(taps, user["energy"]) # Защита: нельзя потратить больше энергии, чем есть
+        if actual_taps > 0:
+            earned = actual_taps * user["multi_tap"]
+            user["coins"] += earned
+            user["energy"] = max(0, user["energy"] - actual_taps)
+            user["last_seen"] = int(time.time())
+            save_game_db(db)
         
-        body {
-            background-color: var(--bg-app); color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-            margin: 0; min-height: 100vh; display: flex; flex-direction: column;
-            overflow-x: hidden; position: relative; user-select: none;
-            transform: translateZ(0);
-        }
-
-        /* 120 Гц Оптимизация */
-        .scrolling-active #fog-canvas,
-        .scrolling-active #emoji-layer {
-            pointer-events: none; opacity: 0.2;
-        }
-
-        /* ТЕМЫ ОФОРМЛЕНИЯ */
-        body.theme-terminal { background-color: #050b05 !important; color: #00ff66 !important; font-family: 'Courier New', monospace !important; }
-        body.theme-glitch { background-color: #0d021a !important; color: #00f0ff !important; }
-        body.theme-vapor { background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important; color: #fff !important; }
-        body.theme-rainbow {
-            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8) !important;
-            background-size: 400% 400% !important; animation: rainbow-bg 8s ease infinite !important;
-        }
-        @keyframes rainbow-bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-        #fog-canvas, #secret-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; transition: opacity 0.3s ease; }
-        #secret-canvas { display: none; z-index: -8; }
-        #emoji-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -5; pointer-events: none; overflow: hidden; }
-        .floating-emoji { position: absolute; user-select: none; will-change: transform; opacity: 0.7; }
-
-        .screen-ripple {
-            position: fixed; border-radius: 50%;
-            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 60%);
-            transform: scale(0); opacity: 1; pointer-events: none; z-index: 100;
-            animation: rippleExplode 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-        }
-        @keyframes rippleExplode { 100% { transform: scale(50); opacity: 0; } }
-
-        .jackpot-particle {
-            position: fixed; font-size: 2rem; pointer-events: none; z-index: 9999;
-            will-change: transform, opacity;
-            animation: explode 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-        @keyframes explode {
-            0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 1; }
-            100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5) rotate(var(--rot)); opacity: 0; }
-        }
-
-        .glass-panel {
-            background: var(--glass-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-            border: 1px solid var(--glass-border); box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
-        }
-
-        header { display: flex; justify-content: space-between; padding: 15px 20px; z-index: 50; width: 100%; max-width: 600px; margin: 0 auto; }
-        .nav-btn { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; font-weight: 500; cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-radius: 12px; }
-        .nav-btn:active { transform: scale(0.92); }
-
-        /* 🌟 НИЖНЯЯ ПАНЕЛЬ С КНОПКАМИ 🌟 */
-        .floating-achieving-btn {
-            position: fixed; bottom: 20px; left: 16px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--primary); color: var(--text-main);
-            padding: 10px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
-            display: flex; align-items: center; gap: 6px; cursor: pointer;
-            box-shadow: 0 4px 20px var(--primary-glow);
-        }
-        .floating-achieving-btn:active { transform: scale(0.9); }
-
-        .floating-play-btn {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90;
-            background: linear-gradient(135deg, rgba(41, 199, 95, 0.45), rgba(56, 189, 248, 0.45));
-            backdrop-filter: blur(18px); border: 1px solid rgba(41, 199, 95, 0.8); color: var(--text-main);
-            padding: 11px 22px; border-radius: 30px; font-size: 0.95rem; font-weight: 800;
-            cursor: pointer; animation: shimmerGlow 2.5s infinite alternate;
-        }
-        .floating-play-btn:active { transform: translateX(-50%) scale(0.91); }
-
-        @keyframes shimmerGlow {
-            0% { box-shadow: 0 4px 20px rgba(41, 199, 95, 0.35); }
-            100% { box-shadow: 0 4px 30px rgba(56, 189, 248, 0.65); }
-        }
-
-        .floating-leaderboard-btn {
-            position: fixed; bottom: 20px; right: 16px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
-            padding: 10px 16px; border-radius: 30px; font-size: 0.9rem; font-weight: 700;
-            display: flex; align-items: center; gap: 6px; cursor: pointer;
-            box-shadow: 0 4px 20px rgba(234, 179, 8, 0.25);
-        }
-        .floating-leaderboard-btn:active { transform: scale(0.9); }
-
-        main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transform: translateY(-2vh); }
-        .app-container { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
-
-        .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
-        .platform-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
-        .platform-btn.active { background: var(--primary-glow); color: var(--primary); box-shadow: 0 4px 15px var(--primary-glow); }
-
-        .result-field { border-radius: 24px; padding: 30px 20px; text-align: center; min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
-        .username-text { font-size: 1.8rem; font-weight: 800; color: var(--text-muted); word-break: break-all; font-family: monospace; }
-        .market-value { font-size: 0.85rem; color: #eab308; font-weight: 600; display: none; margin-bottom: 8px; background: rgba(234, 179, 8, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3);}
-        .price-text { font-size: 0.85rem; opacity: 0.7; }
-        .golden-mode { border-color: #FFD700 !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.3) !important; }
-
-        .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; }
-        .action-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; display: flex; justify-content: center; align-items: center; gap: 6px; }
-        .action-btn:active { transform: scale(0.93); }
-        .btn-take { background: var(--primary-glow); color: var(--primary); border-color: var(--primary); }
-        .btn-story { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
-
-        .btn-generate { background: var(--primary); color: #000; border: none; border-radius: 16px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; width: 100%; box-shadow: 0 8px 25px var(--primary-glow); }
-        .btn-generate:active { transform: scale(0.94); }
-        .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
-
-        /* 🔮 ЭКРАН МАЙНИНГА (CYBER TYCOON) 🔮 */
-        #tycoon-overlay { position: fixed; inset: 0; background: #030604; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; }
-        #tycoon-overlay.active { display: flex; }
-
-        .tycoon-header { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .coin-balance-badge { font-size: 1.8rem; font-weight: 900; color: #eab308; display: flex; align-items: center; gap: 8px; }
-
-        .core-click-area { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
-        #core-canvas { width: 300px; height: 300px; touch-action: none; cursor: pointer; }
-
-        .floating-number { position: absolute; font-size: 1.8rem; font-weight: 900; color: #29c75f; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 0 10px rgba(41,199,95,0.8); }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
-
-        .energy-bar-container { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
-        .energy-text-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; }
-        .energy-progress-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
-        .energy-progress-fill { height: 100%; background: linear-gradient(90deg, #29c75f, #38bdf8); border-radius: 10px; transition: width 0.2s ease; }
-
-        .tycoon-nav-tabs { display: flex; gap: 10px; width: 100%; max-width: 320px; z-index: 10; }
-        .tab-btn { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer; }
-        .tab-btn.active { background: var(--primary); color: #000; }
-
-        /* МОДАЛЬНЫЕ ОКНА И НАСТРОЙКИ */
-        .modal-overlay { 
-            position: fixed; inset: 0; 
-            background: rgba(3, 7, 6, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
-            z-index: 2500; display: flex; justify-content: center; align-items: center; padding: 20px; 
-            opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.35s ease;
-        }
-        .modal-overlay.active { opacity: 1; visibility: visible; pointer-events: auto; }
-        
-        .modal-content { 
-            width: 100%; max-width: 420px; max-height: 82vh; 
-            display: flex; flex-direction: column; border-radius: 24px; overflow: hidden;
-        }
-        .modal-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
-        .modal-title { margin: 0; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-
-        .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-
-        .setting-item { background: rgba(255,255,255,0.03); padding: 14px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
-        .setting-info { display: flex; flex-direction: column; gap: 3px; flex: 1; padding-right: 10px; }
-        .setting-title { font-weight: 600; font-size: 0.9rem; }
-        .setting-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.25; }
-
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s; }
-        input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        .panel-collapse-btn {
-            background: transparent; border: none; color: var(--text-muted);
-            width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            opacity: 0.7; transition: transform 0.3s ease;
-        }
-        .panel-collapse-btn svg { transform: rotate(0deg); }
-        .panel-collapse-btn.collapsed svg { transform: rotate(180deg); }
-
-        .range-slider { width: 90px; accent-color: var(--primary); }
-        .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
-        .color-dot { width: 28px; height: 28px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-        .color-dot.active { border-color: #fff; transform: scale(1.1); }
-
-        .filter-options { display: none; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; margin-top: -4px; margin-bottom: 12px; }
-        .filter-options.active { display: block; }
-
-        .custom-select-wrapper { position: relative; width: 100%; }
-        .custom-select-trigger { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 10px 14px; border-radius: 12px; color: #fff; font-size: 0.85rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .custom-select-trigger:after { content: '▾'; font-size: 0.8rem; color: var(--text-muted); }
-        .custom-select-options { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: rgba(15, 22, 18, 0.96); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; }
-        .custom-select-options.open { display: block; }
-        .custom-option { padding: 10px 14px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .custom-option:hover, .custom-option.selected { background: var(--primary-glow); color: #fff; }
-
-        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
-        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 12px; outline: none; font-size: 0.85rem; }
-        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; }
-        .btn-reset-custom { width: 100%; background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; margin-top: 10px; }
-
-        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease; max-height: 85px; }
-        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.35); }
-        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.35); }
-        .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.25rem; opacity: 0; z-index: 1; }
-        .swipe-icon-left { left: 18px; color: #fff; }
-        .swipe-icon-right { right: 18px; color: #fff; }
-        .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
-        .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
-        .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
-
-        .history-card { background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; touch-action: pan-y; }
-        .lb-card { background: rgba(18, 25, 21, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-
-        .shop-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .shop-buy-btn { background: #eab308; color: #000; border: none; font-weight: 800; padding: 10px 14px; border-radius: 12px; cursor: pointer; }
-
-        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; opacity: 0.6; filter: grayscale(0.8); }
-        .achieve-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
-        .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 10px; }
-
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 16px; text-align: center; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.4s; z-index: 4000; }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    </style>
-</head>
-<body>
-
-    <canvas id="fog-canvas"></canvas>
-    <canvas id="secret-canvas"></canvas>
-    <div id="emoji-layer"></div>
-
-    <header>
-        <button class="nav-btn" onclick="openModal('modal-history')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> История
-        </button>
-        <button class="nav-btn" onclick="openModal('modal-settings')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Настройки
-        </button>
-    </header>
-
-    <main>
-        <div class="app-container">
-            <div class="platform-toggle glass-panel">
-                <button class="platform-btn active" onclick="setPlatform('telegram', this)">Telegram</button>
-                <button class="platform-btn" onclick="setPlatform('whatsapp', this)">WhatsApp</button>
-            </div>
-
-            <div class="result-field glass-panel" id="result-box">
-                <div class="username-text" id="res-username">@username</div>
-                <div class="market-value" id="res-market">Fragment: ~150 TON</div>
-                <div class="price-text" id="res-status">Нажмите сгенерировать</div>
-            </div>
-
-            <div class="quick-actions" id="quick-actions">
-                <button class="action-btn btn-take" onclick="takeUsername()">🚀 Занять</button>
-                <button class="action-btn btn-story" onclick="shareToFriends()">📲 Поделиться</button>
-            </div>
-
-            <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
-        </div>
-    </main>
-
-    <!-- ПЛАВАЮЩИЕ КНОПКИ -->
-    <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">🏆 <span id="achieve-counter-badge">0/100</span></button>
-    <button class="floating-play-btn" onclick="openTycoonScreen()">⚡ Майнинг</button>
-    <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')">📊 Топ</button>
-
-    <div class="toast" id="global-toast">✨ Скопировано!</div>
-
-    <!-- 🔮 ПОЛНОЭКРАННЫЙ ЭКРАН МАЙНИНГА (CYBER TYCOON) 🔮 -->
-    <div id="tycoon-overlay">
-        <div class="tycoon-header">
-            <button class="tab-btn" style="width: auto; padding: 8px 16px;" onclick="closeTycoonScreen()">◀ Выход</button>
-            <div class="coin-balance-badge">🟡 <span id="tycoon-coins">0</span></div>
-            <div style="width: 60px;"></div>
-        </div>
-
-        <div class="core-click-area" id="click-area">
-            <canvas id="core-canvas" width="300" height="300"></canvas>
-        </div>
-
-        <div class="energy-bar-container">
-            <div class="energy-text-row">
-                <span>⚡ Энергия</span>
-                <span><span id="energy-val">1000</span> / <span id="max-energy-val">1000</span></span>
-            </div>
-            <div class="energy-progress-bg">
-                <div class="energy-progress-fill" id="energy-fill" style="width: 100%;"></div>
-            </div>
-        </div>
-
-        <div class="tycoon-nav-tabs">
-            <button class="tab-btn active" onclick="openModal('modal-shop')">🛒 Магазин</button>
-            <button class="tab-btn" onclick="openModal('modal-leaderboard')">👑 <span id="user-rank-text">Ловец</span></button>
-        </div>
-    </div>
-
-    <!-- 🛒 МОДАЛКА: КИБЕР-МАГА3ИН 🛒 -->
-    <div class="modal-overlay" id="modal-shop">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 class="modal-title">🛒 Кибер-Магазин</h2>
-                <button class="btn-close" onclick="closeModal('modal-shop')">✕</button>
-            </div>
-            <div class="modal-body">
-                <h3 style="font-size: 0.95rem; color: var(--primary); margin-bottom: 8px;">⚡ Прокачка Кликера</h3>
-                
-                <div class="shop-card">
-                    <div>
-                        <div style="font-weight:bold;">👆 Мульти-Тап (Lvl. <span id="lvl-multitap">1</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">+1 монета за клик</div>
-                    </div>
-                    <button class="shop-buy-btn" onclick="buyItem('multi_tap')"><span id="cost-multitap">200</span> 🟡</button>
-                </div>
-
-                <div class="shop-card">
-                    <div>
-                        <div style="font-weight:bold;">🔋 Запас Батареи (Lvl. <span id="lvl-energy">1</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">+500 к макс. энергии</div>
-                    </div>
-                    <button class="shop-buy-btn" onclick="buyItem('max_energy')"><span id="cost-energy">150</span> 🟡</button>
-                </div>
-
-                <div class="shop-card">
-                    <div>
-                        <div style="font-weight:bold;">🚜 Автосборщик (Lvl. <span id="lvl-miner">0</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Пассивный фарм (3 часа макс)</div>
-                    </div>
-                    <button class="shop-buy-btn" onclick="buyItem('offline_miner')"><span id="cost-miner">3000</span> 🟡</button>
-                </div>
-
-                <h3 style="font-size: 0.95rem; color: #eab308; margin-top: 15px; margin-bottom: 8px;">🎯 Апгрейды Парсера</h3>
-
-                <div class="shop-card">
-                    <div>
-                        <div style="font-weight:bold;">🎯 +1 Слот Радара</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Слежка за редкими никами</div>
-                    </div>
-                    <button class="shop-buy-btn" onclick="buyItem('radar_slot')">5000 🟡</button>
-                </div>
-
-                <div class="shop-card">
-                    <div>
-                        <div style="font-weight:bold;">🚀 Турбо-Парсер (x2 Speed)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускорение поиска на 15 мин</div>
-                    </div>
-                    <button class="shop-buy-btn" onclick="buyItem('turbo_parse')">3500 🟡</button>
-                </div>
-
-                <div class="shop-card">
-                    <div>
-                        <div style="font-weight:bold;">🔑 Секретная Тема Cyberpunk</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Уникальный вид приложения</div>
-                    </div>
-                    <button class="shop-buy-btn" onclick="buyItem('theme_cyberpunk')">40000 🟡</button>
-                </div>
-
-                <div class="shop-card">
-                    <div>
-                        <div style="font-weight:bold;">👑 Ранг «Легендарный Ловец»</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Золотой статус в Топе</div>
-                    </div>
-                    <button class="shop-buy-btn" onclick="buyItem('rank_legend')">100000 🟡</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🎁 МОДАЛКА: ПРИВЕТСТВИЕ ОФФЛАЙН-ФАРМА 🎁 -->
-    <div class="modal-overlay" id="modal-welcome-offline">
-        <div class="modal-content glass-panel" style="text-align: center;">
-            <div class="modal-header">
-                <h2 class="modal-title" style="color: #eab308;">🤖 Автосборщик поработал!</h2>
-            </div>
-            <div class="modal-body">
-                <p style="font-size: 0.9rem; color: var(--text-muted);">Вас не было в игре какое-то время. Ваш Майнер нафармил:</p>
-                <div style="font-size: 2.2rem; font-weight: 900; color: #eab308; margin: 15px 0;">+<span id="offline-earned-val">0</span> 🟡</div>
-                <button class="form-btn" onclick="closeModal('modal-welcome-offline')">Отлично, Забрать!</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- МОДАЛКА: НАСТРОЙКИ -->
-    <div class="modal-overlay" id="modal-settings">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 class="modal-title">Настройки и Фильтры</h2>
-                <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
-            </div>
-            <div class="modal-body" onscroll="handleModalScroll()">
-                
-                <div class="setting-item" style="cursor: pointer; border-color: var(--primary); background: rgba(41,199,95,0.05);" onclick="openModal('modal-radar')">
-                    <div class="setting-info">
-                        <span class="setting-title" style="color: var(--primary);">🎯 Радар (Уведомление в ЛС)</span>
-                        <span class="setting-desc">Бот напишет вам, как только ник освободится</span>
-                    </div>
-                    <span style="font-size: 1.2rem; color: var(--primary);">→</span>
-                </div>
-
-                <div class="setting-item" style="cursor: pointer; border-color: #a855f7; background: rgba(168, 85, 247, 0.05);" onclick="openModal('modal-secret-code')">
-                    <div class="setting-info">
-                        <span class="setting-title" style="color: #a855f7;">🔑 Ввести секретный код</span>
-                        <span class="setting-desc">Разблокировка уникальных тем оформления</span>
-                    </div>
-                    <span style="font-size: 1.2rem; color: #a855f7;">→</span>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-title">Внешний вид</span>
-                        <span class="setting-desc">Цвета, огоньки и летающие значки</span>
-                    </div>
-                    <div class="setting-controls">
-                        <button class="panel-collapse-btn" id="btn-toggle-custom-panel" style="display:none;" onclick="togglePanelVisibility('custom-menu', this)">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                        </button>
-                        <label class="switch">
-                            <input type="checkbox" id="toggle-custom" onchange="toggleCustomMenu(this)">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="filter-options" id="custom-menu">
-                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">Тема акцента</div>
-                    <div class="color-picker-grid" id="theme-dots-grid">
-                        <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', 'rgba(56, 189, 248, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#6366f1;" onclick="setThemeColor('#6366f1', 'rgba(99, 102, 241, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#a855f7;" onclick="setThemeColor('#a855f7', 'rgba(168, 85, 247, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', 'rgba(236, 72, 153, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#ef4444;" onclick="setThemeColor('#ef4444', 'rgba(239, 68, 68, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#f97316;" onclick="setThemeColor('#f97316', 'rgba(249, 115, 22, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', 'rgba(234, 179, 8, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#14b8a6;" onclick="setThemeColor('#14b8a6', 'rgba(20, 184, 166, 0.25)', this)"></div>
-                        <div class="color-dot" style="background:#f43f5e;" onclick="setThemeColor('#f43f5e', 'rgba(244, 63, 94, 0.25)', this)"></div>
-                    </div>
-
-                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
-
-                    <div class="filter-row">
-                        <span style="font-size: 0.8rem; color: var(--text-main);">Количество тумана</span>
-                        <input type="range" class="range-slider" id="fog-count-slider" min="2" max="15" value="5" onchange="updateFogSettings()">
-                    </div>
-
-                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
-
-                    <div class="filter-row">
-                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Летающие иконки</span>
-                        <label class="switch">
-                            <input type="checkbox" id="toggle-emoji" checked onchange="toggleEmojiFeature(this)">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div id="emoji-controls-box">
-                        <input type="text" id="emoji-input" class="form-input" style="margin-top:6px; margin-bottom:8px;" placeholder="🔥, ⚡, 💎" value="🔥, ⚡, 💎" onchange="updateEmojiSettings()">
-                    </div>
-
-                    <button class="btn-reset-custom" onclick="resetCustomization()">↺ Сбросить вид</button>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-title">Автопарсер</span>
-                        <span class="setting-desc">Непрерывный авто-поиск свободных ников</span>
-                    </div>
-                    <label class="switch"><input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)"><span class="slider"></span></label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-title">Режим генератора</span>
-                        <span class="setting-desc">Выбор логики и приставки к вашему слову</span>
-                    </div>
-                    <div class="setting-controls">
-                        <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                        </button>
-                        <label class="switch"><input type="checkbox" id="toggle-filter" onchange="toggleFilterMenu(this)"><span class="slider"></span></label>
-                    </div>
-                </div>
-
-                <div class="filter-options" id="filter-menu">
-                    <div style="margin-bottom: 12px;">
-                        <span style="font-size: 0.85rem; font-weight:600; color: var(--text-main); display:block; margin-bottom:6px;">Что подбираем?</span>
-                        
-                        <div class="custom-select-wrapper" id="select-gen-mode">
-                            <div class="custom-select-trigger" onclick="toggleCustomSelect('select-gen-mode')">
-                                <span id="label-gen-mode">✨ Красивое имя (Неологизм)</span>
-                            </div>
-                            <div class="custom-select-options">
-                                <div class="custom-option selected" onclick="selectOption('select-gen-mode', 'standard', '✨ Красивое имя (Неологизм)')">✨ Красивое имя (Неологизм)</div>
-                                <div class="custom-option" onclick="selectOption('select-gen-mode', 'prefix_master', '🎯 Приставка к вашему слову')">🎯 Приставка к вашему слову</div>
-                                <div class="custom-option" onclick="selectOption('select-gen-mode', 'translit', '🇷🇺 Ники на латинице (Транслит)')">🇷🇺 Ники на латинице (Транслит)</div>
-                            </div>
-                        </div>
-
-                        <div id="mode-desc-text" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">
-                            Придумывает уникальные бренд-ники из 5–6 букв с высоким шансом свободы.
-                        </div>
-                    </div>
-
-                    <div id="prefix-master-box" style="display:none; border-top: 1px dashed rgba(255,255,255,0.1); padding-top:12px; margin-top:12px;">
-                        <span style="font-size: 0.8rem; color: var(--primary); font-weight:600; display:block; margin-bottom: 6px;">Ваше слово или имя</span>
-                        <input type="text" id="prefix-user-input" class="form-input" style="margin-bottom:10px;" placeholder="Впишите слово (например: spiderman, apple)">
-                        
-                        <div style="margin-bottom:10px;">
-                            <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Тематика канала/проекта</span>
-                            <div class="custom-select-wrapper" id="select-category">
-                                <div class="custom-select-trigger" onclick="toggleCustomSelect('select-category')">
-                                    <span id="label-category">🌐 Авто-подбор тематики</span>
-                                </div>
-                                <div class="custom-select-options">
-                                    <div class="custom-option selected" onclick="selectOption('select-category', 'auto_detect', '🌐 Авто-подбор тематики')">🌐 Авто-подбор тематики</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'personal', '👤 Блогеры и Звезды')">👤 Блогеры и Звезды</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'gaming', '🎮 Игры и Киберспорт')">🎮 Игры и Киберспорт</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'crypto', '📈 Крипта и NFT')">📈 Крипта и NFT</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'tech', '💻 IT и Софт')">💻 IT и Софт</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'sports', '⚽ Спорт и Фитнес')">⚽ Спорт и Фитнес</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'business', '🛍️ Бизнес и Магазины')">🛍️ Бизнес и Магазины</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'music', '🎵 Музыка и Звук')">🎵 Музыка и Звук</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'auto', '🚗 Авто и Скорость')">🚗 Авто и Скорость</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'media', '🎬 Фильмы и Герои')">🎬 Фильмы и Герои</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'military', '🎖️ Военные и Звания')">🎖️ Военные и Звания</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'design', '🎨 Дизайн и Арт')">🎨 Дизайн и Арт</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'food', '🍔 Еда и Кафе')">🍔 Еда и Кафе</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Куда ставить приставку?</span>
-                            <div class="custom-select-wrapper" id="select-position">
-                                <div class="custom-select-trigger" onclick="toggleCustomSelect('select-position')">
-                                    <span id="label-position">🔀 Автоматически (Как лучше звучит)</span>
-                                </div>
-                                <div class="custom-select-options">
-                                    <div class="custom-option selected" onclick="selectOption('select-position', 'mix', '🔀 Автоматически (Как лучше звучит)')">🔀 Автоматически (Как лучше)</div>
-                                    <div class="custom-option" onclick="selectOption('select-position', 'suffix', '➡️ В конец (spidermanofficial)')">➡️ В конец (spidermanofficial)</div>
-                                    <div class="custom-option" onclick="selectOption('select-position', 'prefix', '⬅️ В начало (realspiderman)')">⬅️ В начало (realspiderman)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
-
-                    <div>
-                        <span style="font-size: 0.85rem; color: var(--text-main); display:block; margin-bottom:4px;">Длина ника</span>
-                        <div class="custom-select-wrapper" id="select-len">
-                            <div class="custom-select-trigger" onclick="toggleCustomSelect('select-len')">
-                                <span id="label-len">5–6 букв (Короткие)</span>
-                            </div>
-                            <div class="custom-select-options">
-                                <div class="custom-option selected" onclick="selectOption('select-len', '5-6', '5–6 букв (Короткие)')">5–6 букв (Короткие)</div>
-                                <div class="custom-option" onclick="selectOption('select-len', '7-8', '7–8 букв (Обычные)')">7–8 букв (Обычные)</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- МОДАЛКА: СЕКРЕТНЫЙ КОД -->
-    <div class="modal-overlay" id="modal-secret-code">
-        <div class="modal-content glass-panel" style="max-width: 360px;">
-            <div class="modal-header">
-                <h2 class="modal-title">🔑 Ввод кода</h2>
-                <button class="btn-close" onclick="closeModal('modal-secret-code')">✕</button>
-            </div>
-            <div class="modal-body" style="text-align:center;">
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите промокод для открывания секретных тем!</p>
-                <input type="text" id="secret-code-input" class="form-input" style="text-align:center; font-weight:bold; letter-spacing:1px; margin-bottom:12px;" placeholder="ПРОМОКОД...">
-                <button class="form-btn" onclick="submitSecretCode()">Применить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- МОДАЛКА: РАДАР -->
-    <div class="modal-overlay" id="modal-radar">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 class="modal-title">🎯 Радар (Слежка)</h2>
-                <button class="btn-close" onclick="closeModal('modal-radar')">✕</button>
-            </div>
-            <div class="modal-body" onscroll="handleModalScroll()">
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Введите занятый ник. Бот напишет в ЛС, как только он станет свободным!</div>
-                <input type="text" id="radar-input" class="form-input" placeholder="@username">
-                <button class="form-btn" style="margin-top:10px;" onclick="addRadarTarget()">Следить за ником</button>
-                <div id="radar-list" style="margin-top: 20px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- МОДАЛКА: ИСТОРИЯ -->
-    <div class="modal-overlay" id="modal-history">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 class="modal-title">История улова</h2>
-                <button class="btn-clear-history" style="background:transparent; border:none; color:#ef4444; font-size:0.8rem; cursor:pointer;" onclick="clearHistory()">🗑 Очистить</button>
-                <button class="btn-close" onclick="closeModal('modal-history')">✕</button>
-            </div>
-            <div class="modal-body" onscroll="handleModalScroll()"><div class="history-list" id="history-container"></div></div>
-        </div>
-    </div>
-
-    <!-- МОДАЛКА: ЛИДЕРБОРД -->
-    <div class="modal-overlay" id="modal-leaderboard">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 class="modal-title" style="color: #eab308;">👑 ТОП Улова</h2>
-                <button class="btn-close" onclick="closeModal('modal-leaderboard')">✕</button>
-            </div>
-            <div class="modal-body" onscroll="handleModalScroll()">
-                <div id="leaderboard-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- МОДАЛКА: ДОСТИЖЕНИЯ -->
-    <div class="modal-overlay" id="modal-achievements">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 class="modal-title">🏆 Ваши награды (<span id="achieve-count-modal">0</span>/100)</h2>
-                <button class="btn-close" onclick="closeModal('modal-achievements')">✕</button>
-            </div>
-            <div class="modal-body" id="achievements-list-container" onscroll="handleModalScroll()"></div>
-        </div>
-    </div>
-
-    <!-- МОДАЛКА: ИТОГИ АВТОПАРСА -->
-    <div class="modal-overlay" id="modal-summary">
-        <div class="modal-content glass-panel" style="text-align: center; max-width: 400px;">
-            <div class="modal-header">
-                <h2 class="modal-title" style="color: var(--primary);">🎯 Итоги поиска</h2>
-                <button class="btn-close" onclick="closeModal('modal-summary')">✕</button>
-            </div>
-            <div class="modal-body">
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 12px;">
-                    Найдено свободных ников: <b id="summary-count" style="color: var(--primary);">0</b>
-                </p>
-                <div id="summary-list" style="text-align:left; max-height:280px; overflow-y:auto; margin-bottom: 15px; display:flex; flex-direction:column; gap:8px;"></div>
-                <button class="form-btn" onclick="closeModal('modal-summary')">Отлично</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let currentPlatform = 'telegram';
-        let isAuto = false;
-        let isFetching = false;
-        let lastGenerated = "";
-        let slotInterval;
-        let tgChatId = "0";
-        let finderName = "Аноним";
-        let autoParseCatches = [];
-
-        let userProfile = {
-            coins: 0, energy: 1000, max_energy: 1000,
-            multi_tap: 1, energy_regen: 3, offline_miner_lvl: 0,
-            rank: "Ловец"
-        };
-
-        let pendingTaps = 0;
-        let syncTimer = null;
-
-        let selectedValues = {
-            'select-gen-mode': 'standard',
-            'select-category': 'auto_detect',
-            'select-position': 'mix',
-            'select-len': '5-6'
-        };
-
-        let scrollTimer = null;
-        function handleModalScroll() {
-            document.body.classList.add('scrolling-active');
-            clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => {
-                document.body.classList.remove('scrolling-active');
-            }, 120);
-        }
-
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-            const user = window.Telegram.WebApp.initDataUnsafe.user;
-            tgChatId = user.id.toString();
-            finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
-        }
-
-        // Загрузка данных кликера и баланса с сервера
-        async function loadGameState() {
-            try {
-                const res = await fetch(`/api/game/state?user_id=${tgChatId}`);
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile = data.profile;
-                    updateTycoonUI();
-
-                    if (data.offline_earned > 0) {
-                        document.getElementById('offline-earned-val').innerText = data.offline_earned;
-                        openModal('modal-welcome-offline');
-                    }
+    return {"status": "ok", "coins": user["coins"], "energy": user["energy"]}
+
+@app.post("/api/game/buy")
+async def buy_item(request: Request):
+    data = await request.json()
+    user_id = str(data.get("user_id", "0"))
+    item_id = str(data.get("item_id", ""))
+    
+    db = load_game_db()
+    user = get_user_profile(db, user_id)
+    
+    if item_id == "multi_tap":
+        cost = int(200 * (1.8 ** (user["multi_tap"] - 1)))
+        if user["coins"] >= cost and user["multi_tap"] < 20:
+            user["coins"] -= cost
+            user["multi_tap"] += 1
+        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+    elif item_id == "max_energy":
+        lvl = (user["max_energy"] - 1000) // 500
+        cost = int(150 * (1.6 ** lvl))
+        if user["coins"] >= cost and lvl < 20:
+            user["coins"] -= cost
+            user["max_energy"] += 500
+            user["energy"] = user["max_energy"]
+        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+    elif item_id == "offline_miner":
+        lvl = user["offline_miner_lvl"]
+        cost = 3000 if lvl == 0 else int(3000 * (2.2 ** lvl))
+        if user["coins"] >= cost and lvl < 10:
+            user["coins"] -= cost
+            user["offline_miner_lvl"] += 1
+        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+    elif item_id == "radar_slot":
+        if user["coins"] >= 5000:
+            user["coins"] -= 5000
+            user["radar_extra_slots"] += 1
+        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+    elif item_id == "turbo_parse":
+        if user["coins"] >= 3500:
+            user["coins"] -= 3500
+            user["has_turbo"] = True
+        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+    elif item_id == "theme_cyberpunk":
+        if user["coins"] >= 40000 and "cyberpunk" not in user["unlocked_themes"]:
+            user["coins"] -= 40000
+            user["unlocked_themes"].append("cyberpunk")
+        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+    elif item_id == "rank_legend":
+        if user["coins"] >= 100000:
+            user["coins"] -= 100000
+            user["rank"] = "👑 Легендарный Ловец"
+        else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+    user["last_seen"] = int(time.time())
+    save_game_db(db)
+    return {"status": "ok", "profile": user}
+
+@app.get("/")
+async def read_root():
+    if os.path.exists(INDEX_PATH): 
+        return FileResponse(INDEX_PATH, media_type="text/html")
+    return JSONResponse(status_code=404, content={"error": "index.html не найден"})
+
+@app.get("/api/generate")
+async def generate_username(
+    request: Request, 
+    platform: str = Query("telegram"),
+    len_mode: str = Query("5-6"),
+    mode: str = Query("standard"),
+    user_input: str = Query(""),
+    category: str = Query("auto_detect"),
+    position: str = Query("mix"),
+    finder_name: str = Query("Аноним"),
+    finder_id: str = Query("0")
+):
+    client_ip = request.client.host if request.client else "global"
+    now = time.time()
+    
+    if client_ip in USER_COOLDOWNS:
+        elapsed = now - USER_COOLDOWNS[client_ip]
+        if elapsed < COOLDOWN_SECONDS:
+            await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
+    USER_COOLDOWNS[client_ip] = time.time()
+
+    if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE:
+        GENERATED_HISTORY.clear()
+
+    for _ in range(15):
+        if mode == "prefix_master" and user_input.strip():
+            generated = generate_prefix_master(user_input, category, position)
+        elif mode == "translit":
+            generated = generate_translit_brand()
+        else:
+            generated = generate_standard_brand(len_mode)
+
+        if generated not in GENERATED_HISTORY and len(generated) >= 5:
+            is_free = await check_username_telethon(generated)
+            if is_free:
+                GENERATED_HISTORY.add(generated)
+                eval_data = calculate_catch_score(generated, True)
+                if eval_data["score"] >= 40:
+                    add_to_leaderboard(generated, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
+                return {
+                    "status": "success", 
+                    "generated_username": generated, 
+                    "platform": platform, 
+                    "is_free": True, 
+                    "evaluation": eval_data
                 }
-            } catch(e){}
-        }
-        loadGameState();
-
-        function updateTycoonUI() {
-            document.getElementById('tycoon-coins').innerText = userProfile.coins;
-            document.getElementById('energy-val').innerText = userProfile.energy;
-            document.getElementById('max-energy-val').innerText = userProfile.max_energy;
-            document.getElementById('user-rank-text').innerText = userProfile.rank;
-
-            let fillPercent = Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
-            document.getElementById('energy-fill').style.width = fillPercent + "%";
-
-            document.getElementById('lvl-multitap').innerText = userProfile.multi_tap;
-            document.getElementById('cost-multitap').innerText = Math.floor(200 * (1.8 ** (userProfile.multi_tap - 1)));
-
-            let energyLvl = (userProfile.max_energy - 1000) / 500;
-            document.getElementById('lvl-energy').innerText = energyLvl + 1;
-            document.getElementById('cost-energy').innerText = Math.floor(150 * (1.6 ** energyLvl));
-
-            document.getElementById('lvl-miner').innerText = userProfile.offline_miner_lvl;
-            document.getElementById('cost-miner').innerText = userProfile.offline_miner_lvl === 0 ? 3000 : Math.floor(3000 * (2.2 ** userProfile.offline_miner_lvl));
-        }
-
-        // Авто-регенерация энергии каждую секунду
-        setInterval(() => {
-            if (userProfile.energy < userProfile.max_energy) {
-                userProfile.energy = Math.min(userProfile.max_energy, userProfile.energy + userProfile.energy_regen);
-                updateTycoonUI();
-            }
-        }, 1000);
-
-        function openTycoonScreen() {
-            vibrate('light');
-            document.getElementById('tycoon-overlay').classList.add('active');
-            initCoreCanvas();
-        }
-
-        function closeTycoonScreen() {
-            vibrate('light');
-            document.getElementById('tycoon-overlay').classList.remove('active');
-        }
-
-        function toggleCustomSelect(wrapperId) {
-            const wrapper = document.getElementById(wrapperId);
-            const options = wrapper.querySelector('.custom-select-options');
-            const isOpen = options.classList.contains('open');
-
-            document.querySelectorAll('.custom-select-options').forEach(el => el.classList.remove('open'));
-            if (!isOpen) options.classList.add('open');
-        }
-
-        function selectOption(wrapperId, value, labelText) {
-            selectedValues[wrapperId] = value;
-            document.getElementById(`label-${wrapperId.replace('select-', '')}`).innerText = labelText;
-
-            const wrapper = document.getElementById(wrapperId);
-            wrapper.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
-            event.target.classList.add('selected');
-            wrapper.querySelector('.custom-select-options').classList.remove('open');
-
-            if (wrapperId === 'select-gen-mode') updateGenModeUI();
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.custom-select-wrapper')) {
-                document.querySelectorAll('.custom-select-options').forEach(el => el.classList.remove('open'));
-            }
-        });
-
-        function updateGenModeUI() {
-            const mode = selectedValues['select-gen-mode'];
-            const pBox = document.getElementById('prefix-master-box');
-            const descEl = document.getElementById('mode-desc-text');
-            
-            if (mode === 'prefix_master') {
-                pBox.style.display = 'block';
-                descEl.innerText = "Подставляет официальные слова (Real, Official, Team) к вашему имени.";
-            } else if (mode === 'translit') {
-                pBox.style.display = 'none';
-                descEl.innerText = "Подбирает созвучные слова из русского языка на латинице (Vostok, Zarya).";
-            } else {
-                pBox.style.display = 'none';
-                descEl.innerText = "Придумывает уникальные бренд-ники из 5–6 букв с высоким шансом свободы.";
-            }
-        }
-
-        let stats = {
-            generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
-            radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
-            themesChanged: parseInt(localStorage.getItem('vh_stat_themes') || '0'),
-            fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0'),
-            secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
-        };
-
-        let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
-        
-        const SECRET_PROMOS = {
-            'REDPILL': { id: 'matrix', icon: '💻', colorHex: '#29c75f', glowHex: 'rgba(41, 199, 95, 0.4)', emojis: '0, 1, ⚡, 💻', msg: '🟢 MATRIX' },
-            'DUROV360': { id: 'durov', icon: '✈️', colorHex: '#1e3c72', glowHex: 'rgba(30, 60, 114, 0.4)', emojis: '💎, 👑, ✈️, 💰', msg: '✈️ DUROV SKY' },
-            'CROWN_KING': { id: 'kington', icon: '👑', colorHex: '#eab308', glowHex: 'rgba(234, 179, 8, 0.4)', emojis: '👑, 💎, ✨, 🔱', msg: '👑 KINGTON GOLD' },
-            'CYBER_PUNK': { id: 'cyber', icon: '⚡', colorHex: '#f97316', glowHex: 'rgba(249, 115, 22, 0.4)', emojis: '⚡, 🤖, 🔮', msg: '⚡ CYBERPUNK' },
-            'NEBULA_DEEP': { id: 'nebula', icon: '🪐', colorHex: '#6366f1', glowHex: 'rgba(99, 102, 241, 0.4)', emojis: '🪐, 🌌, ✨', msg: '🪐 NEBULA' },
-            'SUDO_RM_RF': { id: 'terminal', icon: '📟', colorHex: '#00ff66', glowHex: 'rgba(0, 255, 102, 0.4)', emojis: '👾, 💾, 📟, 🤖', msg: '📟 TERMINAL' },
-            'SYNTH_1984': { id: 'vapor', icon: '🌆', colorHex: '#ec4899', glowHex: 'rgba(236, 72, 153, 0.4)', emojis: '🌆, 🌴, 📼, 💖', msg: '🌆 VAPORWAVE' }
-        };
-
-        const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
-
-        function saveStats() {
-            localStorage.setItem('vh_stat_gen', stats.generations.toString());
-            localStorage.setItem('vh_stat_radar', stats.radarAdded.toString());
-            localStorage.setItem('vh_stat_themes', stats.themesChanged.toString());
-            localStorage.setItem('vh_stat_fragment', stats.fragmentFound.toString());
-            localStorage.setItem('vh_stat_secrets', stats.secretsFound.toString());
-            checkAchievementProgress();
-        }
-
-        function openUserChat(finderId) {
-            if (!finderId || finderId === "0") return;
-            vibrate('light');
-            const url = `tg://user?id=${finderId}`;
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-                window.Telegram.WebApp.openTelegramLink(url);
-            } else {
-                window.open(url, '_blank');
-            }
-        }
-
-        async function fetchLeaderboard(period = 'all') {
-            const container = document.getElementById('leaderboard-list-container');
-            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка топа...</div>';
-
-            try {
-                const res = await fetch(`/api/leaderboard?period=${period}`);
-                const data = await res.json();
-                
-                if (data.status === 'ok' && data.leaderboard.length > 0) {
-                    container.innerHTML = data.leaderboard.map((item, index) => {
-                        const rankMedal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
-                        const topClass = index === 0 ? "lb-card-top1" : index === 1 ? "lb-card-top2" : index === 2 ? "lb-card-top3" : "";
-
-                        return `
-                            <div class="lb-card ${topClass}" style="border-left: 4px solid ${item.color};">
-                                <div style="display:flex; align-items:center; gap:12px;">
-                                    <div class="lb-rank-badge">${rankMedal}</div>
-                                    <div>
-                                        <div style="font-weight:bold; color:#fff; font-size:0.95rem;">@${item.username}</div>
-                                        <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: <span style="color:#eab308;">${item.finder_name}</span></div>
-                                        ${item.finder_id !== "0" ? `<button class="lb-finder-btn" onclick="openUserChat('${item.finder_id}')">💬 Написать</button>` : ''}
-                                    </div>
-                                </div>
-                                <div style="text-align:right;">
-                                    <div style="color:${item.color}; font-weight:bold; font-size:0.85rem;">${item.rank}</div>
-                                    <div style="font-size:0.7rem; color:#eab308; opacity:0.9; margin-top:2px;">${item.price}</div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Находок пока нет.</div>';
-                }
-            } catch (e) {
-                container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px;">Ошибка загрузки</div>';
-            }
-        }
-
-        function submitSecretCode() {
-            const input = document.getElementById('secret-code-input');
-            const code = input.value.trim().toUpperCase();
-            input.value = "";
-
-            if (SECRET_PROMOS[code]) {
-                const p = SECRET_PROMOS[code];
-                unlockSecretTheme(p.id, p.icon, p.colorHex, p.glowHex, p.emojis);
-                showToast(`✨ Открыто: ${p.msg}!`);
-                stats.secretsFound++; saveStats();
-            } else {
-                showToast("❌ Неверный код");
-                return;
-            }
-            closeModal('modal-secret-code');
-        }
-
-        function unlockSecretTheme(themeId, icon, colorHex, glowHex, emojis) {
-            if (!unlockedSecretThemes.some(t => t.id === themeId)) {
-                unlockedSecretThemes.push({ id: themeId, icon, colorHex, glowHex, emojis });
-                localStorage.setItem('vh_secret_themes', JSON.stringify(unlockedSecretThemes));
-            }
-            renderCustomThemesGrid();
-            activateSecretEffect(themeId, colorHex, glowHex, emojis);
-        }
-
-        function renderCustomThemesGrid() {
-            const grid = document.getElementById('theme-dots-grid');
-            if (!grid) return;
-
-            document.querySelectorAll('.color-dot.secret-unlocked').forEach(e => e.remove());
-
-            unlockedSecretThemes.forEach(theme => {
-                const dot = document.createElement('div');
-                dot.className = 'color-dot secret-unlocked';
-                dot.style.background = theme.colorHex;
-                dot.innerText = theme.icon;
-                dot.onclick = (e) => {
-                    activateSecretEffect(theme.id, theme.colorHex, theme.glowHex, theme.emojis);
-                    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-                    dot.classList.add('active');
-                };
-                grid.appendChild(dot);
-            });
-        }
-
-        let secretAnimId = null;
-        const secretCanvas = document.getElementById('secret-canvas');
-        const sCtx = secretCanvas.getContext('2d');
-
-        function stopSecretAnimation() {
-            if (secretAnimId) { cancelAnimationFrame(secretAnimId); secretAnimId = null; }
-            sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
-            secretCanvas.style.display = 'none';
-            document.body.className = '';
-        }
-
-        function activateSecretEffect(themeId, colorHex, glowHex, emojis) {
-            stopSecretAnimation();
-            setThemeColor(colorHex, glowHex, null);
-            if (emojis) { document.getElementById('emoji-input').value = emojis; updateEmojiSettings(); }
-
-            secretCanvas.width = window.innerWidth;
-            secretCanvas.height = window.innerHeight;
-
-            if (themeId === 'matrix') {
-                secretCanvas.style.display = 'block';
-                const chars = '0123456789ABCDEFｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ';
-                const fontSize = 14;
-                const columns = Math.floor(secretCanvas.width / fontSize);
-                const drops = Array(columns).fill(1);
-
-                function drawMatrix() {
-                    sCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-                    sCtx.fillRect(0, 0, secretCanvas.width, secretCanvas.height);
-                    sCtx.fillStyle = '#0F0';
-                    sCtx.font = `${fontSize}px monospace`;
-                    for (let i = 0; i < drops.length; i++) {
-                        const text = chars.charAt(Math.floor(Math.random() * chars.length));
-                        sCtx.fillText(text, i * fontSize, drops[i] * fontSize);
-                        if (drops[i] * fontSize > secretCanvas.height && Math.random() > 0.975) drops[i] = 0;
-                        drops[i]++;
-                    }
-                    secretAnimId = requestAnimationFrame(drawMatrix);
-                }
-                drawMatrix();
-            } 
-            else if (themeId === 'durov') {
-                secretCanvas.style.display = 'block';
-                let planes = Array.from({ length: 18 }, () => ({
-                    x: Math.random() * secretCanvas.width,
-                    y: Math.random() * secretCanvas.height,
-                    speed: 1 + Math.random() * 2, size: 15 + Math.random() * 10
-                }));
-
-                function drawDurov() {
-                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
-                    sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    planes.forEach(p => {
-                        sCtx.save();
-                        sCtx.translate(p.x, p.y);
-                        sCtx.beginPath();
-                        sCtx.moveTo(0, 0); sCtx.lineTo(-p.size, -p.size/2); sCtx.lineTo(-p.size/2, 0); sCtx.lineTo(-p.size, p.size/2);
-                        sCtx.closePath(); sCtx.fill();
-                        sCtx.restore();
-                        p.x -= p.speed; p.y -= p.speed * 0.5;
-                        if (p.x < -30 || p.y < -30) { p.x = secretCanvas.width + 30; p.y = Math.random() * secretCanvas.height; }
-                    });
-                    secretAnimId = requestAnimationFrame(drawDurov);
-                }
-                drawDurov();
-            }
-            else if (themeId === 'kington') {
-                secretCanvas.style.display = 'block';
-                let goldList = Array.from({ length: 45 }, () => ({
-                    x: Math.random() * secretCanvas.width, y: Math.random() * secretCanvas.height,
-                    size: Math.random() * 3 + 1.5, speed: Math.random() * 1.5 + 0.5, op: Math.random()
-                }));
-
-                function drawKington() {
-                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
-                    goldList.forEach(g => {
-                        sCtx.fillStyle = `rgba(255, 215, 0, ${g.op})`;
-                        sCtx.beginPath(); sCtx.arc(g.x, g.y, g.size, 0, Math.PI * 2); sCtx.fill();
-                        g.y += g.speed;
-                        if (g.y > secretCanvas.height) { g.y = 0; g.x = Math.random() * secretCanvas.width; }
-                    });
-                    secretAnimId = requestAnimationFrame(drawKington);
-                }
-                drawKington();
-            }
-            else if (themeId === 'vapor') {
-                document.body.classList.add("theme-vapor");
-            }
-            else {
-                document.body.classList.add(`theme-${themeId}`);
-            }
-        }
-
-        const ACHIEVEMENTS_DATA = [];
-        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
-        
-        for (let i = 1; i <= 100; i++) {
-            let title = `Уровень #${i}`;
-            let desc = `Выполните условия для уровня ${i}.`;
-            let icon = EMOJI_LIST[i % EMOJI_LIST.length];
-            let statKey = "generations";
-            let target = i * 10;
-
-            if (i === 1) { title = "Первый поиск"; desc = "Сделать 1 генерацию."; icon = "🎲"; target = 1; statKey = "generations"; }
-            else if (i === 2) { title = "Любитель поиска"; desc = "Сделать 10 генераций."; icon = "🎰"; target = 10; statKey = "generations"; }
-            else if (i === 3) { title = "Мастер спинов"; desc = "Сделать 50 генераций."; icon = "⚡"; target = 50; statKey = "generations"; }
-            else if (i === 5) { title = "Наводчик радара"; desc = "Поставить 1 ник на Радар."; icon = "🎯"; target = 1; statKey = "radarAdded"; }
-            else {
-                title = `Индекс поиска Lvl.${i}`;
-                desc = `Сделать ${i * 15} успешных проверок.`;
-                target = i * 15;
-                statKey = "generations";
-            }
-
-            ACHIEVEMENTS_DATA.push({ id: `ach_${i}`, title, desc, icon, target, statKey });
-        }
-
-        let unlockedAchievements = JSON.parse(localStorage.getItem('vh_unlocked_achievements') || '[]');
-
-        function checkAchievementProgress() {
-            ACHIEVEMENTS_DATA.forEach(ach => {
-                const currentVal = stats[ach.statKey] || 0;
-                if (currentVal >= ach.target && !unlockedAchievements.includes(ach.id)) {
-                    unlockedAchievements.push(ach.id);
-                    localStorage.setItem('vh_unlocked_achievements', JSON.stringify(unlockedAchievements));
-                    showToast(`🏆 Награда: ${ach.title}!`);
-                    vibrate('success');
-                }
-            });
-            renderAchievements();
-        }
-
-        function renderAchievements() {
-            const container = document.getElementById('achievements-list-container');
-            document.getElementById('achieve-counter-badge').innerText = `${unlockedAchievements.length}/100`;
-            document.getElementById('achieve-count-modal').innerText = unlockedAchievements.length;
-
-            if (!container) return;
-
-            container.innerHTML = ACHIEVEMENTS_DATA.map(item => {
-                const isUnlocked = unlockedAchievements.includes(item.id);
-                const currentVal = Math.min(stats[item.statKey] || 0, item.target);
-                const percent = Math.min(100, Math.floor((currentVal / item.target) * 100));
-
-                return `
-                    <div class="achieve-card ${isUnlocked ? 'unlocked' : ''}">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="font-size:1.8rem;">${item.icon}</div>
-                            <div style="flex:1;">
-                                <div style="font-size:0.9rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
-                                    <span>${item.title}</span>
-                                    <span style="font-size:0.75rem; color:var(--primary);">${currentVal}/${item.target}</span>
-                                </div>
-                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${item.desc}</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${percent}%;"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        const canvas = document.getElementById('fog-canvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
-        let particles = [];
-        let fogSpeedFactor = 1.5;
-
-        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize); resize();
-
-        function initParticles(count) {
-            particles = [];
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#29c75f';
-            for(let i=0; i<count; i++) {
-                particles.push({
-                    x: Math.random() * width, y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * fogSpeedFactor, vy: (Math.random() - 0.5) * fogSpeedFactor,
-                    radius: Math.random() * 140 + 100, color: primaryColor
-                });
-            }
-        }
-        initParticles(5);
-
-        function drawFog() {
-            ctx.clearRect(0, 0, width, height);
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            particles.forEach((p) => {
-                p.x += p.vx; p.y += p.vy;
-                if(p.x < 0 || p.x > width) p.vx *= -1;
-                if(p.y < 0 || p.y > height) p.vy *= -1;
-
-                let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-                grad.addColorStop(0, primaryColor + '20'); grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
-            });
-            requestAnimationFrame(drawFog);
-        }
-        drawFog();
-
-        let floatingEmojisList = [];
-        let emojiElements = [];
-
-        function toggleEmojiFeature(cb) {
-            const controlsBox = document.getElementById('emoji-controls-box');
-            const layer = document.getElementById('emoji-layer');
-            
-            if (cb.checked) {
-                controlsBox.style.display = 'block';
-                updateEmojiSettings();
-            } else {
-                controlsBox.style.display = 'none';
-                layer.innerHTML = '';
-                emojiElements = [];
-            }
-            saveCustomization();
-        }
-
-        function updateEmojiSettings() {
-            const isEnabled = document.getElementById('toggle-emoji').checked;
-            const layer = document.getElementById('emoji-layer');
-
-            if (!isEnabled) {
-                layer.innerHTML = '';
-                emojiElements = [];
-                return;
-            }
-
-            const raw = document.getElementById('emoji-input').value;
-            floatingEmojisList = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
-
-            layer.innerHTML = '';
-            emojiElements = [];
-
-            if (floatingEmojisList.length === 0) return;
-
-            for (let i = 0; i < 5; i++) {
-                const el = document.createElement('div');
-                el.className = 'floating-emoji';
-                el.innerText = floatingEmojisList[i % floatingEmojisList.length];
-                el.style.fontSize = `20px`;
-                
-                let posX = Math.random() * window.innerWidth;
-                let posY = Math.random() * window.innerHeight;
-                let speedX = (Math.random() - 0.5) * 1.2;
-                let speedY = (Math.random() - 0.5) * 1.2;
-
-                layer.appendChild(el);
-                emojiElements.push({ el, posX, posY, speedX, speedY });
-            }
-
-            saveCustomization();
-        }
-
-        function animateEmojis() {
-            emojiElements.forEach(item => {
-                item.posX += item.speedX;
-                item.posY += item.speedY;
-
-                if (item.posX < -30) item.posX = window.innerWidth + 10;
-                if (item.posX > window.innerWidth + 30) item.posX = -10;
-                if (item.posY < -30) item.posY = window.innerHeight + 10;
-                if (item.posY > window.innerHeight + 30) item.posY = -10;
-
-                item.el.style.transform = `translate3d(${item.posX}px, ${item.posY}px, 0)`;
-            });
-            requestAnimationFrame(animateEmojis);
-        }
-        animateEmojis();
-
-        function updateFogSettings() {
-            const count = parseInt(document.getElementById('fog-count-slider').value);
-            initParticles(count);
-            saveCustomization();
-        }
-
-        function setThemeColor(hex, glow, dotEl) {
-            stopSecretAnimation();
-            document.documentElement.style.setProperty('--primary', hex);
-            document.documentElement.style.setProperty('--primary-glow', glow);
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-            if(dotEl) dotEl.classList.add('active');
-            stats.themesChanged++; saveStats();
-            saveCustomization();
-        }
-
-        function toggleCustomMenu(cb) {
-            const menu = document.getElementById('custom-menu');
-            const btn = document.getElementById('btn-toggle-custom-panel');
-            if (cb.checked) {
-                menu.classList.add('active');
-                btn.style.display = 'flex';
-                btn.classList.remove('collapsed');
-            } else {
-                menu.classList.remove('active');
-                btn.style.display = 'none';
-            }
-            saveCustomization();
-        }
-
-        function toggleFilterMenu(cb) {
-            const menu = document.getElementById('filter-menu');
-            const btn = document.getElementById('btn-toggle-filter-panel');
-            if (cb.checked) {
-                menu.classList.add('active');
-                btn.style.display = 'flex';
-                btn.classList.remove('collapsed');
-            } else {
-                menu.classList.remove('active');
-                btn.style.display = 'none';
-            }
-        }
-
-        function togglePanelVisibility(panelId, btnEl) {
-            const menu = document.getElementById(panelId);
-            if (menu.classList.contains('active')) {
-                menu.classList.remove('active');
-                btnEl.classList.add('collapsed');
-            } else {
-                menu.classList.add('active');
-                btnEl.classList.remove('collapsed');
-            }
-        }
-
-        function resetCustomization() {
-            localStorage.removeItem('vh_custom_settings');
-            stopSecretAnimation();
-            setThemeColor('#29c75f', 'rgba(41, 199, 95, 0.25)', document.querySelectorAll('.color-dot')[0]);
-            document.getElementById('fog-count-slider').value = 5;
-            document.getElementById('toggle-emoji').checked = true;
-            document.getElementById('emoji-controls-box').style.display = 'block';
-            document.getElementById('emoji-input').value = '🔥, ⚡, 💎';
-            
-            updateFogSettings();
-            updateEmojiSettings();
-            showToast('↺ Настройки сброшены!');
-        }
-
-        function saveCustomization() {
-            const customData = {
-                customEnabled: document.getElementById('toggle-custom').checked,
-                themeColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
-                themeGlow: getComputedStyle(document.documentElement).getPropertyValue('--primary-glow').trim(),
-                fogCount: document.getElementById('fog-count-slider').value,
-                emojiEnabled: document.getElementById('toggle-emoji').checked,
-                emojis: document.getElementById('emoji-input').value
-            };
-            localStorage.setItem('vh_custom_settings', JSON.stringify(customData));
-        }
-
-        function loadCustomization() {
-            renderCustomThemesGrid();
-            const saved = localStorage.getItem('vh_custom_settings');
-            checkAchievementProgress();
-            if(!saved) return;
-            const data = JSON.parse(saved);
-
-            if(data.customEnabled) {
-                document.getElementById('toggle-custom').checked = true;
-                document.getElementById('custom-menu').classList.add('active');
-                document.getElementById('btn-toggle-custom-panel').style.display = 'flex';
-            }
-
-            if(data.emojiEnabled !== undefined) {
-                document.getElementById('toggle-emoji').checked = data.emojiEnabled;
-                document.getElementById('emoji-controls-box').style.display = data.emojiEnabled ? 'block' : 'none';
-            }
-
-            if(data.themeColor) setThemeColor(data.themeColor, data.themeGlow, null);
-            if(data.fogCount) document.getElementById('fog-count-slider').value = data.fogCount;
-            if(data.emojis) document.getElementById('emoji-input').value = data.emojis;
-
-            updateFogSettings();
-            updateEmojiSettings();
-        }
-        loadCustomization();
-
-        function createRipple(x, y) {
-            const ripple = document.createElement('div'); ripple.className = 'screen-ripple';
-            ripple.style.width = ripple.style.height = '100px'; ripple.style.left = (x - 50) + 'px'; ripple.style.top = (y - 50) + 'px';
-            document.body.appendChild(ripple); setTimeout(() => ripple.remove(), 1200);
-        }
-
-        function triggerJackpot() {
-            vibrate('success'); setTimeout(() => vibrate('success'), 200);
-            document.getElementById('result-box').classList.add('golden-mode');
-            stats.fragmentFound++; saveStats();
-            const emojis = ['⚡', '✨', '🔥', '💎', '🚀'];
-            for(let i=0; i<25; i++) {
-                const p = document.createElement('div'); p.innerText = emojis[Math.floor(Math.random() * emojis.length)]; p.className = 'jackpot-particle'; document.body.appendChild(p);
-                const rect = document.getElementById('result-box').getBoundingClientRect();
-                p.style.left = (rect.left + rect.width / 2) + 'px'; p.style.top = (rect.top + rect.height / 2) + 'px';
-                const angle = Math.random() * Math.PI * 2; const distance = 100 + Math.random() * 200;
-                p.style.setProperty('--tx', `${Math.cos(angle) * distance}px`); p.style.setProperty('--ty', `${Math.sin(angle) * distance}px`); p.style.setProperty('--rot', `${Math.random() * 360}deg`);
-                setTimeout(() => p.remove(), 1200);
-            }
-        }
-
-        function vibrate(type = 'light') {
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                if (type === 'light') window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-                if (type === 'success') window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-            } else if (navigator.vibrate) {
-                if (type === 'light') navigator.vibrate(15);
-                if (type === 'success') navigator.vibrate([50, 50, 100]);
-            }
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('global-toast');
-            if (msg) toast.innerHTML = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3500);
-        }
-
-        function setPlatform(platform, btn) {
-            if (isAuto) return; 
-            currentPlatform = platform;
-            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active'); vibrate('light');
-        }
-
-        function openModal(id) {
-            vibrate('light'); document.getElementById(id).classList.add('active');
-            if(id === 'modal-radar') fetchRadarList();
-            if(id === 'modal-history') renderHistory();
-            if(id === 'modal-achievements') renderAchievements();
-            if(id === 'modal-leaderboard') fetchLeaderboard('all');
-        }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-        // =========================================================================
-        // 🔮 АНИМАЦИОННОЕ КВАНТОВОЕ ЯДРО (CANVAS 2D)
-        // =========================================================================
-        const cCanvas = document.getElementById('core-canvas');
-        const cCtx = cCanvas.getContext('2d');
-        let coreAngle = 0;
-        let coreHealth = 100;
-        let crackRays = [];
-
-        function initCoreCanvas() {
-            drawCore();
-        }
-
-        function drawCore() {
-            cCtx.clearRect(0, 0, 300, 300);
-
-            let centerX = 150, centerY = 150, radius = 80;
-
-            // Вращающиеся цепи/кольца
-            coreAngle += 0.015;
-            cCtx.save();
-            cCtx.translate(centerX, centerY);
-            cCtx.rotate(coreAngle);
-
-            cCtx.strokeStyle = 'rgba(41, 199, 95, 0.6)';
-            cCtx.lineWidth = 4;
-            cCtx.setLineDash([15, 10]);
-            cCtx.beginPath();
-            cCtx.arc(0, 0, radius + 15, 0, Math.PI * 2);
-            cCtx.stroke();
-            cCtx.restore();
-
-            // Внутреннее пульсирующее Ядро
-            let grad = cCtx.createRadialGradient(centerX, centerY, 10, centerX, centerY, radius);
-            grad.addColorStop(0, '#38bdf8');
-            grad.addColorStop(0.7, '#29c75f');
-            grad.addColorStop(1, '#030604');
-
-            cCtx.fillStyle = grad;
-            cCtx.beginPath();
-            cCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-            cCtx.fill();
-
-            // Рисование трещин при ударе
-            cCtx.strokeStyle = '#ffffff';
-            cCtx.lineWidth = 2;
-            crackRays.forEach(ray => {
-                cCtx.beginPath();
-                cCtx.moveTo(centerX, centerY);
-                cCtx.lineTo(centerX + Math.cos(ray) * radius, centerY + Math.sin(ray) * radius);
-                cCtx.stroke();
-            });
-
-            requestAnimationFrame(drawCore);
-        }
-
-        // ТАП ПО ЯДРУ
-        const clickArea = document.getElementById('click-area');
-        clickArea.addEventListener('pointerdown', (e) => {
-            if (userProfile.energy < 1) {
-                showToast('⚡ Энергия на нуле! Подождите зарядки.');
-                return;
-            }
-
-            vibrate('light');
-            userProfile.energy -= 1;
-            userProfile.coins += userProfile.multi_tap;
-            pendingTaps++;
-
-            coreHealth -= 4;
-            if (crackRays.length < 12) crackRays.push(Math.random() * Math.PI * 2);
-
-            if (coreHealth <= 0) {
-                coreHealth = 100;
-                crackRays = [];
-                userProfile.coins += userProfile.multi_tap * 10;
-                showToast('💥 Слой защиты взломан! Бонус +10х 🟡');
-            }
-
-            // Всплывающая цифра (+1 / +2)
-            const rect = clickArea.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            const floatNum = document.createElement('div');
-            floatNum.className = 'floating-number';
-            floatNum.innerText = `+${userProfile.multi_tap}`;
-            floatNum.style.left = `${x - 15}px`;
-            floatNum.style.top = `${y - 20}px`;
-            clickArea.appendChild(floatNum);
-
-            setTimeout(() => floatNum.remove(), 800);
-            updateTycoonUI();
-
-            clearTimeout(syncTimer);
-            syncTimer = setTimeout(syncTapsWithServer, 1000);
-        });
-
-        async function syncTapsWithServer() {
-            if (pendingTaps === 0) return;
-            let tapsToSend = pendingTaps;
-            pendingTaps = 0;
-
-            try {
-                const res = await fetch('/api/game/sync_tap', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile.coins = data.coins;
-                    updateTycoonUI();
-                }
-            } catch(e){}
-        }
-
-        async function buyItem(itemId) {
-            try {
-                const res = await fetch('/api/game/buy', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, item_id: itemId })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile = data.profile;
-                    updateTycoonUI();
-                    showToast('✅ Успешно куплено!');
-                } else {
-                    showToast('❌ Недостаточно монет!');
-                }
-            } catch(e) {
-                showToast('Ошибка покупки');
-            }
-        }
-
-        async function fetchRadarList() {
-            const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
-            const data = await res.json(); renderRadar(data.targets);
-        }
-        async function addRadarTarget() {
-            const inp = document.getElementById('radar-input'); const val = inp.value.trim();
-            if(!val) return;
-
-            const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
-            const data = await res.json();
-            inp.value = ""; showToast("Взято на мушку!"); renderRadar(data.targets);
-            stats.radarAdded++; saveStats();
-        }
-        async function removeRadarTarget(username) {
-            const res = await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${username}`);
-            const data = await res.json(); renderRadar(data.targets);
-        }
-        function renderRadar(targets) {
-            const cont = document.getElementById('radar-list');
-            cont.innerHTML = targets.map(t => `<div class="history-card" style="cursor:default;"><div style="font-weight:bold; color:var(--text-main)">@${t}</div><button class="radar-remove" style="background:transparent; border:none; color:#ef4444; font-size:0.8rem; cursor:pointer;" onclick="removeRadarTarget('${t}')">Удалить</button></div>`).join('');
-        }
-
-        function saveToHistory(item) {
-            if (!item.user || item.user === "timeout" || item.user === "error") return;
-            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
-            if (historyData.some(i => i.user === item.user && i.plat === item.plat)) return;
-            historyData.push(item);
-            historyData.sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
-            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
-        }
-
-        function renderHistory() {
-            const cont = document.getElementById('history-container'); cont.innerHTML = '';
-            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
-            
-            if (historyData.length === 0) { cont.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.85rem;">История пуста.</div>'; return; }
-            
-            historyData.forEach((item, index) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'history-wrapper';
-                wrapper.id = `hist-wrap-${index}`;
-
-                const div = document.createElement('div'); 
-                div.className = 'history-card';
-                div.setAttribute('data-index', index);
-                div.setAttribute('data-user', item.user);
-                
-                div.innerHTML = `
-                    <div class="swipe-action-icon swipe-icon-left">🗑</div>
-                    <div class="hist-left" style="pointer-events:none;"><div class="hist-user" style="color: ${item.color}">@${item.user}</div><div class="hist-plat" style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div></div>
-                    <div class="hist-right" style="text-align:right; pointer-events:none;"><div class="hist-rank" style="color: ${item.color}; font-weight:bold;">${item.rank}</div><div class="price-text" style="font-size:0.75rem; opacity:0.8;">${item.price}</div></div>
-                    <div class="swipe-action-icon swipe-icon-right">🔗</div>
-                `;
-
-                div.ontouchstart = handleTouchStart;
-                div.ontouchmove = handleTouchMove;
-                div.ontouchend = handleTouchEnd;
-
-                div.onclick = (e) => {
-                    if (isSwiping) return;
-                    navigator.clipboard.writeText(item.user); 
-                    showToast('✨ Ник скопирован!'); 
-                    vibrate('light'); 
-                };
-
-                wrapper.appendChild(div);
-                cont.appendChild(wrapper);
-            });
-        }
-
-        function clearHistory() {
-            if (confirm("Очистить историю?")) {
-                localStorage.removeItem('vpn_parser_history');
-                renderHistory();
-            }
-        }
-
-        let startX = 0, currentX = 0, activeCard = null, isSwiping = false;
-
-        function handleTouchStart(e) {
-            startX = e.touches[0].clientX;
-            activeCard = e.currentTarget;
-            activeCard.style.transition = 'none';
-            isSwiping = false;
-        }
-
-        function handleTouchMove(e) {
-            if (!activeCard) return;
-            currentX = e.touches[0].clientX;
-            let diffX = currentX - startX;
-
-            const index = parseInt(activeCard.getAttribute('data-index'));
-            const wrapper = document.getElementById(`hist-wrap-${index}`);
-
-            if (Math.abs(diffX) > 10) isSwiping = true;
-
-            if (diffX > 0) {
-                if (wrapper) {
-                    wrapper.classList.add('swiping-right');
-                    wrapper.classList.remove('swiping-left');
-                }
-            } else if (diffX < 0) {
-                if (wrapper) {
-                    wrapper.classList.add('swiping-left');
-                    wrapper.classList.remove('swiping-right');
-                }
-            }
-
-            activeCard.style.transform = `translate3d(${diffX}px, 0, 0)`;
-            activeCard.style.opacity = `${1 - Math.abs(diffX) / 250}`;
-        }
-
-        function handleTouchEnd(e) {
-            if (!activeCard) return;
-            let diffX = currentX - startX;
-            const index = parseInt(activeCard.getAttribute('data-index'));
-            const username = activeCard.getAttribute('data-user');
-            const wrapper = document.getElementById(`hist-wrap-${index}`);
-
-            if (diffX > 140) {
-                activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
-                activeCard.style.transform = 'translate3d(100%, 0, 0)';
-                activeCard.style.opacity = '0';
-
-                setTimeout(() => { if (wrapper) wrapper.classList.add('deleting'); }, 120);
-
-                setTimeout(() => {
-                    let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
-                    historyData.splice(index, 1);
-                    localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
-                    renderHistory();
-                }, 350);
-            } 
-            else if (diffX < -140) {
-                activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
-                activeCard.style.transform = 'translate3d(-100%, 0, 0)';
-                activeCard.style.opacity = '0';
-
-                vibrate('success');
-                const botUsername = "selectionusername_bot";
-                const text = `🎯 Доступный юзернейм @${username} найден с помощью @${botUsername}`;
-                const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/' + botUsername)}&text=${encodeURIComponent(text)}`;
-                
-                setTimeout(() => {
-                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-                        window.Telegram.WebApp.openTelegramLink(url);
-                    } else {
-                        window.open(url, '_blank');
-                    }
-                    renderHistory();
-                }, 200);
-            } 
-            else {
-                activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-                activeCard.style.transform = 'translate3d(0px, 0, 0)';
-                activeCard.style.opacity = '1';
-                if(wrapper) {
-                    wrapper.classList.remove('swiping-right');
-                    wrapper.classList.remove('swiping-left');
-                }
-            }
-
-            startX = 0; currentX = 0; activeCard = null;
-            setTimeout(() => { isSwiping = false; }, 50);
-        }
-
-        function startSlotMachine() {
-            const el = document.getElementById('res-username'); const chars = "abcdefghijklmnopqrstuvwxyz";
-            document.getElementById('res-market').style.display = 'none'; document.getElementById('result-box').classList.remove('golden-mode');
-            slotInterval = setInterval(() => { let rand = ""; for(let i=0; i<6; i++) rand += chars[Math.floor(Math.random() * chars.length)]; el.textContent = "@" + rand; }, 60);
-        }
-        function stopSlotMachine(finalName) { clearInterval(slotInterval); document.getElementById('res-username').textContent = "@" + finalName; }
-
-        function toggleAutoSearch(cb) {
-            vibrate('light'); isAuto = cb.checked; const btn = document.getElementById('btn-generate');
-            if (isAuto) { 
-                autoParseCatches = [];
-                btn.disabled = true; 
-                btn.textContent = "Парсинг..."; 
-                runCycle(); 
-            } else { 
-                btn.disabled = false; 
-                btn.textContent = "Сгенерировать"; 
-                showSummaryModal();
-            }
-        }
-
-        async function runCycle() { if (!isAuto) return; if (!isFetching) await fetchUsername(); if (isAuto) setTimeout(runCycle, 2500); }
-
-        async function manualGenerate(event) {
-            if (isFetching || isAuto) return; vibrate('light');
-            if(event && event.clientX) createRipple(event.clientX, event.clientY); else createRipple(window.innerWidth/2, window.innerHeight/2);
-            document.getElementById('quick-actions').style.display = 'none';
-            const btn = document.getElementById('btn-generate'); btn.disabled = true; btn.textContent = "Анализ...";
-            await fetchUsername(); btn.textContent = "Сгенерировать"; btn.disabled = false;
-        }
-
-        async function fetchUsername() {
-            isFetching = true; startSlotMachine();
-            
-            stats.generations++;
-            saveStats();
-
-            const mode = selectedValues['select-gen-mode'];
-            const userInput = document.getElementById('prefix-user-input').value;
-            const category = selectedValues['select-category'];
-            const position = selectedValues['select-position'];
-            const lenMode = selectedValues['select-len'];
-
-            const url = `/api/generate?platform=${currentPlatform}&mode=${mode}&user_input=${encodeURIComponent(userInput)}&category=${category}&position=${position}&len_mode=${lenMode}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`;
-
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("Server_Error");
-                
-                const data = await res.json();
-                lastGenerated = data.generated_username; stopSlotMachine(lastGenerated);
-                
-                const uEl = document.getElementById('res-username'); const mEl = document.getElementById('res-market'); const sEl = document.getElementById('res-status');
-                uEl.style.color = data.evaluation.color; sEl.textContent = data.evaluation.status; sEl.style.color = data.evaluation.color;
-
-                if (data.is_free === true && data.evaluation.rank !== "ERR") {
-                    if(!isAuto) document.getElementById('quick-actions').style.display = 'flex';
-                    
-                    const catchItem = { user: data.generated_username, plat: currentPlatform, rank: data.evaluation.rank, price: data.evaluation.status, color: data.evaluation.color };
-                    saveToHistory(catchItem);
-                    if (isAuto) autoParseCatches.push(catchItem);
-
-                    if (data.evaluation.status.includes("Fragment") || data.evaluation.rank === "SSS+") {
-                        mEl.style.display = 'inline-block'; mEl.textContent = data.evaluation.status; triggerJackpot();
-                    } else { vibrate('light'); }
-                }
-            } catch (e) {
-                stopSlotMachine("---");
-                document.getElementById('res-status').textContent = "Сбой соединения с сервером";
-                document.getElementById('res-status').style.color = "#f97316";
-            } finally { isFetching = false; }
-        }
-
-        function showSummaryModal() {
-            if (autoParseCatches.length === 0) {
-                showToast("Свободных ников не найдено");
-                return;
-            }
-
-            const sorted = [...autoParseCatches].sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
-
-            document.getElementById('summary-count').innerText = autoParseCatches.length;
-            
-            document.getElementById('summary-list').innerHTML = sorted.map(item => `
-                <div class="history-card" 
-                     style="cursor:pointer; padding:12px 14px; border-left: 3px solid ${item.color}; margin-bottom:0;" 
-                     onclick="copySummaryUsername('${item.user}')">
-                    <div class="hist-left">
-                        <div class="hist-user" style="color: #ffffff; font-weight:bold;">@${item.user}</div>
-                        <div style="font-size:0.75rem; color: ${item.color}; font-weight:600; margin-top:2px;">
-                            Индекс: ${item.rank}
-                        </div>
-                    </div>
-                    <div class="hist-right" style="text-align:right;">
-                        <div style="font-size:0.8rem; color:#eab308; font-weight:600; background:rgba(234, 179, 8, 0.1); padding:2px 6px; border-radius:6px; border:1px solid rgba(234, 179, 8, 0.2);">
-                            ${item.price}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            openModal('modal-summary');
-        }
-
-        function copySummaryUsername(username) {
-            navigator.clipboard.writeText(username);
-            vibrate('success');
-            showToast(`✨ @${username} скопирован!`);
-        }
-
-        function shareToFriends() {
-            vibrate('light');
-            const botUsername = "selectionusername_bot";
-            const priceText = document.getElementById('res-market').innerText;
-            const text = `🎯 Поймал юзернейм @${lastGenerated} через @${botUsername}!\nОценка: ${priceText}`;
-            const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/' + botUsername)}&text=${encodeURIComponent(text)}`;
-            
-            if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-                window.Telegram.WebApp.openTelegramLink(url);
-            } else {
-                window.open(url, '_blank');
-            }
-        }
-
-        function takeUsername() {
-            navigator.clipboard.writeText(lastGenerated);
-            vibrate('success');
-            showToast('✨ Юзернейм скопирован!');
-        }
-    </script>
-</body>
-</html>
+            await asyncio.sleep(0.08)
+
+    if mode == "prefix_master" and user_input.strip():
+        fallback_nick = generate_prefix_master(user_input, category, "suffix")
+    elif mode == "translit":
+        fallback_nick = generate_translit_brand()
+    else:
+        fallback_nick = generate_standard_brand(len_mode)
+
+    is_free_fallback = await check_username_telethon(fallback_nick)
+    eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
+    
+    if is_free_fallback:
+        GENERATED_HISTORY.add(fallback_nick)
+        if eval_data["score"] >= 40:
+            add_to_leaderboard(fallback_nick, eval_data["rank"], eval_data["status"], eval_data["score"], eval_data["color"], finder_name, finder_id)
+
+    return {
+        "status": "success", 
+        "generated_username": fallback_nick, 
+        "platform": platform, 
+        "is_free": is_free_fallback, 
+        "evaluation": eval_data
+    }
+
+@app.get("/api/leaderboard")
+async def get_leaderboard(period: str = Query("all")):
+    lb = load_leaderboard()
+    now = int(time.time())
+    if period == "day": 
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 86400]
+    elif period == "week": 
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 604800]
+    elif period == "month": 
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 2592000]
+    return {"status": "ok", "leaderboard": lb[:1000]}
+
+@app.get("/api/radar/add")
+async def radar_add(chat_id: str, username: str):
+    db = load_radar_db()
+    chat_id, username = str(chat_id).strip(), username.replace("@", "").strip().lower()
+    if not username: 
+        return {"status": "error", "message": "Пустой юзернейм"}
+    if chat_id not in db: 
+        db[chat_id] = []
+    if username not in db[chat_id]: 
+        db[chat_id].append(username)
+        save_radar_db(db)
+    return {"status": "ok", "targets": db[chat_id]}
+
+@app.get("/api/radar/list")
+async def radar_list(chat_id: str):
+    return {"targets": load_radar_db().get(str(chat_id).strip(), [])}
+
+@app.get("/api/radar/remove")
+async def radar_remove(chat_id: str, username: str):
+    db = load_radar_db()
+    chat_id, username = str(chat_id).strip(), username.replace("@", "").strip().lower()
+    if chat_id in db and username in db[chat_id]:
+        db[chat_id].remove(username)
+        if not db[chat_id]: 
+            del db[chat_id]
+        save_radar_db(db)
+    return {"status": "ok", "targets": db.get(chat_id, [])}
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
