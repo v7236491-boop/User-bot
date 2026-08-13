@@ -36,7 +36,7 @@ USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.3
 
 # =========================================================================
-# 📚 БАЗЫ ДАННЫХ И ПРЕФИКСЫ
+# 👑 ПРЕМИАЛЬНАЯ ЛАТИНСКАЯ И ЭЛЛИНСКАЯ БАЗА (ВЫСОКАЯ ЦЕННОСТЬ)
 # =========================================================================
 TOP_BRANDS = list(set([
     "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
@@ -51,30 +51,17 @@ PURE_WORDS = list(set((
     "solace chronos tempest sapphire emerald olympus trident"
 ).split()))
 
-# 1. Легко читаемые короткие префиксы и корни (5-6 букв)
-SHORT_EASY_PREFIXES = [
-    "qsor", "qcol", "vityaz", "krom", "vort", "cold", "zora", "koda", "mora",
-    "solu", "velv", "aero", "nova", "lumi", "zeph", "krus", "vibe", "flex",
-    "peak", "wave", "volt", "flux", "rift", "glow", "dusk", "dawn", "echo"
+# Премиум-корни высокой ценности (звучат дорого и солидно)
+LUXURY_ROOTS = [
+    "aeth", "chron", "solis", "vort", "lum", "phos", "zeph", "celest", "aegis",
+    "crest", "vanguard", "valer", "kismet", "astral", "spect", "temp", "titan",
+    "mirag", "auror", "prism", "orion", "verve", "lunar", "stell", "zenith",
+    "hyper", "myth", "noble", "penn", "quant", "rhod", "siren", "solac"
 ]
 
-SHORT_EASY_SUFFIXES = ["a", "o", "x", "y", "e", "is", "os", "in", "or", "um"]
-
-# 2. Бренд-неологизмы (6-8 букв)
-NEO_PREFIXES = [
-    "astro", "cyber", "solis", "vortex", "aether", "nexus", "velvet", 
-    "chroma", "verve", "lunar", "stella", "zenith", "hyper", "crypto", "shadow",
-    "mirage", "pulse", "aurora", "zephyr", "solace", "kismet", "aegis", "prism",
-    "valen", "zoran", "orion", "celest", "solari", "volti", "lumis", "velora"
+LUXURY_SUFFIXES = [
+    "is", "ex", "or", "um", "on", "us", "ia", "ix", "ar", "al", "io", "ora", "eth"
 ]
-
-NEO_SUFFIXES = [
-    "ia", "is", "os", "um", "or", "ix", "on", "ar", "al", "io",
-    "ora", "eth", "ux", "ax", "era", "ex", "ita"
-]
-
-CONSONANTS_EASY = "bcdfgklmnprstvwz"
-VOWELS_EASY = "aeiouy"
 
 # --- ХРАНИЛИЩЕ ЛИДЕРБОРДА ---
 def load_leaderboard():
@@ -112,7 +99,7 @@ def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_
     save_leaderboard(lb)
 
 # =========================================================================
-# 🇷🇺 ЭКСПЕРТНАЯ ОЦЕНКА НА РУССКОМ ЯЗЫКЕ
+# 🇷🇺 ПРЕМИАЛЬНАЯ ОЦЕНКА РАНГОВ И СТОИМОСТИ
 # =========================================================================
 def calculate_catch_score(username: str, is_free: bool):
     if not is_free:
@@ -139,42 +126,47 @@ def calculate_catch_score(username: str, is_free: bool):
 
     is_trash = (max_cons_streak >= 3)
 
+    # 💎 SSS+ РАНГ: Эксклюзивные 5-буквенники или бренды
     if (username in TOP_BRANDS) or (length == 5 and not is_trash):
         return {
             "rank": "SSS+", 
-            "status": "Эксклюзивный актив (~100-500+ TON)", 
+            "status": "Эксклюзивный актив (~150-600+ TON)", 
             "color": "#29c75f", 
             "score": 100
         }
 
+    # 🥇 SS РАНГ: Сочные 6-буквенные словарные/брендовые ники
     if (username in PURE_WORDS) or (length == 6 and not is_trash):
         return {
             "rank": "SS", 
-            "status": "Редкий словарный ник (~25-100 TON)", 
+            "status": "Редкий элитный ник (~40-150 TON)", 
             "color": "#eab308", 
             "score": 85
         }
 
+    # 🥈 S РАНГ: Дорогие 7-буквенные неологизмы
     if length == 7 and not is_trash:
         return {
             "rank": "S", 
-            "status": "Премиум бренд (~5-25 TON)", 
+            "status": "Премиум бренд (~10-40 TON)", 
             "color": "#a855f7", 
             "score": 65
         }
 
+    # 🥉 A РАНГ: Солидные 8-буквенники
     if length == 8 and not is_trash:
         return {
             "rank": "A", 
-            "status": "Стандартный красивый ник (~1-5 TON)", 
+            "status": "Стандартный красивый ник (~2-8 TON)", 
             "color": "#3b82f6", 
             "score": 40
         }
 
+    # ⚪ B РАНГ
     if not is_trash and length <= 12:
         return {
             "rank": "B", 
-            "status": "Для личного пользования (~0.5-1 TON)", 
+            "status": "Для личного пользования (~1 TON)", 
             "color": "#64748b", 
             "score": 20
         }
@@ -203,39 +195,23 @@ async def check_username_telethon(username: str) -> bool:
         return False
 
 # =========================================================================
-# 🧬 ГЕНЕРАТОР, ПОДСТРАИВАЮЩИЙСЯ ПОД ФИЛЬТРЫ
+# 🧬 ГЕНЕРАТОР ВЫСОКОЦЕННЫХ ПРЕМИУМ-НИКНЕЙМОВ
 # =========================================================================
 def generate_smart_username(len_mode: str = "5-6") -> str:
     roll = random.random()
     
-    # 1. 40% — Читаемые и легкие 5-6 буквенные ники (qsora, qcold, vityaz)
-    if roll < 0.40 or len_mode == "5-6":
-        if random.random() < 0.70:
-            pref = random.choice(SHORT_EASY_PREFIXES)
-            suf = random.choice(SHORT_EASY_SUFFIXES)
-            candidate = pref + suf
-            if len(candidate) > 6:
-                candidate = candidate[:6]
-            return candidate
-        else:
-            # Чередование слогов ровно на 5 или 6 букв
-            target_len = random.choice([5, 6])
-            candidate = ""
-            start_with_consonant = random.choice([True, False])
-            for i in range(target_len):
-                if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
-                    candidate += random.choice(CONSONANTS_EASY)
-                else:
-                    candidate += random.choice(VOWELS_EASY)
-            return candidate
+    # 1. 85% — Генерация премиальных благородных бренд-имен (сочность + высокая свободоемкость)
+    if roll < 0.85 or len_mode == "5-6":
+        root = random.choice(LUXURY_ROOTS)
+        suf = random.choice(LUXURY_SUFFIXES)
+        candidate = root + suf
+        
+        # Если включен режим 5-6, строго следим за длиной
+        if len_mode == "5-6" and len(candidate) > 6:
+            candidate = candidate[:6]
+        return candidate
 
-    # 2. 50% — Эстетичные 6-8 буквенные неологизмы (если len_mode != "5-6")
-    elif roll < 0.90:
-        pref = random.choice(NEO_PREFIXES)
-        suf = random.choice(NEO_SUFFIXES)
-        return pref + suf
-
-    # 3. 10% — Редкие словарные слова
+    # 2. 15% — Попытка выбить популярные словарные слова
     else:
         return random.choice(PURE_WORDS)
 
@@ -335,7 +311,7 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # Делаем до 15 попыток быстро нащупать свободный ник под фильтры пользователя
+    # Делаем до 15 быстрых проверок в секунду
     for _ in range(15):
         generated = generate_smart_username(len_mode)
         is_free = await check_username_telethon(generated)
