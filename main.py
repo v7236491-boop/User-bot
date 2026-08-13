@@ -36,46 +36,41 @@ USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.3
 
 # =========================================================================
-# 📚 БАЗЫ ДАННЫХ ДЛЯ БАЛАНСА КАТЕГОРИЙ
+# 📚 БАЗЫ ДАННЫХ И ПРЕФИКСЫ
 # =========================================================================
-
-# 10% — Топовые Бренды и IT/Крипто термины
 TOP_BRANDS = list(set([
     "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
     "tesla", "bitcoin", "crypto", "pavel", "durov", "telegram", "starbucks", "prada",
-    "gucci", "porsche", "bmw", "mercedes", "ferrari", "redbull", "steam", "roblox",
-    "matrix", "cyber", "vortex", "shadow", "phantom", "legend", "oracle", "nexus"
+    "gucci", "porsche", "bmw", "mercedes", "ferrari", "redbull", "steam", "roblox"
 ]))
 
-# 20% — Красивые Английские Словарные Слова
 PURE_WORDS = list(set((
-    "apple world music house light dream space power smart stone water earth cloud storm "
-    "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
-    "spring sunset sunrise silent secret future vision wonder action energy galaxy cosmic "
-    "infinity legend hero master leader pioneer champion starlight moonlight diamond emerald "
-    "sapphire phoenix dragon falcon freedom victory passion harmony destiny horizon paradise "
-    "eternity velvet breeze velocity aurora solitude serenity zenith vortex nebula castle "
-    "kingdom throne emperor knight shield sword crown dynasty legacy empire symbol beacon "
-    "summit peak vertex vector matrix orbit alpha beta gamma delta echo tango fox wolf bear "
-    "eagle lion tiger shark panther snake cobra viper raven hawk owl deer midnight dawn dusk "
-    "abyss nova pulsar quasar comet meteor planet star sun moon sky wind rain snow ice frost "
-    "fire ash ember spark glow ray beam wave tide surf shore coast island mountain hill valley "
-    "aether legacy zenith cipher haven solace chronos hyperion helium cobalt iridium valkyrie "
-    "astral eclipse titan solis kismet olympus paragon genesis seraph ravena vanguard horizon "
-    "spectrum pulse tremor trident phantom prism siren zenith aegis solstice obsidian arcade"
+    "velvet aurora zenith vortex nebula horizon starlight crystal phoenix freedom "
+    "infinity eternity paradise solitude serenity genesis paragon solstice obsidian "
+    "valkyrie hyperion titanium cobalt specter vanguard solis aether kismet "
+    "solace chronos tempest sapphire emerald olympus trident"
 ).split()))
 
-# 70% — Красиво звучащие неологизмы и бренд-звуки
-HARMONIC_ROOTS = [
-    "astro", "cyber", "synth", "solis", "vortex", "aether", "nexus", "velvet", 
-    "chroma", "verve", "lunar", "stellar", "zenith", "hyper", "crypto", "shadow",
-    "mirage", "pulse", "aurora", "zephyr", "solace", "kismet", "aegis", "prism",
-    "valen", "zoran", "orion", "krypto", "aero", "nova", "vindex", "alstra"
+# 1. Легко читаемые короткие префиксы и корни (5-6 букв)
+SHORT_EASY_PREFIXES = [
+    "qsor", "qcol", "vityaz", "krom", "vort", "cold", "zora", "koda", "mora",
+    "solu", "velv", "aero", "nova", "lumi", "zeph", "krus", "vibe", "flex",
+    "peak", "wave", "volt", "flux", "rift", "glow", "dusk", "dawn", "echo"
 ]
 
-HARMONIC_ENDINGS = [
-    "ix", "ex", "is", "os", "um", "ia", "or", "on", "ar", "al", 
-    "ic", "us", "ez", "eth", "ux", "ov", "ax", "io", "ora", "is"
+SHORT_EASY_SUFFIXES = ["a", "o", "x", "y", "e", "is", "os", "in", "or", "um"]
+
+# 2. Бренд-неологизмы (6-8 букв)
+NEO_PREFIXES = [
+    "astro", "cyber", "solis", "vortex", "aether", "nexus", "velvet", 
+    "chroma", "verve", "lunar", "stella", "zenith", "hyper", "crypto", "shadow",
+    "mirage", "pulse", "aurora", "zephyr", "solace", "kismet", "aegis", "prism",
+    "valen", "zoran", "orion", "celest", "solari", "volti", "lumis", "velora"
+]
+
+NEO_SUFFIXES = [
+    "ia", "is", "os", "um", "or", "ix", "on", "ar", "al", "io",
+    "ora", "eth", "ux", "ax", "era", "ex", "ita"
 ]
 
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
@@ -144,7 +139,6 @@ def calculate_catch_score(username: str, is_free: bool):
 
     is_trash = (max_cons_streak >= 3)
 
-    # 💎 SSS+ РАНГ
     if (username in TOP_BRANDS) or (length == 5 and not is_trash):
         return {
             "rank": "SSS+", 
@@ -153,7 +147,6 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 100
         }
 
-    # 🥇 SS РАНГ
     if (username in PURE_WORDS) or (length == 6 and not is_trash):
         return {
             "rank": "SS", 
@@ -162,7 +155,6 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 85
         }
 
-    # 🥈 S РАНГ
     if length == 7 and not is_trash:
         return {
             "rank": "S", 
@@ -171,7 +163,6 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 65
         }
 
-    # 🥉 A РАНГ
     if length == 8 and not is_trash:
         return {
             "rank": "A", 
@@ -180,7 +171,6 @@ def calculate_catch_score(username: str, is_free: bool):
             "score": 40
         }
 
-    # ⚪ B РАНГ
     if not is_trash and length <= 12:
         return {
             "rank": "B", 
@@ -197,7 +187,7 @@ def calculate_catch_score(username: str, is_free: bool):
     }
 
 # =========================================================================
-# 🛡️ ПРЯМАЯ ПРО ВЕРКА СВОБОДЕН/ЗАНЯТ
+# 🛡️ ПРОВЕРКА ЧЕРЕЗ TELETHON
 # =========================================================================
 async def check_username_telethon(username: str) -> bool:
     username = username.replace("@", "").strip().lower()
@@ -213,32 +203,23 @@ async def check_username_telethon(username: str) -> bool:
         return False
 
 # =========================================================================
-# 🧬 УМНЫЙ ГЕНЕРАТОР С БАЛАНСОМ ШАНСОВ
+# 🧬 ГЕНЕРАТОР, ПОДСТРАИВАЮЩИЙСЯ ПОД ФИЛЬТРЫ
 # =========================================================================
 def generate_smart_username(len_mode: str = "5-6") -> str:
     roll = random.random()
     
-    # 1. 10% ШАНС: Известные бренды и IT-термины
-    if roll < 0.10:
-        return random.choice(TOP_BRANDS)
-        
-    # 2. 20% ШАНС: Английские словарные слова
-    elif roll < 0.30:
-        return random.choice(PURE_WORDS)
-        
-    # 3. 70% ШАНС: Красиво звучащие неологизмы и сочные слова
-    else:
-        if random.random() < 0.60:
-            # Генерация из гармоничных корней и суффиксов
-            root = random.choice(HARMONIC_ROOTS)
-            ending = random.choice(HARMONIC_ENDINGS)
-            candidate = root + ending
-            if len_mode == "5-6" and len(candidate) > 6:
+    # 1. 40% — Читаемые и легкие 5-6 буквенные ники (qsora, qcold, vityaz)
+    if roll < 0.40 or len_mode == "5-6":
+        if random.random() < 0.70:
+            pref = random.choice(SHORT_EASY_PREFIXES)
+            suf = random.choice(SHORT_EASY_SUFFIXES)
+            candidate = pref + suf
+            if len(candidate) > 6:
                 candidate = candidate[:6]
             return candidate
         else:
-            # Генерация мягко звучащих слогов
-            target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
+            # Чередование слогов ровно на 5 или 6 букв
+            target_len = random.choice([5, 6])
             candidate = ""
             start_with_consonant = random.choice([True, False])
             for i in range(target_len):
@@ -248,8 +229,18 @@ def generate_smart_username(len_mode: str = "5-6") -> str:
                     candidate += random.choice(VOWELS_EASY)
             return candidate
 
+    # 2. 50% — Эстетичные 6-8 буквенные неологизмы (если len_mode != "5-6")
+    elif roll < 0.90:
+        pref = random.choice(NEO_PREFIXES)
+        suf = random.choice(NEO_SUFFIXES)
+        return pref + suf
+
+    # 3. 10% — Редкие словарные слова
+    else:
+        return random.choice(PURE_WORDS)
+
 # =========================================================================
-# 📡 РАДАР ОПОВЕЩЕНИЙ
+# 📡 РАДАР
 # =========================================================================
 def load_radar_db() -> dict:
     if os.path.exists(RADAR_DB_PATH):
@@ -268,7 +259,7 @@ def save_radar_db(db: dict):
         pass
 
 async def radar_worker():
-    print("🚀 Автономный Радар запущен!")
+    print("🚀 Радар запущен!")
     while True:
         try:
             db = load_radar_db()
@@ -287,7 +278,7 @@ async def radar_worker():
                                 try:
                                     await bot.send_message(
                                         chat_id=int(chat_id), 
-                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nБыстрее забирай в Telegram!", 
+                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nЗабирай!", 
                                         parse_mode="Markdown"
                                     )
                                     notified_chats.append(chat_id)
@@ -321,7 +312,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Username Generator & Checker PRO", lifespan=lifespan)
 
-# --- API ROUTING ---
+# --- API ---
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH): 
@@ -344,8 +335,8 @@ async def generate_username(
             await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
     USER_COOLDOWNS[client_ip] = time.time()
 
-    # Делаем до 10 быстрых попыток нащупать именно свободный красивый ник
-    for _ in range(10):
+    # Делаем до 15 попыток быстро нащупать свободный ник под фильтры пользователя
+    for _ in range(15):
         generated = generate_smart_username(len_mode)
         is_free = await check_username_telethon(generated)
         if is_free:
@@ -361,7 +352,6 @@ async def generate_username(
             }
         await asyncio.sleep(0.05)
 
-    # Если 10 подряд были заняты, отдаем честную последнюю проверку
     fallback_nick = generate_smart_username(len_mode)
     is_free_fallback = await check_username_telethon(fallback_nick)
     eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
