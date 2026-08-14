@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Username Scanner PRO & Cosmic Core 3D</title>
     
-    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- 3D Engine Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
@@ -19,7 +17,6 @@
             --text-muted: #829288;
             --glass-bg: rgba(18, 25, 21, 0.7);
             --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.04);
             --primary-glow: rgba(41, 199, 95, 0.22);
         }
 
@@ -41,43 +38,19 @@
             position: relative; 
             user-select: none;
             -webkit-user-select: none;
-            transform: translateZ(0);
         }
 
-        /* Оптимизация 120 Гц при скролле */
-        .scrolling-active #fog-canvas,
-        .scrolling-active #emoji-layer,
-        .scrolling-active #space-canvas-inside {
-            pointer-events: none; 
-            opacity: 0.2;
-        }
-
-        /* ТЕМЫ ОФОРМЛЕНИЯ */
-        body.theme-terminal { 
-            background-color: #050b05 !important; 
-            color: #00ff66 !important; 
-            font-family: 'Courier New', monospace !important; 
-        }
-        body.theme-glitch { 
-            background-color: #0d021a !important; 
-            color: #00f0ff !important; 
-        }
-        body.theme-vapor { 
-            background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important; 
-            color: #fff !important; 
-        }
+        /* ТЕМЫ */
+        body.theme-terminal { background-color: #050b05 !important; color: #00ff66 !important; font-family: 'Courier New', monospace !important; }
+        body.theme-glitch { background-color: #0d021a !important; color: #00f0ff !important; }
+        body.theme-vapor { background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important; color: #fff !important; }
         body.theme-rainbow {
             background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8) !important;
-            background-size: 400% 400% !important; 
-            animation: rainbow-bg 8s ease infinite !important;
+            background-size: 400% 400% !important; animation: rainbow-bg 8s ease infinite !important;
         }
-        @keyframes rainbow-bg { 
-            0% { background-position: 0% 50%; } 
-            50% { background-position: 100% 50%; } 
-            100% { background-position: 0% 50%; } 
-        }
+        @keyframes rainbow-bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* ФОНОВЫЕ СЛОИ ГЛАВНОГО ЭКРАНА */
+        /* ФОНОВЫЕ СЛОИ */
         #fog-canvas, #secret-canvas { 
             position: fixed; 
             top: 0; 
@@ -86,7 +59,6 @@
             height: 100vh; 
             z-index: -10; 
             pointer-events: none; 
-            transition: opacity 0.3s ease; 
         }
         #secret-canvas { display: none; z-index: -8; }
         #emoji-layer { 
@@ -103,10 +75,9 @@
             position: absolute; 
             user-select: none; 
             will-change: transform; 
-            opacity: 0.7; 
+            opacity: 0.75; 
         }
 
-        /* ЭФФЕКТЫ ВОЛН И ЧАСТИЦ */
         .screen-ripple {
             position: fixed; 
             border-radius: 50%;
@@ -117,9 +88,7 @@
             z-index: 100;
             animation: rippleExplode 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
         }
-        @keyframes rippleExplode { 
-            100% { transform: scale(50); opacity: 0; } 
-        }
+        @keyframes rippleExplode { 100% { transform: scale(50); opacity: 0; } }
 
         .jackpot-particle {
             position: fixed; 
@@ -134,7 +103,6 @@
             100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5) rotate(var(--rot)); opacity: 0; }
         }
 
-        /* БАЗОВЫЕ КЛАССЫ СТЕКЛА */
         .glass-panel {
             background: var(--glass-bg); 
             backdrop-filter: blur(18px); 
@@ -164,7 +132,7 @@
             align-items: center; 
             gap: 8px; 
             border-radius: 12px; 
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.2s ease;
         }
         .nav-btn:active { transform: scale(0.92); }
 
@@ -186,7 +154,6 @@
             gap: 14px; 
         }
 
-        /* КНОПКИ И ПЕРЕКЛЮЧАТЕЛИ */
         .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
         .platform-btn { 
             flex: 1; 
@@ -244,11 +211,8 @@
             box-shadow: 0 0 50px rgba(255, 215, 0, 0.3) !important; 
         }
 
-        .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(12px) scale(0.95); } 
-            to { opacity: 1; transform: translateY(0) scale(1); } 
-        }
+        .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         
         .action-btn { 
             flex: 1; 
@@ -279,12 +243,12 @@
             cursor: pointer; 
             width: 100%; 
             box-shadow: 0 8px 25px var(--primary-glow); 
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+            transition: transform 0.2s ease, background 0.3s ease;
         }
         .btn-generate:active { transform: scale(0.94); }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* ПЛАВАЮЩИЕ КНОПКИ ВНИЗУ */
+        /* ПЛАВАЮЩИЕ КНОПКИ */
         .floating-achieving-btn {
             position: fixed; 
             bottom: 20px; 
@@ -303,7 +267,6 @@
             gap: 6px; 
             cursor: pointer;
             box-shadow: 0 4px 20px var(--primary-glow);
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .floating-achieving-btn:active { transform: scale(0.9); }
 
@@ -323,7 +286,6 @@
             font-weight: 800;
             cursor: pointer; 
             animation: shimmerGlow 2.5s infinite alternate;
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .floating-play-btn:active { transform: translateX(-50%) scale(0.91); }
 
@@ -350,7 +312,6 @@
             gap: 6px; 
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(234, 179, 8, 0.25);
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .floating-leaderboard-btn:active { transform: scale(0.9); }
 
@@ -417,6 +378,20 @@
         @keyframes floatUp { 
             0% { opacity: 1; transform: translateY(0) scale(1); } 
             100% { opacity: 0; transform: translateY(-70px) scale(1.3); } 
+        }
+
+        .defense-status-badge {
+            z-index: 10;
+            background: rgba(18, 25, 21, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: -10px;
         }
 
         .energy-bar-container { 
@@ -503,7 +478,7 @@
             background: var(--glass-bg);
             border: 1px solid rgba(255,255,255,0.08);
             transform: scale(0.92) translateY(15px);
-            transition: transform 0.35s cubic-bezier(0.34, 1.25, 0.64, 1);
+            transition: transform 0.35s ease;
         }
         .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
 
@@ -533,9 +508,7 @@
             align-items: center; 
             justify-content: center; 
             cursor: pointer; 
-            transition: transform 0.2s ease;
         }
-        .btn-close:active { transform: scale(0.85); }
 
         .modal-body { 
             padding: 20px; 
@@ -581,8 +554,7 @@
         .color-dot.active { border-color: #fff; transform: scale(1.1); }
 
         .filter-options { display: none; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; margin-top: -4px; margin-bottom: 12px; }
-        .filter-options.active { display: block; animation: slideDown 0.3s ease; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .filter-options.active { display: block; }
 
         .custom-select-wrapper { position: relative; width: 100%; margin-bottom: 10px; }
         .custom-select-trigger { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 10px 14px; border-radius: 12px; color: #fff; font-size: 0.85rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -592,14 +564,12 @@
         .custom-option { padding: 10px 14px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .custom-option:hover, .custom-option.selected { background: var(--primary-glow); color: #fff; }
 
-        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 12px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
-        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; transition: transform 0.2s ease; }
-        .form-btn:active { transform: scale(0.96); }
+        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; }
         .btn-reset-custom { width: 100%; background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; margin-top: 10px; }
 
         /* ИСТОРИЯ И СВАЙПЫ */
-        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, margin-bottom 0.3s ease, opacity 0.3s ease; max-height: 85px; }
+        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 85px; }
         .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.35); }
         .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.35); }
         .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.25rem; opacity: 0; z-index: 1; transition: opacity 0.2s ease; }
@@ -613,10 +583,9 @@
         .lb-card { background: rgba(18, 25, 21, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 
         .shop-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .shop-buy-btn { background: #eab308; color: #000; border: none; font-weight: 800; padding: 10px 14px; border-radius: 12px; cursor: pointer; transition: transform 0.2s ease; }
-        .shop-buy-btn:active { transform: scale(0.92); }
+        .shop-buy-btn { background: #eab308; color: #000; border: none; font-weight: 800; padding: 10px 14px; border-radius: 12px; cursor: pointer; }
 
-        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; opacity: 0.6; filter: grayscale(0.8); transition: 0.3s; }
+        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; opacity: 0.6; filter: grayscale(0.8); }
         .achieve-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
         .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-top: 8px;}
         .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.3s ease; }
@@ -627,7 +596,7 @@
 </head>
 <body>
 
-    <!-- Фоновые слои главного меню -->
+    <!-- Фоновые слои -->
     <canvas id="fog-canvas"></canvas>
     <canvas id="secret-canvas"></canvas>
     <div id="emoji-layer"></div>
@@ -663,7 +632,7 @@
         </div>
     </main>
 
-    <!-- ПЛАВАЮЩИЕ КНОПКИ ВНИЗУ -->
+    <!-- ПЛАВАЮЩИЕ КНОПКИ -->
     <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
         🏆 <span id="achieve-counter-badge">0/100</span>
     </button>
@@ -676,15 +645,18 @@
 
     <div class="toast" id="global-toast">✨ Скопировано!</div>
 
-    <!-- 🔮 ПОЛНОЭКРАННЫЙ ЭКРАН МАЙНИНГА (COSMIC CORE 3D) 🔮 -->
+    <!-- 🔮 ПОЛНОЭКРАННЫЙ ЭКРАН МАЙНИНГА (3D ЗЕМЛЯ, ЦЕПИ, КОСМОС) 🔮 -->
     <div id="tycoon-overlay">
-        <!-- Космос строго внутри кликера -->
         <canvas id="space-canvas-inside"></canvas>
 
         <div class="tycoon-header">
             <button class="tab-btn" style="width: auto; padding: 8px 16px;" onclick="closeTycoonScreen()">◀ Выход</button>
             <div class="coin-balance-badge">🟡 <span id="tycoon-coins">0</span></div>
             <div style="width: 60px;"></div>
+        </div>
+
+        <div class="defense-status-badge" id="defense-badge">
+            <span id="defense-icon">🛡️</span> <span id="defense-layer-name">Купол Соты (Слой 1)</span>
         </div>
 
         <div id="three-earth-container"></div>
@@ -705,7 +677,7 @@
         </div>
     </div>
 
-    <!-- 🛒 МАГАЗИН АПГРЕЙДОВ 🛒 -->
+    <!-- 🛒 МАГАЗИН 🛒 -->
     <div class="modal-overlay" id="modal-shop">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -714,7 +686,6 @@
             </div>
             <div class="modal-body">
                 <h3 style="font-size: 0.95rem; color: var(--primary); margin-bottom: 8px;">⚡ Прокачка Кликера</h3>
-                
                 <div class="shop-card">
                     <div>
                         <div style="font-weight:bold;">👆 Мульти-Тап (Lvl. <span id="lvl-multitap">1</span>)</div>
@@ -722,7 +693,6 @@
                     </div>
                     <button class="shop-buy-btn" onclick="buyItem('multi_tap')"><span id="cost-multitap">200</span> 🟡</button>
                 </div>
-
                 <div class="shop-card">
                     <div>
                         <div style="font-weight:bold;">🔋 Запас Батареи (Lvl. <span id="lvl-energy">1</span>)</div>
@@ -730,7 +700,6 @@
                     </div>
                     <button class="shop-buy-btn" onclick="buyItem('max_energy')"><span id="cost-energy">150</span> 🟡</button>
                 </div>
-
                 <div class="shop-card">
                     <div>
                         <div style="font-weight:bold;">🚜 Автосборщик (Lvl. <span id="lvl-miner">0</span>)</div>
@@ -740,7 +709,6 @@
                 </div>
 
                 <h3 style="font-size: 0.95rem; color: #eab308; margin-top: 15px; margin-bottom: 8px;">🎯 Апгрейды Парсера</h3>
-
                 <div class="shop-card">
                     <div>
                         <div style="font-weight:bold;">🎯 +1 Слот Радара</div>
@@ -748,15 +716,13 @@
                     </div>
                     <button class="shop-buy-btn" onclick="buyItem('radar_slot')">5000 🟡</button>
                 </div>
-
                 <div class="shop-card">
                     <div>
-                        <div style="font-weight:bold;">🚀 Турбо-Парсер (x2 Speed)</div>
+                        <div style="font-weight:bold;">🚀 Турбо-Парсер (x2)</div>
                         <div style="font-size:0.75rem; color:var(--text-muted);">Ускорение поиска на 15 мин</div>
                     </div>
                     <button class="shop-buy-btn" onclick="buyItem('turbo_parse')">3500 🟡</button>
                 </div>
-
                 <div class="shop-card">
                     <div>
                         <div style="font-weight:bold;">🔑 Секретная Тема Cyberpunk</div>
@@ -764,7 +730,6 @@
                     </div>
                     <button class="shop-buy-btn" onclick="buyItem('theme_cyberpunk')">40000 🟡</button>
                 </div>
-
                 <div class="shop-card">
                     <div>
                         <div style="font-weight:bold;">👑 Ранг «Легендарный Ловец»</div>
@@ -776,12 +741,10 @@
         </div>
     </div>
 
-    <!-- 🎁 МОДАЛКА: ОФФЛАЙН-ФАРМ 🎁 -->
+    <!-- 🎁 ОФФЛАЙН-ФАРМ 🎁 -->
     <div class="modal-overlay" id="modal-welcome-offline">
         <div class="modal-content glass-panel" style="text-align: center;">
-            <div class="modal-header">
-                <h2 class="modal-title" style="color: #eab308;">🤖 Автосборщик поработал!</h2>
-            </div>
+            <div class="modal-header"><h2 class="modal-title" style="color: #eab308;">🤖 Автосборщик поработал!</h2></div>
             <div class="modal-body">
                 <p style="font-size: 0.9rem; color: var(--text-muted);">Вас не было в игре. Ваш Майнер нафармил:</p>
                 <div style="font-size: 2.2rem; font-weight: 900; color: #eab308; margin: 15px 0;">+<span id="offline-earned-val">0</span> 🟡</div>
@@ -790,7 +753,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: НАСТРОЙКИ И ФИЛЬТРЫ -->
+    <!-- НАСТРОЙКИ -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -798,7 +761,6 @@
                 <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
             </div>
             <div class="modal-body" onscroll="handleModalScroll()">
-                
                 <div class="setting-item" style="cursor: pointer; border-color: var(--primary); background: rgba(41,199,95,0.05);" onclick="openModal('modal-radar')">
                     <div class="setting-info">
                         <span class="setting-title" style="color: var(--primary);">🎯 Радар (Уведомление в ЛС)</span>
@@ -894,7 +856,6 @@
                 <div class="filter-options" id="filter-menu">
                     <div style="margin-bottom: 12px;">
                         <span style="font-size: 0.85rem; font-weight:600; color: var(--text-main); display:block; margin-bottom:6px;">Что подбираем?</span>
-                        
                         <div class="custom-select-wrapper" id="select-gen-mode">
                             <div class="custom-select-trigger" onclick="toggleCustomSelect('select-gen-mode')">
                                 <span id="label-gen-mode">✨ Красивое имя (Неологизм)</span>
@@ -905,7 +866,6 @@
                                 <div class="custom-option" onclick="selectOption('select-gen-mode', 'translit', '🇷🇺 Ники на латинице (Транслит)')">🇷🇺 Ники на латинице (Транслит)</div>
                             </div>
                         </div>
-
                         <div id="mode-desc-text" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">
                             Придумывает уникальные бренд-ники из 5–6 букв с высоким шансом свободы.
                         </div>
@@ -916,7 +876,7 @@
                         <input type="text" id="prefix-user-input" class="form-input" style="margin-bottom:10px;" placeholder="Впишите слово (например: spiderman, apple)">
                         
                         <div style="margin-bottom:10px;">
-                            <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Тематика канала/проекта</span>
+                            <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Тематика</span>
                             <div class="custom-select-wrapper" id="select-category">
                                 <div class="custom-select-trigger" onclick="toggleCustomSelect('select-category')">
                                     <span id="label-category">🌐 Авто-подбор тематики</span>
@@ -927,14 +887,6 @@
                                     <div class="custom-option" onclick="selectOption('select-category', 'gaming', '🎮 Игры и Киберспорт')">🎮 Игры и Киберспорт</div>
                                     <div class="custom-option" onclick="selectOption('select-category', 'crypto', '📈 Крипта и NFT')">📈 Крипта и NFT</div>
                                     <div class="custom-option" onclick="selectOption('select-category', 'tech', '💻 IT и Софт')">💻 IT и Софт</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'sports', '⚽ Спорт и Фитнес')">⚽ Спорт и Фитнес</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'business', '🛍️ Бизнес и Магазины')">🛍️ Бизнес и Магазины</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'music', '🎵 Музыка и Звук')">🎵 Музыка и Звук</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'auto', '🚗 Авто и Скорость')">🚗 Авто и Скорость</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'media', '🎬 Фильмы и Герои')">🎬 Фильмы и Герои</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'military', '🎖️ Военные и Звания')">🎖️ Военные и Звания</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'design', '🎨 Дизайн и Арт')">🎨 Дизайн и Арт</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'food', '🍔 Еда и Кафе')">🍔 Еда и Кафе</div>
                                 </div>
                             </div>
                         </div>
@@ -943,12 +895,12 @@
                             <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Куда ставить приставку?</span>
                             <div class="custom-select-wrapper" id="select-position">
                                 <div class="custom-select-trigger" onclick="toggleCustomSelect('select-position')">
-                                    <span id="label-position">🔀 Автоматически (Как лучше звучит)</span>
+                                    <span id="label-position">🔀 Автоматически (Как лучше)</span>
                                 </div>
                                 <div class="custom-select-options">
-                                    <div class="custom-option selected" onclick="selectOption('select-position', 'mix', '🔀 Автоматически (Как лучше звучит)')">🔀 Автоматически (Как лучше)</div>
-                                    <div class="custom-option" onclick="selectOption('select-position', 'suffix', '➡️ В конец (spidermanofficial)')">➡️ В конец (spidermanofficial)</div>
-                                    <div class="custom-option" onclick="selectOption('select-position', 'prefix', '⬅️ В начало (realspiderman)')">⬅️ В начало (realspiderman)</div>
+                                    <div class="custom-option selected" onclick="selectOption('select-position', 'mix', '🔀 Автоматически (Как лучше)')">🔀 Автоматически</div>
+                                    <div class="custom-option" onclick="selectOption('select-position', 'suffix', '➡️ В конец')">➡️ В конец</div>
+                                    <div class="custom-option" onclick="selectOption('select-position', 'prefix', '⬅️ В начало')">⬅️ В начало</div>
                                 </div>
                             </div>
                         </div>
@@ -974,7 +926,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: СЕКРЕТНЫЙ КОД -->
+    <!-- СЕКРЕТНЫЙ КОД -->
     <div class="modal-overlay" id="modal-secret-code">
         <div class="modal-content glass-panel" style="max-width: 360px;">
             <div class="modal-header">
@@ -982,14 +934,14 @@
                 <button class="btn-close" onclick="closeModal('modal-secret-code')">✕</button>
             </div>
             <div class="modal-body" style="text-align:center;">
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите промокод для открывания секретных тем!</p>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 15px;">Введите промокод для разблокировки секретных тем!</p>
                 <input type="text" id="secret-code-input" class="form-input" style="text-align:center; font-weight:bold; letter-spacing:1px; margin-bottom:12px;" placeholder="ПРОМОКОД...">
                 <button class="form-btn" onclick="submitSecretCode()">Применить</button>
             </div>
         </div>
     </div>
 
-    <!-- МОДАЛКА: РАДАР -->
+    <!-- РАДАР -->
     <div class="modal-overlay" id="modal-radar">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -997,7 +949,7 @@
                 <button class="btn-close" onclick="closeModal('modal-radar')">✕</button>
             </div>
             <div class="modal-body" onscroll="handleModalScroll()">
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Введите занятый ник. Бот напишет в ЛС, как только он станет свободным!</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Введите занятый ник. Бот напишет в ЛС, как только он освободится!</div>
                 <input type="text" id="radar-input" class="form-input" placeholder="@username">
                 <button class="form-btn" style="margin-top:10px;" onclick="addRadarTarget()">Следить за ником</button>
                 <div id="radar-list" style="margin-top: 20px;"></div>
@@ -1005,7 +957,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: ИСТОРИЯ -->
+    <!-- ИСТОРИЯ -->
     <div class="modal-overlay" id="modal-history">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -1019,7 +971,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: ЛИДЕРБОРД -->
+    <!-- ЛИДЕРБОРД -->
     <div class="modal-overlay" id="modal-leaderboard">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -1032,7 +984,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: ДОСТИЖЕНИЯ -->
+    <!-- ДОСТИЖЕНИЯ -->
     <div class="modal-overlay" id="modal-achievements">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -1043,7 +995,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: ИТОГИ АВТОПАРСА -->
+    <!-- ИТОГИ ПОИСКА -->
     <div class="modal-overlay" id="modal-summary">
         <div class="modal-content glass-panel" style="text-align: center; max-width: 400px;">
             <div class="modal-header">
@@ -1061,7 +1013,7 @@
     </div>
 
     <!-- =========================================================================
-         ЛОГИКА СКРИПТОВ (JS МОНОЛИТ)
+         ЛОГИКА СКРИПТОВ
     ========================================================================= -->
     <script>
         let currentPlatform = 'telegram';
@@ -1069,9 +1021,21 @@
         let isFetching = false;
         let lastGenerated = "";
         let slotInterval;
-        let tgChatId = "0";
         let finderName = "Аноним";
         let autoParseCatches = [];
+
+        // Dual-ID System: сохранение постоянного UID
+        let tgChatId = localStorage.getItem('vh_persistent_uid');
+        if (!tgChatId) {
+            tgChatId = "user_" + Math.random().toString(36).substring(2, 11);
+            localStorage.setItem('vh_persistent_uid', tgChatId);
+        }
+
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            tgChatId = user.id.toString();
+            finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
+        }
 
         let userProfile = {
             coins: 0, energy: 1000, max_energy: 1000,
@@ -1099,15 +1063,6 @@
             }, 120);
         }
 
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-            const user = window.Telegram.WebApp.initDataUnsafe.user;
-            tgChatId = user.id.toString();
-            finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
-        }
-
-        // =========================================================================
-        // ИНИЦИАЛИЗАЦИЯ И БАЛАНС
-        // =========================================================================
         async function loadGameState() {
             try {
                 const res = await fetch(`/api/game/state?user_id=${tgChatId}`);
@@ -1115,7 +1070,6 @@
                 if (data.status === 'ok') {
                     userProfile = data.profile;
                     updateTycoonUI();
-
                     if (data.offline_earned > 0) {
                         document.getElementById('offline-earned-val').innerText = data.offline_earned;
                         openModal('modal-welcome-offline');
@@ -1145,7 +1099,6 @@
             document.getElementById('cost-miner').innerText = userProfile.offline_miner_lvl === 0 ? 3000 : Math.floor(3000 * (2.2 ** userProfile.offline_miner_lvl));
         }
 
-        // СТРОГАЯ РЕГЕНЕРАЦИЯ ЭНЕРГИИ (+1 ед/сек) С ПАУЗОЙ 2 СЕКУНДЫ
         setInterval(() => {
             if (Date.now() - lastTapTime < 2000) return;
             if (userProfile.energy < userProfile.max_energy) {
@@ -1155,7 +1108,7 @@
         }, 1000);
 
         // =========================================================================
-        // 🌌 ЗВЕЗДНЫЙ КОСМОС (СТРОГО ВНУТРИ КЛИКЕРА)
+        // 🌌 КОСМОС ВНУТРИ КЛИКЕРА
         // =========================================================================
         const spCanvas = document.getElementById('space-canvas-inside');
         const spCtx = spCanvas.getContext('2d');
@@ -1178,9 +1131,7 @@
                 requestAnimationFrame(drawInsideSpace);
                 return;
             }
-
             spCtx.clearRect(0, 0, spCanvas.width, spCanvas.height);
-
             stars.forEach(s => {
                 s.opacity += s.speed;
                 if (s.opacity > 1 || s.opacity < 0) s.speed *= -1;
@@ -1200,22 +1151,57 @@
                 grad.addColorStop(1, 'transparent');
                 spCtx.strokeStyle = grad; spCtx.lineWidth = 2.5;
                 spCtx.beginPath(); spCtx.moveTo(c.x, c.y); spCtx.lineTo(c.x - c.length, c.y - c.length * 0.8); spCtx.stroke();
-
                 if (c.y > spCanvas.height || c.x > spCanvas.width) comets.splice(i, 1);
             }
-
             requestAnimationFrame(drawInsideSpace);
         }
         initInsideSpace();
         drawInsideSpace();
 
         // =========================================================================
-        // 🌍 3D ЗЕМЛЯ, ЦЕПИ И 3D МОНЕТЫ (THREE.JS)
+        // 🛡️ МНОГОСЛОЙНАЯ ЗАЩИТА: СОТЫ + СТАЛЬНЫЕ ЦЕПИ + ЗЕМЛЯ (THREE.JS)
         // =========================================================================
-        let sceneEarth, cameraEarth, rendererEarth, earthMesh, chainGroups = [];
-        let flyingCoins = [];
+        let sceneEarth, cameraEarth, rendererEarth;
+        let earthMesh, hexShieldMesh, lockMesh;
+        let chainGroups = [], flyingCoins = [], particleExplosions = [];
         let isThreeEarthInit = false;
-        let coreHealth = 100;
+        
+        let currentDefenseLayer = 1; // 1 = Купол Соты, 2 = Стальные Цепи, 3 = Ядро Земли
+        let layerHealth = 100;
+        let targetScale = 1.0, currentScale = 1.0;
+
+        function createProceduralEarthTexture() {
+            const canvasTex = document.createElement('canvas');
+            canvasTex.width = 1024; canvasTex.height = 512;
+            const ctxTex = canvasTex.getContext('2d');
+            
+            const oceanGrad = ctxTex.createLinearGradient(0, 0, 0, 512);
+            oceanGrad.addColorStop(0, '#0a2342');
+            oceanGrad.addColorStop(0.5, '#0d3b66');
+            oceanGrad.addColorStop(1, '#0a2342');
+            ctxTex.fillStyle = oceanGrad;
+            ctxTex.fillRect(0, 0, 1024, 512);
+
+            ctxTex.fillStyle = '#2d6a4f';
+            for (let i = 0; i < 450; i++) {
+                ctxTex.beginPath();
+                let x = Math.random() * 1024, y = Math.random() * 512, r = Math.random() * 45 + 15;
+                ctxTex.arc(x, y, r, 0, Math.PI * 2);
+                ctxTex.fill();
+                
+                ctxTex.fillStyle = '#52b788';
+                ctxTex.beginPath();
+                ctxTex.arc(x + (Math.random()-0.5)*15, y + (Math.random()-0.5)*15, r*0.5, 0, Math.PI*2);
+                ctxTex.fill();
+                ctxTex.fillStyle = '#2d6a4f';
+            }
+
+            ctxTex.fillStyle = '#e0f2fe';
+            ctxTex.fillRect(0, 0, 1024, 35);
+            ctxTex.fillRect(0, 477, 1024, 35);
+
+            return new THREE.CanvasTexture(canvasTex);
+        }
 
         function init3DEarth() {
             if (isThreeEarthInit) return;
@@ -1233,57 +1219,40 @@
 
             const ambLight = new THREE.AmbientLight(0xffffff, 0.85);
             sceneEarth.add(ambLight);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-            dirLight.position.set(5, 5, 5);
-            sceneEarth.add(dirLight);
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
+            sunLight.position.set(5, 3, 5);
+            sceneEarth.add(sunLight);
 
-            // Процедурная текстура рельефа Земли
-            const canvasTex = document.createElement('canvas');
-            canvasTex.width = 1024; canvasTex.height = 512;
-            const ctxTex = canvasTex.getContext('2d');
-            
-            ctxTex.fillStyle = '#064273'; ctxTex.fillRect(0,0,1024,512);
-            ctxTex.fillStyle = '#228b22';
-            ctxTex.shadowColor = '#000'; ctxTex.shadowBlur = 8;
-            for(let i=0; i<350; i++) {
-                ctxTex.beginPath();
-                let x = Math.random()*1024, y = Math.random()*512, r = Math.random()*40 + 10;
-                ctxTex.arc(x, y, r, 0, Math.PI*2);
-                ctxTex.fill();
-                ctxTex.fillStyle = '#8b4513';
-                ctxTex.beginPath(); ctxTex.arc(x + Math.random()*10-5, y + Math.random()*10-5, r*0.5, 0, Math.PI*2); ctxTex.fill();
-                ctxTex.fillStyle = '#228b22';
-            }
-
-            const texture = new THREE.CanvasTexture(canvasTex);
-            const earthGeo = new THREE.SphereGeometry(1.2, 64, 64);
+            // 1. Тело Планеты
+            const earthTexture = createProceduralEarthTexture();
+            const earthGeo = new THREE.SphereGeometry(1.2, 48, 48);
             const earthMat = new THREE.MeshStandardMaterial({ 
-                map: texture, 
-                bumpMap: texture, 
-                bumpScale: 0.05, 
-                roughness: 0.6, 
+                map: earthTexture, 
+                roughness: 0.5, 
                 metalness: 0.1 
             });
             earthMesh = new THREE.Mesh(earthGeo, earthMat);
             sceneEarth.add(earthMesh);
 
-            // Атмосферный ореол
-            const atmosGeo = new THREE.SphereGeometry(1.25, 32, 32);
+            // 2. Атмосфера
+            const atmosGeo = new THREE.SphereGeometry(1.24, 32, 32);
             const atmosMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.15, side: THREE.BackSide });
-            const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
-            sceneEarth.add(atmosMesh);
+            sceneEarth.add(new THREE.Mesh(atmosGeo, atmosMat));
 
-            createNewChainLayer();
+            // 3. Построение слоев защиты (Соты + Стальные цепи)
+            buildSteelChains();
+            buildHexShield();
 
-            // Вращение Земли жестами
+            updateDefenseHUD();
+
+            // Вращение жестами
             let isDragging = false, prevX = 0, prevY = 0;
             container.addEventListener('pointerdown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
             window.addEventListener('pointermove', e => {
                 if (!isDragging || !earthMesh) return;
-                let deltaX = e.clientX - prevX;
-                let deltaY = e.clientY - prevY;
-                earthMesh.rotation.y += deltaX * 0.008;
-                earthMesh.rotation.x += deltaY * 0.008;
+                let deltaX = e.clientX - prevX; let deltaY = e.clientY - prevY;
+                earthMesh.rotation.y += deltaX * 0.008; earthMesh.rotation.x += deltaY * 0.008;
+                if(hexShieldMesh) { hexShieldMesh.rotation.y += deltaX * 0.008; hexShieldMesh.rotation.x += deltaY * 0.008; }
                 prevX = e.clientX; prevY = e.clientY;
             });
             window.addEventListener('pointerup', () => isDragging = false);
@@ -1292,75 +1261,187 @@
             animateEarth();
         }
 
-        function createNewChainLayer() {
-            const group = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color: 0xeab308, metalness: 0.9, roughness: 0.3 });
-            const linkGeo = new THREE.TorusGeometry(0.12, 0.045, 12, 24);
-            const numLinks = 35;
-            const radius = 1.25;
+        // ПОСТРОЕНИЕ КИБЕР-КУПОЛА СОТ (LAYER 1)
+        function buildHexShield() {
+            if(hexShieldMesh) sceneEarth.remove(hexShieldMesh);
+            const hexGeo = new THREE.IcosahedronGeometry(1.36, 3);
+            const hexMat = new THREE.MeshStandardMaterial({
+                color: 0x38bdf8,
+                emissive: 0x0284c7,
+                emissiveIntensity: 0.5,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.75,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+            hexShieldMesh = new THREE.Mesh(hexGeo, hexMat);
+            sceneEarth.add(hexShieldMesh);
+        }
 
-            for(let i=0; i<numLinks; i++) {
-                const mesh = new THREE.Mesh(linkGeo, mat);
-                const angle = (i / numLinks) * Math.PI * 2;
-                mesh.position.set(Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
-                mesh.lookAt(0,0,0);
-                if (i % 2 === 0) mesh.rotation.x = Math.PI/2;
-                
-                mesh.userData.velocity = new THREE.Vector3((Math.random()-0.5)*0.15, (Math.random()-0.5)*0.15, (Math.random()-0.5)*0.15);
-                group.add(mesh);
+        // ПОСТРОЕНИЕ ТЕМНЫХ СТАЛЬНЫХ ЦЕПЕЙ (LAYER 2)
+        function buildSteelChains() {
+            chainGroups.forEach(cg => sceneEarth.remove(cg.group));
+            chainGroups = [];
+            if (lockMesh) sceneEarth.remove(lockMesh);
+
+            const steelMat = new THREE.MeshStandardMaterial({
+                color: 0x828b94,
+                metalness: 0.95,
+                roughness: 0.2
+            });
+
+            // 3 перекрестных кольца из стальных звеньев
+            const angles = [
+                { x: 0, y: 0, z: 0 },
+                { x: Math.PI / 3, y: Math.PI / 6, z: 0 },
+                { x: -Math.PI / 3, y: -Math.PI / 6, z: Math.PI / 4 }
+            ];
+
+            angles.forEach(rot => {
+                const group = new THREE.Group();
+                const linkGeo = new THREE.TorusGeometry(0.085, 0.032, 10, 20);
+                const count = 38; 
+                const radius = 1.26;
+
+                for (let i = 0; i < count; i++) {
+                    const mesh = new THREE.Mesh(linkGeo, steelMat);
+                    const a = (i / count) * Math.PI * 2;
+                    mesh.position.set(Math.cos(a) * radius, 0, Math.sin(a) * radius);
+                    mesh.lookAt(0, 0, 0);
+                    if (i % 2 === 0) mesh.rotation.x = Math.PI / 2;
+
+                    mesh.userData.velocity = new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.18,
+                        (Math.random() - 0.5) * 0.18,
+                        (Math.random() - 0.5) * 0.18 + 0.06
+                    );
+                    group.add(mesh);
+                }
+                group.rotation.set(rot.x, rot.y, rot.z);
+                sceneEarth.add(group);
+                chainGroups.push({ group: group, breaking: false, life: 1.0 });
+            });
+
+            // Массивный стальной замок
+            const lockGeo = new THREE.BoxGeometry(0.26, 0.26, 0.14);
+            const lockMat = new THREE.MeshStandardMaterial({
+                color: 0x475569,
+                metalness: 0.95,
+                roughness: 0.2
+            });
+            lockMesh = new THREE.Mesh(lockGeo, lockMat);
+            lockMesh.position.set(0, 0, 1.32);
+            sceneEarth.add(lockMesh);
+        }
+
+        function updateDefenseHUD() {
+            const badge = document.getElementById('defense-badge');
+            const icon = document.getElementById('defense-icon');
+            const label = document.getElementById('defense-layer-name');
+
+            if (currentDefenseLayer === 1) {
+                icon.innerText = "🛡️";
+                label.innerText = `Купол Сот (${layerHealth}%)`;
+                badge.style.borderColor = "#38bdf8";
+            } else if (currentDefenseLayer === 2) {
+                icon.innerText = "⛓️";
+                label.innerText = `Стальные Цепи (${layerHealth}%)`;
+                badge.style.borderColor = "#94a3b8";
+            } else {
+                icon.innerText = "🌍";
+                label.innerText = `Ядро Земли [x10 Бонус]`;
+                badge.style.borderColor = "#29c75f";
             }
-            group.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
-            sceneEarth.add(group);
-            chainGroups.push({ group: group, breaking: false, life: 1.0 });
         }
 
         function spawn3DCoin(touchX, touchY, rect) {
-            if (flyingCoins.length > 25) return;
-            
-            const coinGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.025, 24);
-            const coinMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 1.0, roughness: 0.2 });
-            const coin = new THREE.Mesh(coinGeo, coinMat);
-            coin.rotation.x = Math.PI/2;
-            
+            if (flyingCoins.length > 20) return;
+            const coin = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.11, 0.11, 0.025, 24),
+                new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.15, emissive: 0xeab308, emissiveIntensity: 0.3 })
+            );
+            coin.rotation.x = Math.PI / 2;
             const x = ((touchX - rect.left) / rect.width) * 2 - 1;
             const y = -((touchY - rect.top) / rect.height) * 2 + 1;
-            
-            coin.position.set(x * 1.5, y * 1.5, 1.5);
-            coin.userData.velocity = new THREE.Vector3((Math.random()-0.5)*0.02, 0.05 + Math.random()*0.02, 0.05); 
+            coin.position.set(x * 1.5, y * 1.5, 1.4);
+            coin.userData.velocity = new THREE.Vector3((Math.random() - 0.5) * 0.03, 0.045 + Math.random() * 0.025, 0.04);
             sceneEarth.add(coin);
             flyingCoins.push(coin);
         }
 
+        // Взрыв осколков сот
+        function triggerHexShatter() {
+            const pGeo = new THREE.BufferGeometry();
+            const count = 80;
+            const pos = [], vels = [];
+            for (let i = 0; i < count; i++) {
+                pos.push(0, 0, 1.3);
+                vels.push((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, Math.random() * 0.3 + 0.05);
+            }
+            pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            const pMat = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.07, transparent: true, opacity: 1 });
+            const pSystem = new THREE.Points(pGeo, pMat);
+            pSystem.userData = { vels: vels, life: 1.0 };
+            sceneEarth.add(pSystem);
+            particleExplosions.push(pSystem);
+        }
+
         function animateEarth() {
             if (document.getElementById('tycoon-overlay').classList.contains('active')) {
-                if (earthMesh) earthMesh.rotation.y += 0.002;
-                
-                for (let i = chainGroups.length - 1; i >= 0; i--) {
-                    let cg = chainGroups[i];
-                    if (!cg.breaking) {
-                        cg.group.rotation.z -= 0.005;
-                    } else {
-                        cg.life -= 0.03;
-                        cg.group.children.forEach(link => {
-                            link.position.add(link.userData.velocity);
-                            link.rotation.x += 0.1; 
-                            link.rotation.y += 0.1;
-                        });
-                        if (cg.life <= 0) {
-                            sceneEarth.remove(cg.group);
-                            chainGroups.splice(i, 1);
-                        }
-                    }
+                currentScale += (targetScale - currentScale) * 0.25;
+                if (earthMesh) { 
+                    earthMesh.scale.set(currentScale, currentScale, currentScale); 
+                    earthMesh.rotation.y += 0.0018; 
                 }
 
+                // Вращение купола сот
+                if (hexShieldMesh && currentDefenseLayer === 1) {
+                    hexShieldMesh.scale.set(currentScale, currentScale, currentScale);
+                    hexShieldMesh.rotation.y -= 0.003;
+                    hexShieldMesh.rotation.z += 0.002;
+                }
+
+                // Вращение стальных цепей
+                chainGroups.forEach((cg, idx) => {
+                    if (!cg.breaking) {
+                        cg.group.rotation.z += (idx % 2 === 0 ? 0.003 : -0.003);
+                    } else {
+                        cg.life -= 0.035;
+                        cg.group.children.forEach(link => {
+                            link.position.add(link.userData.velocity);
+                            link.rotation.x += 0.15; link.rotation.y += 0.15;
+                        });
+                        if (cg.life <= 0) sceneEarth.remove(cg.group);
+                    }
+                });
+
+                // Анимация вылетающих 3D монет
                 for (let i = flyingCoins.length - 1; i >= 0; i--) {
                     let coin = flyingCoins[i];
                     coin.position.add(coin.userData.velocity);
-                    coin.rotation.z += 0.2;
-                    coin.rotation.x += 0.1;
-                    if (coin.position.y > 3 || coin.position.z > 5) {
-                        sceneEarth.remove(coin);
-                        flyingCoins.splice(i, 1);
+                    coin.rotation.z += 0.15; coin.rotation.x += 0.2;
+                    if (coin.position.y > 3.2 || coin.position.z > 4.5) { 
+                        sceneEarth.remove(coin); 
+                        flyingCoins.splice(i, 1); 
+                    }
+                }
+
+                // Анимация взрыва осколков
+                for (let i = particleExplosions.length - 1; i >= 0; i--) {
+                    let pe = particleExplosions[i];
+                    pe.userData.life -= 0.03;
+                    const positions = pe.geometry.attributes.position.array;
+                    for (let j = 0; j < positions.length; j += 3) {
+                        positions[j] += pe.userData.vels[j];
+                        positions[j + 1] += pe.userData.vels[j + 1];
+                        positions[j + 2] += pe.userData.vels[j + 2];
+                    }
+                    pe.geometry.attributes.position.needsUpdate = true;
+                    pe.material.opacity = pe.userData.life;
+                    if (pe.userData.life <= 0) {
+                        sceneEarth.remove(pe);
+                        particleExplosions.splice(i, 1);
                     }
                 }
 
@@ -1370,10 +1451,10 @@
         }
 
         // =========================================================================
-        // МНОГОПАЛЬЦЕВЫЙ ТАП (MULTITOUCH) БЕЗ СПИСАНИЯ МОНЕТ
+        // МНОГОПАЛЬЦЕВЫЙ ТАП С ПОЭТАПНЫМ СНЯТИЕМ СЛОЕВ ЗАЩИТЫ
         // =========================================================================
         const earthContainer = document.getElementById('three-earth-container');
-        
+
         function handleEarthTap(e) {
             e.preventDefault();
             let touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
@@ -1381,34 +1462,61 @@
 
             touches.forEach(touch => {
                 if (userProfile.energy < 1) {
-                    showToast('⚡ Энергия на нуле! Ожидайте зарядки.');
+                    showToast('⚡ Энергия на нуле!');
                     return;
                 }
-
                 lastTapTime = Date.now();
                 userProfile.energy -= 1;
-                userProfile.coins += userProfile.multi_tap;
+                
+                let gain = userProfile.multi_tap;
+                if(currentDefenseLayer === 3) gain *= 2; // Ядро дает двойные монеты
+                userProfile.coins += gain;
                 pendingTaps++;
+
+                targetScale = 0.94;
+                setTimeout(() => { targetScale = 1.0; }, 70);
 
                 spawn3DCoin(touch.clientX, touch.clientY, rect);
 
-                coreHealth -= 4;
-                if (coreHealth <= 0) {
-                    coreHealth = 100;
-                    userProfile.coins += userProfile.multi_tap * 10;
-                    showToast('💥 Слой разрушен! Бонус +10х 🟡');
+                layerHealth -= 5;
+
+                // Разрушение Слоя 1: Купол Сот
+                if (currentDefenseLayer === 1 && layerHealth <= 0) {
+                    currentDefenseLayer = 2;
+                    layerHealth = 100;
+                    triggerHexShatter();
+                    if(hexShieldMesh) sceneEarth.remove(hexShieldMesh);
+                    showToast('💥 Кибер-Купол взломан! Открыты Стальные Цепи ⛓️');
                     vibrate('success');
-                    
-                    if (chainGroups.length > 0) chainGroups[chainGroups.length - 1].breaking = true;
-                    createNewChainLayer();
+                }
+                // Разрушение Слоя 2: Стальные Цепи
+                else if (currentDefenseLayer === 2 && layerHealth <= 0) {
+                    currentDefenseLayer = 3;
+                    layerHealth = 100;
+                    chainGroups.forEach(cg => cg.breaking = true);
+                    if(lockMesh) sceneEarth.remove(lockMesh);
+                    userProfile.coins += userProfile.multi_tap * 10;
+                    showToast('🌍 Цепи разорваны! Ядро планеты открыто [БОНУС +10х] 🟡');
+                    vibrate('success');
+
+                    // Через 12 секунд восстанавливаем защитный контур нового уровня
+                    setTimeout(() => {
+                        currentDefenseLayer = 1;
+                        layerHealth = 100;
+                        buildSteelChains();
+                        buildHexShield();
+                        updateDefenseHUD();
+                        showToast('🛡️ Защитный контур планеты перезагружен!');
+                    }, 12000);
                 } else {
                     vibrate('light');
                 }
 
-                // Всплывающее неоновое число
+                updateDefenseHUD();
+
                 const floatNum = document.createElement('div');
                 floatNum.className = 'floating-number';
-                floatNum.innerText = `+${userProfile.multi_tap} 🟡`;
+                floatNum.innerText = `+${gain} 🟡`;
                 floatNum.style.left = `${(touch.clientX - rect.left) - 20}px`;
                 floatNum.style.top = `${(touch.clientY - rect.top) - 20}px`;
                 earthContainer.appendChild(floatNum);
@@ -1416,7 +1524,6 @@
             });
 
             updateTycoonUI();
-
             clearTimeout(syncTimer);
             syncTimer = setTimeout(syncTapsWithServer, 500);
         }
@@ -1430,7 +1537,6 @@
             if (pendingTaps === 0) return;
             let tapsToSend = pendingTaps;
             pendingTaps = 0;
-
             try {
                 const res = await fetch('/api/game/sync_tap', {
                     method: 'POST',
@@ -1440,6 +1546,7 @@
                 const data = await res.json();
                 if (data.status === 'ok') {
                     userProfile.energy = Math.max(0, data.server_energy - pendingTaps);
+                    userProfile.multi_tap = data.multi_tap || userProfile.multi_tap;
                     updateTycoonUI();
                 }
             } catch(e){}
@@ -1456,9 +1563,6 @@
             document.getElementById('tycoon-overlay').classList.remove('active');
         }
 
-        // =========================================================================
-        // МАГАЗИН И УПРАВЛЕНИЕ UI
-        // =========================================================================
         async function buyItem(itemId) {
             try {
                 const res = await fetch('/api/game/buy', {
@@ -1474,9 +1578,7 @@
                 } else {
                     showToast('❌ Недостаточно монет!');
                 }
-            } catch(e) { 
-                showToast('Ошибка покупки'); 
-            }
+            } catch(e) { showToast('Ошибка покупки'); }
         }
 
         function toggleCustomSelect(wrapperId) {
@@ -1497,14 +1599,6 @@
             if (wrapperId === 'select-gen-mode') {
                 const mode = selectedValues['select-gen-mode'];
                 document.getElementById('prefix-master-box').style.display = (mode === 'prefix_master') ? 'block' : 'none';
-                const descEl = document.getElementById('mode-desc-text');
-                if (mode === 'prefix_master') {
-                    descEl.innerText = "Подставляет официальные слова (Real, Official, Team) к вашему имени.";
-                } else if (mode === 'translit') {
-                    descEl.innerText = "Подбирает созвучные слова из русского языка на латинице (Vostok, Zarya).";
-                } else {
-                    descEl.innerText = "Придумывает уникальные бренд-ники из 5–6 букв с высоким шансом свободы.";
-                }
             }
         }
 
@@ -1514,6 +1608,7 @@
             }
         });
 
+        // СТАТИСТИКА И НАСТРОЙКИ
         let stats = {
             generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
             radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
@@ -1533,21 +1628,22 @@
 
         let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
         const SECRET_PROMOS = {
-            'REDPILL': { id: 'matrix', colorHex: '#29c75f', glowHex: 'rgba(41, 199, 95, 0.4)' },
-            'DUROV360': { id: 'durov', colorHex: '#1e3c72', glowHex: 'rgba(30, 60, 114, 0.4)' },
-            'CYBER_PUNK': { id: 'cyber', colorHex: '#f97316', glowHex: 'rgba(249, 115, 22, 0.4)' },
-            'NEBULA_DEEP': { id: 'nebula', colorHex: '#6366f1', glowHex: 'rgba(99, 102, 241, 0.4)' },
-            'SUDO_RM_RF': { id: 'terminal', colorHex: '#00ff66', glowHex: 'rgba(0, 255, 102, 0.4)' },
-            'SYNTH_1984': { id: 'vapor', colorHex: '#ec4899', glowHex: 'rgba(236, 72, 153, 0.4)' },
-            'CROWN_KING': { id: 'kington', colorHex: '#eab308', glowHex: 'rgba(234, 179, 8, 0.4)' }
+            'REDPILL': { id: 'matrix', icon: '💻', colorHex: '#29c75f', glowHex: 'rgba(41, 199, 95, 0.4)', msg: 'MATRIX' },
+            'DUROV360': { id: 'durov', icon: '✈️', colorHex: '#1e3c72', glowHex: 'rgba(30, 60, 114, 0.4)', msg: 'DUROV SKY' },
+            'CYBER_PUNK': { id: 'cyber', icon: '⚡', colorHex: '#f97316', glowHex: 'rgba(249, 115, 22, 0.4)', msg: 'CYBERPUNK' },
+            'NEBULA_DEEP': { id: 'nebula', icon: '🪐', colorHex: '#6366f1', glowHex: 'rgba(99, 102, 241, 0.4)', msg: 'NEBULA' },
+            'SUDO_RM_RF': { id: 'terminal', icon: '📟', colorHex: '#00ff66', glowHex: 'rgba(0, 255, 102, 0.4)', msg: 'TERMINAL' },
+            'SYNTH_1984': { id: 'vapor', icon: '🌆', colorHex: '#ec4899', glowHex: 'rgba(236, 72, 153, 0.4)', msg: 'VAPORWAVE' },
+            'CROWN_KING': { id: 'kington', icon: '👑', colorHex: '#eab308', glowHex: 'rgba(234, 179, 8, 0.4)', msg: 'KINGTON GOLD' }
         };
 
         function submitSecretCode() {
             const code = document.getElementById('secret-code-input').value.trim().toUpperCase();
             document.getElementById('secret-code-input').value = "";
             if (SECRET_PROMOS[code]) {
-                unlockSecretTheme(SECRET_PROMOS[code].id, SECRET_PROMOS[code].colorHex, SECRET_PROMOS[code].glowHex);
-                showToast(`✨ Открыта секретная тема!`);
+                const p = SECRET_PROMOS[code];
+                unlockSecretTheme(p.id, p.icon, p.colorHex, p.glowHex);
+                showToast(`✨ Открыто: ${p.msg}!`);
                 stats.secretsFound++;
                 saveStats();
             } else {
@@ -1556,9 +1652,9 @@
             closeModal('modal-secret-code');
         }
 
-        function unlockSecretTheme(themeId, colorHex, glowHex) {
+        function unlockSecretTheme(themeId, icon, colorHex, glowHex) {
             if (!unlockedSecretThemes.some(t => t.id === themeId)) {
-                unlockedSecretThemes.push({ id: themeId, colorHex, glowHex });
+                unlockedSecretThemes.push({ id: themeId, icon, colorHex, glowHex });
                 localStorage.setItem('vh_secret_themes', JSON.stringify(unlockedSecretThemes));
             }
             renderCustomThemesGrid();
@@ -1574,7 +1670,7 @@
                 const dot = document.createElement('div');
                 dot.className = 'color-dot secret-unlocked';
                 dot.style.background = theme.colorHex;
-                dot.innerText = "✨";
+                dot.innerText = theme.icon;
                 dot.onclick = () => {
                     activateSecretEffect(theme.id);
                     document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
@@ -1589,10 +1685,7 @@
         const sCtx = secretCanvas.getContext('2d');
 
         function stopSecretAnimation() {
-            if (secretAnimId) {
-                cancelAnimationFrame(secretAnimId);
-                secretAnimId = null;
-            }
+            if (secretAnimId) { cancelAnimationFrame(secretAnimId); secretAnimId = null; }
             sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
             secretCanvas.style.display = 'none';
             document.body.className = '';
@@ -1609,7 +1702,6 @@
                 const fontSize = 14;
                 const columns = Math.floor(secretCanvas.width / fontSize);
                 const drops = Array(columns).fill(1);
-
                 function drawMatrix() {
                     sCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                     sCtx.fillRect(0, 0, secretCanvas.width, secretCanvas.height);
@@ -1625,50 +1717,20 @@
                 drawMatrix();
             } else if (themeId === 'durov') {
                 secretCanvas.style.display = 'block';
-                let planes = Array.from({ length: 18 }, () => ({
-                    x: Math.random() * secretCanvas.width,
-                    y: Math.random() * secretCanvas.height,
-                    speed: 1 + Math.random() * 2,
-                    size: 15 + Math.random() * 10
-                }));
-
+                let planes = Array.from({ length: 18 }, () => ({ x: Math.random() * secretCanvas.width, y: Math.random() * secretCanvas.height, speed: 1 + Math.random() * 2, size: 15 + Math.random() * 10 }));
                 function drawDurov() {
                     sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
                     sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                     planes.forEach(p => {
-                        sCtx.save();
-                        sCtx.translate(p.x, p.y);
-                        sCtx.beginPath();
-                        sCtx.moveTo(0, 0); sCtx.lineTo(-p.size, -p.size/2); sCtx.lineTo(-p.size/2, 0); sCtx.lineTo(-p.size, p.size/2);
-                        sCtx.closePath(); sCtx.fill();
-                        sCtx.restore();
+                        sCtx.save(); sCtx.translate(p.x, p.y);
+                        sCtx.beginPath(); sCtx.moveTo(0, 0); sCtx.lineTo(-p.size, -p.size/2); sCtx.lineTo(-p.size/2, 0); sCtx.lineTo(-p.size, p.size/2);
+                        sCtx.closePath(); sCtx.fill(); sCtx.restore();
                         p.x -= p.speed; p.y -= p.speed * 0.5;
                         if (p.x < -30 || p.y < -30) { p.x = secretCanvas.width + 30; p.y = Math.random() * secretCanvas.height; }
                     });
                     secretAnimId = requestAnimationFrame(drawDurov);
                 }
                 drawDurov();
-            } else if (themeId === 'kington') {
-                secretCanvas.style.display = 'block';
-                let goldList = Array.from({ length: 45 }, () => ({
-                    x: Math.random() * secretCanvas.width,
-                    y: Math.random() * secretCanvas.height,
-                    size: Math.random() * 3 + 1.5,
-                    speed: Math.random() * 1.5 + 0.5,
-                    op: Math.random()
-                }));
-
-                function drawKington() {
-                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
-                    goldList.forEach(g => {
-                        sCtx.fillStyle = `rgba(255, 215, 0, ${g.op})`;
-                        sCtx.beginPath(); sCtx.arc(g.x, g.y, g.size, 0, Math.PI * 2); sCtx.fill();
-                        g.y += g.speed;
-                        if (g.y > secretCanvas.height) { g.y = 0; g.x = Math.random() * secretCanvas.width; }
-                    });
-                    secretAnimId = requestAnimationFrame(drawKington);
-                }
-                drawKington();
             } else if (themeId === 'vapor') {
                 document.body.classList.add("theme-vapor");
             } else {
@@ -1693,7 +1755,6 @@
             if (cb.checked) {
                 menu.classList.add('active');
                 btn.style.display = 'flex';
-                btn.classList.remove('collapsed');
             } else {
                 menu.classList.remove('active');
                 btn.style.display = 'none';
@@ -1707,7 +1768,6 @@
             if (cb.checked) {
                 menu.classList.add('active');
                 btn.style.display = 'flex';
-                btn.classList.remove('collapsed');
             } else {
                 menu.classList.remove('active');
                 btn.style.display = 'none';
@@ -1740,38 +1800,28 @@
 
         function saveCustomization() {
             const customData = {
-                customEnabled: document.getElementById('toggle-custom').checked,
                 themeColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
                 themeGlow: getComputedStyle(document.documentElement).getPropertyValue('--primary-glow').trim(),
-                fogCount: document.getElementById('fog-count-slider').value,
                 emojiEnabled: document.getElementById('toggle-emoji').checked,
-                emojis: document.getElementById('emoji-input').value
+                emojis: document.getElementById('emoji-input').value,
+                fogCount: document.getElementById('fog-count-slider').value
             };
             localStorage.setItem('vh_custom_settings', JSON.stringify(customData));
         }
 
         function loadCustomization() {
             renderCustomThemesGrid();
-            const saved = localStorage.getItem('vh_custom_settings');
             checkAchievementProgress();
+            const saved = localStorage.getItem('vh_custom_settings');
             if(!saved) return;
             const data = JSON.parse(saved);
-
-            if(data.customEnabled) {
-                document.getElementById('toggle-custom').checked = true;
-                document.getElementById('custom-menu').classList.add('active');
-                document.getElementById('btn-toggle-custom-panel').style.display = 'flex';
-            }
-
             if(data.emojiEnabled !== undefined) {
                 document.getElementById('toggle-emoji').checked = data.emojiEnabled;
                 document.getElementById('emoji-controls-box').style.display = data.emojiEnabled ? 'block' : 'none';
             }
-
             if(data.themeColor) setThemeColor(data.themeColor, data.themeGlow, null);
-            if(data.fogCount) document.getElementById('fog-count-slider').value = data.fogCount;
             if(data.emojis) document.getElementById('emoji-input').value = data.emojis;
-
+            if(data.fogCount) document.getElementById('fog-count-slider').value = data.fogCount;
             updateFogSettings();
             updateEmojiSettings();
         }
@@ -1793,18 +1843,15 @@
         function updateEmojiSettings() {
             const isEnabled = document.getElementById('toggle-emoji').checked;
             const layer = document.getElementById('emoji-layer');
-
             if (!isEnabled) {
                 layer.innerHTML = '';
                 emojiElements = [];
                 return;
             }
-
             const raw = document.getElementById('emoji-input').value;
             floatingEmojisList = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
             layer.innerHTML = '';
             emojiElements = [];
-
             if (floatingEmojisList.length === 0) return;
 
             for (let i = 0; i < 5; i++) {
@@ -1837,6 +1884,7 @@
         }
         animateEmojis();
 
+        // ТУМАН
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
         let width, height;
@@ -1960,9 +2008,7 @@
             document.getElementById(id).classList.remove('active');
         }
 
-        // =========================================================================
-        // СЕРВЕРНЫЙ РАДАР
-        // =========================================================================
+        // РАДАР
         async function fetchRadarList() {
             const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
             const data = await res.json();
@@ -1998,9 +2044,7 @@
             `).join('');
         }
 
-        // =========================================================================
-        // ИСТОРИЯ И ЖЕСТЫ СВАЙПОВ
-        // =========================================================================
+        // ИСТОРИЯ И СВАЙПЫ
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
         function saveToHistory(item) {
@@ -2011,6 +2055,8 @@
             historyData.sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
             localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
         }
+
+        let isSwiping = false, startX = 0, currentX = 0, activeCard = null;
 
         function renderHistory() {
             const cont = document.getElementById('history-container');
@@ -2035,7 +2081,7 @@
                 div.innerHTML = `
                     <div class="swipe-action-icon swipe-icon-left">🗑</div>
                     <div class="hist-left" style="pointer-events:none;">
-                        <div class="hist-user" style="color: ${item.color}">@${item.user}</div>
+                        <div class="hist-user" style="color: ${item.color}; font-weight:bold;">@${item.user}</div>
                         <div class="hist-plat" style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div>
                     </div>
                     <div class="hist-right" style="text-align:right; pointer-events:none;">
@@ -2049,7 +2095,7 @@
                 div.ontouchmove = handleTouchMove;
                 div.ontouchend = handleTouchEnd;
 
-                div.onclick = (e) => {
+                div.onclick = () => {
                     if (isSwiping) return;
                     navigator.clipboard.writeText(item.user);
                     showToast('✨ Ник скопирован!');
@@ -2067,8 +2113,6 @@
                 renderHistory();
             }
         }
-
-        let startX = 0, currentX = 0, activeCard = null, isSwiping = false;
 
         function handleTouchStart(e) {
             startX = e.touches[0].clientX;
@@ -2097,9 +2141,7 @@
                     wrapper.classList.remove('swiping-right');
                 }
             }
-
             activeCard.style.transform = `translate3d(${diffX}px, 0, 0)`;
-            activeCard.style.opacity = `${1 - Math.abs(diffX) / 250}`;
         }
 
         function handleTouchEnd(e) {
@@ -2109,21 +2151,19 @@
             const username = activeCard.getAttribute('data-user');
             const wrapper = document.getElementById(`hist-wrap-${index}`);
 
-            if (diffX > 140) {
+            if (diffX > 120) {
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translate3d(100%, 0, 0)';
-                activeCard.style.opacity = '0';
-                setTimeout(() => { if (wrapper) wrapper.classList.add('deleting'); }, 120);
+                setTimeout(() => { if (wrapper) wrapper.classList.add('deleting'); }, 100);
                 setTimeout(() => {
                     let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
                     historyData.splice(index, 1);
                     localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
                     renderHistory();
-                }, 350);
-            } else if (diffX < -140) {
-                activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
-                activeCard.style.transform = 'translate3d(-100%, 0, 0)';
-                activeCard.style.opacity = '0';
+                }, 300);
+            } else if (diffX < -120) {
+                activeCard.style.transition = 'transform 0.25s ease-out';
+                activeCard.style.transform = 'translate3d(0px, 0, 0)';
                 vibrate('success');
                 const botUsername = "selectionusername_bot";
                 const text = `🎯 Доступный юзернейм @${username} найден с помощью @${botUsername}`;
@@ -2134,25 +2174,20 @@
                     } else {
                         window.open(url, '_blank');
                     }
-                    renderHistory();
-                }, 200);
+                }, 150);
             } else {
-                activeCard.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+                activeCard.style.transition = 'transform 0.2s ease';
                 activeCard.style.transform = 'translate3d(0px, 0, 0)';
-                activeCard.style.opacity = '1';
                 if(wrapper) {
                     wrapper.classList.remove('swiping-right');
                     wrapper.classList.remove('swiping-left');
                 }
             }
-
             startX = 0; currentX = 0; activeCard = null;
             setTimeout(() => { isSwiping = false; }, 50);
         }
 
-        // =========================================================================
-        // ГЕНЕРАЦИЯ НИКОВ И АВТОПАРСИНГ
-        // =========================================================================
+        // ГЕНЕРАЦИЯ
         function startSlotMachine() {
             const el = document.getElementById('res-username');
             const chars = "abcdefghijklmnopqrstuvwxyz";
@@ -2189,7 +2224,7 @@
         async function runCycle() {
             if (!isAuto) return;
             if (!isFetching) await fetchUsername();
-            if (isAuto) setTimeout(runCycle, 2500);
+            if (isAuto) setTimeout(runCycle, 1500);
         }
 
         async function manualGenerate(event) {
@@ -2299,9 +2334,7 @@
             }
         }
 
-        // =========================================================================
-        // ДОСТИЖЕНИЯ И ЛИДЕРБОРД
-        // =========================================================================
+        // ДОСТИЖЕНИЯ
         const ACHIEVEMENTS_DATA = [];
         const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
         for (let i = 1; i <= 100; i++) {
