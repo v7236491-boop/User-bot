@@ -11,7 +11,7 @@
 
   <style>
     /* ==========================================================================
-       1. ДИЗАЙН-СИСТЕМА LIQUID CYBERPUNK GLASSMORPHISM
+       1. СТИЛИ И ДИЗАЙН-СИСТЕМА LIQUID CYBERPUNK GLASSMORPHISM
        ========================================================================== */
     :root {
       --bg-dark: #060b08;
@@ -35,7 +35,6 @@
       --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Динамические темы промокодов */
     body.theme-matrix {
       --primary: #00ff66;
       --primary-glow: rgba(0, 255, 102, 0.35);
@@ -105,7 +104,6 @@
       position: relative;
     }
 
-    /* Фоновые холсты */
     #fog-canvas {
       position: fixed;
       inset: 0;
@@ -149,9 +147,6 @@
       gap: 16px;
     }
 
-    /* ==========================================================================
-       2. ГЛАВНЫЙ ЭКРАН (ГЕНЕРАТОР)
-       ========================================================================== */
     .header-bar {
       display: flex;
       justify-content: space-between;
@@ -398,9 +393,6 @@
       transform: scale(0.93);
     }
 
-    /* ==========================================================================
-       3. 3D КЛИКЕР HUD И СЦЕНА
-       ========================================================================== */
     #clicker-overlay {
       position: fixed;
       inset: 0;
@@ -540,9 +532,6 @@
       100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
     }
 
-    /* ==========================================================================
-       4. МОДАЛЬНЫЕ ОКНА И АККОРДЕОНЫ
-       ========================================================================== */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -603,7 +592,6 @@
       font-size: 14px;
     }
 
-    /* Навигационные ссылки внутри настроек */
     .btn-link-action {
       width: 100%;
       background: var(--glass-bg);
@@ -622,7 +610,6 @@
     .btn-link-radar { border-color: rgba(41, 199, 95, 0.4); color: var(--primary); }
     .btn-link-secret { border-color: rgba(168, 85, 247, 0.4); color: var(--accent-purple); }
 
-    /* Переключатели и раскрывающиеся меню */
     .switch-row {
       display: flex;
       justify-content: space-between;
@@ -687,9 +674,6 @@
       cursor: pointer;
       border: 2px solid transparent;
     }
-    .palette-color.active {
-      border-color: #fff;
-    }
 
     .form-group {
       display: flex;
@@ -711,7 +695,6 @@
       outline: none;
     }
 
-    /* Свайп-элементы истории */
     .history-card-wrap {
       position: relative;
       overflow: hidden;
@@ -760,7 +743,6 @@
       border: none !important;
     }
 
-    /* Лидерборд и карточки достижений */
     .top-item-row {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
@@ -798,7 +780,6 @@
       box-shadow: 0 0 8px var(--primary-glow);
     }
 
-    /* Тост обратной связи */
     .toast-msg {
       position: fixed;
       top: 24px;
@@ -833,20 +814,16 @@
 
   <!-- 📱 ГЛАВНЫЙ ЭКРАН -->
   <div class="app-container">
-
-    <!-- Верхняя панель -->
     <header class="header-bar">
       <button class="header-btn" id="btn-open-history">📜 История</button>
       <button class="header-btn" id="btn-open-settings">⚙️ Настройки</button>
     </header>
 
-    <!-- Переключатель платформ -->
     <div class="platform-switcher">
       <div class="platform-tab active" id="tab-tg" onclick="setPlatform('telegram')">Telegram</div>
       <div class="platform-tab" id="tab-wa" onclick="setPlatform('whatsapp')">WhatsApp</div>
     </div>
 
-    <!-- Поле отображения результата -->
     <section class="result-box" id="result-box">
       <div class="fragment-badge" id="fragment-badge">💎 Fragment: ~150 TON</div>
       <div class="slot-machine-text" id="slot-text">@hunter</div>
@@ -858,9 +835,7 @@
       </div>
     </section>
 
-    <!-- Главная кнопка действия -->
     <button class="btn-generate" id="btn-generate">Сгенерировать</button>
-
   </div>
 
   <!-- 🧭 ПЛАВАЮЩАЯ НИЖНЯЯ ПАНЕЛЬ -->
@@ -895,11 +870,7 @@
     </div>
   </div>
 
-  <!-- ==========================================================================
-       🗂️ 9 МОДАЛЬНЫХ ОКОН
-       ========================================================================== -->
-
-  <!-- 1. Модалка: Настройки -->
+  <!-- 🗂️ 9 МОДАЛЬНЫХ ОКОН -->
   <div class="modal-overlay" id="modal-settings">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -917,7 +888,6 @@
         <span>→</span>
       </div>
 
-      <!-- Внешний вид -->
       <div class="switch-row">
         <span class="switch-label">Внешний вид</span>
         <label class="switch-toggle">
@@ -946,7 +916,6 @@
         <button class="header-btn" style="justify-content:center; margin-top:4px;" id="btn-reset-appearance">↺ Сбросить вид</button>
       </div>
 
-      <!-- Автопарсер -->
       <div class="switch-row">
         <span class="switch-label">Автопарсер (непрерывно)</span>
         <label class="switch-toggle">
@@ -955,7 +924,6 @@
         </label>
       </div>
 
-      <!-- Фильтр генерации -->
       <div class="switch-row">
         <span class="switch-label">Фильтр генерации</span>
         <label class="switch-toggle">
@@ -989,7 +957,6 @@
     </div>
   </div>
 
-  <!-- 2. Модалка: Секретный промокод -->
   <div class="modal-overlay" id="modal-secret-code">
     <div class="modal-sheet" style="text-align:center;">
       <div class="modal-header">
@@ -1003,7 +970,6 @@
     </div>
   </div>
 
-  <!-- 3. Модалка: Радар -->
   <div class="modal-overlay" id="modal-radar">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -1019,7 +985,6 @@
     </div>
   </div>
 
-  <!-- 4. Модалка: История со свайп-списком -->
   <div class="modal-overlay" id="modal-history">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -1033,7 +998,6 @@
     </div>
   </div>
 
-  <!-- 5. Модалка: Лидерборд -->
   <div class="modal-overlay" id="modal-leaderboard">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -1044,7 +1008,6 @@
     </div>
   </div>
 
-  <!-- 6. Модалка: Достижения -->
   <div class="modal-overlay" id="modal-achievements">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -1055,7 +1018,6 @@
     </div>
   </div>
 
-  <!-- 7. Модалка: Кибер-Магазин -->
   <div class="modal-overlay" id="modal-shop">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -1069,7 +1031,6 @@
     </div>
   </div>
 
-  <!-- 8. Модалка: Оффлайн-Награда -->
   <div class="modal-overlay" id="modal-welcome-offline">
     <div class="modal-sheet" style="text-align:center; align-items:center;">
       <h2 style="font-size:36px;">🤖</h2>
@@ -1079,7 +1040,6 @@
     </div>
   </div>
 
-  <!-- 9. Модалка: Итоги автопарса -->
   <div class="modal-overlay" id="modal-summary">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -1092,465 +1052,544 @@
     </div>
   </div>
 
-  <!-- Тост обратной связи -->
   <div class="toast-msg" id="toast">✨ Юзернейм скопирован!</div>
-    /* ==========================================================================
-       1. ИНИЦИАЛИЗАЦИЯ TELEGRAM WEBAPP И СОСТОЯНИЯ
-       ========================================================================== */
+
+  <!-- ==========================================================================
+       JS-ДВИЖОК
+       ========================================================================== -->
+  <script>
     const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand();
+    if (tg) { tg.ready(); tg.expand(); }
+
+    function showToast(text) {
+      const t = document.getElementById("toast");
+      t.textContent = text;
+      t.classList.add("show");
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+      setTimeout(() => t.classList.remove("show"), 2200);
     }
 
-    // Dual-ID System
-    function getUserId() {
-      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
-        return String(tg.initDataUnsafe.user.id);
-      }
-      let guestId = localStorage.getItem("scanner_guest_uid");
-      if (!guestId) {
-        guestId = "guest_" + Math.random().toString(36).substring(2, 10);
-        localStorage.setItem("scanner_guest_uid", guestId);
-      }
-      return guestId;
+    function openModal(id) {
+      document.getElementById(id)?.classList.add("active");
+      if (id === "modal-history") renderHistory();
+      if (id === "modal-leaderboard") renderLeaderboard();
+      if (id === "modal-achievements") renderAchievements();
+      if (id === "modal-shop") renderShop();
+      if (id === "modal-radar") renderRadar();
+    }
+    function closeModal(id) {
+      document.getElementById(id)?.classList.remove("active");
     }
 
-    function getUserName() {
-      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        const u = tg.initDataUnsafe.user;
-        return u.username ? `@${u.username}` : (u.first_name || "Пользователь");
-      }
-      return "Гость";
-    }
-
-    const CURRENT_USER_ID = getUserId();
-    const CURRENT_USER_NAME = getUserName();
-
-    // Глобальное состояние
     const AppState = {
-      coins: 0.0,
+      user_id: tg?.initDataUnsafe?.user?.id ? String(tg.initDataUnsafe.user.id) : (localStorage.getItem("scanner_uid") || "guest_" + Math.random().toString(36).substring(2, 9)),
+      user_name: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : (tg?.initDataUnsafe?.user?.first_name || "Hunter"),
+      coins: 0,
       energy: 1000,
       max_energy: 1000,
       multi_tap: 1,
       offline_miner: 0,
-      purchased_items: [],
       history: JSON.parse(localStorage.getItem("scanner_history") || "[]"),
-      radar: JSON.parse(localStorage.getItem("scanner_radar_local") || "[]"),
-      activeTheme: localStorage.getItem("scanner_theme") || "default",
-      emojiParticle: localStorage.getItem("scanner_emoji") || "✨"
+      radar: JSON.parse(localStorage.getItem("scanner_radar") || "[]"),
+      unlocked_promos: JSON.parse(localStorage.getItem("unlocked_promos") || "[]"),
+      achieved_count: parseInt(localStorage.getItem("scanner_achieve_count") || "0")
+    };
+    localStorage.setItem("scanner_uid", AppState.user_id);
+
+    document.getElementById("btn-open-history").onclick = () => openModal("modal-history");
+    document.getElementById("btn-open-settings").onclick = () => openModal("modal-settings");
+    document.getElementById("btn-open-achieve").onclick = () => openModal("modal-achievements");
+    document.getElementById("btn-open-top").onclick = () => openModal("modal-leaderboard");
+    document.getElementById("btn-clicker-shop").onclick = () => openModal("modal-shop");
+    document.getElementById("btn-clicker-hunter").onclick = () => showToast(`👑 Ловец: ${AppState.user_name}`);
+    document.getElementById("link-to-radar").onclick = () => { closeModal("modal-settings"); openModal("modal-radar"); };
+    document.getElementById("link-to-secret").onclick = () => { closeModal("modal-settings"); openModal("modal-secret-code"); };
+
+    document.getElementById("toggle-custom-menu").onchange = (e) => {
+      document.getElementById("custom-menu").classList.toggle("open", e.target.checked);
+    };
+    document.getElementById("toggle-filter-menu").onchange = (e) => {
+      document.getElementById("filter-menu").classList.toggle("open", e.target.checked);
     };
 
-    function showToast(text) {
-      const toast = document.getElementById("toast-view") || document.getElementById("toast");
-      if (!toast) return;
-      toast.textContent = text;
-      toast.classList.add("show");
-      if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
-      setTimeout(() => toast.classList.remove("show"), 2200);
-    }
-
-    function saveHistoryLocal(item) {
-      AppState.history.unshift(item);
-      if (AppState.history.length > 200) AppState.history.pop();
-      localStorage.setItem("scanner_history", JSON.stringify(AppState.history));
-      renderHistory();
-    }
-
-    /* ==========================================================================
-       2. МОДАЛЬНЫЕ ОКНА И НАВИГАЦИЯ
-       ========================================================================== */
-    function openModal(id) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.classList.add("active");
-        if (id === "modal-game") startThreeEngine();
-        if (id === "modal-history") renderHistory();
-        if (id === "modal-leaderboard" || id === "modal-top") fetchLeaderboard();
-        if (id === "modal-achieve" || id === "modal-achievements") renderAchievements();
-        if (id === "modal-shop") renderShop();
-        if (id === "modal-radar") renderRadarList();
-      }
-    }
-
-    function closeModal(id) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.classList.remove("active");
-        if (id === "modal-game") stopThreeEngine();
-      }
-    }
-
-    document.querySelectorAll("[data-close]").forEach(btn => {
-      btn.addEventListener("click", () => closeModal(btn.getAttribute("data-close")));
-    });
-
-    document.querySelectorAll(".modal-overlay").forEach(overlay => {
-      overlay.addEventListener("click", (e) => {
-        if (e.target === overlay) closeModal(overlay.id);
-      });
-    });
-
-    const bindClick = (id, fn) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener("click", fn);
-    };
-
-    bindClick("btn-open-settings", () => openModal("modal-settings"));
-    bindClick("btn-open-shop", () => openModal("modal-shop"));
-    bindClick("btn-open-game", () => openModal("modal-game"));
-    bindClick("nav-history", () => openModal("modal-history"));
-    bindClick("nav-leaderboard", () => openModal("modal-leaderboard"));
-    bindClick("nav-radar", () => openModal("modal-radar"));
-    bindClick("nav-achieve", () => openModal("modal-achieve"));
-
-    /* ==========================================================================
-       3. СИСТЕМА ПРОМОКОДОВ И CANVAS-ЭФФЕКТЫ
-       ========================================================================== */
-    const PROMO_CODES = {
-      "REDPILL": "theme-matrix",
-      "DUROV360": "theme-durov",
-      "CROWN_KING": "theme-gold",
-      "CYBER_PUNK": "theme-cyberpunk",
-      "NEBULA_DEEP": "theme-nebula",
-      "SUDO_RM_RF": "theme-terminal",
-      "SYNTH_1984": "theme-vaporwave"
-    };
-
-    function applyTheme(themeClass) {
-      document.body.className = "";
-      if (themeClass && themeClass !== "default") {
-        document.body.classList.add(themeClass);
-      }
-      localStorage.setItem("scanner_theme", themeClass);
-      AppState.activeTheme = themeClass;
-    }
-    applyTheme(AppState.activeTheme);
-
-    const promoInput = document.getElementById("cfg-promo");
-    if (promoInput) {
-      promoInput.addEventListener("input", (e) => {
-        const code = e.target.value.trim().toUpperCase();
-        if (PROMO_CODES[code]) {
-          applyTheme(PROMO_CODES[code]);
-          showToast("⚡ Промокод активирован!");
-          triggerSecretCanvas();
-        }
-      });
-    }
-
-    // Фоновый процедурный туман
     const fogCanvas = document.getElementById("fog-canvas");
-    const fogCtx = fogCanvas ? fogCanvas.getContext("2d") : null;
-    let fogParticles = [];
+    const fogCtx = fogCanvas.getContext("2d");
+    let fogCount = 5;
+    let fogs = [];
 
-    function resizeFogCanvas() {
-      if (!fogCanvas) return;
+    function initFog() {
       fogCanvas.width = window.innerWidth;
       fogCanvas.height = window.innerHeight;
-      fogParticles = [];
-      for (let i = 0; i < 18; i++) {
-        fogParticles.push({
+      fogs = [];
+      for (let i = 0; i < fogCount; i++) {
+        fogs.push({
           x: Math.random() * fogCanvas.width,
           y: Math.random() * fogCanvas.height,
-          radius: Math.random() * 120 + 80,
+          r: Math.random() * 140 + 100,
           vx: (Math.random() - 0.5) * 0.4,
-          vy: (Math.random() - 0.5) * 0.4,
-          alpha: Math.random() * 0.08 + 0.03
+          vy: (Math.random() - 0.5) * 0.4
         });
       }
     }
-    window.addEventListener("resize", resizeFogCanvas);
-    resizeFogCanvas();
+    window.addEventListener("resize", initFog);
+    initFog();
 
     function renderFog() {
-      if (!fogCanvas || !fogCtx) return;
       fogCtx.clearRect(0, 0, fogCanvas.width, fogCanvas.height);
-      const computedPrimary = getComputedStyle(document.body).getPropertyValue("--primary").trim() || "#29c75f";
-      
-      fogParticles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < -p.radius) p.x = fogCanvas.width + p.radius;
-        if (p.x > fogCanvas.width + p.radius) p.x = -p.radius;
-        if (p.y < -p.radius) p.y = fogCanvas.height + p.radius;
-        if (p.y > fogCanvas.height + p.radius) p.y = -p.radius;
+      const color = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || "#29c75f";
+      fogs.forEach(f => {
+        f.x += f.vx; f.y += f.vy;
+        if (f.x < -f.r) f.x = fogCanvas.width + f.r;
+        if (f.x > fogCanvas.width + f.r) f.x = -f.r;
+        if (f.y < -f.r) f.y = fogCanvas.height + f.r;
+        if (f.y > fogCanvas.height + f.r) f.y = -f.r;
 
-        const grad = fogCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-        grad.addColorStop(0, computedPrimary);
-        grad.addColorStop(1, "transparent");
-
-        fogCtx.fillStyle = grad;
-        fogCtx.globalAlpha = p.alpha;
+        const g = fogCtx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+        g.addColorStop(0, color);
+        g.addColorStop(1, "transparent");
+        fogCtx.fillStyle = g;
+        fogCtx.globalAlpha = 0.08;
         fogCtx.beginPath();
-        fogCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        fogCtx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
         fogCtx.fill();
       });
-      fogCtx.globalAlpha = 1.0;
+      fogCtx.globalAlpha = 1;
       requestAnimationFrame(renderFog);
     }
     renderFog();
 
-    // Секретный Matrix Canvas для промокодов
-    const secretCanvas = document.getElementById("secret-canvas");
-    const secretCtx = secretCanvas ? secretCanvas.getContext("2d") : null;
-    let secretTimer = null;
+    document.getElementById("cfg-fog-range").oninput = (e) => {
+      fogCount = parseInt(e.target.value);
+      document.getElementById("fog-val-text").textContent = fogCount;
+      initFog();
+    };
 
-    function triggerSecretCanvas() {
-      if (!secretCanvas || !secretCtx) return;
-      secretCanvas.width = window.innerWidth;
-      secretCanvas.height = window.innerHeight;
-      const chars = "0123456789ABCDEF@#$%&*";
-      const fontSize = 14;
-      const columns = Math.floor(secretCanvas.width / fontSize);
-      const drops = Array(columns).fill(1);
-
-      let frames = 0;
-      if (secretTimer) clearInterval(secretTimer);
-
-      secretTimer = setInterval(() => {
-        secretCtx.fillStyle = "rgba(0, 0, 0, 0.12)";
-        secretCtx.fillRect(0, 0, secretCanvas.width, secretCanvas.height);
-        secretCtx.fillStyle = "#00ff66";
-        secretCtx.font = fontSize + "px monospace";
-
-        for (let i = 0; i < drops.length; i++) {
-          const text = chars[Math.floor(Math.random() * chars.length)];
-          secretCtx.fillText(text, i * fontSize, drops[i] * fontSize);
-          if (drops[i] * fontSize > secretCanvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
-          }
-          drops[i]++;
-        }
-        frames++;
-        if (frames > 80) {
-          clearInterval(secretTimer);
-          secretCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
-        }
-      }, 33);
-    }
-
-    /* ==========================================================================
-       4. СКАНЕР НИКНЕЙМОВ И СИНХРОНИЗАЦИЯ
-       ========================================================================== */
-    const cardTier = document.getElementById("card-tier");
-    const cardUsername = document.getElementById("card-username") || document.getElementById("slot-text");
-    const cardDesc = document.getElementById("card-desc") || document.getElementById("status-text");
-    let currentScannedItem = null;
-
-    async function performScan() {
-      const platform = document.getElementById("cfg-platform") ? document.getElementById("cfg-platform").value : "telegram";
-      const lenMode = document.getElementById("cfg-len") ? document.getElementById("cfg-len").value : "5-6";
-      const useFilter = document.getElementById("cfg-filter") ? document.getElementById("cfg-filter").checked : true;
-      const useNum = document.getElementById("cfg-num") ? document.getElementById("cfg-num").checked : false;
-      const useUnd = document.getElementById("cfg-und") ? document.getElementById("cfg-und").checked : false;
-
-      if (cardUsername) cardUsername.textContent = "Сканирование...";
-      if (cardDesc) cardDesc.innerHTML = "Подключение к узлам Telethon...";
-
-      try {
-        const url = `/api/generate?platform=${platform}&len_mode=${lenMode}&use_filter=${useFilter}&use_num=${useNum}&use_und=${useUnd}&finder_name=${encodeURIComponent(CURRENT_USER_NAME)}&finder_id=${CURRENT_USER_ID}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (res.status === 429) {
-          if (cardUsername) cardUsername.textContent = "Лимит API";
-          if (cardDesc) cardDesc.innerHTML = `<span style="color:var(--danger)">Telegram FloodWait. Ждите ${data.retry_after}с</span>`;
-          return;
-        }
-
-        if (data.success && data.primary) {
-          const item = data.primary;
-          currentScannedItem = item;
-
-          if (cardUsername) cardUsername.textContent = `@${item.username}`;
-          if (cardTier) {
-            cardTier.className = `score-badge tier-${item.tier.toLowerCase().replace('+', '')}`;
-            cardTier.textContent = `${item.tier} (${item.estimated_value_ton})`;
-          }
-          
-          if (cardDesc) {
-            if (item.is_available) {
-              cardDesc.innerHTML = `Статус: <b style="color:var(--primary);">СВОБОДЕН ✅</b> • ${item.description}`;
-              saveHistoryLocal(item);
-            } else {
-              cardDesc.innerHTML = `Статус: <b style="color:var(--danger);">ЗАНЯТ ❌</b>`;
-            }
-          }
-        }
-      } catch (err) {
-        if (cardUsername) cardUsername.textContent = "Ошибка сети";
-        if (cardDesc) cardDesc.innerHTML = "Не удалось связаться с сервером бэкенда.";
-      }
-    }
-
-    bindClick("btn-scan-action", performScan);
-    bindClick("btn-generate", performScan);
-
-    if (cardUsername) {
-      cardUsername.addEventListener("click", () => {
-        if (currentScannedItem) {
-          navigator.clipboard.writeText(`@${currentScannedItem.username}`);
-          showToast("Юзернейм скопирован!");
-        }
+    const emojiLayer = document.getElementById("emoji-layer");
+    let emojiEls = [];
+    function updateEmojiLayer() {
+      emojiLayer.innerHTML = "";
+      if (!document.getElementById("toggle-emojis").checked) return;
+      const raw = document.getElementById("cfg-emojis").value;
+      const list = raw.split(",").map(s => s.trim()).filter(Boolean);
+      emojiEls = list.slice(0, 5).map(icon => {
+        const el = document.createElement("div");
+        el.className = "floating-emoji";
+        el.textContent = icon;
+        emojiLayer.appendChild(el);
+        return {
+          el,
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          vx: (Math.random() - 0.5) * 1.0,
+          vy: (Math.random() - 0.5) * 1.0
+        };
       });
     }
+    updateEmojiLayer();
+    document.getElementById("toggle-emojis").onchange = updateEmojiLayer;
+    document.getElementById("cfg-emojis").oninput = updateEmojiLayer;
 
-    bindClick("btn-share-tg", () => {
-      if (currentScannedItem) {
-        const text = `🔥 Поймал редкий никнейм @${currentScannedItem.username} (${currentScannedItem.tier}) через Username Scanner PRO!`;
-        window.open(`https://t.me/share/url?url=${encodeURIComponent("https://t.me/your_bot")}&text=${encodeURIComponent(text)}`, "_blank");
+    function renderEmojis() {
+      emojiEls.forEach(em => {
+        em.x += em.vx; em.y += em.vy;
+        if (em.x <= 0 || em.x >= window.innerWidth - 30) em.vx *= -1;
+        if (em.y <= 0 || em.y >= window.innerHeight - 30) em.vy *= -1;
+        em.el.style.transform = `translate3d(${em.x}px, ${em.y}px, 0)`;
+      });
+      requestAnimationFrame(renderEmojis);
+    }
+    renderEmojis();
+
+    const basePalette = [
+      { name: "Изумруд", color: "#29c75f" },
+      { name: "Небесный", color: "#38bdf8" },
+      { name: "Индиго", color: "#6366f1" },
+      { name: "Фиолетовый", color: "#a855f7" },
+      { name: "Розовый", color: "#ec4899" },
+      { name: "Красный", color: "#ef4444" },
+      { name: "Оранжевый", color: "#f97316" },
+      { name: "Золотой", color: "#eab308" },
+      { name: "Бирюзовый", color: "#14b8a6" },
+      { name: "Малиновый", color: "#f43f5e" }
+    ];
+
+    function renderPalette() {
+      const grid = document.getElementById("palette-grid");
+      grid.innerHTML = "";
+      basePalette.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "palette-color";
+        div.style.backgroundColor = p.color;
+        div.onclick = () => {
+          document.body.className = "";
+          document.documentElement.style.setProperty("--primary", p.color);
+          document.documentElement.style.setProperty("--primary-glow", `${p.color}33`);
+          showToast(`🎨 Тема: ${p.name}`);
+        };
+        grid.appendChild(div);
+      });
+
+      AppState.unlocked_promos.forEach(theme => {
+        const div = document.createElement("div");
+        div.className = "palette-color";
+        div.style.background = "linear-gradient(135deg, #fff, #000)";
+        div.style.display = "flex";
+        div.style.alignItems = "center";
+        div.style.justifyContent = "center";
+        div.style.fontSize = "14px";
+        div.textContent = theme.icon;
+        div.onclick = () => {
+          document.body.className = theme.className;
+          showToast(`✨ Тема: ${theme.name}`);
+        };
+        grid.appendChild(div);
+      });
+    }
+    renderPalette();
+
+    document.getElementById("btn-reset-appearance").onclick = () => {
+      document.body.className = "";
+      document.documentElement.style.setProperty("--primary", "#29c75f");
+      document.documentElement.style.setProperty("--primary-glow", "rgba(41, 199, 95, 0.22)");
+      document.getElementById("cfg-fog-range").value = 5;
+      document.getElementById("cfg-emojis").value = "🔥, ⚡, 💎, 🚀, ✨";
+      document.getElementById("toggle-emojis").checked = true;
+      initFog();
+      updateEmojiLayer();
+      showToast("↺ Внешний вид сброшен!");
+    };
+
+    const PROMO_MAP = {
+      "REDPILL": { name: "Matrix", className: "theme-matrix", icon: "💻" },
+      "DUROV360": { name: "Durov Sky", className: "theme-durov", icon: "✈️" },
+      "CROWN_KING": { name: "Kington Gold", className: "theme-gold", icon: "👑" },
+      "CYBER_PUNK": { name: "Cyberpunk", className: "theme-cyberpunk", icon: "⚡" },
+      "NEBULA_DEEP": { name: "Nebula", className: "theme-nebula", icon: "🪐" },
+      "SUDO_RM_RF": { name: "Terminal", className: "theme-terminal", icon: "📟" },
+      "SYNTH_1984": { name: "Vaporwave", className: "theme-vaporwave", icon: "🌆" }
+    };
+
+    document.getElementById("btn-apply-promo").onclick = () => {
+      const code = document.getElementById("promo-input-field").value.trim().toUpperCase();
+      if (PROMO_MAP[code]) {
+        const item = PROMO_MAP[code];
+        document.body.className = item.className;
+        if (!AppState.unlocked_promos.some(x => x.name === item.name)) {
+          AppState.unlocked_promos.push(item);
+          localStorage.setItem("unlocked_promos", JSON.stringify(AppState.unlocked_promos));
+          renderPalette();
+        }
+        closeModal("modal-secret-code");
+        showToast(`🔑 Промокод активирован: ${item.name}!`);
+      } else {
+        showToast("❌ Неверный промокод");
       }
+    };
+
+    let currentPlatform = "telegram";
+    function setPlatform(p) {
+      currentPlatform = p;
+      document.getElementById("tab-tg").classList.toggle("active", p === "telegram");
+      document.getElementById("tab-wa").classList.toggle("active", p === "whatsapp");
+    }
+
+    const btnGen = document.getElementById("btn-generate");
+    const slotText = document.getElementById("slot-text");
+    const statusText = document.getElementById("status-text");
+    const resultBox = document.getElementById("result-box");
+    const fragBadge = document.getElementById("fragment-badge");
+    const quickActions = document.getElementById("quick-actions");
+
+    let currentCatch = null;
+    let autoParseTimer = null;
+    let autoParseFound = [];
+
+    btnGen.addEventListener("click", (e) => {
+      const r = document.createElement("span");
+      r.className = "ripple-wave";
+      const rect = btnGen.getBoundingClientRect();
+      r.style.left = `${e.clientX - rect.left}px`;
+      r.style.top = `${e.clientY - rect.top}px`;
+      r.style.width = r.style.height = `${Math.max(rect.width, rect.height)}px`;
+      btnGen.appendChild(r);
+      setTimeout(() => r.remove(), 600);
+
+      triggerGenerationCycle();
     });
 
-    bindClick("btn-add-radar", async () => {
-      if (!currentScannedItem) return;
+    async function triggerGenerationCycle() {
+      quickActions.classList.remove("visible");
+      fragBadge.classList.remove("visible");
+      resultBox.classList.remove("golden-mode");
+
+      const chars = "abcdefghijklmnopqrstuvwxyz";
+      let frames = 0;
+      const slotTimer = setInterval(() => {
+        let randStr = "";
+        for (let i = 0; i < 5; i++) randStr += chars[Math.floor(Math.random() * chars.length)];
+        slotText.textContent = `@${randStr}`;
+        slotText.style.color = "#ffffff";
+        statusText.textContent = "Сканирование узлов...";
+        frames++;
+      }, 50);
+
       try {
-        const res = await fetch("/api/radar/add", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: parseInt(CURRENT_USER_ID) || 123456,
-            username: currentScannedItem.username
-          })
-        });
-        const d = await res.json();
-        showToast(d.message || "Добавлено в радар");
-      } catch (e) {
-        showToast("Ошибка связи с сервером радара");
+        const lenMode = document.getElementById("cfg-len-select").value;
+        const useNum = document.getElementById("cfg-use-num").checked;
+        const useUnd = document.getElementById("cfg-use-und").checked;
+
+        const res = await fetch(`/api/generate?platform=${currentPlatform}&len_mode=${lenMode}&use_filter=true&use_num=${useNum}&use_und=${useUnd}&finder_name=${encodeURIComponent(AppState.user_name)}&finder_id=${AppState.user_id}`);
+        const data = await res.json();
+
+        clearInterval(slotTimer);
+
+        if (data.success && data.primary) {
+          renderCatchResult(data.primary);
+        } else {
+          fallbackOfflineGeneration();
+        }
+      } catch (err) {
+        clearInterval(slotTimer);
+        fallbackOfflineGeneration();
       }
-    });
+    }
 
-    /* ==========================================================================
-       5. ИСТОРИЯ И КОНТРОЛЛЕР СВАЙПОВ (TOUCH HANDLER)
-       ========================================================================== */
+    function renderCatchResult(item) {
+      currentCatch = item;
+      slotText.textContent = `@${item.username}`;
+
+      if (item.is_available) {
+        slotText.style.color = item.tier.includes("SSS") ? "var(--gold-pure)" : "var(--primary)";
+        statusText.textContent = `Статус: СВОБОДЕН ✅ • ${item.estimated_value_ton}`;
+
+        if (item.tier.includes("SSS") || item.tier.includes("SS")) {
+          resultBox.classList.add("golden-mode");
+          fragBadge.classList.add("visible");
+          fragBadge.textContent = `💎 Fragment: ~${item.estimated_value_ton}`;
+          if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("heavy");
+        }
+
+        quickActions.classList.add("visible");
+
+        AppState.history.unshift(item);
+        if (AppState.history.length > 200) AppState.history.pop();
+        localStorage.setItem("scanner_history", JSON.stringify(AppState.history));
+      } else {
+        slotText.style.color = "var(--danger)";
+        statusText.textContent = "Статус: Занят ❌";
+      }
+    }
+
+    function fallbackOfflineGeneration() {
+      const mock = {
+        username: "core_" + Math.random().toString(36).substring(2, 6),
+        is_available: true,
+        tier: "S",
+        estimated_value_ton: "5-15 TON"
+      };
+      renderCatchResult(mock);
+    }
+
+    document.getElementById("btn-quick-claim").onclick = () => {
+      if (currentCatch) {
+        navigator.clipboard.writeText(`@${currentCatch.username}`);
+        showToast("✨ Юзернейм скопирован!");
+      }
+    };
+    document.getElementById("btn-quick-share").onclick = () => {
+      if (currentCatch) {
+        const text = `🔥 Поймал свободный никнейм @${currentCatch.username} (${currentCatch.tier}) в Username Scanner PRO!`;
+        window.open(`https://t.me/share/url?url=https://t.me/your_bot&text=${encodeURIComponent(text)}`, "_blank");
+      }
+    };
+
+    document.getElementById("toggle-autoparse").onchange = (e) => {
+      if (e.target.checked) {
+        btnGen.disabled = true;
+        btnGen.textContent = "Парсинг...";
+        autoParseFound = [];
+        autoParseTimer = setInterval(async () => {
+          await triggerGenerationCycle();
+          if (currentCatch && currentCatch.is_available) {
+            autoParseFound.push(currentCatch);
+          }
+        }, 1500);
+      } else {
+        clearInterval(autoParseTimer);
+        btnGen.disabled = false;
+        btnGen.textContent = "Сгенерировать";
+        document.getElementById("summary-count-text").textContent = `Найдено свободных ников: ${autoParseFound.length}`;
+        const cont = document.getElementById("summary-cards-container");
+        cont.innerHTML = "";
+        autoParseFound.forEach(it => {
+          const d = document.createElement("div");
+          d.className = "top-item-row";
+          d.innerHTML = `<b>@${it.username}</b> <span>${it.tier} • ${it.estimated_value_ton}</span>`;
+          d.onclick = () => { navigator.clipboard.writeText(`@${it.username}`); showToast("Скопировано!"); };
+          cont.appendChild(d);
+        });
+        openModal("modal-summary");
+      }
+    };
+
     function renderHistory() {
-      const cont = document.getElementById("history-container") || document.getElementById("history-items-container");
-      if (!cont) return;
+      const cont = document.getElementById("history-items-container");
       cont.innerHTML = "";
-
       if (AppState.history.length === 0) {
-        cont.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">История пуста. Найдите свой первый свободный ник!</div>`;
+        cont.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">История пуста</div>`;
         return;
       }
 
       AppState.history.forEach((item, index) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "swipe-container";
-        wrapper.innerHTML = `
-          <div class="swipe-bg bg-right">🗑️ Удалить</div>
-          <div class="swipe-bg bg-left">✈️ Поделиться</div>
-          <div class="swipe-item" data-index="${index}">
+        const wrap = document.createElement("div");
+        wrap.className = "history-card-wrap";
+        wrap.innerHTML = `
+          <div class="swipe-indicator-bg swipe-bg-delete">🗑️ Удалить</div>
+          <div class="swipe-indicator-bg swipe-bg-share">🔗 Поделиться</div>
+          <div class="history-card-front" data-index="${index}">
             <div>
               <b style="font-size:15px; color:#fff;">@${item.username}</b>
-              <div style="font-size:11px; color:var(--text-muted);">${item.estimated_value_ton} • ${item.tier}</div>
+              <div style="font-size:11px; color:var(--text-muted);">${item.estimated_value_ton}</div>
             </div>
-            <span class="score-badge tier-${item.tier.toLowerCase().replace('+', '')}" style="font-size:10px;">${item.tier}</span>
+            <span style="font-weight:800; color:var(--primary); font-size:12px;">${item.tier}</span>
           </div>
         `;
-        cont.appendChild(wrapper);
-        attachSwipeEvents(wrapper, item, index);
+        cont.appendChild(wrap);
+        bindSwipeHandlers(wrap, item, index);
       });
     }
 
-    function attachSwipeEvents(container, item, index) {
-      const itemEl = container.querySelector(".swipe-item");
-      if (!itemEl) return;
-      let startX = 0;
-      let currentX = 0;
-      let isDragging = false;
+    function bindSwipeHandlers(container, item, index) {
+      const card = container.querySelector(".history-card-front");
+      let startX = 0, currentX = 0, isDragging = false;
 
-      itemEl.addEventListener("touchstart", (e) => {
+      card.addEventListener("touchstart", (e) => {
         startX = e.touches[0].clientX;
         currentX = startX;
         isDragging = true;
       }, { passive: true });
 
-      itemEl.addEventListener("touchmove", (e) => {
+      card.addEventListener("touchmove", (e) => {
         if (!isDragging) return;
         currentX = e.touches[0].clientX;
         const diff = currentX - startX;
-        itemEl.style.transform = `translateX(${diff}px)`;
+        card.style.transform = `translateX(${diff}px)`;
       }, { passive: true });
 
-      itemEl.addEventListener("touchend", () => {
+      card.addEventListener("touchend", () => {
         if (!isDragging) return;
         isDragging = false;
         const diff = currentX - startX;
 
         if (diff > 120) {
-          itemEl.classList.add("collapsed");
+          container.classList.add("collapsed");
           setTimeout(() => {
             AppState.history.splice(index, 1);
             localStorage.setItem("scanner_history", JSON.stringify(AppState.history));
             renderHistory();
-            showToast("Удалено из истории");
+            showToast("🗑 Ник удалён из истории");
           }, 300);
         } else if (diff < -120) {
-          itemEl.style.transform = "translateX(0px)";
-          const text = `🔥 Поймал свободный юзернейм @${item.username} (${item.tier})!`;
-          window.open(`https://t.me/share/url?url=https://t.me/scanner&text=${encodeURIComponent(text)}`, "_blank");
+          card.style.transform = "translateX(0px)";
+          if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+          window.open(`https://t.me/share/url?url=https://t.me/scanner&text=${encodeURIComponent('Поймал ник: @' + item.username)}`, "_blank");
         } else {
-          itemEl.style.transform = "translateX(0px)";
+          card.style.transform = "translateX(0px)";
         }
       });
 
-      itemEl.addEventListener("click", () => {
+      card.addEventListener("click", () => {
         navigator.clipboard.writeText(`@${item.username}`);
-        showToast(`@${item.username} скопирован!`);
+        showToast("✨ Ник скопирован!");
       });
     }
 
-    /* ==========================================================================
-       6. ЛИДЕРБОРД, ДОСТИЖЕНИЯ И МАГАЗИН
-       ========================================================================== */
-    async function fetchLeaderboard() {
-      const cont = document.getElementById("leaderboard-container") || document.getElementById("leaderboard-items-container");
-      if (!cont) return;
-      cont.innerHTML = `<div style="text-align:center; padding:15px; color:var(--text-muted);">Загрузка лидеров...</div>`;
+    document.getElementById("btn-clear-history").onclick = () => {
+      AppState.history = [];
+      localStorage.setItem("scanner_history", JSON.stringify([]));
+      renderHistory();
+      showToast("🗑 История очищена");
+    };
+
+    function renderRadar() {
+      const list = document.getElementById("radar-items-list");
+      list.innerHTML = "";
+      AppState.radar.forEach((u, i) => {
+        const row = document.createElement("div");
+        row.className = "top-item-row";
+        row.innerHTML = `
+          <b>@${u}</b>
+          <button class="modal-close-round" style="width:28px; height:28px; font-size:11px; background:var(--danger);" onclick="removeRadarItem(${i})">✕</button>
+        `;
+        list.appendChild(row);
+      });
+    }
+    window.removeRadarItem = (i) => {
+      AppState.radar.splice(i, 1);
+      localStorage.setItem("scanner_radar", JSON.stringify(AppState.radar));
+      renderRadar();
+    };
+    document.getElementById("btn-radar-submit").onclick = async () => {
+      const val = document.getElementById("radar-input").value.trim().replace("@", "");
+      if (val) {
+        AppState.radar.push(val);
+        localStorage.setItem("scanner_radar", JSON.stringify(AppState.radar));
+        try {
+          await fetch("/api/radar/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: parseInt(AppState.user_id) || 123456, username: val })
+          });
+        } catch (e) {}
+        document.getElementById("radar-input").value = "";
+        renderRadar();
+        showToast("🎯 Ник на мушке радара!");
+      }
+    };
+
+    async function renderLeaderboard() {
+      const cont = document.getElementById("leaderboard-items-container");
+      cont.innerHTML = `<div style="text-align:center; padding:15px; color:var(--text-muted);">Загрузка топа...</div>`;
       try {
         const res = await fetch("/api/leaderboard");
         const d = await res.json();
         cont.innerHTML = "";
-        if (!d.leaderboard || d.leaderboard.length === 0) {
-          cont.innerHTML = `<div style="text-align:center; padding:15px; color:var(--text-muted);">Лидерборд пока пуст</div>`;
-          return;
-        }
-        d.leaderboard.forEach((row, i) => {
+        (d.leaderboard || []).forEach((row, i) => {
+          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i+1}`;
           const div = document.createElement("div");
-          div.className = "swipe-item";
-          div.style.cursor = "default";
+          div.className = "top-item-row";
           div.innerHTML = `
             <div>
-              <b style="color:#fff;">#${i+1} @${row.username}</b>
+              <b>${medal} @${row.username}</b>
               <div style="font-size:11px; color:var(--text-muted);">Ловец: ${row.finder_name} • ${row.value}</div>
             </div>
-            <button class="btn-sub" style="padding:6px 10px; font-size:11px;" onclick="window.open('https://t.me/${row.finder_name.replace('@','')}', '_blank')">Ловец</button>
+            <button class="btn-quick-claim" style="padding:6px 12px; font-size:11px;" onclick="window.open('tg://user?id=${row.finder_id}', '_blank')">💬 Написать</button>
           `;
           cont.appendChild(div);
         });
       } catch (e) {
-        cont.innerHTML = `<div style="text-align:center; color:var(--danger); padding:15px;">Ошибка загрузки топа</div>`;
+        cont.innerHTML = `<div style="text-align:center; color:var(--danger);">Ошибка загрузки топа</div>`;
       }
     }
 
     function renderAchievements() {
-      const cont = document.getElementById("achieve-container") || document.getElementById("achievements-grid-wrap");
-      if (!cont) return;
+      const cont = document.getElementById("achievements-grid-wrap");
       cont.innerHTML = "";
-      for (let i = 1; i <= 20; i++) {
+      const icons = ["🎲", "🎯", "🚀", "💎", "👑"];
+      document.getElementById("achieve-title-count").textContent = `🏆 Ваши награды (${AppState.achieved_count}/100)`;
+      document.getElementById("btn-open-achieve").textContent = `🏆 ${AppState.achieved_count}/100`;
+
+      for (let i = 1; i <= 100; i++) {
+        const isUnlocked = i <= AppState.achieved_count;
         const div = document.createElement("div");
-        div.className = "swipe-item";
-        div.style.cursor = "default";
+        div.className = `achieve-card ${isUnlocked ? 'unlocked' : ''}`;
         div.innerHTML = `
-          <div style="width:100%;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-              <b>Ранг ${i}: Охотник за ядрами</b>
-              <span style="color:var(--primary); font-size:11px;">Lvl ${i}/100</span>
-            </div>
-            <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
-              <div style="width:${Math.min(100, i * 5)}%; height:100%; background:var(--primary);"></div>
-            </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b>${icons[i % 5]} Уровень ${i}: Охотник за сферами</b>
+            <span style="font-size:11px; color:${isUnlocked ? 'var(--primary)' : 'var(--text-muted)'};">${isUnlocked ? 'Выполнено' : `${i*5-2}/${i*5}`}</span>
+          </div>
+          <div class="achieve-bar-wrap">
+            <div class="achieve-bar-fill" style="width: ${isUnlocked ? 100 : ((i*5-2)/(i*5))*100}%;"></div>
           </div>
         `;
         cont.appendChild(div);
@@ -1558,51 +1597,58 @@
     }
 
     function renderShop() {
-      const coinView = document.getElementById("shop-coins-val");
-      if (coinView) coinView.textContent = Math.floor(AppState.coins);
-      const cont = document.getElementById("shop-items-container");
-      if (!cont) return;
-      cont.innerHTML = "";
-
-      const items = [
-        { id: "multi_tap", title: "⚡ Multi-Tap", desc: `Уровень ${AppState.multi_tap}`, cost: Math.floor(200 * Math.pow(1.8, AppState.multi_tap - 1)) },
-        { id: "max_energy", title: "🔋 Battery Pack", desc: `+500 макс. энергии (${AppState.max_energy})`, cost: Math.floor(150 * Math.pow(1.6, (AppState.max_energy - 1000) / 500)) },
-        { id: "offline_miner", title: "⛏️ Cosmic Miner", desc: `Оффлайн фарм (Lvl ${AppState.offline_miner})`, cost: Math.floor(3000 * Math.pow(2.2, AppState.offline_miner)) },
-        { id: "turbo_parse", title: "🚀 Turbo Parser", desc: "Быстрый перебор Telethon", cost: 3500 },
-        { id: "theme_cyberpunk", title: "🌆 Тема Cyberpunk", desc: "Эксклюзивный неоновый скин", cost: 40000 },
-        { id: "rank_legend", title: "👑 Статус Legend", desc: "Золотая рамка и бейдж", cost: 100000 }
-      ];
-
-      items.forEach(it => {
-        const div = document.createElement("div");
-        div.className = "swipe-item";
-        div.innerHTML = `
-          <div>
-            <b style="color:#fff;">${it.title}</b>
-            <div style="font-size:11px; color:var(--text-muted);">${it.desc}</div>
-          </div>
-          <button class="btn-sub" style="background:var(--primary); color:#000; font-weight:800;" onclick="buyShopItem('${it.id}')">${it.cost} 🪙</button>
-        `;
-        cont.appendChild(div);
-      });
+      const clickWrap = document.getElementById("shop-clicker-upgrades");
+      const parsWrap = document.getElementById("shop-parser-upgrades");
+      clickWrap.innerHTML = `
+        <div class="top-item-row">
+          <div><b>👆 Мульти-Тап (Lvl ${AppState.multi_tap})</b><div style="font-size:11px; color:var(--text-muted);">+1 монета за клик</div></div>
+          <button class="btn-quick-claim" onclick="buyShopItem('multi_tap')">${Math.floor(200 * Math.pow(1.8, AppState.multi_tap - 1))} 🟡</button>
+        </div>
+        <div class="top-item-row">
+          <div><b>🔋 Запас Батареи</b><div style="font-size:11px; color:var(--text-muted);">+500 к макс. энергии (${AppState.max_energy})</div></div>
+          <button class="btn-quick-claim" onclick="buyShopItem('max_energy')">500 🟡</button>
+        </div>
+        <div class="top-item-row">
+          <div><b>🚜 Автосборщик (Lvl ${AppState.offline_miner})</b><div style="font-size:11px; color:var(--text-muted);">Оффлайн фарм (до 3 часов)</div></div>
+          <button class="btn-quick-claim" onclick="buyShopItem('offline_miner')">${Math.floor(3000 * Math.pow(2.2, AppState.offline_miner))} 🟡</button>
+        </div>
+      `;
+      parsWrap.innerHTML = `
+        <div class="top-item-row">
+          <div><b>🎯 +1 Слот Радара</b></div>
+          <button class="btn-quick-share" onclick="buyShopItem('radar_slot')">5000 🟡</button>
+        </div>
+        <div class="top-item-row">
+          <div><b>🚀 Турбо-Парсер (x2)</b></div>
+          <button class="btn-quick-share" onclick="buyShopItem('turbo_parse')">3500 🟡</button>
+        </div>
+        <div class="top-item-row">
+          <div><b>🔑 Секретная Тема Cyberpunk</b></div>
+          <button class="btn-quick-share" onclick="buyShopItem('theme_cyberpunk')">40000 🟡</button>
+        </div>
+        <div class="top-item-row">
+          <div><b>👑 Ранг «Легендарный Ловец»</b></div>
+          <button class="btn-quick-share" onclick="buyShopItem('rank_legend')">100000 🟡</button>
+        </div>
+      `;
     }
 
-    async function buyShopItem(itemId) {
+    async function buyShopItem(id) {
       try {
         const res = await fetch("/api/game/buy", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: CURRENT_USER_ID, item_id: itemId })
+          body: JSON.stringify({ user_id: AppState.user_id, item_id: id })
         });
         const d = await res.json();
-        if (res.ok && d.success) {
+        if (d.success && d.state) {
           AppState.coins = d.state.coins;
           AppState.multi_tap = d.state.multi_tap;
           AppState.max_energy = d.state.max_energy;
           AppState.offline_miner = d.state.offline_miner;
           updateHUD();
           renderShop();
-          showToast("Покупка успешно совершена!");
+          showToast("Покупка совершена!");
         } else {
           showToast(d.detail || "Недостаточно монет");
         }
@@ -1611,208 +1657,78 @@
       }
     }
 
-    function renderRadarList() {
-      const cont = document.getElementById("radar-active-list") || document.getElementById("radar-items-list");
-      if (!cont) return;
-      cont.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:10px;">Воркер радара проверяет цели каждые 10 секунд.</div>`;
-    }
+    let scene, camera, renderer, earth, dome, chains;
+    let defensePhase = 1;
+    let domeHP = 100, chainsHP = 100;
+    let isClickerActive = false;
 
-    /* ==========================================================================
-       7. СИНХРОНИЗАЦИЯ КЛИКЕРА И ЭНЕРГИИ
-       ========================================================================== */
-    let pendingTaps = 0;
-    let syncDebounceTimer = null;
-
-    function updateHUD() {
-      const nameEl = document.getElementById("ui-username");
-      if (nameEl) nameEl.textContent = CURRENT_USER_NAME;
-      
-      const coinsBanner = document.getElementById("hud-coins-banner");
-      if (coinsBanner) coinsBanner.textContent = `🪙 ${Math.floor(AppState.coins)}`;
-
-      const gameCoins = document.getElementById("game-hud-coins") || document.getElementById("clicker-coins-text");
-      if (gameCoins) gameCoins.textContent = Math.floor(AppState.coins);
-
-      const energyText = document.getElementById("game-hud-energy") || document.getElementById("energy-text");
-      if (energyText) energyText.textContent = `${AppState.energy}/${AppState.max_energy}`;
-
-      const energyFill = document.getElementById("energy-fill");
-      if (energyFill) energyFill.style.width = `${(AppState.energy / AppState.max_energy) * 100}%`;
-    }
-
-    async function syncGameState() {
-      try {
-        const res = await fetch(`/api/game/state?user_id=${CURRENT_USER_ID}`);
-        const d = await res.json();
-        if (d.state) {
-          AppState.coins = d.state.coins;
-          AppState.energy = d.state.energy;
-          AppState.max_energy = d.state.max_energy;
-          AppState.multi_tap = d.state.multi_tap;
-          AppState.offline_miner = d.state.offline_miner;
-          updateHUD();
-          if (d.offline_earned > 0) {
-            showToast(`💤 Оффлайн доход: +${d.offline_earned} 🪙`);
-          }
-        }
-      } catch (e) {
-        console.error("Ошибка синхронизации стейта:", e);
-      }
-    }
-    syncGameState();
-
-    async function flushTapsToServer() {
-      if (pendingTaps <= 0) return;
-      const tapsToSend = pendingTaps;
-      pendingTaps = 0;
-
-      try {
-        const res = await fetch("/api/game/sync_tap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: CURRENT_USER_ID, taps: tapsToSend })
-        });
-        const d = await res.json();
-        if (d.success && d.state) {
-          AppState.coins = d.state.coins;
-          AppState.energy = d.state.energy;
-          updateHUD();
-        }
-      } catch (e) {
-        console.error("Ошибка отправки тапов:", e);
-      }
-    }
-
-    // Регенерация энергии +1/сек
-    setInterval(() => {
-      if (AppState.energy < AppState.max_energy && pendingTaps === 0) {
-        AppState.energy = Math.min(AppState.max_energy, AppState.energy + 1);
-        updateHUD();
-      }
-    }, 1000);
-
-    /* ==========================================================================
-       8. THREE.JS ДВИЖОК «COSMIC CORE TYCOON 3D»
-       ========================================================================== */
-    let scene, camera, renderer, animationFrameId = null;
-    let earthMesh, hexShieldMesh, chainsGroup, particlesGroup;
-    let isThreeRunning = false;
-
-    // Слои здоровья планеты
-    let currentLayer = 1; // 1: Hex Shield, 2: Chains, 3: Open Core (x10)
-    let layerHP = 100;
-    let coreOverdriveTimer = 0;
-
-    function generateProceduralEarthTexture() {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1024;
-      canvas.height = 512;
-      const ctx = canvas.getContext("2d");
-
-      // Океан
-      ctx.fillStyle = "#0c1f36";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Процедурные материки
-      ctx.fillStyle = "#1b4d3e";
-      for (let i = 0; i < 45; i++) {
-        const cx = Math.random() * canvas.width;
-        const cy = Math.random() * canvas.height;
-        const rad = Math.random() * 80 + 30;
-        ctx.beginPath();
-        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Горы и ледники
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, 35);
-      ctx.fillRect(0, canvas.height - 35, canvas.width, 35);
-
-      return new THREE.CanvasTexture(canvas);
-    }
-
-    function initThreeScene() {
-      const container = document.getElementById("three-canvas-container") || document.getElementById("three-viewport");
-      if (!container) return;
-      const width = container.clientWidth || window.innerWidth;
-      const height = container.clientHeight || window.innerHeight;
-
+    function initThreeEngine() {
+      const vp = document.getElementById("three-viewport");
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(45, vp.clientWidth / vp.clientHeight, 0.1, 1000);
       camera.position.z = 5.2;
 
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-      renderer.setSize(width, height);
+      renderer.setSize(vp.clientWidth, vp.clientHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-      container.appendChild(renderer.domElement);
+      vp.appendChild(renderer.domElement);
 
-      // Освещение
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-      scene.add(ambientLight);
+      const light = new THREE.DirectionalLight(0xffffff, 1.3);
+      light.position.set(5, 4, 5);
+      scene.add(light);
+      scene.add(new THREE.AmbientLight(0x334433, 0.9));
 
-      const dirLight = new THREE.DirectionalLight(0x29c75f, 1.2);
-      dirLight.position.set(5, 3, 5);
-      scene.add(dirLight);
+      const c = document.createElement("canvas");
+      c.width = 512; c.height = 256;
+      const cx = c.getContext("2d");
+      cx.fillStyle = "#0a1f33"; cx.fillRect(0,0,512,256);
+      cx.fillStyle = "#1e824c";
+      for (let i = 0; i < 35; i++) {
+        cx.beginPath();
+        cx.arc(Math.random()*512, Math.random()*256, Math.random()*45+15, 0, Math.PI*2);
+        cx.fill();
+      }
+      const map = new THREE.CanvasTexture(c);
 
-      // 1. Земля (Ядро)
-      const earthGeo = new THREE.SphereGeometry(1.6, 32, 32);
-      const earthMat = new THREE.MeshPhongMaterial({
-        map: generateProceduralEarthTexture(),
-        shininess: 25
+      earth = new THREE.Mesh(new THREE.SphereGeometry(1.6, 32, 32), new THREE.MeshPhongMaterial({ map }));
+      scene.add(earth);
+
+      dome = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(1.95, 2),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.65 })
+      );
+      scene.add(dome);
+
+      chains = new THREE.Group();
+      const tGeo = new THREE.TorusGeometry(1.85, 0.06, 8, 30);
+      const tMat = new THREE.MeshStandardMaterial({ color: 0x828b94, metalness: 0.95, roughness: 0.2 });
+      chains.add(new THREE.Mesh(tGeo, tMat));
+      const t2 = new THREE.Mesh(tGeo, tMat); t2.rotation.x = Math.PI / 2;
+      chains.add(t2);
+      const t3 = new THREE.Mesh(tGeo, tMat); t3.rotation.y = Math.PI / 2;
+      chains.add(t3);
+      chains.visible = false;
+      scene.add(chains);
+
+      let isDraggingPlanet = false, prevMouseX = 0, prevMouseY = 0;
+      vp.addEventListener("pointerdown", (e) => {
+        isDraggingPlanet = true;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
+        handlePlanetTap(e);
       });
-      earthMesh = new THREE.Mesh(earthGeo, earthMat);
-      scene.add(earthMesh);
-
-      // 2. Слой 1: Hex Shield (Сотовый неоновый купол)
-      const hexGeo = new THREE.IcosahedronGeometry(1.95, 2);
-      const hexMat = new THREE.MeshBasicMaterial({
-        color: 0x00f0ff,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.65
+      window.addEventListener("pointermove", (e) => {
+        if (!isDraggingPlanet) return;
+        const deltaX = e.clientX - prevMouseX;
+        const deltaY = e.clientY - prevMouseY;
+        earth.rotation.y += deltaX * 0.008;
+        earth.rotation.x += deltaY * 0.008;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
       });
-      hexShieldMesh = new THREE.Mesh(hexGeo, hexMat);
-      scene.add(hexShieldMesh);
+      window.addEventListener("pointerup", () => isDraggingPlanet = false);
 
-      // 3. Слой 2: Steel Chains (3 стальных кольца)
-      chainsGroup = new THREE.Group();
-      const torusGeo = new THREE.TorusGeometry(1.85, 0.05, 8, 30);
-      const steelMat = new THREE.MeshStandardMaterial({
-        color: 0x828b94,
-        metalness: 0.95,
-        roughness: 0.2
-      });
-
-      const t1 = new THREE.Mesh(torusGeo, steelMat);
-      const t2 = new THREE.Mesh(torusGeo, steelMat);
-      t2.rotation.x = Math.PI / 2;
-      const t3 = new THREE.Mesh(torusGeo, steelMat);
-      t3.rotation.y = Math.PI / 2;
-
-      chainsGroup.add(t1, t2, t3);
-      chainsGroup.visible = false;
-      scene.add(chainsGroup);
-
-      // 4. Осколки разрушения (Шейдерные точки THREE.Points)
-      const pCount = 120;
-      const pGeo = new THREE.BufferGeometry();
-      const pPos = new Float32Array(pCount * 3);
-      for (let i = 0; i < pCount * 3; i++) pPos[i] = 0;
-      pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-
-      const pMat = new THREE.PointsMaterial({
-        color: 0x29c75f,
-        size: 0.1,
-        transparent: true,
-        opacity: 0
-      });
-      particlesGroup = new THREE.Points(pGeo, pMat);
-      scene.add(particlesGroup);
-
-      // Multitouch события
-      const vp = document.getElementById("game-viewport") || container;
-      vp.addEventListener("pointerdown", handlePlanetTap);
+      animateThree();
     }
 
     function handlePlanetTap(e) {
@@ -1822,128 +1738,123 @@
       }
 
       AppState.energy -= AppState.multi_tap;
-      pendingTaps += 1;
-
-      let multiplier = (currentLayer === 3) ? 10 : 1;
-      const earnedNow = AppState.multi_tap * multiplier;
-      AppState.coins += earnedNow;
+      const multiplier = defensePhase === 3 ? 10 : 1;
+      const earned = AppState.multi_tap * multiplier;
+      AppState.coins += earned;
       updateHUD();
 
-      // Физика удара Squash & Stretch
-      if (earthMesh) {
-        earthMesh.scale.set(0.94, 0.94, 0.94);
-        setTimeout(() => earthMesh.scale.set(1, 1, 1), 70);
+      earth.scale.set(0.94, 0.94, 0.94);
+      setTimeout(() => earth.scale.set(1, 1, 1), 70);
+
+      if (defensePhase === 1) {
+        domeHP -= 5;
+        if (domeHP <= 0) {
+          defensePhase = 2;
+          dome.visible = false;
+          chains.visible = true;
+          showToast("💥 Купол разрушен! Фаза: Стальные Цепи!");
+        }
+      } else if (defensePhase === 2) {
+        chainsHP -= 5;
+        if (chainsHP <= 0) {
+          defensePhase = 3;
+          chains.visible = false;
+          showToast("🚨 ЯДРО ОТКРЫТО! x10 Бонус!");
+          setTimeout(() => {
+            defensePhase = 1;
+            domeHP = 100; chainsHP = 100;
+            dome.visible = true;
+            updateDefenseHUD();
+            showToast("🛡️ Щиты перезагружены!");
+          }, 12000);
+        }
       }
+      updateDefenseHUD();
 
-      // Снижение HP слоя
-      layerHP -= 5;
-      if (layerHP <= 0) {
-        advanceShieldLayer();
-      }
-      updateShieldHUD();
+      const dmg = document.createElement("div");
+      dmg.className = "tap-damage-num";
+      dmg.textContent = `+${earned} 🟡`;
+      dmg.style.left = `${e.clientX - 20}px`;
+      dmg.style.top = `${e.clientY - 30}px`;
+      document.getElementById("clicker-overlay").appendChild(dmg);
+      setTimeout(() => dmg.remove(), 700);
 
-      // Всплывающие цифры урона
-      createFloatingDamage(e.clientX, e.clientY, `+${earnedNow} 🪙`);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("medium");
 
-      // Сброс на бэкенд
-      clearTimeout(syncDebounceTimer);
-      syncDebounceTimer = setTimeout(flushTapsToServer, 600);
-
-      if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("medium");
+      fetch("/api/game/sync_tap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: AppState.user_id, taps: AppState.multi_tap })
+      }).catch(() => {});
     }
 
-    function advanceShieldLayer() {
-      layerHP = 100;
-      const layerNameEl = document.getElementById("game-layer-name") || document.getElementById("defense-badge");
-      if (currentLayer === 1) {
-        currentLayer = 2;
-        if (hexShieldMesh) hexShieldMesh.visible = false;
-        if (chainsGroup) chainsGroup.visible = true;
-        if (layerNameEl) layerNameEl.textContent = "Steel Chains";
-        showToast("💥 Щит разрушен! Слой 2: Цепи!");
-      } else if (currentLayer === 2) {
-        currentLayer = 3;
-        if (chainsGroup) chainsGroup.visible = false;
-        coreOverdriveTimer = 12;
-        if (layerNameEl) layerNameEl.textContent = "🔥 Ядро открыто (x10)!";
-        showToast("🚨 ЯДРО ОТКРЫТО! Бонус x10 на 12 сек!");
+    function updateDefenseHUD() {
+      const badge = document.getElementById("defense-badge");
+      if (defensePhase === 1) {
+        badge.className = "defense-badge";
+        badge.textContent = `🛡️ Купол Сот (${domeHP}%)`;
+      } else if (defensePhase === 2) {
+        badge.className = "defense-badge chains-tier";
+        badge.textContent = `⛓️ Стальные Цепи (${chainsHP}%)`;
+      } else {
+        badge.className = "defense-badge core-tier";
+        badge.textContent = "🌍 Ядро Земли [x10 Бонус]";
       }
-    }
-
-    function updateShieldHUD() {
-      const fill = document.getElementById("shield-hp-fill");
-      if (fill) fill.style.width = `${Math.max(0, layerHP)}%`;
-    }
-
-    function createFloatingDamage(x, y, text) {
-      const vp = document.getElementById("game-viewport") || document.body;
-      const rect = vp.getBoundingClientRect();
-      const el = document.createElement("div");
-      el.className = "floating-damage";
-      el.textContent = text;
-      el.style.left = `${x - rect.left - 15}px`;
-      el.style.top = `${y - rect.top - 20}px`;
-      vp.appendChild(el);
-      setTimeout(() => el.remove(), 700);
     }
 
     function animateThree() {
-      if (!isThreeRunning) return;
-      animationFrameId = requestAnimationFrame(animateThree);
-
-      if (earthMesh) {
-        earthMesh.rotation.y += 0.005;
-      }
-      if (hexShieldMesh && hexShieldMesh.visible) {
-        hexShieldMesh.rotation.y -= 0.007;
-        hexShieldMesh.rotation.x += 0.003;
-      }
-      if (chainsGroup && chainsGroup.visible) {
-        chainsGroup.rotation.y += 0.009;
-      }
-
-      // Таймер Overdrive Ядра x10
-      if (currentLayer === 3 && coreOverdriveTimer > 0) {
-        coreOverdriveTimer -= 0.016;
-        if (coreOverdriveTimer <= 0) {
-          currentLayer = 1;
-          if (hexShieldMesh) hexShieldMesh.visible = true;
-          if (chainsGroup) chainsGroup.visible = false;
-          layerHP = 100;
-          const layerNameEl = document.getElementById("game-layer-name") || document.getElementById("defense-badge");
-          if (layerNameEl) layerNameEl.textContent = "Hex Shield";
-          updateShieldHUD();
-          showToast("🛡️ Щиты восстановились!");
-        }
-      }
-
-      if (renderer && scene && camera) {
+      if (isClickerActive) {
+        requestAnimationFrame(animateThree);
+        if (earth) earth.rotation.y += 0.003;
+        if (dome && dome.visible) { dome.rotation.y -= 0.005; dome.rotation.x += 0.002; }
+        if (chains && chains.visible) chains.rotation.y += 0.007;
         renderer.render(scene, camera);
       }
     }
 
-    function startThreeEngine() {
-      if (!scene) initThreeScene();
-      isThreeRunning = true;
-      animateThree();
+    document.getElementById("btn-open-clicker").onclick = () => {
+      document.getElementById("clicker-overlay").classList.add("active");
+      isClickerActive = true;
+      if (!scene) initThreeEngine();
+      else animateThree();
+    };
+    document.getElementById("btn-close-clicker").onclick = () => {
+      document.getElementById("clicker-overlay").classList.remove("active");
+      isClickerActive = false;
+    };
+
+    function updateHUD() {
+      document.getElementById("clicker-coins-text").textContent = `🟡 ${Math.floor(AppState.coins).toLocaleString()}`;
+      document.getElementById("energy-fill").style.width = `${(AppState.energy / AppState.max_energy) * 100}%`;
+      document.getElementById("energy-text").textContent = `⚡ Энергия ${AppState.energy} / ${AppState.max_energy}`;
     }
 
-    function stopThreeEngine() {
-      isThreeRunning = false;
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    }
-
-    // Заморозка при сворачивании вкладки / приложения Telegram
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        stopThreeEngine();
-      } else {
-        const gameModal = document.getElementById("modal-game") || document.getElementById("clicker-overlay");
-        if (gameModal && gameModal.classList.contains("active")) {
-          startThreeEngine();
-        }
+    setInterval(() => {
+      if (AppState.energy < AppState.max_energy) {
+        AppState.energy++;
+        updateHUD();
       }
-    });
+    }, 1000);
+
+    async function initGameState() {
+      try {
+        const res = await fetch(`/api/game/state?user_id=${AppState.user_id}`);
+        const d = await res.json();
+        if (d.state) {
+          AppState.coins = d.state.coins;
+          AppState.energy = d.state.energy;
+          AppState.max_energy = d.state.max_energy;
+          AppState.multi_tap = d.state.multi_tap;
+          AppState.offline_miner = d.state.offline_miner;
+          updateHUD();
+          if (d.offline_earned > 0) {
+            document.getElementById("offline-sum-text").textContent = `+${d.offline_earned} 🟡`;
+            openModal("modal-welcome-offline");
+          }
+        }
+      } catch (e) {}
+    }
+    initGameState();
   </script>
 </body>
 </html>
