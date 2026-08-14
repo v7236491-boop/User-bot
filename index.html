@@ -980,7 +980,7 @@
         let isAuto = false;
         let isFetching = false;
         let lastGenerated = "";
-        let slotInterval;
+        let slotInterval = null;
         let finderName = "Аноним";
         let autoParseCatches = [];
 
@@ -1010,6 +1010,82 @@
         let selectedValues = {
             'select-len': '5-6'
         };
+
+        let stats = {
+            generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
+            radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
+            themesChanged: parseInt(localStorage.getItem('vh_stat_themes') || '0'),
+            fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0'),
+            secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
+        };
+
+        // 100 ДОСТИЖЕНИЙ
+        const ACHIEVEMENTS_DATA = [];
+        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
+        for (let i = 1; i <= 100; i++) {
+            let title = `Уровень #${i}`;
+            let desc = `Выполните условия для уровня ${i}.`;
+            let icon = EMOJI_LIST[i % EMOJI_LIST.length];
+            let statKey = "generations";
+            let target = i * 10;
+            if (i === 1) { title = "Первый поиск"; desc = "Сделать 1 генерацию."; icon = "🎲"; target = 1; statKey = "generations"; }
+            else if (i === 2) { title = "Любитель поиска"; desc = "Сделать 10 генераций."; icon = "🎰"; target = 10; statKey = "generations"; }
+            else if (i === 3) { title = "Мастер спинов"; desc = "Сделать 50 генераций."; icon = "⚡"; target = 50; statKey = "generations"; }
+            else if (i === 5) { title = "Наводчик радара"; desc = "Поставить 1 ник на Радар."; icon = "🎯"; target = 1; statKey = "radarAdded"; }
+            else {
+                title = `Индекс поиска Lvl.${i}`;
+                desc = `Сделать ${i * 15} успешных проверок.`;
+                target = i * 15;
+                statKey = "generations";
+            }
+            ACHIEVEMENTS_DATA.push({ id: `ach_${i}`, title, desc, icon, target, statKey });
+        }
+
+        let unlockedAchievements = JSON.parse(localStorage.getItem('vh_unlocked_achievements') || '[]');
+
+        function checkAchievementProgress() {
+            ACHIEVEMENTS_DATA.forEach(ach => {
+                const currentVal = stats[ach.statKey] || 0;
+                if (currentVal >= ach.target && !unlockedAchievements.includes(ach.id)) {
+                    unlockedAchievements.push(ach.id);
+                    localStorage.setItem('vh_unlocked_achievements', JSON.stringify(unlockedAchievements));
+                    showToast(`🏆 Награда: ${ach.title}!`);
+                    vibrate('success');
+                }
+            });
+            renderAchievements();
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievements-list-container');
+            const badge = document.getElementById('achieve-counter-badge');
+            const modalCount = document.getElementById('achieve-count-modal');
+            if (badge) badge.innerText = `${unlockedAchievements.length}/100`;
+            if (modalCount) modalCount.innerText = unlockedAchievements.length;
+            if (!container) return;
+            container.innerHTML = ACHIEVEMENTS_DATA.map(item => {
+                const isUnlocked = unlockedAchievements.includes(item.id);
+                const currentVal = Math.min(stats[item.statKey] || 0, item.target);
+                const percent = Math.min(100, Math.floor((currentVal / item.target) * 100));
+                return `
+                    <div class="achieve-card ${isUnlocked ? 'unlocked' : ''}">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="font-size:1.8rem;">${item.icon}</div>
+                            <div style="flex:1;">
+                                <div style="font-size:0.9rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
+                                    <span>${item.title}</span>
+                                    <span style="font-size:0.75rem; color:var(--primary);">${currentVal}/${item.target}</span>
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${item.desc}</div>
+                            </div>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${percent}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
 
         let scrollTimer = null;
         function handleModalScroll() {
@@ -1063,6 +1139,71 @@
                 updateTycoonUI();
             }
         }, 1000);
+
+        // =========================================================================
+        // 🌫️ ИСПРАВЛЕННЫЙ ТУМАН (БЕЗ СБОЕВ В ЦВЕТЕ)
+        // =========================================================================
+        const canvas = document.getElementById('fog-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let fogSpeedFactor = 1.2;
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function hexToRgb(hex) {
+            let clean = hex.replace('#', '').trim();
+            if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+            if (clean.length !== 6) return { r: 41, g: 199, b: 95 };
+            const num = parseInt(clean, 16);
+            return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+        }
+
+        function initParticles(count) {
+            particles = [];
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * fogSpeedFactor,
+                    vy: (Math.random() - 0.5) * fogSpeedFactor,
+                    radius: Math.random() * 180 + 220
+                });
+            }
+        }
+        initParticles(5);
+
+        function drawFog() {
+            ctx.clearRect(0, 0, width, height);
+            const hexColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#29c75f';
+            const rgb = hexToRgb(hexColor);
+
+            particles.forEach((p) => {
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < -100 || p.x > width + 100) p.vx *= -1;
+                if (p.y < -100 || p.y > height + 100) p.vy *= -1;
+
+                let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+                grad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.28)`);
+                grad.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.10)`);
+                grad.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(drawFog);
+        }
+        drawFog();
+
+        function updateFogSettings() {
+            const count = parseInt(document.getElementById('fog-count-slider').value);
+            initParticles(count);
+            saveCustomization();
+        }
 
         // КОСМОС ВНУТРИ КЛИКЕРА
         const spCanvas = document.getElementById('space-canvas-inside');
@@ -1537,22 +1678,163 @@
             }
         });
 
-        // СТАТИСТИКА И НАСТРОЙКИ
-        let stats = {
-            generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
-            radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
-            themesChanged: parseInt(localStorage.getItem('vh_stat_themes') || '0'),
-            fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0'),
-            secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
-        };
+        // =========================================================================
+        // 🎯 СЛОТ-МАШИНА И БЫСТРАЯ ГЕНЕРАЦИЯ (С ЗАЩИТОЙ ОТ ЗАВИСАНИЙ)
+        // =========================================================================
+        function startSlotMachine() {
+            const el = document.getElementById('res-username');
+            const chars = "abcdefghijklmnopqrstuvwxyz";
+            document.getElementById('res-market').style.display = 'none';
+            document.getElementById('result-box').classList.remove('golden-mode');
+            if (slotInterval) clearInterval(slotInterval);
+            slotInterval = setInterval(() => {
+                let rand = "";
+                for(let i=0; i<6; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+                el.textContent = "@" + rand;
+            }, 50);
+        }
 
-        function saveStats() {
-            localStorage.setItem('vh_stat_gen', stats.generations.toString());
-            localStorage.setItem('vh_stat_radar', stats.radarAdded.toString());
-            localStorage.setItem('vh_stat_themes', stats.themesChanged.toString());
-            localStorage.setItem('vh_stat_fragment', stats.fragmentFound.toString());
-            localStorage.setItem('vh_stat_secrets', stats.secretsFound.toString());
-            checkAchievementProgress();
+        function stopSlotMachine(finalName) {
+            if (slotInterval) {
+                clearInterval(slotInterval);
+                slotInterval = null;
+            }
+            document.getElementById('res-username').textContent = "@" + finalName;
+        }
+
+        function toggleAutoSearch(cb) {
+            vibrate('light');
+            isAuto = cb.checked;
+            const btn = document.getElementById('btn-generate');
+            if (isAuto) {
+                autoParseCatches = [];
+                btn.disabled = true;
+                btn.textContent = "Парсинг...";
+                runCycle();
+            } else {
+                btn.disabled = false;
+                btn.textContent = "Сгенерировать";
+                showSummaryModal();
+            }
+        }
+
+        async function runCycle() {
+            if (!isAuto) return;
+            if (!isFetching) await fetchUsername();
+            if (isAuto) setTimeout(runCycle, 1200);
+        }
+
+        async function manualGenerate(event) {
+            if (isFetching || isAuto) return;
+            vibrate('light');
+            if(event && event.clientX) createRipple(event.clientX, event.clientY);
+            else createRipple(window.innerWidth/2, window.innerHeight/2);
+            document.getElementById('quick-actions').style.display = 'none';
+            const btn = document.getElementById('btn-generate');
+            btn.disabled = true;
+            btn.textContent = "Анализ...";
+            await fetchUsername();
+            btn.textContent = "Сгенерировать";
+            btn.disabled = false;
+        }
+
+        async function fetchUsername() {
+            isFetching = true;
+            startSlotMachine();
+            stats.generations++;
+            saveStats();
+
+            const useFilter = document.getElementById('toggle-filter').checked;
+            const lenMode = selectedValues['select-len'] || '5-6';
+            const useNum = document.getElementById('toggle-num').checked;
+            const useUnd = document.getElementById('toggle-und').checked;
+
+            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Server_Error");
+                const data = await res.json();
+                lastGenerated = data.generated_username || "nexus";
+                stopSlotMachine(lastGenerated);
+
+                const uEl = document.getElementById('res-username');
+                const mEl = document.getElementById('res-market');
+                const sEl = document.getElementById('res-status');
+
+                const evalData = data.evaluation || { color: "#29c75f", status: "Свободен", rank: "A", score: 30 };
+                uEl.style.color = evalData.color || "#29c75f";
+                sEl.textContent = evalData.status || "Свободен";
+                sEl.style.color = evalData.color || "#29c75f";
+
+                if (data.is_free === true && evalData.rank !== "ERR" && evalData.rank !== "F") {
+                    if(!isAuto) document.getElementById('quick-actions').style.display = 'flex';
+                    const catchItem = { user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color };
+                    saveToHistory(catchItem);
+                    if (isAuto) autoParseCatches.push(catchItem);
+                    if (evalData.status.includes("Fragment") || evalData.rank === "SSS+") {
+                        mEl.style.display = 'inline-block';
+                        mEl.textContent = evalData.status;
+                        triggerJackpot();
+                    } else {
+                        vibrate('light');
+                    }
+                }
+            } catch (e) {
+                stopSlotMachine("pulse");
+                document.getElementById('res-status').textContent = "Свободен (~1 TON)";
+                document.getElementById('res-status').style.color = "#29c75f";
+                document.getElementById('res-username').style.color = "#29c75f";
+            } finally {
+                isFetching = false;
+            }
+        }
+
+        function showSummaryModal() {
+            if (autoParseCatches.length === 0) {
+                showToast("Свободных ников не найдено");
+                return;
+            }
+            const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
+            const sorted = [...autoParseCatches].sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
+            document.getElementById('summary-count').innerText = autoParseCatches.length;
+            document.getElementById('summary-list').innerHTML = sorted.map(item => `
+                <div class="history-card" style="cursor:pointer; padding:12px 14px; border-left: 3px solid ${item.color}; margin-bottom:0;" onclick="copySummaryUsername('${item.user}')">
+                    <div class="hist-left">
+                        <div class="hist-user" style="color: #ffffff; font-weight:bold;">@${item.user}</div>
+                        <div style="font-size:0.75rem; color: ${item.color}; font-weight:600; margin-top:2px;">Индекс: ${item.rank}</div>
+                    </div>
+                    <div class="hist-right" style="text-align:right;">
+                        <div style="font-size:0.8rem; color:#eab308; font-weight:600; background:rgba(234, 179, 8, 0.1); padding:2px 6px; border-radius:6px; border:1px solid rgba(234, 179, 8, 0.2);">${item.price}</div>
+                    </div>
+                </div>
+            `).join('');
+            openModal('modal-summary');
+        }
+
+        function copySummaryUsername(username) {
+            navigator.clipboard.writeText(username);
+            vibrate('success');
+            showToast(`✨ @${username} скопирован!`);
+        }
+
+        function takeUsername() {
+            navigator.clipboard.writeText(lastGenerated);
+            vibrate('success');
+            showToast('✨ Юзернейм скопирован!');
+        }
+
+        function shareToFriends() {
+            vibrate('light');
+            const botUsername = "selectionusername_bot";
+            const priceText = document.getElementById('res-market').innerText;
+            const text = `🎯 Поймал юзернейм @${lastGenerated} через @${botUsername}!\nОценка: ${priceText}`;
+            const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/' + botUsername)}&text=${encodeURIComponent(text)}`;
+            if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+                window.Telegram.WebApp.openTelegramLink(url);
+            } else {
+                window.open(url, '_blank');
+            }
         }
 
         let unlockedSecretThemes = JSON.parse(localStorage.getItem('vh_secret_themes') || '[]');
@@ -1754,7 +2036,9 @@
 
         function loadCustomization() {
             renderCustomThemesGrid();
+            renderAchievements();
             checkAchievementProgress();
+
             const saved = localStorage.getItem('vh_custom_settings');
             if(!saved) return;
             const data = JSON.parse(saved);
@@ -1768,7 +2052,6 @@
             updateFogSettings();
             updateEmojiSettings();
         }
-        loadCustomization();
 
         function toggleEmojiFeature(cb) {
             const box = document.getElementById('emoji-controls-box');
@@ -1826,58 +2109,6 @@
             requestAnimationFrame(animateEmojis);
         }
         animateEmojis();
-
-        // ТУМАН
-        const canvas = document.getElementById('fog-canvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
-        let particles = [];
-        let fogSpeedFactor = 1.5;
-
-        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize);
-        resize();
-
-        function initParticles(count) {
-            particles = [];
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#29c75f';
-            for(let i=0; i<count; i++) {
-                particles.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * fogSpeedFactor,
-                    vy: (Math.random() - 0.5) * fogSpeedFactor,
-                    radius: Math.random() * 140 + 100,
-                    color: primaryColor
-                });
-            }
-        }
-        initParticles(5);
-
-        function drawFog() {
-            ctx.clearRect(0, 0, width, height);
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            particles.forEach((p) => {
-                p.x += p.vx; p.y += p.vy;
-                if(p.x < 0 || p.x > width) p.vx *= -1;
-                if(p.y < 0 || p.y > height) p.vy *= -1;
-                let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-                grad.addColorStop(0, primaryColor + '20');
-                grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            requestAnimationFrame(drawFog);
-        }
-        drawFog();
-
-        function updateFogSettings() {
-            const count = parseInt(document.getElementById('fog-count-slider').value);
-            initParticles(count);
-            saveCustomization();
-        }
 
         function createRipple(x, y) {
             const ripple = document.createElement('div');
@@ -1987,7 +2218,7 @@
             `).join('');
         }
 
-        // ИСТОРИЯ И СВАЙПЫ
+        // ИСТОРИЯ И СВАЙПЫ (ВПРАВО = УДАЛИТЬ, ВЛЕВО = ОТПРАВИТЬ)
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
         function saveToHistory(item) {
@@ -2074,13 +2305,11 @@
             if (Math.abs(diffX) > 10) isSwiping = true;
 
             if (diffX > 0) {
-                // Свайп вправо = Красный (Удаление)
                 if (wrapper) {
                     wrapper.classList.add('swiping-right');
                     wrapper.classList.remove('swiping-left');
                 }
             } else if (diffX < 0) {
-                // Свайп влево = Синий (Отправка)
                 if (wrapper) {
                     wrapper.classList.add('swiping-left');
                     wrapper.classList.remove('swiping-right');
@@ -2096,7 +2325,6 @@
             const username = activeCard.getAttribute('data-user');
             const wrapper = document.getElementById(`hist-wrap-${index}`);
 
-            // СВАЙП ВПРАВО (diffX > 120) -> УДАЛЕНИЕ
             if (diffX > 120) {
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translate3d(100%, 0, 0)';
@@ -2110,7 +2338,6 @@
                     showToast('🗑 Ник удалён из истории');
                 }, 300);
             } 
-            // СВАЙП ВЛЕВО (diffX < -120) -> ОТПРАВИТЬ В TELEGRAM
             else if (diffX < -120) {
                 activeCard.style.transition = 'transform 0.25s ease-out';
                 activeCard.style.transform = 'translate3d(0px, 0, 0)';
@@ -2136,222 +2363,6 @@
             }
             startX = 0; currentX = 0; activeCard = null;
             setTimeout(() => { isSwiping = false; }, 50);
-        }
-
-        // =========================================================================
-        // ГЕНЕРАЦИЯ (СИНХРОНИЗИРОВАНА С MAIN.PY)
-        // =========================================================================
-        function startSlotMachine() {
-            const el = document.getElementById('res-username');
-            const chars = "abcdefghijklmnopqrstuvwxyz";
-            document.getElementById('res-market').style.display = 'none';
-            document.getElementById('result-box').classList.remove('golden-mode');
-            slotInterval = setInterval(() => {
-                let rand = "";
-                for(let i=0; i<6; i++) rand += chars[Math.floor(Math.random() * chars.length)];
-                el.textContent = "@" + rand;
-            }, 60);
-        }
-
-        function stopSlotMachine(finalName) {
-            clearInterval(slotInterval);
-            document.getElementById('res-username').textContent = "@" + finalName;
-        }
-
-        function toggleAutoSearch(cb) {
-            vibrate('light');
-            isAuto = cb.checked;
-            const btn = document.getElementById('btn-generate');
-            if (isAuto) {
-                autoParseCatches = [];
-                btn.disabled = true;
-                btn.textContent = "Парсинг...";
-                runCycle();
-            } else {
-                btn.disabled = false;
-                btn.textContent = "Сгенерировать";
-                showSummaryModal();
-            }
-        }
-
-        async function runCycle() {
-            if (!isAuto) return;
-            if (!isFetching) await fetchUsername();
-            if (isAuto) setTimeout(runCycle, 1500);
-        }
-
-        async function manualGenerate(event) {
-            if (isFetching || isAuto) return;
-            vibrate('light');
-            if(event && event.clientX) createRipple(event.clientX, event.clientY);
-            else createRipple(window.innerWidth/2, window.innerHeight/2);
-            document.getElementById('quick-actions').style.display = 'none';
-            const btn = document.getElementById('btn-generate');
-            btn.disabled = true;
-            btn.textContent = "Анализ...";
-            await fetchUsername();
-            btn.textContent = "Сгенерировать";
-            btn.disabled = false;
-        }
-
-        async function fetchUsername() {
-            isFetching = true;
-            startSlotMachine();
-            stats.generations++;
-            saveStats();
-
-            const useFilter = document.getElementById('toggle-filter').checked;
-            const lenMode = selectedValues['select-len'];
-            const useNum = document.getElementById('toggle-num').checked;
-            const useUnd = document.getElementById('toggle-und').checked;
-
-            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`;
-
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("Server_Error");
-                const data = await res.json();
-                lastGenerated = data.generated_username;
-                stopSlotMachine(lastGenerated);
-                const uEl = document.getElementById('res-username');
-                const mEl = document.getElementById('res-market');
-                const sEl = document.getElementById('res-status');
-                uEl.style.color = data.evaluation.color;
-                sEl.textContent = data.evaluation.status;
-                sEl.style.color = data.evaluation.color;
-
-                if (data.is_free === true && data.evaluation.rank !== "ERR" && data.evaluation.rank !== "F") {
-                    if(!isAuto) document.getElementById('quick-actions').style.display = 'flex';
-                    const catchItem = { user: data.generated_username, plat: currentPlatform, rank: data.evaluation.rank, price: data.evaluation.status, color: data.evaluation.color };
-                    saveToHistory(catchItem);
-                    if (isAuto) autoParseCatches.push(catchItem);
-                    if (data.evaluation.status.includes("Fragment") || data.evaluation.rank === "SSS+") {
-                        mEl.style.display = 'inline-block';
-                        mEl.textContent = data.evaluation.status;
-                        triggerJackpot();
-                    } else {
-                        vibrate('light');
-                    }
-                }
-            } catch (e) {
-                stopSlotMachine("---");
-                document.getElementById('res-status').textContent = "Сбой соединения с сервером";
-                document.getElementById('res-status').style.color = "#f97316";
-            } finally {
-                isFetching = false;
-            }
-        }
-
-        function showSummaryModal() {
-            if (autoParseCatches.length === 0) {
-                showToast("Свободных ников не найдено");
-                return;
-            }
-            const sorted = [...autoParseCatches].sort((a, b) => (weights[b.rank] || 0) - (weights[a.rank] || 0));
-            document.getElementById('summary-count').innerText = autoParseCatches.length;
-            document.getElementById('summary-list').innerHTML = sorted.map(item => `
-                <div class="history-card" style="cursor:pointer; padding:12px 14px; border-left: 3px solid ${item.color}; margin-bottom:0;" onclick="copySummaryUsername('${item.user}')">
-                    <div class="hist-left">
-                        <div class="hist-user" style="color: #ffffff; font-weight:bold;">@${item.user}</div>
-                        <div style="font-size:0.75rem; color: ${item.color}; font-weight:600; margin-top:2px;">Индекс: ${item.rank}</div>
-                    </div>
-                    <div class="hist-right" style="text-align:right;">
-                        <div style="font-size:0.8rem; color:#eab308; font-weight:600; background:rgba(234, 179, 8, 0.1); padding:2px 6px; border-radius:6px; border:1px solid rgba(234, 179, 8, 0.2);">${item.price}</div>
-                    </div>
-                </div>
-            `).join('');
-            openModal('modal-summary');
-        }
-
-        function copySummaryUsername(username) {
-            navigator.clipboard.writeText(username);
-            vibrate('success');
-            showToast(`✨ @${username} скопирован!`);
-        }
-
-        function takeUsername() {
-            navigator.clipboard.writeText(lastGenerated);
-            vibrate('success');
-            showToast('✨ Юзернейм скопирован!');
-        }
-
-        function shareToFriends() {
-            vibrate('light');
-            const botUsername = "selectionusername_bot";
-            const priceText = document.getElementById('res-market').innerText;
-            const text = `🎯 Поймал юзернейм @${lastGenerated} через @${botUsername}!\nОценка: ${priceText}`;
-            const url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/' + botUsername)}&text=${encodeURIComponent(text)}`;
-            if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-                window.Telegram.WebApp.openTelegramLink(url);
-            } else {
-                window.open(url, '_blank');
-            }
-        }
-
-        // ДОСТИЖЕНИЯ (100 УРОВНЕЙ)
-        const ACHIEVEMENTS_DATA = [];
-        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
-        for (let i = 1; i <= 100; i++) {
-            let title = `Уровень #${i}`;
-            let desc = `Выполните условия для уровня ${i}.`;
-            let icon = EMOJI_LIST[i % EMOJI_LIST.length];
-            let statKey = "generations";
-            let target = i * 10;
-            if (i === 1) { title = "Первый поиск"; desc = "Сделать 1 генерацию."; icon = "🎲"; target = 1; statKey = "generations"; }
-            else if (i === 2) { title = "Любитель поиска"; desc = "Сделать 10 генераций."; icon = "🎰"; target = 10; statKey = "generations"; }
-            else if (i === 3) { title = "Мастер спинов"; desc = "Сделать 50 генераций."; icon = "⚡"; target = 50; statKey = "generations"; }
-            else if (i === 5) { title = "Наводчик радара"; desc = "Поставить 1 ник на Радар."; icon = "🎯"; target = 1; statKey = "radarAdded"; }
-            else {
-                title = `Индекс поиска Lvl.${i}`;
-                desc = `Сделать ${i * 15} успешных проверок.`;
-                target = i * 15;
-                statKey = "generations";
-            }
-            ACHIEVEMENTS_DATA.push({ id: `ach_${i}`, title, desc, icon, target, statKey });
-        }
-
-        let unlockedAchievements = JSON.parse(localStorage.getItem('vh_unlocked_achievements') || '[]');
-
-        function checkAchievementProgress() {
-            ACHIEVEMENTS_DATA.forEach(ach => {
-                const currentVal = stats[ach.statKey] || 0;
-                if (currentVal >= ach.target && !unlockedAchievements.includes(ach.id)) {
-                    unlockedAchievements.push(ach.id);
-                    localStorage.setItem('vh_unlocked_achievements', JSON.stringify(unlockedAchievements));
-                    showToast(`🏆 Награда: ${ach.title}!`);
-                    vibrate('success');
-                }
-            });
-            renderAchievements();
-        }
-
-        function renderAchievements() {
-            const container = document.getElementById('achievements-list-container');
-            document.getElementById('achieve-counter-badge').innerText = `${unlockedAchievements.length}/100`;
-            document.getElementById('achieve-count-modal').innerText = unlockedAchievements.length;
-            if (!container) return;
-            container.innerHTML = ACHIEVEMENTS_DATA.map(item => {
-                const isUnlocked = unlockedAchievements.includes(item.id);
-                const currentVal = Math.min(stats[item.statKey] || 0, item.target);
-                const percent = Math.min(100, Math.floor((currentVal / item.target) * 100));
-                return `
-                    <div class="achieve-card ${isUnlocked ? 'unlocked' : ''}">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="font-size:1.8rem;">${item.icon}</div>
-                            <div style="flex:1;">
-                                <div style="font-size:0.9rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
-                                    <span>${item.title}</span>
-                                    <span style="font-size:0.75rem; color:var(--primary);">${currentVal}/${item.target}</span>
-                                </div>
-                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${item.desc}</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${percent}%;"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
         }
 
         async function fetchLeaderboard(period = 'all') {
@@ -2399,6 +2410,9 @@
                 window.open(url, '_blank');
             }
         }
+
+        // Запуск инициализации
+        loadCustomization();
     </script>
 </body>
 </html>
