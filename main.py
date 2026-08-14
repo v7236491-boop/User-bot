@@ -14,7 +14,7 @@ from telethon.errors import RPCError
 import uvicorn
 
 # =========================================================================
-# 📂 ПУТИ И ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
+# 📂 ПУТИ К ФАЙЛАМ И НАСТРОЙКИ
 # =========================================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
@@ -22,6 +22,7 @@ RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
 
+# Кэш истории сгенерированных ников во избежание повторов
 GENERATED_HISTORY = set()
 MAX_HISTORY_SIZE = 25000
 
@@ -30,6 +31,9 @@ MAX_REQUESTS_PER_MINUTE = 60
 USER_COOLDOWNS = {}
 COOLDOWN_SECONDS = 0.1
 
+# =========================================================================
+# 🤖 ИНИЦИАЛИЗАЦИЯ БОТА И TELETHON
+# =========================================================================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID", "38162572"))
 API_HASH = os.getenv("API_HASH", "71b8ecb44bddc1ae0a802f4a0f6628ba")
@@ -44,7 +48,7 @@ else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
 # =========================================================================
-# 💾 ИГРОВАЯ БАЗА ДАННЫХ И ЭКОНОМИКА
+# 💾 ИГРОВАЯ БАЗА ДАННЫХ И ЭКОНОМИКА КЛИКЕРА
 # =========================================================================
 def load_game_db() -> dict:
     if os.path.exists(GAME_DB_PATH):
@@ -81,6 +85,8 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     
     user = db[user_id]
     time_passed = now - user.get("last_seen", now)
+    
+    # Фоновая регенерация энергии за время отсутствия
     if time_passed > 0 and user["energy"] < user["max_energy"]:
         regen_amount = time_passed * user.get("energy_regen", 1)
         user["energy"] = min(user["max_energy"], user["energy"] + regen_amount)
@@ -88,7 +94,7 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     return user
 
 # =========================================================================
-# 📚 ПОЛНАЯ БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВИ СЛОВ (15 КАТЕГОРИЙ)
+# 📚 ПОЛНАЯ БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВ И СЛОВАРЕЙ (15 КАТЕГОРИЙ)
 # =========================================================================
 AFFIX_DATABASE = {
     "personal": ["official", "real", "prime", "live", "blog", "vibe", "zone", "one", "daily", "fan", "hq", "club"],
@@ -154,6 +160,9 @@ def generate_standard_brand(len_mode: str = "5-6") -> str:
         candidate = candidate[:6]
     return candidate
 
+# =========================================================================
+# 👑 ЛИДЕРБОРД
+# =========================================================================
 def load_leaderboard():
     if os.path.exists(LEADERBOARD_PATH):
         try:
@@ -188,6 +197,9 @@ def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_
     })
     save_leaderboard(lb)
 
+# =========================================================================
+# 💎 ОЦЕНКА РЕДКОСТИ И СТОИМОСТИ ЮЗЕРНЕЙМА
+# =========================================================================
 def calculate_catch_score(username: str, is_free: bool):
     if not is_free:
         return {"rank": "F", "status": "Занят пользователем или каналом", "color": "#ef4444", "score": 0}
@@ -227,6 +239,9 @@ def calculate_catch_score(username: str, is_free: bool):
 
     return {"rank": "B", "status": "Для личного пользования (~1 TON)", "color": "#64748b", "score": 20}
 
+# =========================================================================
+# 🔎 ПРОВЕРКА ЧЕРЕЗ TELETHON API
+# =========================================================================
 async def check_username_telethon(username: str) -> bool:
     username = username.replace("@", "").strip().lower()
     if len(username) < 5: 
@@ -240,6 +255,9 @@ async def check_username_telethon(username: str) -> bool:
     except Exception:
         return False
 
+# =========================================================================
+# 🎯 АВТОНОМНЫЙ РАДАР (СЛЕЖКА И ОПОВЕЩЕНИЯ В ЛС)
+# =========================================================================
 def load_radar_db() -> dict:
     if os.path.exists(RADAR_DB_PATH):
         try:
@@ -256,11 +274,8 @@ def save_radar_db(db: dict):
     except Exception: 
         pass
 
-# =========================================================================
-# 🎯 АВТОНОМНЫЙ РАДАР (ФОНОВЫЙ ВОРКЕР)
-# =========================================================================
 async def radar_worker():
-    print("🚀 Автономный Радар запущен!")
+    print("🚀 Автономный Радар запущен в фоновом режиме!")
     while True:
         try:
             db = load_radar_db()
@@ -279,7 +294,7 @@ async def radar_worker():
                                 try:
                                     await bot.send_message(
                                         chat_id=int(chat_id), 
-                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nБыстрее забирай!", 
+                                        text=f"🚨 **РАДАР: НИК ОСВОБОДИЛСЯ!**\n\nЮзернейм: `@{username}`\nБыстрее забирай в Telegram!", 
                                         parse_mode="Markdown"
                                     )
                                     notified_chats.append(chat_id)
@@ -296,11 +311,14 @@ async def radar_worker():
             pass
         await asyncio.sleep(5)
 
+# =========================================================================
+# ⚙️ LIFECYCLE FASTAPI
+# =========================================================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("⏳ Запуск Telethon...")
+    print("⏳ Запуск сессии Telethon...")
     await telethon_client.start()
-    print("✅ Telethon успешно запущен!")
+    print("✅ Telethon успешно подключен!")
     
     asyncio.create_task(radar_worker())
     
@@ -313,9 +331,21 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Username Scanner PRO", lifespan=lifespan)
 
 # =========================================================================
-# 🎮 ЭНДПОИНТЫ КЛИКЕРА И ЭКОНОМИКИ
+# 🎮 ЭНДПОИНТЫ КЛИКЕРА COSMIC CORE
 # =========================================================================
-OFFLINE_RATES = {0: 0, 1: 500, 2: 1200, 3: 2500, 4: 4500, 5: 8000, 6: 14000, 7: 22000, 8: 32000, 9: 45000, 10: 60000}
+OFFLINE_RATES = {
+    0: 0, 
+    1: 500, 
+    2: 1200, 
+    3: 2500, 
+    4: 4500, 
+    5: 8000, 
+    6: 14000, 
+    7: 22000, 
+    8: 32000, 
+    9: 45000, 
+    10: 60000
+}
 
 @app.get("/api/game/state")
 async def get_game_state(user_id: str):
@@ -326,7 +356,7 @@ async def get_game_state(user_id: str):
     time_diff = now - user["last_seen"]
     offline_earned = 0
     if time_diff > 60 and user["offline_miner_lvl"] > 0:
-        clamped_time = min(time_diff, 10800)  # Максимум 3 часа
+        clamped_time = min(time_diff, 10800)  # Максимум 3 часа (10800 секунд)
         rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
         offline_earned = int(clamped_time * rate_per_sec)
         user["coins"] += offline_earned
@@ -350,7 +380,7 @@ async def sync_tap(request: Request):
     user = get_user_profile(db, user_id)
     
     if taps > 0:
-        # Честное начисление монет без откатов баланса
+        # Честный мультитач: начисляем баланс без штрафов и откатов
         earned = taps * user["multi_tap"]
         user["coins"] += earned
         user["energy"] = max(0, user["energy"] - taps)
@@ -428,7 +458,7 @@ async def buy_item(request: Request):
     return {"status": "ok", "profile": user}
 
 # =========================================================================
-# 🌐 ОСНОВНЫЕ МАРШРУТЫ ГЕНЕРАЦИИ И ДАННЫХ
+# 🌐 ОСНОВНЫЕ РОУТЫ ГЕНЕРАТОРА И СТАТИКИ
 # =========================================================================
 @app.get("/")
 async def read_root():
@@ -547,6 +577,9 @@ async def radar_remove(chat_id: str, username: str):
         save_radar_db(db)
     return {"status": "ok", "targets": db.get(chat_id, [])}
 
+# =========================================================================
+# 🚀 ТОЧКА ВХОДА СЕРВЕРА UVICORN
+# =========================================================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
