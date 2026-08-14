@@ -382,8 +382,9 @@
 
         .defense-status-badge {
             z-index: 10;
-            background: rgba(18, 25, 21, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(18, 25, 21, 0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(56, 189, 248, 0.5);
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 0.8rem;
@@ -568,11 +569,11 @@
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 12px; border-radius: 12px; cursor: pointer; }
         .btn-reset-custom { width: 100%; background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; margin-top: 10px; }
 
-        /* ИСТОРИЯ И СВАЙПЫ */
+        /* ИСТОРИЯ И СВАЙПЫ (ВПРАВО = УДАЛЕНИЕ, ВЛЕВО = ОТПРАВИТЬ) */
         .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 85px; }
-        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.35); }
-        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.35); }
-        .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.25rem; opacity: 0; z-index: 1; transition: opacity 0.2s ease; }
+        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.45); }
+        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.45); }
+        .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.3rem; opacity: 0; z-index: 1; transition: opacity 0.2s ease; }
         .swipe-icon-left { left: 18px; color: #fff; }
         .swipe-icon-right { right: 18px; color: #fff; }
         .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
@@ -596,7 +597,6 @@
 </head>
 <body>
 
-    <!-- Фоновые слои -->
     <canvas id="fog-canvas"></canvas>
     <canvas id="secret-canvas"></canvas>
     <div id="emoji-layer"></div>
@@ -645,7 +645,7 @@
 
     <div class="toast" id="global-toast">✨ Скопировано!</div>
 
-    <!-- 🔮 ПОЛНОЭКРАННЫЙ ЭКРАН МАЙНИНГА (3D ЗЕМЛЯ, ЦЕПИ, КОСМОС) 🔮 -->
+    <!-- 🔮 МАЙНИНГ ЭКРАН 🔮 -->
     <div id="tycoon-overlay">
         <canvas id="space-canvas-inside"></canvas>
 
@@ -774,7 +774,7 @@
                         <span class="setting-title" style="color: #a855f7;">🔑 Ввести секретный код</span>
                         <span class="setting-desc">Разблокировка уникальных тем оформления</span>
                     </div>
-                    <span style="font-size: 1.2rem; color: #a855f7;">→</span>
+                    <span style="font-size: 1.2rem; color: var(--primary);">→</span>
                 </div>
 
                 <div class="setting-item">
@@ -842,8 +842,8 @@
                 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <span class="setting-title">Режим генератора</span>
-                        <span class="setting-desc">Выбор логики и приставки к вашему слову</span>
+                        <span class="setting-title">Фильтр генерации</span>
+                        <span class="setting-desc">Настройка длины, цифр и символов</span>
                     </div>
                     <div class="setting-controls">
                         <button class="panel-collapse-btn" id="btn-toggle-filter-panel" style="display:none;" onclick="togglePanelVisibility('filter-menu', this)">
@@ -855,61 +855,7 @@
 
                 <div class="filter-options" id="filter-menu">
                     <div style="margin-bottom: 12px;">
-                        <span style="font-size: 0.85rem; font-weight:600; color: var(--text-main); display:block; margin-bottom:6px;">Что подбираем?</span>
-                        <div class="custom-select-wrapper" id="select-gen-mode">
-                            <div class="custom-select-trigger" onclick="toggleCustomSelect('select-gen-mode')">
-                                <span id="label-gen-mode">✨ Красивое имя (Неологизм)</span>
-                            </div>
-                            <div class="custom-select-options">
-                                <div class="custom-option selected" onclick="selectOption('select-gen-mode', 'standard', '✨ Красивое имя (Неологизм)')">✨ Красивое имя (Неологизм)</div>
-                                <div class="custom-option" onclick="selectOption('select-gen-mode', 'prefix_master', '🎯 Приставка к вашему слову')">🎯 Приставка к вашему слову</div>
-                                <div class="custom-option" onclick="selectOption('select-gen-mode', 'translit', '🇷🇺 Ники на латинице (Транслит)')">🇷🇺 Ники на латинице (Транслит)</div>
-                            </div>
-                        </div>
-                        <div id="mode-desc-text" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">
-                            Придумывает уникальные бренд-ники из 5–6 букв с высоким шансом свободы.
-                        </div>
-                    </div>
-
-                    <div id="prefix-master-box" style="display:none; border-top: 1px dashed rgba(255,255,255,0.1); padding-top:12px; margin-top:12px;">
-                        <span style="font-size: 0.8rem; color: var(--primary); font-weight:600; display:block; margin-bottom: 6px;">Ваше слово или имя</span>
-                        <input type="text" id="prefix-user-input" class="form-input" style="margin-bottom:10px;" placeholder="Впишите слово (например: spiderman, apple)">
-                        
-                        <div style="margin-bottom:10px;">
-                            <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Тематика</span>
-                            <div class="custom-select-wrapper" id="select-category">
-                                <div class="custom-select-trigger" onclick="toggleCustomSelect('select-category')">
-                                    <span id="label-category">🌐 Авто-подбор тематики</span>
-                                </div>
-                                <div class="custom-select-options">
-                                    <div class="custom-option selected" onclick="selectOption('select-category', 'auto_detect', '🌐 Авто-подбор тематики')">🌐 Авто-подбор тематики</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'personal', '👤 Блогеры и Звезды')">👤 Блогеры и Звезды</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'gaming', '🎮 Игры и Киберспорт')">🎮 Игры и Киберспорт</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'crypto', '📈 Крипта и NFT')">📈 Крипта и NFT</div>
-                                    <div class="custom-option" onclick="selectOption('select-category', 'tech', '💻 IT и Софт')">💻 IT и Софт</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <span style="font-size: 0.8rem; color: var(--text-main); display:block; margin-bottom:4px;">Куда ставить приставку?</span>
-                            <div class="custom-select-wrapper" id="select-position">
-                                <div class="custom-select-trigger" onclick="toggleCustomSelect('select-position')">
-                                    <span id="label-position">🔀 Автоматически (Как лучше)</span>
-                                </div>
-                                <div class="custom-select-options">
-                                    <div class="custom-option selected" onclick="selectOption('select-position', 'mix', '🔀 Автоматически (Как лучше)')">🔀 Автоматически</div>
-                                    <div class="custom-option" onclick="selectOption('select-position', 'suffix', '➡️ В конец')">➡️ В конец</div>
-                                    <div class="custom-option" onclick="selectOption('select-position', 'prefix', '⬅️ В начало')">⬅️ В начало</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 12px 0;">
-
-                    <div>
-                        <span style="font-size: 0.85rem; color: var(--text-main); display:block; margin-bottom:4px;">Длина ника</span>
+                        <span style="font-size: 0.85rem; color: var(--text-main); display:block; margin-bottom:4px;">Длина никнейма</span>
                         <div class="custom-select-wrapper" id="select-len">
                             <div class="custom-select-trigger" onclick="toggleCustomSelect('select-len')">
                                 <span id="label-len">5–6 букв (Короткие)</span>
@@ -919,6 +865,20 @@
                                 <div class="custom-option" onclick="selectOption('select-len', '7-8', '7–8 букв (Обычные)')">7–8 букв (Обычные)</div>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="setting-item" style="background:transparent; border:none; padding:6px 0;">
+                        <div class="setting-info">
+                            <span class="setting-title" style="font-size:0.85rem;">Добавлять цифры (123)</span>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="toggle-num"><span class="slider"></span></label>
+                    </div>
+
+                    <div class="setting-item" style="background:transparent; border:none; padding:6px 0;">
+                        <div class="setting-info">
+                            <span class="setting-title" style="font-size:0.85rem;">Добавлять подчеркивание (_)</span>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="toggle-und"><span class="slider"></span></label>
                     </div>
                 </div>
 
@@ -1013,7 +973,7 @@
     </div>
 
     <!-- =========================================================================
-         ЛОГИКА СКРИПТОВ
+         JS МОНОЛИТ
     ========================================================================= -->
     <script>
         let currentPlatform = 'telegram';
@@ -1024,7 +984,6 @@
         let finderName = "Аноним";
         let autoParseCatches = [];
 
-        // Dual-ID System: сохранение постоянного UID
         let tgChatId = localStorage.getItem('vh_persistent_uid');
         if (!tgChatId) {
             tgChatId = "user_" + Math.random().toString(36).substring(2, 11);
@@ -1048,9 +1007,6 @@
         let lastTapTime = 0;
 
         let selectedValues = {
-            'select-gen-mode': 'standard',
-            'select-category': 'auto_detect',
-            'select-position': 'mix',
             'select-len': '5-6'
         };
 
@@ -1107,9 +1063,7 @@
             }
         }, 1000);
 
-        // =========================================================================
-        // 🌌 КОСМОС ВНУТРИ КЛИКЕРА
-        // =========================================================================
+        // КОСМОС
         const spCanvas = document.getElementById('space-canvas-inside');
         const spCtx = spCanvas.getContext('2d');
         let stars = [], comets = [];
@@ -1158,15 +1112,13 @@
         initInsideSpace();
         drawInsideSpace();
 
-        // =========================================================================
-        // 🛡️ МНОГОСЛОЙНАЯ ЗАЩИТА: СОТЫ + СТАЛЬНЫЕ ЦЕПИ + ЗЕМЛЯ (THREE.JS)
-        // =========================================================================
+        // 3D МНОГОСЛОЙНАЯ ЗАЩИТА (КУПОЛ + ЦЕПИ + ЗЕМЛЯ)
         let sceneEarth, cameraEarth, rendererEarth;
         let earthMesh, hexShieldMesh, lockMesh;
         let chainGroups = [], flyingCoins = [], particleExplosions = [];
         let isThreeEarthInit = false;
         
-        let currentDefenseLayer = 1; // 1 = Купол Соты, 2 = Стальные Цепи, 3 = Ядро Земли
+        let currentDefenseLayer = 1;
         let layerHealth = 100;
         let targetScale = 1.0, currentScale = 1.0;
 
@@ -1223,7 +1175,6 @@
             sunLight.position.set(5, 3, 5);
             sceneEarth.add(sunLight);
 
-            // 1. Тело Планеты
             const earthTexture = createProceduralEarthTexture();
             const earthGeo = new THREE.SphereGeometry(1.2, 48, 48);
             const earthMat = new THREE.MeshStandardMaterial({ 
@@ -1234,18 +1185,14 @@
             earthMesh = new THREE.Mesh(earthGeo, earthMat);
             sceneEarth.add(earthMesh);
 
-            // 2. Атмосфера
             const atmosGeo = new THREE.SphereGeometry(1.24, 32, 32);
             const atmosMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.15, side: THREE.BackSide });
             sceneEarth.add(new THREE.Mesh(atmosGeo, atmosMat));
 
-            // 3. Построение слоев защиты (Соты + Стальные цепи)
             buildSteelChains();
             buildHexShield();
-
             updateDefenseHUD();
 
-            // Вращение жестами
             let isDragging = false, prevX = 0, prevY = 0;
             container.addEventListener('pointerdown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
             window.addEventListener('pointermove', e => {
@@ -1261,7 +1208,6 @@
             animateEarth();
         }
 
-        // ПОСТРОЕНИЕ КИБЕР-КУПОЛА СОТ (LAYER 1)
         function buildHexShield() {
             if(hexShieldMesh) sceneEarth.remove(hexShieldMesh);
             const hexGeo = new THREE.IcosahedronGeometry(1.36, 3);
@@ -1279,7 +1225,6 @@
             sceneEarth.add(hexShieldMesh);
         }
 
-        // ПОСТРОЕНИЕ ТЕМНЫХ СТАЛЬНЫХ ЦЕПЕЙ (LAYER 2)
         function buildSteelChains() {
             chainGroups.forEach(cg => sceneEarth.remove(cg.group));
             chainGroups = [];
@@ -1291,7 +1236,6 @@
                 roughness: 0.2
             });
 
-            // 3 перекрестных кольца из стальных звеньев
             const angles = [
                 { x: 0, y: 0, z: 0 },
                 { x: Math.PI / 3, y: Math.PI / 6, z: 0 },
@@ -1323,7 +1267,6 @@
                 chainGroups.push({ group: group, breaking: false, life: 1.0 });
             });
 
-            // Массивный стальной замок
             const lockGeo = new THREE.BoxGeometry(0.26, 0.26, 0.14);
             const lockMat = new THREE.MeshStandardMaterial({
                 color: 0x475569,
@@ -1370,7 +1313,6 @@
             flyingCoins.push(coin);
         }
 
-        // Взрыв осколков сот
         function triggerHexShatter() {
             const pGeo = new THREE.BufferGeometry();
             const count = 80;
@@ -1395,14 +1337,12 @@
                     earthMesh.rotation.y += 0.0018; 
                 }
 
-                // Вращение купола сот
                 if (hexShieldMesh && currentDefenseLayer === 1) {
                     hexShieldMesh.scale.set(currentScale, currentScale, currentScale);
                     hexShieldMesh.rotation.y -= 0.003;
                     hexShieldMesh.rotation.z += 0.002;
                 }
 
-                // Вращение стальных цепей
                 chainGroups.forEach((cg, idx) => {
                     if (!cg.breaking) {
                         cg.group.rotation.z += (idx % 2 === 0 ? 0.003 : -0.003);
@@ -1416,7 +1356,6 @@
                     }
                 });
 
-                // Анимация вылетающих 3D монет
                 for (let i = flyingCoins.length - 1; i >= 0; i--) {
                     let coin = flyingCoins[i];
                     coin.position.add(coin.userData.velocity);
@@ -1427,7 +1366,6 @@
                     }
                 }
 
-                // Анимация взрыва осколков
                 for (let i = particleExplosions.length - 1; i >= 0; i--) {
                     let pe = particleExplosions[i];
                     pe.userData.life -= 0.03;
@@ -1450,9 +1388,6 @@
             requestAnimationFrame(animateEarth);
         }
 
-        // =========================================================================
-        // МНОГОПАЛЬЦЕВЫЙ ТАП С ПОЭТАПНЫМ СНЯТИЕМ СЛОЕВ ЗАЩИТЫ
-        // =========================================================================
         const earthContainer = document.getElementById('three-earth-container');
 
         function handleEarthTap(e) {
@@ -1469,7 +1404,7 @@
                 userProfile.energy -= 1;
                 
                 let gain = userProfile.multi_tap;
-                if(currentDefenseLayer === 3) gain *= 2; // Ядро дает двойные монеты
+                if(currentDefenseLayer === 3) gain *= 2;
                 userProfile.coins += gain;
                 pendingTaps++;
 
@@ -1480,7 +1415,6 @@
 
                 layerHealth -= 5;
 
-                // Разрушение Слоя 1: Купол Сот
                 if (currentDefenseLayer === 1 && layerHealth <= 0) {
                     currentDefenseLayer = 2;
                     layerHealth = 100;
@@ -1489,7 +1423,6 @@
                     showToast('💥 Кибер-Купол взломан! Открыты Стальные Цепи ⛓️');
                     vibrate('success');
                 }
-                // Разрушение Слоя 2: Стальные Цепи
                 else if (currentDefenseLayer === 2 && layerHealth <= 0) {
                     currentDefenseLayer = 3;
                     layerHealth = 100;
@@ -1499,7 +1432,6 @@
                     showToast('🌍 Цепи разорваны! Ядро планеты открыто [БОНУС +10х] 🟡');
                     vibrate('success');
 
-                    // Через 12 секунд восстанавливаем защитный контур нового уровня
                     setTimeout(() => {
                         currentDefenseLayer = 1;
                         layerHealth = 100;
@@ -1596,10 +1528,6 @@
             wrapper.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
             event.target.classList.add('selected');
             wrapper.querySelector('.custom-select-options').classList.remove('open');
-            if (wrapperId === 'select-gen-mode') {
-                const mode = selectedValues['select-gen-mode'];
-                document.getElementById('prefix-master-box').style.display = (mode === 'prefix_master') ? 'block' : 'none';
-            }
         }
 
         document.addEventListener('click', (e) => {
@@ -1731,6 +1659,20 @@
                     secretAnimId = requestAnimationFrame(drawDurov);
                 }
                 drawDurov();
+            } else if (themeId === 'kington') {
+                secretCanvas.style.display = 'block';
+                let goldList = Array.from({ length: 45 }, () => ({ x: Math.random() * secretCanvas.width, y: Math.random() * secretCanvas.height, size: Math.random() * 3 + 1.5, speed: Math.random() * 1.5 + 0.5, op: Math.random() }));
+                function drawKington() {
+                    sCtx.clearRect(0, 0, secretCanvas.width, secretCanvas.height);
+                    goldList.forEach(g => {
+                        sCtx.fillStyle = `rgba(255, 215, 0, ${g.op})`;
+                        sCtx.beginPath(); sCtx.arc(g.x, g.y, g.size, 0, Math.PI * 2); sCtx.fill();
+                        g.y += g.speed;
+                        if (g.y > secretCanvas.height) { g.y = 0; g.x = Math.random() * secretCanvas.width; }
+                    });
+                    secretAnimId = requestAnimationFrame(drawKington);
+                }
+                drawKington();
             } else if (themeId === 'vapor') {
                 document.body.classList.add("theme-vapor");
             } else {
@@ -2044,7 +1986,7 @@
             `).join('');
         }
 
-        // ИСТОРИЯ И СВАЙПЫ
+        // ИСТОРИЯ И СВАЙПЫ (ВПРАВО = УДАЛЕНИЕ, ВЛЕВО = ОТПРАВИТЬ)
         const weights = { "SSS+": 100, "SS": 80, "S": 60, "A": 40, "B": 20, "ERR": -1, "F": -10 };
 
         function saveToHistory(item) {
@@ -2131,11 +2073,13 @@
             if (Math.abs(diffX) > 10) isSwiping = true;
 
             if (diffX > 0) {
+                // Свайп вправо = красный фон удаления
                 if (wrapper) {
                     wrapper.classList.add('swiping-right');
                     wrapper.classList.remove('swiping-left');
                 }
             } else if (diffX < 0) {
+                // Свайп влево = синий фон отправки
                 if (wrapper) {
                     wrapper.classList.add('swiping-left');
                     wrapper.classList.remove('swiping-right');
@@ -2151,17 +2095,22 @@
             const username = activeCard.getAttribute('data-user');
             const wrapper = document.getElementById(`hist-wrap-${index}`);
 
+            // СВАЙП ВПРАВО (diffX > 120) -> УДАЛЕНИЕ
             if (diffX > 120) {
                 activeCard.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
                 activeCard.style.transform = 'translate3d(100%, 0, 0)';
+                activeCard.style.opacity = '0';
                 setTimeout(() => { if (wrapper) wrapper.classList.add('deleting'); }, 100);
                 setTimeout(() => {
                     let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
                     historyData.splice(index, 1);
                     localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
                     renderHistory();
+                    showToast('🗑 Ник удалён из истории');
                 }, 300);
-            } else if (diffX < -120) {
+            } 
+            // СВАЙП ВЛЕВО (diffX < -120) -> ОТПРАВИТЬ В TELEGRAM
+            else if (diffX < -120) {
                 activeCard.style.transition = 'transform 0.25s ease-out';
                 activeCard.style.transform = 'translate3d(0px, 0, 0)';
                 vibrate('success');
@@ -2175,7 +2124,8 @@
                         window.open(url, '_blank');
                     }
                 }, 150);
-            } else {
+            } 
+            else {
                 activeCard.style.transition = 'transform 0.2s ease';
                 activeCard.style.transform = 'translate3d(0px, 0, 0)';
                 if(wrapper) {
@@ -2187,7 +2137,9 @@
             setTimeout(() => { isSwiping = false; }, 50);
         }
 
-        // ГЕНЕРАЦИЯ
+        // =========================================================================
+        // ГЕНЕРАЦИЯ (СИНХРОНИЗИРОВАНА С MAIN.PY)
+        // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
             const chars = "abcdefghijklmnopqrstuvwxyz";
@@ -2247,14 +2199,16 @@
             stats.generations++;
             saveStats();
 
-            const mode = selectedValues['select-gen-mode'];
-            const userInput = document.getElementById('prefix-user-input').value;
-            const category = selectedValues['select-category'];
-            const position = selectedValues['select-position'];
+            const useFilter = document.getElementById('toggle-filter').checked;
             const lenMode = selectedValues['select-len'];
+            const useNum = document.getElementById('toggle-num').checked;
+            const useUnd = document.getElementById('toggle-und').checked;
+
+            // Точный запрос под параметры main.py
+            const url = `/api/generate?platform=${currentPlatform}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`;
 
             try {
-                const res = await fetch(`/api/generate?platform=${currentPlatform}&mode=${mode}&user_input=${encodeURIComponent(userInput)}&category=${category}&position=${position}&len_mode=${lenMode}&finder_name=${encodeURIComponent(finderName)}&finder_id=${tgChatId}`);
+                const res = await fetch(url);
                 if (!res.ok) throw new Error("Server_Error");
                 const data = await res.json();
                 lastGenerated = data.generated_username;
