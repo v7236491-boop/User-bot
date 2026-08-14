@@ -14,7 +14,7 @@ from telethon.errors import RPCError
 import uvicorn
 
 # =========================================================================
-# 📂 ПУТИ К ФАЙЛАМ И НАСТРОЙКИ
+# 📂 ПУТИ К ФАЙЛАМ И АСИНХРОННЫЙ ЗАМОК БД
 # =========================================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
@@ -22,17 +22,15 @@ RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
 
+# Асинхронный замок для защиты от одновременной перезаписи файлов базы данных
+DB_LOCK = asyncio.Lock()
+
 # Кэш истории сгенерированных ников во избежание повторов
 GENERATED_HISTORY = set()
 MAX_HISTORY_SIZE = 25000
 
-IP_REQUEST_HISTORY = {}
-MAX_REQUESTS_PER_MINUTE = 60
-USER_COOLDOWNS = {}
-COOLDOWN_SECONDS = 0.1
-
 # =========================================================================
-# 🤖 ИНИЦИАЛИЗАЦИЯ БОТА И TELETHON
+# 🤖 ИНИЦИАЛИЗАЦИЯ TELEGRAM БОТА И TELETHON КЛИЕНТА
 # =========================================================================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID", "38162572"))
@@ -48,7 +46,7 @@ else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
 # =========================================================================
-# 💾 ИГРОВАЯ БАЗА ДАННЫХ И ЭКОНОМИКА КЛИКЕРА
+# 💾 ИГРОВАЯ БАЗА ДАННЫХ И ЭКОНОМИКА (CYBER TYCOON)
 # =========================================================================
 def load_game_db() -> dict:
     if os.path.exists(GAME_DB_PATH):
@@ -68,13 +66,14 @@ def save_game_db(db: dict):
 
 def get_user_profile(db: dict, user_id: str) -> dict:
     now = int(time.time())
+    user_id = str(user_id).strip()
     if user_id not in db:
         db[user_id] = {
             "coins": 0,
             "energy": 1000,
             "max_energy": 1000,
             "multi_tap": 1,
-            "energy_regen": 1,  # Строгий баланс: +1 энергия в секунду
+            "energy_regen": 1,  # Строгий баланс: +1 ед/сек
             "offline_miner_lvl": 0,
             "last_seen": now,
             "unlocked_themes": [],
@@ -86,7 +85,7 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     user = db[user_id]
     time_passed = now - user.get("last_seen", now)
     
-    # Фоновая регенерация энергии за время отсутствия
+    # Фоновая регенерация энергии за время отсутствия игрока
     if time_passed > 0 and user["energy"] < user["max_energy"]:
         regen_amount = time_passed * user.get("energy_regen", 1)
         user["energy"] = min(user["max_energy"], user["energy"] + regen_amount)
@@ -94,7 +93,7 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     return user
 
 # =========================================================================
-# 📚 ПОЛНАЯ БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВ И СЛОВАРЕЙ (15 КАТЕГОРИЙ)
+# 📚 ПОЛНАЯ БАЗА ТЕМАТИЧЕСКИХ АФФИКСОВ И СЛОВ (15 КАТЕГОРИЙ)
 # =========================================================================
 AFFIX_DATABASE = {
     "personal": ["official", "real", "prime", "live", "blog", "vibe", "zone", "one", "daily", "fan", "hq", "club"],
@@ -198,7 +197,7 @@ def add_to_leaderboard(username, rank, price, score, color, finder_name, finder_
     save_leaderboard(lb)
 
 # =========================================================================
-# 💎 ОЦЕНКА РЕДКОСТИ И СТОИМОСТИ ЮЗЕРНЕЙМА
+# 💎 ОЦЕНКА РЕДКОСТИ И РАСЧЕТ СТОИМОСТИ ЮЗЕРНЕЙМА
 # =========================================================================
 def calculate_catch_score(username: str, is_free: bool):
     if not is_free:
@@ -256,7 +255,7 @@ async def check_username_telethon(username: str) -> bool:
         return False
 
 # =========================================================================
-# 🎯 АВТОНОМНЫЙ РАДАР (СЛЕЖКА И ОПОВЕЩЕНИЯ В ЛС)
+# 🎯 АВТОНОМНЫЙ РАДАР (СЛЕЖКА И ОПОВЕЩЕНИЕ В ЛС)
 # =========================================================================
 def load_radar_db() -> dict:
     if os.path.exists(RADAR_DB_PATH):
@@ -306,17 +305,17 @@ async def radar_worker():
                             if not db[chat_id]: 
                                 del db[chat_id]
                         save_radar_db(db)
-                    await asyncio.sleep(1.5)
+                    await asyncio.sleep(1.0)
         except Exception: 
             pass
         await asyncio.sleep(5)
 
 # =========================================================================
-# ⚙️ LIFECYCLE FASTAPI
+# ⚙️ LIFECYCLE FASTAPI ПРИЛОЖЕНИЯ
 # =========================================================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("⏳ Запуск сессии Telethon...")
+    print("⏳ Запуск Telethon клиента...")
     await telethon_client.start()
     print("✅ Telethon успешно подключен!")
     
@@ -349,116 +348,125 @@ OFFLINE_RATES = {
 
 @app.get("/api/game/state")
 async def get_game_state(user_id: str):
-    db = load_game_db()
-    user = get_user_profile(db, user_id)
-    now = int(time.time())
-    
-    time_diff = now - user["last_seen"]
-    offline_earned = 0
-    if time_diff > 60 and user["offline_miner_lvl"] > 0:
-        clamped_time = min(time_diff, 10800)  # Максимум 3 часа (10800 секунд)
-        rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
-        offline_earned = int(clamped_time * rate_per_sec)
-        user["coins"] += offline_earned
+    async with DB_LOCK:
+        db = load_game_db()
+        user = get_user_profile(db, user_id)
+        now = int(time.time())
+        
+        time_diff = now - user["last_seen"]
+        offline_earned = 0
+        if time_diff > 60 and user["offline_miner_lvl"] > 0:
+            clamped_time = min(time_diff, 10800)  # Максимум 3 часа (10800 секунд)
+            rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
+            offline_earned = int(clamped_time * rate_per_sec)
+            user["coins"] += offline_earned
 
-    user["last_seen"] = now
-    save_game_db(db)
-    
-    return {
-        "status": "ok",
-        "profile": user,
-        "offline_earned": offline_earned
-    }
+        user["last_seen"] = now
+        save_game_db(db)
+        
+        return {
+            "status": "ok",
+            "profile": user,
+            "offline_earned": offline_earned
+        }
 
 @app.post("/api/game/sync_tap")
 async def sync_tap(request: Request):
     data = await request.json()
-    user_id = str(data.get("user_id", "0"))
+    user_id = str(data.get("user_id", "default_guest")).strip()
     taps = int(data.get("taps", 0))
     
-    db = load_game_db()
-    user = get_user_profile(db, user_id)
-    
-    if taps > 0:
-        # Честный мультитач: начисляем баланс без штрафов и откатов
-        earned = taps * user["multi_tap"]
-        user["coins"] += earned
-        user["energy"] = max(0, user["energy"] - taps)
-        user["last_seen"] = int(time.time())
-        save_game_db(db)
+    async with DB_LOCK:
+        db = load_game_db()
+        user = get_user_profile(db, user_id)
         
-    return {"status": "ok", "server_energy": user["energy"]}
+        if taps > 0:
+            actual_taps = min(taps, user["energy"])
+            if actual_taps > 0:
+                earned = actual_taps * user["multi_tap"]
+                user["coins"] += earned
+                user["energy"] = max(0, user["energy"] - actual_taps)
+                user["last_seen"] = int(time.time())
+                save_game_db(db)
+                
+        return {
+            "status": "ok", 
+            "coins": user["coins"], 
+            "server_energy": user["energy"], 
+            "multi_tap": user["multi_tap"]
+        }
 
 @app.post("/api/game/buy")
 async def buy_item(request: Request):
     data = await request.json()
-    user_id = str(data.get("user_id", "0"))
+    user_id = str(data.get("user_id", "default_guest")).strip()
     item_id = str(data.get("item_id", ""))
     
-    db = load_game_db()
-    user = get_user_profile(db, user_id)
-    
-    if item_id == "multi_tap":
-        cost = int(200 * (1.8 ** (user["multi_tap"] - 1)))
-        if user["coins"] >= cost and user["multi_tap"] < 20:
-            user["coins"] -= cost
-            user["multi_tap"] += 1
-        else:
-            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+    async with DB_LOCK:
+        db = load_game_db()
+        user = get_user_profile(db, user_id)
+        
+        if item_id == "multi_tap":
+            cost = int(200 * (1.8 ** (user["multi_tap"] - 1)))
+            if user["coins"] >= cost and user["multi_tap"] < 20:
+                user["coins"] -= cost
+                user["multi_tap"] += 1
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-    elif item_id == "max_energy":
-        lvl = (user["max_energy"] - 1000) // 500
-        cost = int(150 * (1.6 ** lvl))
-        if user["coins"] >= cost and lvl < 20:
-            user["coins"] -= cost
-            user["max_energy"] += 500
-            user["energy"] = user["max_energy"]
-        else:
-            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        elif item_id == "max_energy":
+            lvl = (user["max_energy"] - 1000) // 500
+            cost = int(150 * (1.6 ** lvl))
+            if user["coins"] >= cost and lvl < 20:
+                user["coins"] -= cost
+                user["max_energy"] += 500
+                user["energy"] = user["max_energy"]
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-    elif item_id == "offline_miner":
-        lvl = user["offline_miner_lvl"]
-        cost = 3000 if lvl == 0 else int(3000 * (2.2 ** lvl))
-        if user["coins"] >= cost and lvl < 10:
-            user["coins"] -= cost
-            user["offline_miner_lvl"] += 1
-        else:
-            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        elif item_id == "offline_miner":
+            lvl = user["offline_miner_lvl"]
+            cost = 3000 if lvl == 0 else int(3000 * (2.2 ** lvl))
+            if user["coins"] >= cost and lvl < 10:
+                user["coins"] -= cost
+                user["offline_miner_lvl"] += 1
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-    elif item_id == "radar_slot":
-        if user["coins"] >= 5000:
-            user["coins"] -= 5000
-            user["radar_extra_slots"] += 1
-        else:
-            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        elif item_id == "radar_slot":
+            if user["coins"] >= 5000:
+                user["coins"] -= 5000
+                user["radar_extra_slots"] += 1
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-    elif item_id == "turbo_parse":
-        if user["coins"] >= 3500:
-            user["coins"] -= 3500
-            user["has_turbo"] = True
-        else:
-            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        elif item_id == "turbo_parse":
+            if user["coins"] >= 3500:
+                user["coins"] -= 3500
+                user["has_turbo"] = True
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-    elif item_id == "theme_cyberpunk":
-        if user["coins"] >= 40000 and "cyberpunk" not in user["unlocked_themes"]:
-            user["coins"] -= 40000
-            user["unlocked_themes"].append("cyberpunk")
-        else:
-            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        elif item_id == "theme_cyberpunk":
+            if user["coins"] >= 40000 and "cyberpunk" not in user["unlocked_themes"]:
+                user["coins"] -= 40000
+                user["unlocked_themes"].append("cyberpunk")
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-    elif item_id == "rank_legend":
-        if user["coins"] >= 100000:
-            user["coins"] -= 100000
-            user["rank"] = "👑 Легендарный Ловец"
-        else:
-            return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+        elif item_id == "rank_legend":
+            if user["coins"] >= 100000:
+                user["coins"] -= 100000
+                user["rank"] = "👑 Легендарный Ловец"
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-    user["last_seen"] = int(time.time())
-    save_game_db(db)
-    return {"status": "ok", "profile": user}
+        user["last_seen"] = int(time.time())
+        save_game_db(db)
+        return {"status": "ok", "profile": user}
 
 # =========================================================================
-# 🌐 ОСНОВНЫЕ РОУТЫ ГЕНЕРАТОРА И СТАТИКИ
+# 🌐 РОУТЫ ГЕНЕРАТОРА И СТАТИЧЕСКИХ ДАННЫХ
 # =========================================================================
 @app.get("/")
 async def read_root():
@@ -478,19 +486,11 @@ async def generate_username(
     finder_name: str = Query("Аноним"),
     finder_id: str = Query("0")
 ):
-    client_ip = request.client.host if request.client else "global"
-    now = time.time()
-    
-    if client_ip in USER_COOLDOWNS:
-        elapsed = now - USER_COOLDOWNS[client_ip]
-        if elapsed < COOLDOWN_SECONDS:
-            await asyncio.sleep(COOLDOWN_SECONDS - elapsed)
-    USER_COOLDOWNS[client_ip] = time.time()
-
     if len(GENERATED_HISTORY) > MAX_HISTORY_SIZE:
         GENERATED_HISTORY.clear()
 
-    for _ in range(15):
+    # Быстрый перебор до 6 попыток без искусственных пауз sleep
+    for _ in range(6):
         if mode == "prefix_master" and user_input.strip():
             generated = generate_prefix_master(user_input, category, position)
         elif mode == "translit":
@@ -512,15 +512,9 @@ async def generate_username(
                     "is_free": True, 
                     "evaluation": eval_data
                 }
-            await asyncio.sleep(0.08)
 
-    if mode == "prefix_master" and user_input.strip():
-        fallback_nick = generate_prefix_master(user_input, category, "suffix")
-    elif mode == "translit":
-        fallback_nick = generate_translit_brand()
-    else:
-        fallback_nick = generate_standard_brand(len_mode)
-
+    # Быстрый fallback если ни один не освободился
+    fallback_nick = generate_standard_brand(len_mode)
     is_free_fallback = await check_username_telethon(fallback_nick)
     eval_data = calculate_catch_score(fallback_nick, is_free_fallback)
     
@@ -540,13 +534,6 @@ async def generate_username(
 @app.get("/api/leaderboard")
 async def get_leaderboard(period: str = Query("all")):
     lb = load_leaderboard()
-    now = int(time.time())
-    if period == "day": 
-        lb = [x for x in lb if now - x.get("timestamp", 0) <= 86400]
-    elif period == "week": 
-        lb = [x for x in lb if now - x.get("timestamp", 0) <= 604800]
-    elif period == "month": 
-        lb = [x for x in lb if now - x.get("timestamp", 0) <= 2592000]
     return {"status": "ok", "leaderboard": lb[:1000]}
 
 @app.get("/api/radar/add")
