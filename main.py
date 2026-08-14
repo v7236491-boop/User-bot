@@ -7,7 +7,7 @@ import logging
 from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
@@ -144,10 +144,8 @@ def calculate_catch_score(username: str, is_available: bool) -> Dict[str, Any]:
     has_digits = any(char.isdigit() for char in username)
     has_underscore = "_" in username
 
-    # Проверка на брендовость / словарность
     is_brand = clean_name in TOP_BRANDS or clean_name in PURE_WORDS
 
-    # Проверка на консонантный стрик
     consecutive_consonants = 0
     max_consonants = 0
     for char in clean_name:
@@ -210,13 +208,11 @@ def generate_smart_username(
     elif len_mode == "7-8" and random.random() > 0.5:
         target_length = 8
 
-    # Шанс взять словарное слово при выключенном фильтре
     if not use_filter and random.random() < 0.25:
         base_word = random.choice(TOP_BRANDS + PURE_WORDS)
         if len(base_word) > target_length:
             base_word = base_word[:target_length]
     else:
-        # Слоговая генерация (чередование C-V)
         syllables = []
         is_consonant = random.choice([True, False])
         current_len = 0
@@ -230,7 +226,6 @@ def generate_smart_username(
             is_consonant = not is_consonant
         base_word = "".join(syllables)
 
-    # Модификаторы
     result = base_word
     if use_und and len(result) >= 4:
         pos = random.randint(2, len(result) - 2)
@@ -306,7 +301,6 @@ async def radar_worker():
                         except Exception as send_err:
                             logger.error(f"Не удалось отправить уведомление в бота: {send_err}")
                 else:
-                    # Оставляем на отслеживании
                     updated_items.append(item)
 
             if len(updated_items) != len(radar_items):
@@ -328,35 +322,37 @@ async def lifespan(app: FastAPI):
     ensure_db_files_exist()
     logger.info("Инициализация сервисов...")
 
-    # Инициализация бота
-    try:
-        tg_bot = Bot(token=BOT_TOKEN)
-        bot_info = await tg_bot.get_me()
-        logger.info(f"Aiogram бот подключен: @{bot_info.username}")
-    except Exception as e:
-        logger.warning(f"Не удалось запустить Aiogram бот (проверьте BOT_TOKEN): {e}")
+    if BOT_TOKEN and "ABC-DEF" not in BOT_TOKEN:
+        try:
+            tg_bot = Bot(token=BOT_TOKEN)
+            bot_info = await tg_bot.get_me()
+            logger.info(f"Aiogram бот подключен: @{bot_info.username}")
+        except Exception as e:
+            logger.warning(f"Не удалось запустить Aiogram бот: {e}")
+    else:
+        logger.warning("BOT_TOKEN не задан, бот пропущен.")
 
-    # Инициализация Telethon
-    try:
-        telethon_client = TelegramClient(
-            os.path.join(DATA_DIR, TG_SESSION_NAME),
-            TG_API_ID,
-            TG_API_HASH
-        )
-        await telethon_client.connect()
-        if not await telethon_client.is_user_authorized():
-            logger.warning("Telethon сессия не авторизована! Проверки могут быть ограничены.")
-        else:
-            logger.info("Telethon клиент успешно авторизован и готов к сканированию.")
-    except Exception as e:
-        logger.error(f"Ошибка запуска Telethon: {e}")
+    if TG_API_HASH != "your_api_hash_here":
+        try:
+            telethon_client = TelegramClient(
+                os.path.join(DATA_DIR, TG_SESSION_NAME),
+                TG_API_ID,
+                TG_API_HASH
+            )
+            await telethon_client.connect()
+            if not await telethon_client.is_user_authorized():
+                logger.warning("Telethon сессия не авторизована! Проверки могут быть ограничены.")
+            else:
+                logger.info("Telethon клиент успешно авторизован и готов к сканированию.")
+        except Exception as e:
+            logger.error(f"Ошибка запуска Telethon: {e}")
+    else:
+        logger.warning("TG_API_ID/TG_API_HASH не заданы, Telethon пропущен.")
 
-    # Запуск воркера радара
     worker_task = asyncio.create_task(radar_worker())
 
     yield
 
-    # Корректное завершение
     worker_task.cancel()
     if telethon_client and telethon_client.is_connected():
         await telethon_client.disconnect()
@@ -378,7 +374,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Модели запросов
 class SyncTapRequest(BaseModel):
     user_id: str
     taps: int = Field(..., ge=1, le=100)
@@ -394,7 +389,6 @@ class RadarAddRequest(BaseModel):
     username: str
 
 
-# Базовый рендер HTML
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
     index_path = os.path.join(DATA_DIR, "index.html")
@@ -405,12 +399,11 @@ async def serve_index():
     return HTMLResponse("<h2>Файл index.html не найден в корневой директории проекта.</h2>", status_code=404)
 
 
-# Эндпоинт генерации и валидации
 @app.get("/api/generate")
 async def api_generate_username(
-    platform: str = Query("telegram", regex="^(telegram|whatsapp)$"),
+    platform: str = Query("telegram", pattern="^(telegram|whatsapp)$"),
     use_filter: bool = Query(True),
-    len_mode: str = Query("5-6", regex="^(5-6|7-8)$"),
+    len_mode: str = Query("5-6", pattern="^(5-6|7-8)$"),
     use_num: bool = Query(False),
     use_und: bool = Query(False),
     finder_name: str = Query("Anonymous"),
@@ -439,7 +432,6 @@ async def api_generate_username(
                     }
                 )
         else:
-            # Эвристика для WhatsApp
             is_free = len(candidate) >= 5 and not candidate.startswith("_")
             status = "ok"
 
@@ -459,7 +451,6 @@ async def api_generate_username(
 
         checked_items.append(item_result)
 
-        # Если пойман свободный и редкий ник — фиксируем в лидерборде
         if is_free and score_data["score"] >= 55:
             leaderboard = await read_json_db(LEADERBOARD_DB_PATH)
             entry = {
@@ -472,7 +463,6 @@ async def api_generate_username(
                 "date": time.strftime("%Y-%m-%d %H:%M:%S")
             }
             leaderboard.insert(0, entry)
-            # Храним топ-1000
             await write_json_db_atomic(LEADERBOARD_DB_PATH, leaderboard[:1000])
 
         if is_free:
@@ -485,7 +475,6 @@ async def api_generate_username(
     }
 
 
-# Игровые эндпоинты
 @app.get("/api/game/state")
 async def get_game_state(user_id: str = Query(...)):
     game_db = await read_json_db(GAME_DB_PATH)
@@ -493,7 +482,6 @@ async def get_game_state(user_id: str = Query(...)):
 
     user_state = game_db.get(user_id)
     if not user_state:
-        # Новый профиль
         user_state = {
             "coins": 0.0,
             "energy": 1000,
@@ -508,7 +496,6 @@ async def get_game_state(user_id: str = Query(...)):
         await write_json_db_atomic(GAME_DB_PATH, game_db)
         return {"state": user_state, "offline_earned": 0.0}
 
-    # Расчет энергии
     time_diff = now - user_state.get("last_active", now)
     energy_recovery = int(time_diff * 1.0)
     current_energy = min(
@@ -517,7 +504,6 @@ async def get_game_state(user_id: str = Query(...)):
     )
     user_state["energy"] = current_energy
 
-    # Расчет оффлайн-дохода (до 3 часов = 10800 сек)
     capped_offline_time = min(time_diff, 10800.0)
     miner_lvl = user_state.get("offline_miner", 0)
     rate_per_sec = OFFLINE_RATES.get(miner_lvl, 0.0)
@@ -545,7 +531,6 @@ async def sync_tap(payload: SyncTapRequest):
     if not user_state:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    # Актуализация энергии
     time_diff = now - user_state.get("last_active", now)
     current_energy = min(
         user_state.get("max_energy", 1000),
@@ -591,7 +576,6 @@ async def buy_upgrade(payload: BuyUpgradeRequest):
     item_id = payload.item_id
     coins = user_state.get("coins", 0.0)
 
-    # Логика покупок
     if item_id == "multi_tap":
         lvl = user_state.get("multi_tap", 1)
         if lvl >= 20:
@@ -641,7 +625,6 @@ async def buy_upgrade(payload: BuyUpgradeRequest):
     return {"success": True, "state": user_state}
 
 
-# Эндпоинты Радара и Лидерборда
 @app.get("/api/leaderboard")
 async def get_leaderboard():
     data = await read_json_db(LEADERBOARD_DB_PATH)
@@ -668,4 +651,5 @@ async def add_to_radar(payload: RadarAddRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main.py:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
