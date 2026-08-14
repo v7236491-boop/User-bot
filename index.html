@@ -11,76 +11,76 @@
 
   <style>
     /* ==========================================================================
-       1. ПЕРЕМЕННЫЕ И ДИЗАЙН-СИСТЕМА (LIQUID GLASSMORPHISM)
+       1. ДИЗАЙН-СИСТЕМА LIQUID CYBERPUNK GLASSMORPHISM
        ========================================================================== */
     :root {
       --bg-dark: #060b08;
-      --panel-bg: rgba(13, 23, 18, 0.72);
-      --panel-border: rgba(41, 199, 95, 0.22);
       --primary: #29c75f;
-      --primary-glow: rgba(41, 199, 95, 0.45);
-      --text-main: #f3fdf6;
-      --text-muted: #829a8c;
-      --danger: #ff3b5c;
-      --danger-glow: rgba(255, 59, 92, 0.4);
-      --accent-blue: #0098ea;
-      --accent-gold: #e5b83b;
-      --radius-lg: 20px;
-      --radius-md: 14px;
-      --radius-sm: 8px;
+      --primary-glow: rgba(41, 199, 95, 0.22);
+      --glass-bg: rgba(18, 25, 21, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-main: #ffffff;
+      --text-muted: #829288;
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.35);
+      --accent-blue: #3b82f6;
+      --accent-gold: #eab308;
+      --accent-purple: #a855f7;
+      --gold-pure: #ffd700;
+      --gold-glow: rgba(255, 215, 0, 0.4);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
       --blur-val: 18px;
-      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Темы промокодов */
+    /* Динамические темы промокодов */
     body.theme-matrix {
       --primary: #00ff66;
-      --primary-glow: rgba(0, 255, 102, 0.5);
-      --panel-bg: rgba(2, 20, 8, 0.82);
-      --panel-border: rgba(0, 255, 102, 0.35);
+      --primary-glow: rgba(0, 255, 102, 0.35);
+      --glass-bg: rgba(2, 20, 8, 0.85);
+      --glass-border: rgba(0, 255, 102, 0.25);
       --font-stack: "Courier New", Courier, monospace;
     }
     body.theme-durov {
       --primary: #24a1de;
-      --primary-glow: rgba(36, 161, 222, 0.5);
-      --panel-bg: rgba(10, 24, 38, 0.8);
-      --panel-border: rgba(36, 161, 222, 0.3);
+      --primary-glow: rgba(36, 161, 222, 0.35);
+      --glass-bg: rgba(8, 22, 36, 0.85);
+      --glass-border: rgba(36, 161, 222, 0.25);
     }
     body.theme-gold {
-      --primary: #f5c842;
-      --primary-glow: rgba(245, 200, 66, 0.5);
-      --panel-bg: rgba(26, 21, 8, 0.82);
-      --panel-border: rgba(245, 200, 66, 0.35);
+      --primary: #ffd700;
+      --primary-glow: rgba(255, 215, 0, 0.4);
+      --glass-bg: rgba(28, 22, 6, 0.85);
+      --glass-border: rgba(255, 215, 0, 0.3);
     }
     body.theme-cyberpunk {
       --primary: #ff7700;
-      --primary-glow: rgba(255, 119, 0, 0.55);
-      --panel-bg: rgba(26, 10, 2, 0.85);
-      --panel-border: rgba(255, 119, 0, 0.4);
-      --accent-blue: #00f0ff;
+      --primary-glow: rgba(255, 119, 0, 0.4);
+      --glass-bg: rgba(28, 11, 2, 0.88);
+      --glass-border: rgba(255, 119, 0, 0.3);
     }
     body.theme-nebula {
       --primary: #a855f7;
-      --primary-glow: rgba(168, 85, 247, 0.5);
-      --panel-bg: rgba(19, 10, 31, 0.82);
-      --panel-border: rgba(168, 85, 247, 0.35);
+      --primary-glow: rgba(168, 85, 247, 0.35);
+      --glass-bg: rgba(20, 10, 32, 0.85);
+      --glass-border: rgba(168, 85, 247, 0.25);
     }
     body.theme-terminal {
       --primary: #33ff33;
-      --primary-glow: rgba(51, 255, 51, 0.4);
-      --panel-bg: rgba(0, 0, 0, 0.92);
-      --panel-border: rgba(51, 255, 51, 0.6);
+      --primary-glow: rgba(51, 255, 51, 0.3);
+      --glass-bg: rgba(0, 0, 0, 0.94);
+      --glass-border: rgba(51, 255, 51, 0.5);
       --font-stack: "Lucida Console", Monaco, monospace;
     }
     body.theme-vaporwave {
       --primary: #ff71ce;
-      --primary-glow: rgba(255, 113, 206, 0.5);
-      --panel-bg: rgba(20, 8, 30, 0.85);
-      --panel-border: rgba(1, 205, 254, 0.4);
-      --accent-blue: #01cdfe;
+      --primary-glow: rgba(255, 113, 206, 0.4);
+      --glass-bg: rgba(22, 8, 30, 0.88);
+      --glass-border: rgba(1, 205, 254, 0.35);
     }
 
-    /* Базовый сброс */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -101,25 +101,47 @@
       justify-content: flex-start;
       overflow-x: hidden;
       overflow-y: auto;
-      padding: 16px 14px 90px 14px;
+      padding: 16px 14px 110px 14px;
       position: relative;
     }
 
-    /* Фоновые холсты эффектов */
-    #fog-canvas, #emoji-canvas, #secret-canvas {
+    /* Фоновые холсты */
+    #fog-canvas {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100vw;
       height: 100vh;
       pointer-events: none;
-      z-index: 1;
+      z-index: -10;
     }
-    #secret-canvas { z-index: 2; }
+    #secret-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: -8;
+    }
+    #emoji-layer {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: -5;
+      overflow: hidden;
+    }
+    .floating-emoji {
+      position: absolute;
+      font-size: 24px;
+      opacity: 0.35;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.2));
+      will-change: transform;
+    }
 
     .app-container {
       width: 100%;
-      max-width: 480px;
+      max-width: 440px;
       position: relative;
       z-index: 10;
       display: flex;
@@ -128,292 +150,406 @@
     }
 
     /* ==========================================================================
-       2. ШАПКА И СТАТУС БАРА
+       2. ГЛАВНЫЙ ЭКРАН (ГЕНЕРАТОР)
        ========================================================================== */
     .header-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
+      width: 100%;
+    }
+    .header-btn {
+      background: var(--glass-bg);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(var(--blur-val));
       -webkit-backdrop-filter: blur(var(--blur-val));
-      border-radius: var(--radius-lg);
-      padding: 12px 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    }
-
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .user-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--primary);
-      color: #000;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 12px var(--primary-glow);
-    }
-    .user-meta {
-      display: flex;
-      flex-direction: column;
-    }
-    .user-name {
-      font-size: 14px;
-      font-weight: 700;
-    }
-    .user-badge {
-      font-size: 11px;
-      color: var(--primary);
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .btn-icon {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--panel-border);
       color: var(--text-main);
-      width: 38px;
-      height: 38px;
-      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 16px;
+      gap: 6px;
       transition: all 0.2s ease;
     }
-    .btn-icon:active {
-      transform: scale(0.92);
+    .header-btn:active {
+      transform: scale(0.94);
       border-color: var(--primary);
-      box-shadow: 0 0 10px var(--primary-glow);
     }
 
-    /* ==========================================================================
-       3. КАРТОЧКА ГЛАВНОГО РЕЗУЛЬТАТА И СКАНЕРА
-       ========================================================================== */
-    .scanner-card {
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
+    .platform-switcher {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(var(--blur-val));
+      -webkit-backdrop-filter: blur(var(--blur-val));
+      border-radius: var(--radius-md);
+      padding: 4px;
+      display: flex;
+      width: 100%;
+      gap: 4px;
+    }
+    .platform-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .platform-tab.active {
+      background: var(--primary-glow);
+      color: var(--primary);
+      box-shadow: 0 0 16px var(--primary-glow);
+      border: 1px solid var(--primary);
+    }
+
+    .result-box {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
       backdrop-filter: blur(var(--blur-val));
       -webkit-backdrop-filter: blur(var(--blur-val));
       border-radius: var(--radius-lg);
-      padding: 24px 18px;
+      padding: 30px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 16px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      gap: 12px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
       position: relative;
-      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
-    .scanner-card::before {
-      content: "";
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 65%);
-      opacity: 0.12;
-      pointer-events: none;
+    .result-box.golden-mode {
+      border-color: var(--gold-pure);
+      box-shadow: 0 0 35px var(--gold-glow);
+      animation: goldPulse 1.5s infinite alternate ease-in-out;
+    }
+    @keyframes goldPulse {
+      0% { box-shadow: 0 0 20px var(--gold-glow); }
+      100% { box-shadow: 0 0 45px rgba(255, 215, 0, 0.6); }
     }
 
-    .score-badge {
-      display: inline-flex;
+    .slot-machine-text {
+      font-family: "SF Mono", "Courier New", Courier, monospace;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      word-break: break-all;
+      color: #fff;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s ease;
+    }
+
+    .fragment-badge {
+      display: none;
       align-items: center;
       gap: 6px;
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      background: rgba(41, 199, 95, 0.12);
-      border: 1px solid var(--primary);
-      color: var(--primary);
-    }
-    .score-badge.tier-sss {
-      background: rgba(229, 184, 59, 0.15);
-      border-color: var(--accent-gold);
+      background: rgba(234, 179, 8, 0.15);
+      border: 1px solid rgba(234, 179, 8, 0.3);
       color: var(--accent-gold);
-      box-shadow: 0 0 14px rgba(229, 184, 59, 0.4);
+      box-shadow: 0 0 12px rgba(234, 179, 8, 0.2);
     }
-    .score-badge.tier-f {
-      background: rgba(255, 59, 92, 0.15);
-      border-color: var(--danger);
-      color: var(--danger);
+    .fragment-badge.visible {
+      display: inline-flex;
     }
 
-    .username-display {
-      font-size: 26px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      word-break: break-all;
-      color: #fff;
-      text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-      cursor: pointer;
-      transition: transform 0.15s;
-    }
-    .username-display:active {
-      transform: scale(0.96);
-    }
-
-    .val-estimate {
-      font-size: 13px;
+    .status-text {
+      font-size: 14px;
       color: var(--text-muted);
-    }
-    .val-estimate b {
-      color: var(--text-main);
+      font-weight: 500;
     }
 
-    .scanner-controls {
-      display: grid;
+    .quick-actions {
+      display: none;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       width: 100%;
+      margin-top: 6px;
     }
-
-    .btn-main {
-      grid-column: span 2;
-      background: var(--primary);
-      color: #041007;
-      font-weight: 800;
-      font-size: 16px;
-      padding: 16px;
-      border-radius: var(--radius-md);
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 20px var(--primary-glow);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+    .quick-actions.visible {
+      display: grid;
     }
-    .btn-main:active {
-      transform: scale(0.97);
-      box-shadow: 0 2px 10px var(--primary-glow);
-    }
-
-    .btn-sub {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--panel-border);
-      color: var(--text-main);
+    .btn-quick-claim {
+      background: rgba(41, 199, 95, 0.15);
+      border: 1px solid var(--primary);
+      color: var(--primary);
       padding: 12px;
       border-radius: var(--radius-md);
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
     }
-    .btn-sub:active {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--primary);
-    }
-
-    /* ==========================================================================
-       4. НАВИГАЦИОННОЕ МЕНЮ БЫСТРОГО ДОСТУПА
-       ========================================================================== */
-    .quick-nav {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      width: 100%;
-    }
-    .nav-btn {
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      backdrop-filter: blur(var(--blur-val));
-      -webkit-backdrop-filter: blur(var(--blur-val));
+    .btn-quick-share {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid var(--accent-blue);
+      color: var(--accent-blue);
+      padding: 12px;
       border-radius: var(--radius-md);
-      padding: 12px 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-quick-claim:active, .btn-quick-share:active {
+      transform: scale(0.95);
+    }
+
+    .btn-generate {
+      width: 100%;
+      background: var(--primary);
+      color: #041007;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 18px;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 25px var(--primary-glow);
+      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-generate:active:not(:disabled) {
+      transform: scale(0.94);
+    }
+    .btn-generate:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .ripple-wave {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.6);
+      transform: scale(0);
+      animation: rippleAnim 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    .floating-bottom-bar {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 28px);
+      max-width: 440px;
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      z-index: 50;
+    }
+    .pill-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(var(--blur-val));
+      -webkit-backdrop-filter: blur(var(--blur-val));
+      color: var(--text-main);
+      padding: 12px 14px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 600;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
-    .nav-btn .icon {
-      font-size: 18px;
+    .pill-achieve {
+      border-color: rgba(41, 199, 95, 0.4);
+      flex: 1;
     }
-    .nav-btn:active, .nav-btn.active {
-      color: var(--primary);
-      border-color: var(--primary);
-      box-shadow: 0 0 12px var(--primary-glow);
+    .pill-top {
+      border-color: rgba(234, 179, 8, 0.4);
+      flex: 1;
+    }
+    .pill-mining-main {
+      flex: 2;
+      background: linear-gradient(135deg, #1fa84f, #0088cc);
+      color: #fff;
+      border: none;
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 4px 20px rgba(41, 199, 95, 0.4);
+      animation: shimmerGlow 2.5s infinite alternate ease-in-out;
+    }
+    @keyframes shimmerGlow {
+      0% { box-shadow: 0 0 12px rgba(41, 199, 95, 0.3); }
+      100% { box-shadow: 0 0 26px rgba(0, 152, 234, 0.6); }
+    }
+    .pill-btn:active {
+      transform: scale(0.93);
     }
 
     /* ==========================================================================
-       5. КНОПКА ЗАПУСКА 3D КЛИКЕРА COSMIC CORE
+       3. 3D КЛИКЕР HUD И СЦЕНА
        ========================================================================== */
-    .game-banner {
-      background: linear-gradient(135deg, rgba(41, 199, 95, 0.2), rgba(0, 152, 234, 0.2));
-      border: 1px solid var(--panel-border);
-      backdrop-filter: blur(var(--blur-val));
-      -webkit-backdrop-filter: blur(var(--blur-val));
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
+    #clicker-overlay {
+      position: fixed;
+      inset: 0;
+      background: #010306;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
       justify-content: space-between;
+      padding: 16px;
+      touch-action: none;
+    }
+    #clicker-overlay.active {
+      display: flex;
+    }
+    .clicker-top-hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .btn-hud-back {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s;
     }
-    .game-banner:active {
-      transform: scale(0.98);
+    .coins-counter-large {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--gold-pure);
+      text-shadow: 0 0 16px var(--gold-glow);
     }
-    .game-banner-text h3 {
-      font-size: 16px;
+    .defense-badge-container {
+      align-self: center;
+      margin-top: 10px;
+      z-index: 10;
+    }
+    .defense-badge {
+      background: var(--glass-bg);
+      border: 1px solid var(--accent-blue);
+      backdrop-filter: blur(10px);
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13px;
       font-weight: 800;
       color: #fff;
-      margin-bottom: 4px;
+      box-shadow: 0 0 14px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s;
     }
-    .game-banner-text p {
-      font-size: 12px;
-      color: var(--text-muted);
+    .defense-badge.chains-tier {
+      border-color: #828b94;
+      box-shadow: 0 0 14px rgba(130, 139, 148, 0.4);
     }
-    .game-badge {
-      background: var(--primary);
-      color: #000;
-      font-size: 12px;
-      font-weight: 900;
-      padding: 8px 14px;
+    .defense-badge.core-tier {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
+      color: var(--primary);
+    }
+
+    #three-viewport {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+    }
+
+    .clicker-bottom-hud {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 10;
+      margin-bottom: 8px;
+    }
+    .energy-bar-wrap {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      height: 22px;
       border-radius: 12px;
-      box-shadow: 0 0 14px var(--primary-glow);
+      overflow: hidden;
+      position: relative;
+    }
+    .energy-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent-blue));
+      box-shadow: 0 0 12px var(--primary-glow);
+      transition: width 0.15s ease;
+    }
+    .energy-bar-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    }
+    .clicker-actions-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .btn-hud-action {
+      flex: 1;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .tap-damage-num {
+      position: absolute;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--gold-pure);
+      text-shadow: 0 0 10px var(--gold-glow);
+      pointer-events: none;
+      animation: damageRise 0.7s forwards ease-out;
+      z-index: 20;
+    }
+    @keyframes damageRise {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
     }
 
     /* ==========================================================================
-       6. МОДАЛЬНЫЕ ОКНА (ОБЩАЯ СИСТЕМА)
+       4. МОДАЛЬНЫЕ ОКНА И АККОРДЕОНЫ
        ========================================================================== */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      inset: 0;
       background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 100;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 200;
       display: none;
       align-items: flex-end;
       justify-content: center;
@@ -424,36 +560,26 @@
       display: flex;
       opacity: 1;
     }
-
     .modal-sheet {
       width: 100%;
-      max-width: 500px;
-      max-height: 88vh;
-      background: var(--bg-dark);
-      border: 1px solid var(--panel-border);
-      border-top-left-radius: 24px;
-      border-top-right-radius: 24px;
-      padding: 20px 18px 32px 18px;
+      max-width: 480px;
+      max-height: 85vh;
+      background: #080f0b;
+      border: 1px solid var(--glass-border);
+      border-top-left-radius: var(--radius-lg);
+      border-top-right-radius: var(--radius-lg);
+      padding: 20px 18px 36px 18px;
       display: flex;
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
       transform: translateY(100%);
       transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
-      position: relative;
     }
     .modal-overlay.active .modal-sheet {
       transform: translateY(0);
     }
 
-    .modal-handle {
-      width: 44px;
-      height: 5px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      align-self: center;
-      margin-bottom: 4px;
-    }
     .modal-header {
       display: flex;
       justify-content: space-between;
@@ -462,50 +588,46 @@
     .modal-title {
       font-size: 18px;
       font-weight: 800;
-      color: #fff;
     }
-    .modal-close {
+    .modal-close-round {
       background: rgba(255, 255, 255, 0.08);
-      border: none;
-      color: var(--text-main);
+      border: 1px solid var(--glass-border);
+      color: #fff;
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      font-size: 16px;
       cursor: pointer;
-    }
-
-    /* Настройки / Формы */
-    .form-group {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .form-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-    .form-input, .form-select {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--panel-border);
-      color: #fff;
-      padding: 12px 14px;
-      border-radius: var(--radius-md);
+      align-items: center;
+      justify-content: center;
       font-size: 14px;
-      outline: none;
-      width: 100%;
-    }
-    .form-input:focus, .form-select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 10px var(--primary-glow);
     }
 
+    /* Навигационные ссылки внутри настроек */
+    .btn-link-action {
+      width: 100%;
+      background: var(--glass-bg);
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text-main);
+      border: 1px solid var(--glass-border);
+      transition: all 0.2s;
+    }
+    .btn-link-radar { border-color: rgba(41, 199, 95, 0.4); color: var(--primary); }
+    .btn-link-secret { border-color: rgba(168, 85, 247, 0.4); color: var(--accent-purple); }
+
+    /* Переключатели и раскрывающиеся меню */
     .switch-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
+      padding: 12px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
     .switch-label {
@@ -517,15 +639,11 @@
       width: 46px;
       height: 26px;
     }
-    .switch-toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
+    .switch-toggle input { opacity: 0; width: 0; height: 0; }
     .switch-slider {
       position: absolute;
       cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
+      inset: 0;
       background-color: rgba(255, 255, 255, 0.15);
       transition: 0.3s;
       border-radius: 34px;
@@ -541,174 +659,163 @@
       transition: 0.3s;
       border-radius: 50%;
     }
-    input:checked + .switch-slider {
-      background-color: var(--primary);
+    input:checked + .switch-slider { background-color: var(--primary); }
+    input:checked + .switch-slider:before { transform: translateX(20px); }
+
+    .accordion-menu {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    input:checked + .switch-slider:before {
-      transform: translateX(20px);
+    .accordion-menu.open {
+      display: flex;
     }
 
-    /* ==========================================================================
-       7. ИСТОРИЯ И СВАЙП-КАРТОЧКИ
-       ========================================================================== */
-    .history-list, .leaderboard-list, .shop-grid, .achieve-list {
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .palette-color {
+      width: 100%;
+      height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    .palette-color.active {
+      border-color: #fff;
+    }
+
+    .form-group {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 6px;
     }
-    .swipe-container {
+    .form-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .form-input, .form-select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      outline: none;
+    }
+
+    /* Свайп-элементы истории */
+    .history-card-wrap {
       position: relative;
       overflow: hidden;
       border-radius: var(--radius-md);
+      margin-bottom: 8px;
       touch-action: pan-y;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
     }
-    .swipe-bg {
+    .swipe-indicator-bg {
       position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 100%;
+      inset: 0;
       display: flex;
       align-items: center;
       padding: 0 20px;
-      font-size: 16px;
       font-weight: 800;
+      font-size: 16px;
       color: #fff;
     }
-    .swipe-bg.bg-right {
-      background: var(--danger);
+    .swipe-bg-delete {
+      background: rgba(239, 68, 68, 0.45);
       justify-content: flex-start;
     }
-    .swipe-bg.bg-left {
-      background: var(--accent-blue);
+    .swipe-bg-share {
+      background: rgba(56, 189, 248, 0.45);
       justify-content: flex-end;
     }
-    .swipe-item {
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      padding: 14px 16px;
+    .history-card-front {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-left: 4px solid var(--primary);
+      padding: 14px;
+      border-radius: var(--radius-md);
       position: relative;
       z-index: 2;
       display: flex;
       justify-content: space-between;
       align-items: center;
       transition: transform 0.1s ease-out;
-      border-radius: var(--radius-md);
       cursor: pointer;
     }
-    .swipe-item.collapsed {
-      height: 0 !important;
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-      margin: 0 !important;
+    .history-card-wrap.collapsed {
+      max-height: 0 !important;
       opacity: 0 !important;
+      margin-bottom: 0 !important;
+      padding: 0 !important;
       border: none !important;
-      transition: all 0.3s ease;
     }
 
-    /* ==========================================================================
-       8. МОДАЛКА 3D ИГРЫ «COSMIC CORE TYCOON»
-       ========================================================================== */
-    #modal-game .modal-sheet {
-      height: 94vh;
-      max-height: 94vh;
-      padding: 12px;
-      background: #020503;
-    }
-    .game-viewport {
-      width: 100%;
-      flex-grow: 1;
-      position: relative;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      background: radial-gradient(circle, #0c1810 0%, #020503 100%);
-      border: 1px solid var(--panel-border);
-      touch-action: none;
-    }
-    #three-canvas-container {
-      width: 100%;
-      height: 100%;
-    }
-    .game-hud {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
+    /* Лидерборд и карточки достижений */
+    .top-item-row {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 5;
-      pointer-events: none;
+      margin-bottom: 8px;
     }
-    .hud-stat {
-      background: rgba(0, 0, 0, 0.65);
-      border: 1px solid var(--panel-border);
-      backdrop-filter: blur(8px);
-      padding: 8px 14px;
-      border-radius: 20px;
+    .achieve-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 14px;
+      border-radius: var(--radius-md);
       display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      font-weight: 800;
-      color: #fff;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
     }
-    .hud-stat b {
-      color: var(--primary);
+    .achieve-card.unlocked {
+      border-color: rgba(41, 199, 95, 0.4);
+      box-shadow: 0 0 12px rgba(41, 199, 95, 0.15);
     }
-    .shield-health-bar {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
-      height: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      z-index: 5;
-    }
-    .shield-fill {
-      height: 100%;
+    .achieve-bar-wrap {
       width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .achieve-bar-fill {
+      height: 100%;
       background: var(--primary);
-      transition: width 0.1s linear;
-      box-shadow: 0 0 10px var(--primary-glow);
+      box-shadow: 0 0 8px var(--primary-glow);
     }
 
-    /* Всплывающий урон */
-    .floating-damage {
-      position: absolute;
-      font-size: 20px;
-      font-weight: 900;
-      color: var(--primary);
-      text-shadow: 0 0 8px var(--primary-glow);
-      pointer-events: none;
-      animation: floatUp 0.7s forwards ease-out;
-      z-index: 20;
-    }
-    @keyframes floatUp {
-      0% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-50px) scale(1.4); }
-    }
-
-    /* Тост уведомлений */
+    /* Тост обратной связи */
     .toast-msg {
       position: fixed;
-      bottom: 24px;
+      top: 24px;
       left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--panel-bg);
+      transform: translateX(-50%) translateY(-60px);
+      background: #0d1712;
       border: 1px solid var(--primary);
       color: #fff;
-      padding: 10px 20px;
+      padding: 10px 22px;
       border-radius: 30px;
       font-size: 13px;
       font-weight: 700;
       backdrop-filter: blur(12px);
-      z-index: 1000;
+      z-index: 300;
       opacity: 0;
       transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
       pointer-events: none;
     }
     .toast-msg.show {
@@ -719,243 +826,274 @@
 </head>
 <body>
 
-  <!-- Фоновые холсты эффектов -->
+  <!-- 🌌 ФОНОВЫЕ СЛОИ -->
   <canvas id="fog-canvas"></canvas>
-  <canvas id="emoji-canvas"></canvas>
   <canvas id="secret-canvas"></canvas>
+  <div id="emoji-layer"></div>
 
-  <!-- Главный контейнер Mini App -->
+  <!-- 📱 ГЛАВНЫЙ ЭКРАН -->
   <div class="app-container">
 
-    <!-- 1. Верхняя панель профиля -->
+    <!-- Верхняя панель -->
     <header class="header-bar">
-      <div class="user-profile">
-        <div class="user-avatar" id="ui-avatar">U</div>
-        <div class="user-meta">
-          <span class="user-name" id="ui-username">Загрузка...</span>
-          <span class="user-badge" id="ui-rank">Новичок • 0 TON</span>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button class="btn-icon" id="btn-open-shop" title="Магазин">🛒</button>
-        <button class="btn-icon" id="btn-open-settings" title="Настройки">⚙️</button>
-      </div>
+      <button class="header-btn" id="btn-open-history">📜 История</button>
+      <button class="header-btn" id="btn-open-settings">⚙️ Настройки</button>
     </header>
 
-    <!-- 2. Главная карточка Сканера -->
-    <section class="scanner-card">
-      <div class="score-badge tier-sss" id="card-tier">🔥 SSS+ (100-500+ TON)</div>
-      <div class="username-display" id="card-username" title="Нажмите, чтобы скопировать">@durov</div>
-      <div class="val-estimate" id="card-desc">Статус: <b style="color:var(--primary);">СВОБОДЕН ✅</b></div>
+    <!-- Переключатель платформ -->
+    <div class="platform-switcher">
+      <div class="platform-tab active" id="tab-tg" onclick="setPlatform('telegram')">Telegram</div>
+      <div class="platform-tab" id="tab-wa" onclick="setPlatform('whatsapp')">WhatsApp</div>
+    </div>
 
-      <div class="scanner-controls">
-        <button class="btn-main" id="btn-scan-action">⚡ НАЙТИ РЕДКИЙ НИК</button>
-        <button class="btn-sub" id="btn-add-radar">📡 В радар</button>
-        <button class="btn-sub" id="btn-share-tg">✈️ Поделиться</button>
+    <!-- Поле отображения результата -->
+    <section class="result-box" id="result-box">
+      <div class="fragment-badge" id="fragment-badge">💎 Fragment: ~150 TON</div>
+      <div class="slot-machine-text" id="slot-text">@hunter</div>
+      <div class="status-text" id="status-text">Нажмите «Сгенерировать», чтобы начать поиск</div>
+
+      <div class="quick-actions" id="quick-actions">
+        <button class="btn-quick-claim" id="btn-quick-claim">🚀 Занять</button>
+        <button class="btn-quick-share" id="btn-quick-share">📲 Поделиться</button>
       </div>
     </section>
 
-    <!-- 3. Баннер перехода в 3D Кликер Cosmic Core -->
-    <section class="game-banner" id="btn-open-game">
-      <div class="game-banner-text">
-        <h3>🌍 Cosmic Core Tycoon 3D</h3>
-        <p>Кликай ядро, ломай цепи и добывай монеты</p>
-      </div>
-      <div class="game-badge" id="hud-coins-banner">🪙 0</div>
-    </section>
+    <!-- Главная кнопка действия -->
+    <button class="btn-generate" id="btn-generate">Сгенерировать</button>
 
-    <!-- 4. Навигационные вкладки -->
-    <nav class="quick-nav">
-      <div class="nav-btn" id="nav-history">
-        <span class="icon">📜</span>
-        <span>История</span>
-      </div>
-      <div class="nav-btn" id="nav-leaderboard">
-        <span class="icon">🏆</span>
-        <span>Топ-1000</span>
-      </div>
-      <div class="nav-btn" id="nav-radar">
-        <span class="icon">📡</span>
-        <span>Радар</span>
-      </div>
-      <div class="nav-btn" id="nav-achieve">
-        <span class="icon">🎖️</span>
-        <span>Ачивки</span>
-      </div>
-    </nav>
+  </div>
 
+  <!-- 🧭 ПЛАВАЮЩАЯ НИЖНЯЯ ПАНЕЛЬ -->
+  <footer class="floating-bottom-bar">
+    <button class="pill-btn pill-achieve" id="btn-open-achieve">🏆 0/100</button>
+    <button class="pill-btn pill-mining-main" id="btn-open-clicker">⚡ Майнинг 3D</button>
+    <button class="pill-btn pill-top" id="btn-open-top">📊 Топ</button>
+  </footer>
+
+  <!-- 🔮 3D КЛИКЕР OVERLAY -->
+  <div id="clicker-overlay">
+    <div class="clicker-top-hud">
+      <button class="btn-hud-back" id="btn-close-clicker">◀ Выход</button>
+      <div class="coins-counter-large" id="clicker-coins-text">🟡 0</div>
+    </div>
+
+    <div class="defense-badge-container">
+      <div class="defense-badge" id="defense-badge">🛡️ Купол Сот (100%)</div>
+    </div>
+
+    <div id="three-viewport"></div>
+
+    <div class="clicker-bottom-hud">
+      <div class="energy-bar-wrap">
+        <div class="energy-bar-fill" id="energy-fill"></div>
+        <div class="energy-bar-text" id="energy-text">⚡ Энергия 1000 / 1000</div>
+      </div>
+      <div class="clicker-actions-row">
+        <button class="btn-hud-action" id="btn-clicker-shop">🛒 Магазин</button>
+        <button class="btn-hud-action" id="btn-clicker-hunter">👑 Ловец</button>
+      </div>
+    </div>
   </div>
 
   <!-- ==========================================================================
-       9. ВСЕ 7 МОДАЛЬНЫХ ОКОН ПРИЛОЖЕНИЯ
+       🗂️ 9 МОДАЛЬНЫХ ОКОН
        ========================================================================== -->
 
-  <!-- Модалка 1: Настройки -->
+  <!-- 1. Модалка: Настройки -->
   <div class="modal-overlay" id="modal-settings">
     <div class="modal-sheet">
-      <div class="modal-handle"></div>
       <div class="modal-header">
-        <h3 class="modal-title">⚙️ Настройки сканера</h3>
-        <button class="modal-close" data-close="modal-settings">✕</button>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">Платформа для поиска</label>
-        <select class="form-select" id="cfg-platform">
-          <option value="telegram">Telegram (@username)</option>
-          <option value="whatsapp">WhatsApp (wa.me)</option>
-        </select>
+        <h3 class="modal-title">⚙️ Настройки и фильтры</h3>
+        <button class="modal-close-round" onclick="closeModal('modal-settings')">✕</button>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Длина генерируемого ника</label>
-        <select class="form-select" id="cfg-len">
-          <option value="5-6">Короткие (5–6 букв)</option>
-          <option value="7-8">Средние (7–8 букв)</option>
-        </select>
+      <div class="btn-link-action btn-link-radar" id="link-to-radar">
+        <span>🎯 Радар (Уведомление в ЛС)</span>
+        <span>→</span>
       </div>
 
+      <div class="btn-link-action btn-link-secret" id="link-to-secret">
+        <span>🔑 Ввести секретный код</span>
+        <span>→</span>
+      </div>
+
+      <!-- Внешний вид -->
       <div class="switch-row">
-        <span class="switch-label">Красивый слоговой фильтр</span>
+        <span class="switch-label">Внешний вид</span>
         <label class="switch-toggle">
-          <input type="checkbox" id="cfg-filter" checked>
+          <input type="checkbox" id="toggle-custom-menu">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <div class="accordion-menu" id="custom-menu">
+        <div class="form-label">Палитра тем оформления:</div>
+        <div class="palette-grid" id="palette-grid"></div>
+        <div class="form-group" style="margin-top:6px;">
+          <label class="form-label">Количество тумана: <span id="fog-val-text">5</span></label>
+          <input type="range" min="2" max="15" value="5" id="cfg-fog-range">
+        </div>
+        <div class="switch-row" style="padding:4px 0; border:none;">
+          <span class="switch-label" style="font-size:13px;">Летающие иконки</span>
+          <label class="switch-toggle">
+            <input type="checkbox" id="toggle-emojis" checked>
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Эмодзи (через запятую):</label>
+          <input type="text" class="form-input" id="cfg-emojis" value="🔥, ⚡, 💎, 🚀, ✨">
+        </div>
+        <button class="header-btn" style="justify-content:center; margin-top:4px;" id="btn-reset-appearance">↺ Сбросить вид</button>
+      </div>
+
+      <!-- Автопарсер -->
+      <div class="switch-row">
+        <span class="switch-label">Автопарсер (непрерывно)</span>
+        <label class="switch-toggle">
+          <input type="checkbox" id="toggle-autoparse">
           <span class="switch-slider"></span>
         </label>
       </div>
 
+      <!-- Фильтр генерации -->
       <div class="switch-row">
-        <span class="switch-label">Добавлять цифры в конец (1-99)</span>
+        <span class="switch-label">Фильтр генерации</span>
         <label class="switch-toggle">
-          <input type="checkbox" id="cfg-num">
+          <input type="checkbox" id="toggle-filter-menu" checked>
           <span class="switch-slider"></span>
         </label>
       </div>
-
-      <div class="switch-row">
-        <span class="switch-label">Разделитель подчёркивания (_)</span>
-        <label class="switch-toggle">
-          <input type="checkbox" id="cfg-und">
-          <span class="switch-slider"></span>
-        </label>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Секретный промокод темы</label>
-        <input type="text" class="form-input" id="cfg-promo" placeholder="Введите REDPILL, DUROV360...">
+      <div class="accordion-menu open" id="filter-menu">
+        <div class="form-group">
+          <label class="form-label">Длина никнейма:</label>
+          <select class="form-select" id="cfg-len-select">
+            <option value="5-6">5–6 букв (Короткие)</option>
+            <option value="7-8">7–8 букв (Обычные)</option>
+          </select>
+        </div>
+        <div class="switch-row" style="padding:4px 0; border:none;">
+          <span class="switch-label" style="font-size:13px;">Добавлять цифры (123)</span>
+          <label class="switch-toggle">
+            <input type="checkbox" id="cfg-use-num">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <div class="switch-row" style="padding:4px 0; border:none;">
+          <span class="switch-label" style="font-size:13px;">Добавлять подчеркивание (_)</span>
+          <label class="switch-toggle">
+            <input type="checkbox" id="cfg-use-und">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Модалка 2: Радар слежки -->
+  <!-- 2. Модалка: Секретный промокод -->
+  <div class="modal-overlay" id="modal-secret-code">
+    <div class="modal-sheet" style="text-align:center;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔑 Ввод кода</h3>
+        <button class="modal-close-round" onclick="closeModal('modal-secret-code')">✕</button>
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <input type="text" class="form-input" id="promo-input-field" placeholder="ПРОМОКОД..." style="text-align:center; font-size:18px; font-weight:800; text-transform:uppercase;">
+      </div>
+      <button class="btn-generate" id="btn-apply-promo" style="padding:14px; margin-top:8px;">Применить</button>
+    </div>
+  </div>
+
+  <!-- 3. Модалка: Радар -->
   <div class="modal-overlay" id="modal-radar">
     <div class="modal-sheet">
-      <div class="modal-handle"></div>
       <div class="modal-header">
-        <h3 class="modal-title">📡 Автономный радар</h3>
-        <button class="modal-close" data-close="modal-radar">✕</button>
+        <h3 class="modal-title">🎯 Радар (Слежка)</h3>
+        <button class="modal-close-round" onclick="closeModal('modal-radar')">✕</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Поставить никнейм на отслеживание 24/7</label>
-        <div style="display:flex; gap:8px;">
-          <input type="text" class="form-input" id="radar-input" placeholder="например: ton_king">
-          <button class="btn-sub" id="radar-submit-btn" style="width:110px; background:var(--primary); color:#000;">Следить</button>
-        </div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" class="form-input" id="radar-input" placeholder="@username" style="flex:1;">
+        <button class="header-btn" style="background:var(--primary); color:#000;" id="btn-radar-submit">Следить</button>
       </div>
-      <div class="form-label" style="margin-top:10px;">Активные цели в радаре:</div>
-      <div class="history-list" id="radar-active-list">
-        <!-- Заполняется динамически -->
-      </div>
+      <div class="form-label" style="margin-top:8px;">Отслеживаемые ники:</div>
+      <div id="radar-items-list"></div>
     </div>
   </div>
 
-  <!-- Модалка 3: История улова (Со свайпами) -->
+  <!-- 4. Модалка: История со свайп-списком -->
   <div class="modal-overlay" id="modal-history">
     <div class="modal-sheet">
-      <div class="modal-handle"></div>
       <div class="modal-header">
-        <h3 class="modal-title">📜 История пойманных ников</h3>
-        <button class="modal-close" data-close="modal-history">✕</button>
+        <h3 class="modal-title">📜 История улова</h3>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="header-btn" style="padding:6px 12px; font-size:12px;" id="btn-clear-history">🗑 Очистить</button>
+          <button class="modal-close-round" onclick="closeModal('modal-history')">✕</button>
+        </div>
       </div>
-      <p style="font-size:12px; color:var(--text-muted);">👉 Свайп вправо — удалить | 👈 Свайп влево — переслать</p>
-      <div class="history-list" id="history-container">
-        <!-- Карточки со свайпами -->
-      </div>
+      <div id="history-items-container"></div>
     </div>
   </div>
 
-  <!-- Модалка 4: Лидерборд Топ-1000 -->
+  <!-- 5. Модалка: Лидерборд -->
   <div class="modal-overlay" id="modal-leaderboard">
     <div class="modal-sheet">
-      <div class="modal-handle"></div>
       <div class="modal-header">
-        <h3 class="modal-title">🏆 Топ-1000 находок сообщества</h3>
-        <button class="modal-close" data-close="modal-leaderboard">✕</button>
+        <h3 class="modal-title">👑 ТОП Улова</h3>
+        <button class="modal-close-round" onclick="closeModal('modal-leaderboard')">✕</button>
       </div>
-      <div class="leaderboard-list" id="leaderboard-container">
-        <!-- Элементы топа -->
-      </div>
+      <div id="leaderboard-items-container"></div>
     </div>
   </div>
 
-  <!-- Модалка 5: Достижения (100 уровней) -->
-  <div class="modal-overlay" id="modal-achieve">
+  <!-- 6. Модалка: Достижения -->
+  <div class="modal-overlay" id="modal-achievements">
     <div class="modal-sheet">
-      <div class="modal-handle"></div>
       <div class="modal-header">
-        <h3 class="modal-title">🎖️ Достижения охотника</h3>
-        <button class="modal-close" data-close="modal-achieve">✕</button>
+        <h3 class="modal-title" id="achieve-title-count">🏆 Ваши награды (0/100)</h3>
+        <button class="modal-close-round" onclick="closeModal('modal-achievements')">✕</button>
       </div>
-      <div class="achieve-list" id="achieve-container">
-        <!-- Список ачивок с прогресс-барами -->
-      </div>
+      <div id="achievements-grid-wrap"></div>
     </div>
   </div>
 
-  <!-- Модалка 6: Кибер-Магазин -->
+  <!-- 7. Модалка: Кибер-Магазин -->
   <div class="modal-overlay" id="modal-shop">
     <div class="modal-sheet">
-      <div class="modal-handle"></div>
       <div class="modal-header">
-        <h3 class="modal-title">🛒 Кибер-Магазин улучшений</h3>
-        <button class="modal-close" data-close="modal-shop">✕</button>
+        <h3 class="modal-title">🛒 Кибер-Магазин</h3>
+        <button class="modal-close-round" onclick="closeModal('modal-shop')">✕</button>
       </div>
-      <div class="hud-stat" style="justify-content:center;">Баланс: <b id="shop-coins-val">0</b> 🪙</div>
-      <div class="shop-grid" id="shop-items-container">
-        <!-- Товары магазина -->
-      </div>
+      <div class="form-label" style="color:var(--primary);">⚡ Прокачка Кликера:</div>
+      <div id="shop-clicker-upgrades"></div>
+      <div class="form-label" style="color:var(--accent-blue); margin-top:8px;">🎯 Апгрейды Парсера:</div>
+      <div id="shop-parser-upgrades"></div>
     </div>
   </div>
 
-  <!-- Модалка 7: 3D Игра «Cosmic Core Tycoon» -->
-  <div class="modal-overlay" id="modal-game">
+  <!-- 8. Модалка: Оффлайн-Награда -->
+  <div class="modal-overlay" id="modal-welcome-offline">
+    <div class="modal-sheet" style="text-align:center; align-items:center;">
+      <h2 style="font-size:36px;">🤖</h2>
+      <h3 class="modal-title">Автосборщик поработал!</h3>
+      <p style="color:var(--gold-pure); font-size:20px; font-weight:900; margin:10px 0;" id="offline-sum-text">+0 🟡</p>
+      <button class="btn-generate" onclick="closeModal('modal-welcome-offline')">Забрать Награду!</button>
+    </div>
+  </div>
+
+  <!-- 9. Модалка: Итоги автопарса -->
+  <div class="modal-overlay" id="modal-summary">
     <div class="modal-sheet">
-      <div class="modal-handle"></div>
       <div class="modal-header">
-        <h3 class="modal-title">🌍 Ядро Земли: Слой <span id="game-layer-name" style="color:var(--primary);">Hex Shield</span></h3>
-        <button class="modal-close" data-close="modal-game" id="btn-close-game-modal">✕</button>
+        <h3 class="modal-title">📊 Итоги автопарсинга</h3>
+        <button class="modal-close-round" onclick="closeModal('modal-summary')">✕</button>
       </div>
-
-      <div class="game-viewport" id="game-viewport">
-        <div class="game-hud">
-          <div class="hud-stat">🪙 <b id="game-hud-coins">0</b></div>
-          <div class="hud-stat">⚡ <span id="game-hud-energy">1000/1000</span></div>
-        </div>
-
-        <div id="three-canvas-container"></div>
-
-        <div class="shield-health-bar">
-          <div class="shield-fill" id="shield-hp-fill"></div>
-        </div>
-      </div>
+      <p style="font-size:13px; color:var(--text-muted);" id="summary-count-text">Найдено свободных ников: 0</p>
+      <div id="summary-cards-container" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div>
+      <button class="btn-generate" onclick="closeModal('modal-summary')" style="margin-top:8px; padding:12px;">Отлично</button>
     </div>
   </div>
 
   <!-- Тост обратной связи -->
-  <div class="toast-msg" id="toast-view">Никнейм скопирован!</div>
-
-  <!-- Маркер: Далее подключаются скрипты Части 2 и Части 3 -->
-  <script>
-    // [МЕСТО СТЫКОВКИ: JS СКРИПТЫ СИСТЕМЫ И THREE.JS]
+  <div class="toast-msg" id="toast">✨ Юзернейм скопирован!</div>
     /* ==========================================================================
        1. ИНИЦИАЛИЗАЦИЯ TELEGRAM WEBAPP И СОСТОЯНИЯ
        ========================================================================== */
@@ -1004,7 +1142,8 @@
     };
 
     function showToast(text) {
-      const toast = document.getElementById("toast-view");
+      const toast = document.getElementById("toast-view") || document.getElementById("toast");
+      if (!toast) return;
       toast.textContent = text;
       toast.classList.add("show");
       if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
@@ -1027,8 +1166,8 @@
         el.classList.add("active");
         if (id === "modal-game") startThreeEngine();
         if (id === "modal-history") renderHistory();
-        if (id === "modal-leaderboard") fetchLeaderboard();
-        if (id === "modal-achieve") renderAchievements();
+        if (id === "modal-leaderboard" || id === "modal-top") fetchLeaderboard();
+        if (id === "modal-achieve" || id === "modal-achievements") renderAchievements();
         if (id === "modal-shop") renderShop();
         if (id === "modal-radar") renderRadarList();
       }
@@ -1052,13 +1191,18 @@
       });
     });
 
-    document.getElementById("btn-open-settings").addEventListener("click", () => openModal("modal-settings"));
-    document.getElementById("btn-open-shop").addEventListener("click", () => openModal("modal-shop"));
-    document.getElementById("btn-open-game").addEventListener("click", () => openModal("modal-game"));
-    document.getElementById("nav-history").addEventListener("click", () => openModal("modal-history"));
-    document.getElementById("nav-leaderboard").addEventListener("click", () => openModal("modal-leaderboard"));
-    document.getElementById("nav-radar").addEventListener("click", () => openModal("modal-radar"));
-    document.getElementById("nav-achieve").addEventListener("click", () => openModal("modal-achieve"));
+    const bindClick = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("click", fn);
+    };
+
+    bindClick("btn-open-settings", () => openModal("modal-settings"));
+    bindClick("btn-open-shop", () => openModal("modal-shop"));
+    bindClick("btn-open-game", () => openModal("modal-game"));
+    bindClick("nav-history", () => openModal("modal-history"));
+    bindClick("nav-leaderboard", () => openModal("modal-leaderboard"));
+    bindClick("nav-radar", () => openModal("modal-radar"));
+    bindClick("nav-achieve", () => openModal("modal-achieve"));
 
     /* ==========================================================================
        3. СИСТЕМА ПРОМОКОДОВ И CANVAS-ЭФФЕКТЫ
@@ -1084,21 +1228,24 @@
     applyTheme(AppState.activeTheme);
 
     const promoInput = document.getElementById("cfg-promo");
-    promoInput.addEventListener("input", (e) => {
-      const code = e.target.value.trim().toUpperCase();
-      if (PROMO_CODES[code]) {
-        applyTheme(PROMO_CODES[code]);
-        showToast("⚡ Промокод активирован!");
-        triggerSecretCanvas();
-      }
-    });
+    if (promoInput) {
+      promoInput.addEventListener("input", (e) => {
+        const code = e.target.value.trim().toUpperCase();
+        if (PROMO_CODES[code]) {
+          applyTheme(PROMO_CODES[code]);
+          showToast("⚡ Промокод активирован!");
+          triggerSecretCanvas();
+        }
+      });
+    }
 
     // Фоновый процедурный туман
     const fogCanvas = document.getElementById("fog-canvas");
-    const fogCtx = fogCanvas.getContext("2d");
+    const fogCtx = fogCanvas ? fogCanvas.getContext("2d") : null;
     let fogParticles = [];
 
     function resizeFogCanvas() {
+      if (!fogCanvas) return;
       fogCanvas.width = window.innerWidth;
       fogCanvas.height = window.innerHeight;
       fogParticles = [];
@@ -1117,6 +1264,7 @@
     resizeFogCanvas();
 
     function renderFog() {
+      if (!fogCanvas || !fogCtx) return;
       fogCtx.clearRect(0, 0, fogCanvas.width, fogCanvas.height);
       const computedPrimary = getComputedStyle(document.body).getPropertyValue("--primary").trim() || "#29c75f";
       
@@ -1145,10 +1293,11 @@
 
     // Секретный Matrix Canvas для промокодов
     const secretCanvas = document.getElementById("secret-canvas");
-    const secretCtx = secretCanvas.getContext("2d");
+    const secretCtx = secretCanvas ? secretCanvas.getContext("2d") : null;
     let secretTimer = null;
 
     function triggerSecretCanvas() {
+      if (!secretCanvas || !secretCtx) return;
       secretCanvas.width = window.innerWidth;
       secretCanvas.height = window.innerHeight;
       const chars = "0123456789ABCDEF@#$%&*";
@@ -1185,19 +1334,19 @@
        4. СКАНЕР НИКНЕЙМОВ И СИНХРОНИЗАЦИЯ
        ========================================================================== */
     const cardTier = document.getElementById("card-tier");
-    const cardUsername = document.getElementById("card-username");
-    const cardDesc = document.getElementById("card-desc");
+    const cardUsername = document.getElementById("card-username") || document.getElementById("slot-text");
+    const cardDesc = document.getElementById("card-desc") || document.getElementById("status-text");
     let currentScannedItem = null;
 
     async function performScan() {
-      const platform = document.getElementById("cfg-platform").value;
-      const lenMode = document.getElementById("cfg-len").value;
-      const useFilter = document.getElementById("cfg-filter").checked;
-      const useNum = document.getElementById("cfg-num").checked;
-      const useUnd = document.getElementById("cfg-und").checked;
+      const platform = document.getElementById("cfg-platform") ? document.getElementById("cfg-platform").value : "telegram";
+      const lenMode = document.getElementById("cfg-len") ? document.getElementById("cfg-len").value : "5-6";
+      const useFilter = document.getElementById("cfg-filter") ? document.getElementById("cfg-filter").checked : true;
+      const useNum = document.getElementById("cfg-num") ? document.getElementById("cfg-num").checked : false;
+      const useUnd = document.getElementById("cfg-und") ? document.getElementById("cfg-und").checked : false;
 
-      cardUsername.textContent = "Сканирование...";
-      cardDesc.innerHTML = "Подключение к узлам Telethon...";
+      if (cardUsername) cardUsername.textContent = "Сканирование...";
+      if (cardDesc) cardDesc.innerHTML = "Подключение к узлам Telethon...";
 
       try {
         const url = `/api/generate?platform=${platform}&len_mode=${lenMode}&use_filter=${useFilter}&use_num=${useNum}&use_und=${useUnd}&finder_name=${encodeURIComponent(CURRENT_USER_NAME)}&finder_id=${CURRENT_USER_ID}`;
@@ -1205,8 +1354,8 @@
         const data = await res.json();
 
         if (res.status === 429) {
-          cardUsername.textContent = "Лимит API";
-          cardDesc.innerHTML = `<span style="color:var(--danger)">Telegram FloodWait. Ждите ${data.retry_after}с</span>`;
+          if (cardUsername) cardUsername.textContent = "Лимит API";
+          if (cardDesc) cardDesc.innerHTML = `<span style="color:var(--danger)">Telegram FloodWait. Ждите ${data.retry_after}с</span>`;
           return;
         }
 
@@ -1214,40 +1363,47 @@
           const item = data.primary;
           currentScannedItem = item;
 
-          cardUsername.textContent = `@${item.username}`;
-          cardTier.className = `score-badge tier-${item.tier.toLowerCase().replace('+', '')}`;
-          cardTier.textContent = `${item.tier} (${item.estimated_value_ton})`;
+          if (cardUsername) cardUsername.textContent = `@${item.username}`;
+          if (cardTier) {
+            cardTier.className = `score-badge tier-${item.tier.toLowerCase().replace('+', '')}`;
+            cardTier.textContent = `${item.tier} (${item.estimated_value_ton})`;
+          }
           
-          if (item.is_available) {
-            cardDesc.innerHTML = `Статус: <b style="color:var(--primary);">СВОБОДЕН ✅</b> • ${item.description}`;
-            saveHistoryLocal(item);
-          } else {
-            cardDesc.innerHTML = `Статус: <b style="color:var(--danger);">ЗАНЯТ ❌</b>`;
+          if (cardDesc) {
+            if (item.is_available) {
+              cardDesc.innerHTML = `Статус: <b style="color:var(--primary);">СВОБОДЕН ✅</b> • ${item.description}`;
+              saveHistoryLocal(item);
+            } else {
+              cardDesc.innerHTML = `Статус: <b style="color:var(--danger);">ЗАНЯТ ❌</b>`;
+            }
           }
         }
       } catch (err) {
-        cardUsername.textContent = "Ошибка сети";
-        cardDesc.innerHTML = "Не удалось связаться с сервером бэкенда.";
+        if (cardUsername) cardUsername.textContent = "Ошибка сети";
+        if (cardDesc) cardDesc.innerHTML = "Не удалось связаться с сервером бэкенда.";
       }
     }
 
-    document.getElementById("btn-scan-action").addEventListener("click", performScan);
+    bindClick("btn-scan-action", performScan);
+    bindClick("btn-generate", performScan);
 
-    cardUsername.addEventListener("click", () => {
-      if (currentScannedItem) {
-        navigator.clipboard.writeText(`@${currentScannedItem.username}`);
-        showToast("Юзернейм скопирован!");
-      }
-    });
+    if (cardUsername) {
+      cardUsername.addEventListener("click", () => {
+        if (currentScannedItem) {
+          navigator.clipboard.writeText(`@${currentScannedItem.username}`);
+          showToast("Юзернейм скопирован!");
+        }
+      });
+    }
 
-    document.getElementById("btn-share-tg").addEventListener("click", () => {
+    bindClick("btn-share-tg", () => {
       if (currentScannedItem) {
         const text = `🔥 Поймал редкий никнейм @${currentScannedItem.username} (${currentScannedItem.tier}) через Username Scanner PRO!`;
         window.open(`https://t.me/share/url?url=${encodeURIComponent("https://t.me/your_bot")}&text=${encodeURIComponent(text)}`, "_blank");
       }
     });
 
-    document.getElementById("btn-add-radar").addEventListener("click", async () => {
+    bindClick("btn-add-radar", async () => {
       if (!currentScannedItem) return;
       try {
         const res = await fetch("/api/radar/add", {
@@ -1269,7 +1425,8 @@
        5. ИСТОРИЯ И КОНТРОЛЛЕР СВАЙПОВ (TOUCH HANDLER)
        ========================================================================== */
     function renderHistory() {
-      const cont = document.getElementById("history-container");
+      const cont = document.getElementById("history-container") || document.getElementById("history-items-container");
+      if (!cont) return;
       cont.innerHTML = "";
 
       if (AppState.history.length === 0) {
@@ -1298,6 +1455,7 @@
 
     function attachSwipeEvents(container, item, index) {
       const itemEl = container.querySelector(".swipe-item");
+      if (!itemEl) return;
       let startX = 0;
       let currentX = 0;
       let isDragging = false;
@@ -1321,7 +1479,6 @@
         const diff = currentX - startX;
 
         if (diff > 120) {
-          // Свайп вправо -> Удаление
           itemEl.classList.add("collapsed");
           setTimeout(() => {
             AppState.history.splice(index, 1);
@@ -1330,7 +1487,6 @@
             showToast("Удалено из истории");
           }, 300);
         } else if (diff < -120) {
-          // Свайп влево -> Шеринг
           itemEl.style.transform = "translateX(0px)";
           const text = `🔥 Поймал свободный юзернейм @${item.username} (${item.tier})!`;
           window.open(`https://t.me/share/url?url=https://t.me/scanner&text=${encodeURIComponent(text)}`, "_blank");
@@ -1349,7 +1505,8 @@
        6. ЛИДЕРБОРД, ДОСТИЖЕНИЯ И МАГАЗИН
        ========================================================================== */
     async function fetchLeaderboard() {
-      const cont = document.getElementById("leaderboard-container");
+      const cont = document.getElementById("leaderboard-container") || document.getElementById("leaderboard-items-container");
+      if (!cont) return;
       cont.innerHTML = `<div style="text-align:center; padding:15px; color:var(--text-muted);">Загрузка лидеров...</div>`;
       try {
         const res = await fetch("/api/leaderboard");
@@ -1378,7 +1535,8 @@
     }
 
     function renderAchievements() {
-      const cont = document.getElementById("achieve-container");
+      const cont = document.getElementById("achieve-container") || document.getElementById("achievements-grid-wrap");
+      if (!cont) return;
       cont.innerHTML = "";
       for (let i = 1; i <= 20; i++) {
         const div = document.createElement("div");
@@ -1400,8 +1558,10 @@
     }
 
     function renderShop() {
-      document.getElementById("shop-coins-val").textContent = Math.floor(AppState.coins);
+      const coinView = document.getElementById("shop-coins-val");
+      if (coinView) coinView.textContent = Math.floor(AppState.coins);
       const cont = document.getElementById("shop-items-container");
+      if (!cont) return;
       cont.innerHTML = "";
 
       const items = [
@@ -1452,7 +1612,8 @@
     }
 
     function renderRadarList() {
-      const cont = document.getElementById("radar-active-list");
+      const cont = document.getElementById("radar-active-list") || document.getElementById("radar-items-list");
+      if (!cont) return;
       cont.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:10px;">Воркер радара проверяет цели каждые 10 секунд.</div>`;
     }
 
@@ -1463,10 +1624,20 @@
     let syncDebounceTimer = null;
 
     function updateHUD() {
-      document.getElementById("ui-username").textContent = CURRENT_USER_NAME;
-      document.getElementById("hud-coins-banner").textContent = `🪙 ${Math.floor(AppState.coins)}`;
-      document.getElementById("game-hud-coins").textContent = Math.floor(AppState.coins);
-      document.getElementById("game-hud-energy").textContent = `${AppState.energy}/${AppState.max_energy}`;
+      const nameEl = document.getElementById("ui-username");
+      if (nameEl) nameEl.textContent = CURRENT_USER_NAME;
+      
+      const coinsBanner = document.getElementById("hud-coins-banner");
+      if (coinsBanner) coinsBanner.textContent = `🪙 ${Math.floor(AppState.coins)}`;
+
+      const gameCoins = document.getElementById("game-hud-coins") || document.getElementById("clicker-coins-text");
+      if (gameCoins) gameCoins.textContent = Math.floor(AppState.coins);
+
+      const energyText = document.getElementById("game-hud-energy") || document.getElementById("energy-text");
+      if (energyText) energyText.textContent = `${AppState.energy}/${AppState.max_energy}`;
+
+      const energyFill = document.getElementById("energy-fill");
+      if (energyFill) energyFill.style.width = `${(AppState.energy / AppState.max_energy) * 100}%`;
     }
 
     async function syncGameState() {
@@ -1562,9 +1733,10 @@
     }
 
     function initThreeScene() {
-      const container = document.getElementById("three-canvas-container");
-      const width = container.clientWidth;
-      const height = container.clientHeight;
+      const container = document.getElementById("three-canvas-container") || document.getElementById("three-viewport");
+      if (!container) return;
+      const width = container.clientWidth || window.innerWidth;
+      const height = container.clientHeight || window.innerHeight;
 
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -1639,7 +1811,7 @@
       scene.add(particlesGroup);
 
       // Multitouch события
-      const vp = document.getElementById("game-viewport");
+      const vp = document.getElementById("game-viewport") || container;
       vp.addEventListener("pointerdown", handlePlanetTap);
     }
 
@@ -1649,7 +1821,6 @@
         return;
       }
 
-      // Начисление тапов
       AppState.energy -= AppState.multi_tap;
       pendingTaps += 1;
 
@@ -1659,8 +1830,10 @@
       updateHUD();
 
       // Физика удара Squash & Stretch
-      earthMesh.scale.set(0.94, 0.94, 0.94);
-      setTimeout(() => earthMesh.scale.set(1, 1, 1), 70);
+      if (earthMesh) {
+        earthMesh.scale.set(0.94, 0.94, 0.94);
+        setTimeout(() => earthMesh.scale.set(1, 1, 1), 70);
+      }
 
       // Снижение HP слоя
       layerHP -= 5;
@@ -1681,17 +1854,18 @@
 
     function advanceShieldLayer() {
       layerHP = 100;
+      const layerNameEl = document.getElementById("game-layer-name") || document.getElementById("defense-badge");
       if (currentLayer === 1) {
         currentLayer = 2;
-        hexShieldMesh.visible = false;
-        chainsGroup.visible = true;
-        document.getElementById("game-layer-name").textContent = "Steel Chains";
+        if (hexShieldMesh) hexShieldMesh.visible = false;
+        if (chainsGroup) chainsGroup.visible = true;
+        if (layerNameEl) layerNameEl.textContent = "Steel Chains";
         showToast("💥 Щит разрушен! Слой 2: Цепи!");
       } else if (currentLayer === 2) {
         currentLayer = 3;
-        chainsGroup.visible = false;
-        coreOverdriveTimer = 12; // 12 секунд бонуса x10
-        document.getElementById("game-layer-name").textContent = "🔥 Ядро открыто (x10)!";
+        if (chainsGroup) chainsGroup.visible = false;
+        coreOverdriveTimer = 12;
+        if (layerNameEl) layerNameEl.textContent = "🔥 Ядро открыто (x10)!";
         showToast("🚨 ЯДРО ОТКРЫТО! Бонус x10 на 12 сек!");
       }
     }
@@ -1702,7 +1876,7 @@
     }
 
     function createFloatingDamage(x, y, text) {
-      const vp = document.getElementById("game-viewport");
+      const vp = document.getElementById("game-viewport") || document.body;
       const rect = vp.getBoundingClientRect();
       const el = document.createElement("div");
       el.className = "floating-damage";
@@ -1733,16 +1907,19 @@
         coreOverdriveTimer -= 0.016;
         if (coreOverdriveTimer <= 0) {
           currentLayer = 1;
-          hexShieldMesh.visible = true;
-          chainsGroup.visible = false;
+          if (hexShieldMesh) hexShieldMesh.visible = true;
+          if (chainsGroup) chainsGroup.visible = false;
           layerHP = 100;
-          document.getElementById("game-layer-name").textContent = "Hex Shield";
+          const layerNameEl = document.getElementById("game-layer-name") || document.getElementById("defense-badge");
+          if (layerNameEl) layerNameEl.textContent = "Hex Shield";
           updateShieldHUD();
           showToast("🛡️ Щиты восстановились!");
         }
       }
 
-      renderer.render(scene, camera);
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
     }
 
     function startThreeEngine() {
@@ -1760,8 +1937,11 @@
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         stopThreeEngine();
-      } else if (document.getElementById("modal-game").classList.contains("active")) {
-        startThreeEngine();
+      } else {
+        const gameModal = document.getElementById("modal-game") || document.getElementById("clicker-overlay");
+        if (gameModal && gameModal.classList.contains("active")) {
+          startThreeEngine();
+        }
       }
     });
   </script>
