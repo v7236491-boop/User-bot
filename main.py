@@ -25,6 +25,7 @@ DB_LOCK = asyncio.Lock()
 CHECK_CACHE = {}
 CACHE_TTL = 86400
 TELETHON_AVAILABLE = False
+FAILED_ATTEMPTS = {}  # {user_id: [fail_count, lock_timestamp]}
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID", "38162572"))
@@ -44,19 +45,28 @@ OFFLINE_RATES = {
     5: 8000, 6: 14000, 7: 22000, 8: 32000, 9: 45000, 10: 60000
 }
 
-# Порог HP (кликов) для каждой космической стадии
 PLANET_HP_TABLE = {
-    1: 100,       # Земля
-    2: 300,       # Луна
-    3: 800,       # Марс
-    4: 2000,      # Венера
-    5: 5000,      # Юпитер
-    6: 12000,     # Сатурн
-    7: 28000,     # Уран
-    8: 65000,     # Нептун
-    9: 150000,    # Солнце
-    10: 500000    # Чёрная Дыра
+    1: 100,       # 1. Земля
+    2: 300,       # 2. Луна
+    3: 800,       # 3. Марс
+    4: 2000,      # 4. Венера
+    5: 5000,      # 5. Юпитер
+    6: 12000,     # 6. Сатурн
+    7: 28000,     # 7. Уран
+    8: 65000,     # 8. Нептун
+    9: 150000,    # 9. Солнце
+    10: 500000    # 10. Чёрная Дыра
 }
+
+KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+
+def generate_secure_pro_key() -> str:
+    """Генерирует криптографически стойкий 16-значный ключ Base32."""
+    p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+    p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+    p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+    p4 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+    return f"PRO-{p1}-{p2}-{p3}-{p4}"
 
 # =========================================================================
 # 💾 АТОМАРНАЯ РАБОТА С БАЗАМИ ДАННЫХ JSON
@@ -80,6 +90,21 @@ def save_json_atomic_sync(filepath: str, data):
         os.replace(tmp_path, filepath)
     except Exception:
         pass
+
+def init_master_keys():
+    """Автоматически инициализирует тестовый мастер-ключ при запуске сервера."""
+    keys_db = load_json_file(KEYS_DB_PATH, {})
+    master_key = "PRO-9X7K-4MRW-8N2T-H5VQ"
+    if master_key not in keys_db:
+        keys_db[master_key] = {
+            "bound_user_id": None,
+            "days": -1,
+            "created_at": int(time.time()),
+            "activated_status": "unused"
+        }
+        save_json_atomic_sync(KEYS_DB_PATH, keys_db)
+
+init_master_keys()
 
 def is_user_pro(user_id: str) -> tuple[bool, int]:
     db = load_json_file(GAME_DB_PATH, {})
@@ -130,24 +155,29 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     return user
 
 # =========================================================================
-# 📚 БАЗА АФФИКСОВ (15 КАТЕГОРИЙ + СЛОВАРЬ)
+# 📚 БАЗА АФФИКСОВ (20 КАТЕГОРИЙ)
 # =========================================================================
-AFFIX_DATABASE = {
-    "personal": ["official", "real", "prime", "live", "blog", "vibe", "zone", "one", "daily", "fan", "hq", "club"],
-    "military": ["core", "tactics", "force", "unit", "prime", "zone", "command", "shield", "squad", "base", "lead"],
-    "media": ["media", "universe", "zone", "hero", "studio", "space", "channel", "feed", "vision", "press", "cast"],
-    "tech": ["lab", "hub", "space", "core", "app", "dev", "tech", "base", "net", "cloud", "desk", "code", "bot"],
-    "crypto": ["vault", "pay", "trade", "node", "coin", "drop", "capital", "cash", "chain", "pool", "dex", "mint"],
-    "gaming": ["play", "zone", "clan", "gg", "craft", "squad", "hero", "skill", "arena", "guild", "win", "rush"],
-    "sports": ["fit", "run", "pro", "team", "cup", "champ", "sport", "gym", "league", "arena", "flex", "power"],
-    "business": ["store", "shop", "brand", "market", "line", "boutique", "supply", "group", "co", "outlet", "style"],
-    "auto": ["drive", "garage", "motors", "auto", "speed", "custom", "track", "power", "racing", "club"],
-    "design": ["art", "studio", "design", "space", "lab", "craft", "visual", "frame", "gallery", "concept"],
-    "food": ["fresh", "food", "cafe", "kitchen", "supply", "lounge", "taste", "craft", "market", "bar"],
-    "music": ["sound", "beat", "wave", "records", "fm", "audio", "track", "vibe", "studio", "label"],
-    "education": ["academy", "study", "hub", "mind", "center", "pioneer", "lab", "learn", "skill", "base"],
-    "estate": ["estate", "realty", "place", "loft", "space", "house", "group", "park", "point", "living"],
-    "auto_detect": ["my", "get", "go", "hq", "one", "vibe", "space", "zone", "core", "hub", "lab", "pro"]
+AFFIX_DATABASE_20 = {
+    "superheroes": ["hero", "lord", "prime", "knight", "origin", "verse", "force", "core", "squad", "shadow", "iron", "bat"],
+    "cinema": ["film", "cast", "media", "show", "tape", "scene", "star", "cinema", "cut", "movie", "reel", "premiere"],
+    "anime": ["kun", "chan", "senpai", "sama", "ninja", "shogun", "titan", "kage", "anime", "blade", "oni", "drift"],
+    "gaming": ["play", "gg", "game", "quest", "clan", "craft", "hero", "guild", "respawn", "arena", "skill", "player"],
+    "esports": ["pro", "major", "cup", "apex", "frag", "aim", "lead", "tactics", "prime", "win", "rush", "ace"],
+    "crypto": ["ton", "coin", "vault", "dex", "chain", "node", "pool", "mint", "drop", "capital", "dao", "pay"],
+    "music": ["beat", "sound", "wave", "vibe", "records", "flow", "track", "audio", "fm", "drop", "bass", "mix"],
+    "business": ["hub", "inc", "co", "store", "shop", "brand", "group", "trade", "deal", "market", "office", "capital"],
+    "auto": ["drive", "speed", "garage", "custom", "track", "power", "racing", "turbo", "boost", "drift", "ride", "auto"],
+    "sports": ["fit", "run", "gym", "flex", "sport", "power", "champ", "team", "lift", "league", "box", "active"],
+    "it": ["dev", "code", "bot", "lab", "cloud", "stack", "tech", "net", "desk", "core", "host", "sys"],
+    "luxury": ["gold", "rich", "prime", "vip", "royal", "elite", "rare", "black", "diamond", "monaco", "grand", "luxe"],
+    "blog": ["vibe", "life", "daily", "one", "official", "real", "zone", "feed", "channel", "live", "blog", "space"],
+    "memes": ["pepe", "sigma", "gigachad", "chad", "kek", "based", "wojak", "vibe", "stonks", "hype", "boss", "bro"],
+    "twitch": ["tv", "live", "stream", "onair", "cast", "play", "room", "club", "gg", "clip", "host", "zone"],
+    "art": ["art", "design", "craft", "visual", "space", "frame", "gallery", "draw", "vector", "sketch", "maker", "concept"],
+    "food": ["fresh", "food", "kitchen", "cafe", "taste", "craft", "bar", "bake", "cook", "chef", "sweet", "spice"],
+    "cities": ["tokyo", "paris", "london", "dubai", "miami", "rome", "nyc", "moscow", "berlin", "vegas", "la", "bali"],
+    "space": ["star", "cosmic", "orbit", "solar", "astro", "nova", "luna", "void", "galaxy", "mars", "sky", "nebula"],
+    "mythology": ["zeus", "thor", "odin", "ares", "hades", "titan", "hydra", "phoenix", "dragon", "valkyrie", "anubis", "chronos"]
 }
 
 TRANSLIT_WORDS = [
@@ -173,10 +203,29 @@ TOP_BRANDS = set([
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
 VOWELS_EASY = "aeiouy"
 
+def generate_keyword_custom_username(keyword: str, category: str, use_und: bool = False) -> str:
+    """Генерирует умный никнейм на основе ключевого слова и 20 категорий."""
+    keyword = keyword.strip().lower().replace("@", "")
+    affixes = AFFIX_DATABASE_20.get(category, AFFIX_DATABASE_20["superheroes"])
+    affix = random.choice(affixes)
+    
+    prefixes = ["iam", "the", "real", "get", "mr", "dr", "lord", "pro"]
+    pattern = random.choice(["kw_affix", "affix_kw", "prefix_kw", "kw_prefix"])
+    
+    if pattern == "kw_affix":
+        return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
+    elif pattern == "affix_kw":
+        return f"{affix}_{keyword}" if use_und else f"{affix}{keyword}"
+    elif pattern == "prefix_kw":
+        pref = random.choice(prefixes)
+        return f"{pref}_{keyword}" if use_und else f"{pref}{keyword}"
+    else:
+        return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
+
 def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_und: bool = False) -> tuple[str, bool, bool]:
     if random.random() < 0.35:
-        category = random.choice(list(AFFIX_DATABASE.keys()))
-        affix = random.choice(AFFIX_DATABASE[category])
+        category = random.choice(list(AFFIX_DATABASE_20.keys()))
+        affix = random.choice(AFFIX_DATABASE_20[category])
         base = random.choice(TRANSLIT_WORDS)
         if random.random() < 0.5 and len(base) + len(affix) <= 12:
             res = f"{base}_{affix}" if use_und else f"{base}{affix}"
@@ -270,7 +319,7 @@ async def check_username_telethon(username: str) -> bool:
 # ⭐ ТАРИФЫ TELEGRAM STARS И ИНТЕГРАЦИЯ AIOGRAM
 # =========================================================================
 TARRIFS = {
-    "pro_30": {"days": 30, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-парсер"},
+    "pro_30": {"days": 30, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-парсер + ∞ Энергия"},
     "pro_60": {"days": 60, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
     "pro_90": {"days": 90, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO функции"},
     "pro_forever": {"days": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"}
@@ -288,8 +337,8 @@ if dp and bot:
         await message.answer(
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
             "🎯 Мгновенный поиск редких юзернеймов\n"
-            "🪐 3D-майнинг космических тел (10 уровней планет)\n"
-            "👑 Радар на 100 слотов и авто-уведомления",
+            "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
+            "👑 Радар на 100 слотов, Конструктор по 20 категориям и ∞ Энергия",
             reply_markup=kb,
             parse_mode="Markdown"
         )
@@ -307,7 +356,7 @@ if dp and bot:
         if tariff:
             days = tariff["days"]
             now = int(time.time())
-            key_code = f"PRO-{secrets.token_hex(4).upper()}-{secrets.token_hex(4).upper()}"
+            key_code = generate_secure_pro_key()
             
             async with DB_LOCK:
                 keys_db = load_json_file(KEYS_DB_PATH, {})
@@ -315,7 +364,8 @@ if dp and bot:
                     "bound_user_id": user_id,
                     "days": days,
                     "created_at": now,
-                    "activated": True
+                    "activated_status": "used",
+                    "activated_at": now
                 }
                 save_json_atomic_sync(KEYS_DB_PATH, keys_db)
 
@@ -333,7 +383,7 @@ if dp and bot:
             await message.answer(
                 f"🎉 **Оплата {tariff['stars']} ⭐ принята!**\n\n"
                 f"👑 **PRO статус активен:** {duration_text}\n"
-                f"🔑 **Ваш персональный ключ:** `{key_code}`\n\n"
+                f"🔑 **Ваш персональный криптостойкий ключ:**\n`{key_code}`\n\n"
                 f"_Привязан к вашему Telegram ID._",
                 parse_mode="Markdown"
             )
@@ -388,7 +438,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Username Scanner PRO", lifespan=lifespan)
 
 # =========================================================================
-# 🌐 РОУТЫ С ЗАЩИТОЙ ОТ КЭШИРОВАНИЯ
+# 🌐 РОУТЫ БЭКЕНДА
 # =========================================================================
 @app.get("/")
 async def read_root():
@@ -454,12 +504,15 @@ async def sync_tap(request: Request):
     async with DB_LOCK:
         db = load_json_file(GAME_DB_PATH, {})
         user = get_user_profile(db, user_id)
+        is_pro, _ = is_user_pro(user_id)
+        
         if taps > 0:
-            actual_taps = min(taps, user["energy"])
+            actual_taps = taps if is_pro else min(taps, user["energy"])
             if actual_taps > 0:
                 earned = actual_taps * user["multi_tap"]
                 user["coins"] += earned
-                user["energy"] = max(0, user["energy"] - actual_taps)
+                if not is_pro:
+                    user["energy"] = max(0, user["energy"] - actual_taps)
                 
                 # Урон планете
                 user["planet_hp"] = max(0, user["planet_hp"] - damage)
@@ -467,7 +520,7 @@ async def sync_tap(request: Request):
                     if user["planet_stage"] < 10:
                         user["planet_stage"] += 1
                         user["planet_hp"] = PLANET_HP_TABLE.get(user["planet_stage"], 100)
-                        user["coins"] += user["planet_stage"] * 500  # Бонус за переход
+                        user["coins"] += user["planet_stage"] * 500
                     else:
                         user["planet_hp"] = PLANET_HP_TABLE[10]
                 
@@ -479,7 +532,8 @@ async def sync_tap(request: Request):
             "server_energy": user["energy"], 
             "planet_stage": user["planet_stage"], 
             "planet_hp": user["planet_hp"],
-            "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
+            "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100),
+            "is_pro": is_pro
         }
 
 @app.post("/api/game/buy")
@@ -564,20 +618,33 @@ async def activate_pro_key(request: Request):
     data = await request.json()
     user_id = str(data.get("user_id", "")).strip()
     key_code = str(data.get("key", "")).strip().upper()
+    now = int(time.time())
+
+    # --- ЗАЩИТА ОТ БРУТФОРСА (RATE LIMIT) ---
+    if user_id in FAILED_ATTEMPTS:
+        fails, lock_time = FAILED_ATTEMPTS[user_id]
+        if fails >= 5:
+            if now - lock_time < 300:  # Блокировка 5 минут
+                wait_sec = 300 - (now - lock_time)
+                return JSONResponse(status_code=429, content={"error": f"Слишком много попыток. Подождите {wait_sec} сек."})
+            else:
+                FAILED_ATTEMPTS[user_id] = [0, 0]
 
     async with DB_LOCK:
         keys_db = load_json_file(KEYS_DB_PATH, {})
-        if key_code not in keys_db:
-            return JSONResponse(status_code=400, content={"error": "Ключ не существует"})
+        if key_code not in keys_db or keys_db[key_code].get("activated_status") == "used":
+            cur_fails = FAILED_ATTEMPTS.get(user_id, [0, 0])[0] + 1
+            FAILED_ATTEMPTS[user_id] = [cur_fails, now]
+            return JSONResponse(status_code=400, content={"error": "Ключ не существует или уже активирован!"})
         
         k_data = keys_db[key_code]
         if k_data.get("bound_user_id") and k_data["bound_user_id"] != user_id:
             return JSONResponse(status_code=403, content={"error": "Этот ключ привязан к другому Telegram ID!"})
 
-        now = int(time.time())
         days = k_data["days"]
         k_data["bound_user_id"] = user_id
-        k_data["activated"] = True
+        k_data["activated_status"] = "used"
+        k_data["activated_at"] = now
         save_json_atomic_sync(KEYS_DB_PATH, keys_db)
 
         game_db = load_json_file(GAME_DB_PATH, {})
@@ -590,6 +657,9 @@ async def activate_pro_key(request: Request):
         user["rank"] = "👑 PRO Ловец"
         save_json_atomic_sync(GAME_DB_PATH, game_db)
 
+        if user_id in FAILED_ATTEMPTS:
+            del FAILED_ATTEMPTS[user_id]
+
         return {"status": "ok", "pro_until": user["pro_until"]}
 
 @app.get("/api/generate")
@@ -600,10 +670,16 @@ async def generate_username(
     len_mode: str = Query("5-6"), 
     use_num: bool = Query(False), 
     use_und: bool = Query(False), 
+    custom_keyword: str = Query(""),
+    custom_category: str = Query("superheroes"),
     finder_name: str = Query("Аноним"), 
     finder_id: str = Query("0") 
 ):
-    if use_filter:
+    if custom_keyword.strip():
+        generated = generate_keyword_custom_username(custom_keyword, custom_category, use_und)
+        is_pure = True
+        has_und = ("_" in generated)
+    elif use_filter:
         generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
     else:
         generated, is_pure, has_und = generate_smart_username()
