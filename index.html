@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Username Scanner PRO & Cosmic Core 3D</title>
     
-    <script src="https://telegram.org/js/telegram-web-app.js?v=3.0"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=4.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
@@ -20,6 +20,7 @@
             --primary-glow: rgba(41, 199, 95, 0.25);
             --gold-accent: #eab308;
             --gold-glow: rgba(234, 179, 8, 0.45);
+            --fog-rgb: 41, 199, 95;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
@@ -64,6 +65,7 @@
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
         }
 
+        /* ШАПКА С ЧЁТКИМИ ЗАКРУГЛЁННЫМИ КНОПКАМИ */
         header { 
             display: flex; 
             justify-content: space-between; 
@@ -75,26 +77,28 @@
             margin: 0 auto; 
         }
         .nav-btn { 
-            background: transparent; 
-            border: none; 
+            background: rgba(255, 255, 255, 0.07); 
+            border: 1px solid rgba(255, 255, 255, 0.12); 
             color: var(--text-main); 
-            font-size: 0.9rem; 
+            font-size: 0.88rem; 
             font-weight: 600; 
             cursor: pointer; 
-            padding: 8px 12px; 
+            padding: 10px 16px; 
             display: flex; 
             align-items: center; 
             gap: 6px; 
-            border-radius: 12px; 
+            border-radius: 20px; 
+            backdrop-filter: blur(10px);
+            transition: transform 0.15s ease, background 0.2s ease;
         }
-        .nav-btn:active { transform: scale(0.92); }
+        .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.14); }
 
         .btn-buy-pro-header {
             background: linear-gradient(135deg, #eab308, #ca8a04);
             color: #000 !important;
             font-weight: 900;
             font-size: 0.88rem;
-            padding: 9px 16px;
+            padding: 10px 18px;
             border-radius: 24px;
             border: 1px solid #facc15;
             cursor: pointer;
@@ -114,7 +118,7 @@
             margin: 0 auto 10px auto;
             background: linear-gradient(90deg, rgba(234, 179, 8, 0.2), rgba(41, 199, 95, 0.2));
             border: 1px solid #eab308;
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 8px 14px;
             font-size: 0.85rem;
             font-weight: 800;
@@ -196,7 +200,7 @@
         .action-btn { 
             flex: 1; 
             padding: 12px; 
-            border-radius: 12px; 
+            border-radius: 14px; 
             font-size: 0.9rem; 
             font-weight: 600; 
             cursor: pointer; 
@@ -213,7 +217,7 @@
             background: var(--primary); 
             color: #000; 
             border: none; 
-            border-radius: 16px; 
+            border-radius: 18px; 
             padding: 18px; 
             font-size: 1.1rem; 
             font-weight: 700; 
@@ -227,30 +231,42 @@
         .floating-achieving-btn {
             position: fixed; bottom: 20px; left: 16px; z-index: 90;
             background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--primary); color: var(--text-main);
-            padding: 10px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
+            padding: 12px 16px; border-radius: 24px; font-size: 0.85rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 4px 20px var(--primary-glow);
         }
         .floating-play-btn {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90;
             background: linear-gradient(135deg, rgba(41, 199, 95, 0.45), rgba(56, 189, 248, 0.45));
             backdrop-filter: blur(18px); border: 1px solid rgba(41, 199, 95, 0.8); color: var(--text-main);
-            padding: 11px 22px; border-radius: 30px; font-size: 0.95rem; font-weight: 800; cursor: pointer;
+            padding: 12px 24px; border-radius: 24px; font-size: 0.95rem; font-weight: 800; cursor: pointer;
         }
         .floating-leaderboard-btn {
             position: fixed; bottom: 20px; right: 16px; z-index: 90;
             background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
-            padding: 10px 16px; border-radius: 30px; font-size: 0.9rem; font-weight: 700;
+            padding: 12px 18px; border-radius: 24px; font-size: 0.9rem; font-weight: 700;
             display: flex; align-items: center; gap: 6px; cursor: pointer;
         }
 
-        /* 3D КЛИКЕР COSMIC CORE */
+        /* 🪐 3D КЛИКЕР COSMIC CORE & 10 ПЛАНЕТ */
         #tycoon-overlay { 
-            position: fixed; inset: 0; background: radial-gradient(circle, #112217, #010306); z-index: 2000; display: none;
+            position: fixed; inset: 0; background: radial-gradient(circle, #0b1510, #010306); z-index: 2000; display: none;
             flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; overflow: hidden; 
         }
         #tycoon-overlay.active { display: flex; }
         #space-canvas-inside { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        #three-earth-container { position: relative; width: 330px; height: 330px; z-index: 5; touch-action: none; cursor: grab; }
+        
+        #planet-viewport {
+            position: relative; width: 330px; height: 330px; z-index: 5;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #three-earth-container {
+            width: 330px; height: 330px; touch-action: none; cursor: grab;
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+        
+        /* Анимация перехода на новую планету */
+        .planet-fly-left { transform: translateX(-400px) scale(0.6) !important; opacity: 0 !important; }
+        .planet-enter-right { transform: translateX(400px) scale(0.6) !important; opacity: 0 !important; }
         
         .tycoon-header { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
         .coin-balance-badge { font-size: 1.8rem; font-weight: 900; color: #eab308; display: flex; align-items: center; gap: 8px; }
@@ -264,14 +280,23 @@
             text-align: center; pointer-events: none; z-index: 6; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
 
-        .defense-status-badge { z-index: 10; background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(15px); border: 1px solid rgba(56, 189, 248, 0.5); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+        /* Индикатор прогресса до следующего космического тела */
+        .stage-progress-panel {
+            width: 100%; max-width: 320px; z-index: 10;
+            background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 10px 14px;
+        }
+        .stage-header-row { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
+        .stage-progress-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .stage-progress-fill { height: 100%; background: linear-gradient(90deg, #eab308, #ef4444); border-radius: 10px; transition: width 0.25s ease; }
+
         .energy-bar-container { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
         .energy-text-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; }
         .energy-progress-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
         .energy-progress-fill { height: 100%; background: linear-gradient(90deg, #29c75f, #38bdf8); border-radius: 10px; transition: width 0.2s ease; }
         
         .tycoon-nav-tabs { display: flex; gap: 10px; width: 100%; max-width: 320px; z-index: 10; }
-        .tab-btn { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer; }
+        .tab-btn { flex: 1; padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer; }
         .tab-btn.active { background: var(--primary); color: #000; }
 
         /* МОДАЛЬНЫЕ ОКНА */
@@ -307,7 +332,6 @@
             font-weight: 700;
             font-size: 0.9rem;
         }
-        /* Тот самый серый прозрачный угол без основания */
         .acc-corner-arrow {
             width: 8px;
             height: 8px;
@@ -344,10 +368,28 @@
 
         .tariff-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .tariff-card.featured { border-color: #eab308; background: rgba(234, 179, 8, 0.08); }
-        .tariff-btn { background: #eab308; color: #000; font-weight: 800; border: none; padding: 9px 14px; border-radius: 12px; cursor: pointer; }
+        .tariff-btn { background: #eab308; color: #000; font-weight: 800; border: none; padding: 10px 16px; border-radius: 14px; cursor: pointer; }
 
-        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 12px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
-        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 13px; border-radius: 12px; cursor: pointer; }
+        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 14px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
+        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 16px; cursor: pointer; }
+
+        /* ОТДЕЛЬНЫЕ КНОПКИ ДЛЯ КАЖДОГО НИКА В ОТЧЁТЕ */
+        .report-nick-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(41, 199, 95, 0.3);
+            color: var(--primary);
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .report-nick-btn:active { background: var(--primary-glow); transform: scale(0.98); }
 
         .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 85px; }
         .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.45); }
@@ -498,27 +540,27 @@
                     </div>
                     <div class="accordion-content">
                         <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">Плотность тумана (количество):</div>
-                        <input type="range" id="fog-density-slider" min="1" max="12" value="5" style="width:100%; margin: 6px 0;" oninput="updateFogSettings()">
+                        <input type="range" id="fog-density-slider" min="1" max="15" value="6" style="width:100%; margin: 6px 0;" oninput="updateFogSettings()">
                         
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">Скорость вращения тумана:</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">Скорость движения тумана:</div>
                         <input type="range" id="fog-speed-slider" min="1" max="25" value="8" style="width:100%; margin: 6px 0;" oninput="updateFogSettings()">
 
                         <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">Цветовая палитра:</div>
                         <div class="color-picker-grid">
-                            <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', this)"></div>
-                            <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', this)"></div>
-                            <div class="color-dot" style="background:#a855f7;" onclick="setThemeColor('#a855f7', this)"></div>
-                            <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', this)"></div>
-                            <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', this)"></div>
+                            <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', '41, 199, 95', this)"></div>
+                            <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', '56, 189, 248', this)"></div>
+                            <div class="color-dot" style="background:#a855f7;" onclick="setThemeColor('#a855f7', '168, 85, 247', this)"></div>
+                            <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', '236, 72, 153', this)"></div>
+                            <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', '234, 179, 8', this)"></div>
                         </div>
 
                         <div style="font-size:0.8rem; color:var(--text-muted); margin-top:12px;">Секретные стили:</div>
                         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="setSecretTheme('theme-matrix')">Matrix</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#00f0ff;" onclick="setSecretTheme('theme-cyber')">Cyberpunk</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#ff499e;" onclick="setSecretTheme('theme-vapor')">Vaporwave</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#eab308;" onclick="setSecretTheme('theme-rainbow')">Rainbow</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#222; color:#fff;" onclick="setSecretTheme('')">Сброс</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="setSecretTheme('theme-matrix', '0, 255, 102')">Matrix</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#00f0ff;" onclick="setSecretTheme('theme-cyber', '0, 240, 255')">Cyberpunk</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#ff499e;" onclick="setSecretTheme('theme-vapor', '255, 73, 158')">Vaporwave</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#eab308;" onclick="setSecretTheme('theme-rainbow', '234, 179, 8')">Rainbow</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#222; color:#fff;" onclick="setSecretTheme('', '41, 199, 95')">Сброс</button>
                         </div>
                     </div>
                 </div>
@@ -592,15 +634,13 @@
                     </div>
                 </div>
 
-                <div style="font-weight:700; font-size:0.85rem; margin-bottom:8px;">Найденные никнеймы:</div>
-                <div id="report-usernames-list" style="max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:14px;"></div>
-
-                <button class="form-btn" onclick="copyReportList()">📋 Скопировать все найденные</button>
+                <div style="font-weight:700; font-size:0.85rem; margin-bottom:8px;">Нажмите на нужный ник для копирования:</div>
+                <div id="report-usernames-list" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- 🔮 МАЙНИНГ ЭКРАН (3D ЗЕМЛЯ, КУПОЛ СОТЫ, СТАЛЬНЫЕ ЦЕПИ) 🔮 -->
+    <!-- 🪐 МАЙНИНГ ЭКРАН (10 ЭТАПОВ КОСМИЧЕСКИХ ТЕЛ) 🪐 -->
     <div id="tycoon-overlay">
         <canvas id="space-canvas-inside"></canvas>
 
@@ -610,12 +650,20 @@
             <div style="width: 60px;"></div>
         </div>
 
-        <div class="defense-status-badge" id="defense-badge">
-            <span id="defense-icon">🛡️</span> <span id="defense-layer-name">Купол Соты (Слой 1)</span>
+        <!-- ИНДИКАТОР ПРОГРЕССА ДО СЛЕДУЮЩЕГО ОБЪЕКТА -->
+        <div class="stage-progress-panel">
+            <div class="stage-header-row">
+                <span>Космический объект: <b id="stage-num-text" style="color:#fff;">1/10</b></span>
+                <span>До следующего: <b id="stage-percent-text" style="color:var(--primary);">100%</b></span>
+            </div>
+            <div class="stage-progress-bg">
+                <div class="stage-progress-fill" id="stage-fill" style="width: 100%;"></div>
+            </div>
         </div>
 
-        <div id="three-earth-container">
-            <div id="click-prompt">Нажимай на планету,<br>чтобы добывать монеты ⚡</div>
+        <div id="planet-viewport">
+            <div id="three-earth-container"></div>
+            <div id="click-prompt">Нажимай на объект,<br>чтобы добывать монеты ⚡</div>
         </div>
 
         <div class="energy-bar-container">
@@ -800,8 +848,12 @@
             finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
         }
 
-        let userProfile = { coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, offline_miner_lvl: 0, rank: "Ловец" };
-        let pendingTaps = 0, syncTimer = null;
+        let userProfile = { 
+            coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, 
+            offline_miner_lvl: 0, rank: "Ловец", planet_stage: 1, planet_hp: 100 
+        };
+        let planetHpMax = 100;
+        let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
 
         let stats = {
             generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
@@ -872,6 +924,7 @@
                     isProUser = data.is_pro;
                     turboUntil = data.turbo_until || 0;
                     maxRadarSlots = data.max_radar_slots || 3;
+                    planetHpMax = data.planet_hp_max || 100;
 
                     if (isProUser) {
                         const b = document.querySelector('.btn-buy-pro-header');
@@ -920,6 +973,13 @@
             document.getElementById('user-rank-text').innerText = userProfile.rank;
             let fillPercent = Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
             document.getElementById('energy-fill').style.width = fillPercent + "%";
+            
+            // Прогресс разрушения текущего объекта
+            document.getElementById('stage-num-text').innerText = `${userProfile.planet_stage}/10`;
+            let hpPercent = Math.min(100, Math.max(0, Math.floor((userProfile.planet_hp / planetHpMax) * 100)));
+            document.getElementById('stage-percent-text').innerText = `${hpPercent}%`;
+            document.getElementById('stage-fill').style.width = `${hpPercent}%`;
+
             document.getElementById('lvl-multitap').innerText = userProfile.multi_tap;
             document.getElementById('cost-multitap').innerText = Math.floor(200 * (1.8 ** (userProfile.multi_tap - 1)));
             let energyLvl = (userProfile.max_energy - 1000) / 500;
@@ -947,17 +1007,23 @@
         setInterval(updateTurboTimer, 1000);
 
         // =========================================================================
-        // 🌫️ ДИНАМИЧЕСКИЙ ТУМАН CANVAS С НАСТРОЙКОЙ СКОРОСТИ И ПЛОТНОСТИ
+        // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН CANVAS (СИНХРОНИЗАЦИЯ С ТЕМОЙ И КУРСОРОМ)
         // =========================================================================
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
         let width, height, particles = [];
         let fogSpeedMultiplier = 0.8;
-        let fogDensityCount = 5;
+        let fogDensityCount = 6;
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
 
         function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize);
         resize();
+
+        window.addEventListener('pointermove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
 
         function createFogParticles() {
             particles = [];
@@ -973,22 +1039,27 @@
         createFogParticles();
 
         function updateFogSettings() {
-            const density = parseInt(document.getElementById('fog-density-slider').value);
-            const speed = parseInt(document.getElementById('fog-speed-slider').value);
-            fogDensityCount = density;
-            fogSpeedMultiplier = speed / 10.0;
+            fogDensityCount = parseInt(document.getElementById('fog-density-slider').value);
+            fogSpeedMultiplier = parseInt(document.getElementById('fog-speed-slider').value) / 10.0;
             createFogParticles();
         }
 
         function drawFog() {
             ctx.clearRect(0, 0, width, height);
+            const fogRGB = getComputedStyle(document.documentElement).getPropertyValue('--fog-rgb').trim() || "41, 199, 95";
+
             particles.forEach(p => {
-                p.x += p.vx; p.y += p.vy;
-                if (p.x < -100 || p.x > width + 100) p.vx *= -1;
-                if (p.y < -100 || p.y > height + 100) p.vy *= -1;
+                // Плавное следование за пальцем / курсором (параллакс)
+                let dx = mouseX - p.x;
+                let dy = mouseY - p.y;
+                p.x += p.vx + dx * 0.003;
+                p.y += p.vy + dy * 0.003;
+
+                if (p.x < -150 || p.x > width + 150) p.vx *= -1;
+                if (p.y < -150 || p.y > height + 150) p.vy *= -1;
 
                 let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-                grad.addColorStop(0, 'rgba(41, 199, 95, 0.22)');
+                grad.addColorStop(0, `rgba(${fogRGB}, 0.22)`);
                 grad.addColorStop(1, 'transparent');
                 ctx.fillStyle = grad;
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
@@ -1112,113 +1183,211 @@
             document.getElementById('report-found').innerText = autoSessionFound.length;
             const list = document.getElementById('report-usernames-list');
             if (autoSessionFound.length === 0) {
-                list.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center;">Свободных ников не поймано</div>`;
+                list.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:10px;">Свободных ников не поймано</div>`;
             } else {
+                // Каждый найденный никнейм — отдельная кнопка для копирования
                 list.innerHTML = autoSessionFound.map(u => `
-                    <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:10px; font-weight:bold; color:var(--primary);">@${u}</div>
+                    <button class="report-nick-btn" onclick="copySingleNick('${u}')">
+                        <span>@${u}</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted);">Копировать 📋</span>
+                    </button>
                 `).join('');
             }
             openModal('modal-autoparse-report');
         }
 
-        function copyReportList() {
-            if (autoSessionFound.length === 0) return showToast("Список пуст");
-            navigator.clipboard.writeText(autoSessionFound.map(u => "@" + u).join('\n'));
-            showToast("📋 Все ники скопированы!");
+        function copySingleNick(u) {
+            navigator.clipboard.writeText(u);
+            showToast(`✨ Ник @${u} скопирован!`);
         }
 
         // =========================================================================
-        // 🔮 3D КЛИКЕР COSMIC CORE (THREE.JS)
+        // 🪐 3D ДВИЖОК 10 КОСМИЧЕСКИХ ТЕЛ (THREE.JS)
         // =========================================================================
-        let sceneEarth, cameraEarth, rendererEarth, earthMesh, hexShieldMesh, lockMesh;
-        let chainGroups = [], isThreeInit = false;
-        let currentDefenseLayer = 1, layerHealth = 100, targetScale = 1.0, currentScale = 1.0;
+        let sceneEarth, cameraEarth, rendererEarth, currentBodyMesh, saturnRingMesh, blackHoleGlowMesh;
+        let isThreeInit = false;
+        let targetScale = 1.0, currentScale = 1.0;
 
-        function createProceduralEarthTexture() {
+        // Генерация процедурных текстур для всех 10 космических тел
+        function generateProceduralTexture(type) {
             const canvasTex = document.createElement('canvas');
             canvasTex.width = 1024; canvasTex.height = 512;
             const ctxTex = canvasTex.getContext('2d');
-            ctxTex.fillStyle = '#0d3b66'; ctxTex.fillRect(0, 0, 1024, 512);
-            ctxTex.fillStyle = '#2d6a4f';
-            for (let i = 0; i < 400; i++) {
-                ctxTex.beginPath();
-                ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 40 + 10, 0, Math.PI * 2);
-                ctxTex.fill();
+
+            if (type === "earth") {
+                ctxTex.fillStyle = '#0d3b66'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#2d6a4f';
+                for (let i = 0; i < 450; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 45 + 10, 0, Math.PI * 2); ctxTex.fill();
+                }
+            } else if (type === "moon") {
+                ctxTex.fillStyle = '#808588'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#505355';
+                for (let i = 0; i < 500; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 20 + 4, 0, Math.PI * 2); ctxTex.fill();
+                }
+            } else if (type === "mars") {
+                ctxTex.fillStyle = '#c1440e'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#7a2403';
+                for (let i = 0; i < 400; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 35 + 8, 0, Math.PI * 2); ctxTex.fill();
+                }
+            } else if (type === "venus") {
+                ctxTex.fillStyle = '#e3bb76'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#d99e43';
+                for (let i = 0; i < 30; i++) { ctxTex.fillRect(0, i * 18, 1024, 10); }
+            } else if (type === "jupiter") {
+                ctxTex.fillStyle = '#c99039'; ctxTex.fillRect(0, 0, 1024, 512);
+                const bands = ['#e3bb76', '#8e501b', '#d39c5b', '#f5deb3', '#6a3805'];
+                for (let i = 0; i < 40; i++) {
+                    ctxTex.fillStyle = bands[i % bands.length];
+                    ctxTex.fillRect(0, i * 13, 1024, 11);
+                }
+            } else if (type === "saturn") {
+                ctxTex.fillStyle = '#e2bf7d'; ctxTex.fillRect(0, 0, 1024, 512);
+                for (let i = 0; i < 25; i++) {
+                    ctxTex.fillStyle = (i % 2 === 0) ? '#cbb077' : '#e2bf7d';
+                    ctxTex.fillRect(0, i * 21, 1024, 15);
+                }
+            } else if (type === "uranus") {
+                ctxTex.fillStyle = '#4b70dd'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#65a5d1';
+                for (let i = 0; i < 15; i++) { ctxTex.fillRect(0, i * 35, 1024, 20); }
+            } else if (type === "neptune") {
+                ctxTex.fillStyle = '#274687'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#4370d7';
+                for (let i = 0; i < 250; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 30 + 5, 0, Math.PI * 2); ctxTex.fill();
+                }
+            } else if (type === "sun") {
+                ctxTex.fillStyle = '#ff6600'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#ffcc00';
+                for (let i = 0; i < 600; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 50 + 10, 0, Math.PI * 2); ctxTex.fill();
+                }
             }
+
             return new THREE.CanvasTexture(canvasTex);
+        }
+
+        const CELESTIAL_BODIES = {
+            1: { type: "earth", size: 1.2, roughness: 0.5, glow: 0x38bdf8 },
+            2: { type: "moon", size: 1.05, roughness: 0.8, glow: 0x9ca3af },
+            3: { type: "mars", size: 1.15, roughness: 0.6, glow: 0xef4444 },
+            4: { type: "venus", size: 1.2, roughness: 0.4, glow: 0xf59e0b },
+            5: { type: "jupiter", size: 1.4, roughness: 0.3, glow: 0xd97706 },
+            6: { type: "saturn", size: 1.25, roughness: 0.4, hasRing: true, glow: 0xfde047 },
+            7: { type: "uranus", size: 1.25, roughness: 0.3, glow: 0x38bdf8 },
+            8: { type: "neptune", size: 1.25, roughness: 0.3, glow: 0x3b82f6 },
+            9: { type: "sun", size: 1.45, emissive: true, glow: 0xffaa00 },
+            10: { type: "black_hole", size: 1.2, isBlackHole: true }
+        };
+
+        function buildCelestialBody(stage) {
+            if (currentBodyMesh) sceneEarth.remove(currentBodyMesh);
+            if (saturnRingMesh) sceneEarth.remove(saturnRingMesh);
+            if (blackHoleGlowMesh) sceneEarth.remove(blackHoleGlowMesh);
+
+            const spec = CELESTIAL_BODIES[stage] || CELESTIAL_BODIES[1];
+
+            if (spec.isBlackHole) {
+                // Чёрная Дыра: Абсолютная тьма в центре + Аккреционный диск
+                const sphereGeo = new THREE.SphereGeometry(spec.size, 48, 48);
+                const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                currentBodyMesh = new THREE.Mesh(sphereGeo, blackMat);
+                sceneEarth.add(currentBodyMesh);
+
+                const ringGeo = new THREE.RingGeometry(1.35, 2.3, 64);
+                const ringMat = new THREE.MeshBasicMaterial({ 
+                    color: 0xbf5af2, side: THREE.DoubleSide, transparent: true, opacity: 0.85 
+                });
+                blackHoleGlowMesh = new THREE.Mesh(ringGeo, ringMat);
+                blackHoleGlowMesh.rotation.x = Math.PI / 2.5;
+                sceneEarth.add(blackHoleGlowMesh);
+            } else {
+                const geo = new THREE.SphereGeometry(spec.size, 48, 48);
+                let mat;
+                if (spec.emissive) {
+                    mat = new THREE.MeshStandardMaterial({ 
+                        map: generateProceduralTexture(spec.type), 
+                        emissive: 0xff5500, emissiveIntensity: 0.6, roughness: 0.2 
+                    });
+                } else {
+                    mat = new THREE.MeshStandardMaterial({ 
+                        map: generateProceduralTexture(spec.type), 
+                        roughness: spec.roughness || 0.5 
+                    });
+                }
+                currentBodyMesh = new THREE.Mesh(geo, mat);
+                sceneEarth.add(currentBodyMesh);
+
+                if (spec.hasRing) {
+                    const ringGeo = new THREE.RingGeometry(1.5, 2.2, 64);
+                    const ringMat = new THREE.MeshStandardMaterial({ 
+                        color: 0xcbb077, side: THREE.DoubleSide, transparent: true, opacity: 0.8 
+                    });
+                    saturnRingMesh = new THREE.Mesh(ringGeo, ringMat);
+                    saturnRingMesh.rotation.x = Math.PI / 2.8;
+                    sceneEarth.add(saturnRingMesh);
+                }
+            }
+        }
+
+        function switchPlanetWithAnimation(newStage) {
+            const container = document.getElementById('three-earth-container');
+            container.classList.add('planet-fly-left');
+            
+            setTimeout(() => {
+                buildCelestialBody(newStage);
+                container.classList.remove('planet-fly-left');
+                container.classList.add('planet-enter-right');
+                
+                setTimeout(() => {
+                    container.classList.remove('planet-enter-right');
+                }, 50);
+            }, 500);
         }
 
         function init3DEarth() {
             if (isThreeInit) return;
             const container = document.getElementById('three-earth-container');
-            container.innerHTML = `<div id="click-prompt">Нажимай на планету,<br>чтобы добывать монеты ⚡</div>`;
+            container.innerHTML = "";
 
             sceneEarth = new THREE.Scene();
             cameraEarth = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-            cameraEarth.position.z = 4.2;
+            cameraEarth.position.z = 4.3;
 
             rendererEarth = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             rendererEarth.setSize(330, 330);
             rendererEarth.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             container.appendChild(rendererEarth.domElement);
 
-            sceneEarth.add(new THREE.AmbientLight(0xffffff, 0.9));
-            const sun = new THREE.DirectionalLight(0xffffff, 1.3);
-            sun.position.set(5, 3, 5);
-            sceneEarth.add(sun);
+            sceneEarth.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
+            sunLight.position.set(5, 3, 5);
+            sceneEarth.add(sunLight);
 
-            earthMesh = new THREE.Mesh(
-                new THREE.SphereGeometry(1.2, 48, 48),
-                new THREE.MeshStandardMaterial({ map: createProceduralEarthTexture(), roughness: 0.5 })
-            );
-            sceneEarth.add(earthMesh);
-
-            buildHexShield();
-            buildSteelChains();
+            buildCelestialBody(userProfile.planet_stage || 1);
 
             isThreeInit = true;
             animateEarth();
         }
 
-        function buildHexShield() {
-            if(hexShieldMesh) sceneEarth.remove(hexShieldMesh);
-            hexShieldMesh = new THREE.Mesh(
-                new THREE.IcosahedronGeometry(1.36, 3),
-                new THREE.MeshStandardMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.8 })
-            );
-            sceneEarth.add(hexShieldMesh);
-        }
-
-        function buildSteelChains() {
-            chainGroups.forEach(cg => sceneEarth.remove(cg.group));
-            chainGroups = [];
-            if (lockMesh) sceneEarth.remove(lockMesh);
-
-            const angles = [{ x: 0, y: 0, z: 0 }, { x: Math.PI / 3, y: Math.PI / 6, z: 0 }];
-            angles.forEach(rot => {
-                const group = new THREE.Group();
-                for (let i = 0; i < 30; i++) {
-                    const mesh = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.03, 8, 16), new THREE.MeshStandardMaterial({ color: 0x828b94, metalness: 0.9 }));
-                    const a = (i / 30) * Math.PI * 2;
-                    mesh.position.set(Math.cos(a) * 1.26, 0, Math.sin(a) * 1.26);
-                    mesh.lookAt(0, 0, 0);
-                    group.add(mesh);
-                }
-                group.rotation.set(rot.x, rot.y, rot.z);
-                sceneEarth.add(group);
-                chainGroups.push({ group: group, breaking: false, life: 1.0 });
-            });
-
-            lockMesh = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.14), new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.9 }));
-            lockMesh.position.set(0, 0, 1.32);
-            sceneEarth.add(lockMesh);
-        }
-
         function animateEarth() {
             if (document.getElementById('tycoon-overlay').classList.contains('active') && document.visibilityState === 'visible') {
                 currentScale += (targetScale - currentScale) * 0.25;
-                if (earthMesh) { earthMesh.scale.set(currentScale, currentScale, currentScale); earthMesh.rotation.y += 0.002; }
-                if (hexShieldMesh) { hexShieldMesh.scale.set(currentScale, currentScale, currentScale); hexShieldMesh.rotation.y -= 0.003; }
+                if (currentBodyMesh) { 
+                    currentBodyMesh.scale.set(currentScale, currentScale, currentScale); 
+                    currentBodyMesh.rotation.y += 0.003; 
+                }
+                if (saturnRingMesh) {
+                    saturnRingMesh.scale.set(currentScale, currentScale, currentScale);
+                    saturnRingMesh.rotation.z += 0.002;
+                }
+                if (blackHoleGlowMesh) {
+                    blackHoleGlowMesh.scale.set(currentScale, currentScale, currentScale);
+                    blackHoleGlowMesh.rotation.z += 0.006;
+                }
                 rendererEarth.render(sceneEarth, cameraEarth);
             }
             requestAnimationFrame(animateEarth);
@@ -1234,27 +1403,21 @@
             touches.forEach(touch => {
                 if (userProfile.energy < 1) return;
                 userProfile.energy -= 1;
-                let gain = userProfile.multi_tap * (currentDefenseLayer === 3 ? 2 : 1);
+                let gain = userProfile.multi_tap;
                 userProfile.coins += gain;
                 pendingTaps++;
+                pendingDamage += 1;
 
                 targetScale = 0.94; setTimeout(() => { targetScale = 1.0; }, 70);
 
-                layerHealth -= 5;
-                if (currentDefenseLayer === 1 && layerHealth <= 0) {
-                    currentDefenseLayer = 2; layerHealth = 100;
-                    if(hexShieldMesh) sceneEarth.remove(hexShieldMesh);
-                    showToast('💥 Купол сот сломан! Открыты Стальные Цепи ⛓️');
-                } else if (currentDefenseLayer === 2 && layerHealth <= 0) {
-                    currentDefenseLayer = 3; layerHealth = 100;
-                    chainGroups.forEach(cg => sceneEarth.remove(cg.group));
-                    if(lockMesh) sceneEarth.remove(lockMesh);
-                    userProfile.coins += userProfile.multi_tap * 10;
-                    showToast('🌍 Ядро планеты открыто [БОНУС +10х] 🟡');
-                    setTimeout(() => {
-                        currentDefenseLayer = 1; layerHealth = 100;
-                        buildHexShield(); buildSteelChains();
-                    }, 12000);
+                userProfile.planet_hp -= 1;
+                if (userProfile.planet_hp <= 0) {
+                    if (userProfile.planet_stage < 10) {
+                        let prevStage = userProfile.planet_stage;
+                        userProfile.planet_stage += 1;
+                        showToast(`🚀 Переход на космический объект ${userProfile.planet_stage}/10!`);
+                        switchPlanetWithAnimation(userProfile.planet_stage);
+                    }
                 }
 
                 const floatNum = document.createElement('div');
@@ -1274,15 +1437,22 @@
 
         async function syncTapsWithServer() {
             if (pendingTaps === 0) return;
-            let tapsToSend = pendingTaps; pendingTaps = 0;
+            let tapsToSend = pendingTaps;
+            let dmgToSend = pendingDamage;
+            pendingTaps = 0;
+            pendingDamage = 0;
+
             try {
                 const res = await fetch('/api/game/sync_tap', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend })
+                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend, damage: dmgToSend })
                 });
                 const data = await res.json();
                 if (data.status === 'ok') {
                     userProfile.energy = data.server_energy;
+                    userProfile.planet_stage = data.planet_stage;
+                    userProfile.planet_hp = data.planet_hp;
+                    planetHpMax = data.planet_hp_max;
                     updateTycoonUI();
                 }
             } catch(e){}
@@ -1370,9 +1540,9 @@
             const list = data.targets || [];
             document.getElementById('settings-radar-slot-count').innerText = `${list.length}/${maxRadarSlots}`;
             document.getElementById('radar-list-settings').innerHTML = list.map(t => `
-                <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:10px; font-size:0.85rem;">
+                <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:12px; font-size:0.85rem;">
                     <span>@${t}</span>
-                    <button style="background:transparent; border:none; color:#ef4444; cursor:pointer;" onclick="removeRadarTargetSettings('${t}')">Удалить</button>
+                    <button style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-weight:bold;" onclick="removeRadarTargetSettings('${t}')">Удалить</button>
                 </div>
             `).join('');
         }
@@ -1502,17 +1672,20 @@
         }
 
         // =========================================================================
-        // 🎨 ТЕМЫ
+        // 🎨 ТЕМЫ И СИНХРОНИЗАЦИЯ С ТУМАНОМ
         // =========================================================================
-        function setThemeColor(colorHex, el) {
+        function setThemeColor(colorHex, rgbStr, el) {
             document.documentElement.style.setProperty('--primary', colorHex);
             document.documentElement.style.setProperty('--primary-glow', colorHex + '35');
+            document.documentElement.style.setProperty('--fog-rgb', rgbStr);
             document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
             if (el) el.classList.add('active');
+            showToast("Тема и туман обновлены");
         }
 
-        function setSecretTheme(themeClass) {
+        function setSecretTheme(themeClass, rgbStr) {
             document.body.className = themeClass;
+            document.documentElement.style.setProperty('--fog-rgb', rgbStr || '41, 199, 95');
             showToast("Стиль активирован!");
         }
 
