@@ -155,11 +155,7 @@ def get_user_profile(db: dict, user_id: str) -> dict:
 
     return user
 
-# =========================================================================
-# 💎 БАЗА ЭЛИТНЫХ И БЛАГОЗВУЧНЫХ КОРНЕЙ
-# =========================================================================
 PREMIUM_PREFIXES = ["neo", "vox", "lux", "zen", "vex", "arc", "sol", "dex", "sky", "ray", "val", "nox"]
-PREMIUM_SUFFIXES = ["ex", "ix", "on", "ar", "is", "or", "us", "ax", "ox", "io", "ia", "en"]
 ELITE_ROOTS = [
     "nova", "apex", "volt", "onyx", "flux", "aura", "lyra", "zane", "koda", "mira",
     "dusk", "dawn", "vibe", "luna", "zeta", "echo", "myth", "pulse", "rift", "warp",
@@ -210,10 +206,7 @@ def generate_keyword_custom_username(keyword: str, category: str, use_und: bool 
         return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
 
 def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_und: bool = False, strict_filter: bool = False) -> tuple[str, bool, bool]:
-    """Генерирует благозвучные, брендовые никнеймы высокой ценности."""
     r_val = random.random()
-    
-    # 1. Элитные брендовые связки
     if r_val < 0.45 and not strict_filter:
         root = random.choice(ELITE_ROOTS)
         if random.random() < 0.5:
@@ -221,7 +214,6 @@ def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_un
         else:
             pref = random.choice(PREMIUM_PREFIXES)
             res = pref + root[:3]
-    # 2. Фонетическая матрица CVCVC
     else:
         target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
         res = ""
@@ -352,13 +344,30 @@ if dp and bot:
                 user["pro_expired_notified"] = False
                 save_json_atomic_sync(GAME_DB_PATH, game_db)
 
-            duration_text = "Навсегда" if secs == -1 else f"{secs // 86400} дней"
+            duration_text = "Навсегда (Lifetime) 🌌" if secs == -1 else f"{secs // 86400} дней 📅"
+            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
+            kb = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="🚀 Открыть NameHunter PRO", web_app=WebAppInfo(url=web_app_url))]
+                ]
+            )
+
+            # 👑 КРАСИВОЕ СООБЩЕНИЕ С КОПИРОВАНИЕМ КЛЮЧА В 1 КЛИК
             await message.answer(
-                f"🎉 **Оплата {tariff['stars']} ⭐ принята!**\n\n"
-                f"👑 **PRO статус активен:** {duration_text}\n"
-                f"🔑 **Ваш персональный ключ:**\n`{key_code}`\n\n"
-                f"_Привязан к вашему Telegram ID._",
-                parse_mode="Markdown"
+                f"🎉 **СПАСИБО ЗА ПОКУПКУ PRO ПОДПИСКИ!** 👑\n\n"
+                f"🌟 **Ваш статус:** АКТИВЕН\n"
+                f"⏳ **Срок действия:** {duration_text}\n\n"
+                f"🔑 **Ваш персональный одноразовый ключ:**\n"
+                f"`{key_code}`\n\n"
+                f"_(Нажмите на ключ выше, чтобы мгновенно скопировать его в 1 клик)_\n\n"
+                f"✨ **Что вам теперь доступно:**\n"
+                f"• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
+                f"• 🎯 Радар слежки расширен до 100 слотов\n"
+                f"• 🛠️ Конструктор ников по 20 категориям\n"
+                f"• ⚡ Турбо-парсер без задержек\n"
+                f"• 👑 Золотой VIP статус в топе игроков",
+                parse_mode="Markdown",
+                reply_markup=kb
             )
 
 async def pro_expiry_worker():
@@ -502,6 +511,76 @@ async def read_root():
         )
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
+# =========================================================================
+# 💾 ДВУХСТОРОННЯЯ СИНХРОНИЗАЦИЯ ПРОФИЛЯ С LOCALSTORAGE
+# =========================================================================
+@app.post("/api/game/restore_sync")
+async def restore_sync(request: Request):
+    """Восстанавливает профиль на сервере из сохраненного localStorage при деплоях."""
+    data = await request.json()
+    user_id = str(data.get("user_id", "")).strip()
+    client_profile = data.get("client_profile", {})
+    client_radar = data.get("client_radar", [])
+
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "no_user_id"})
+
+    async with DB_LOCK:
+        db = load_json_file(GAME_DB_PATH, {})
+        user = get_user_profile(db, user_id)
+        now = int(time.time())
+
+        # Если на клиенте сохранен PRO или больший прогресс — восстанавливаем на сервере
+        if client_profile.get("pro_until", 0) == -1 or client_profile.get("pro_until", 0) > user.get("pro_until", 0):
+            user["pro_until"] = client_profile["pro_until"]
+            user["rank"] = "👑 PRO Ловец"
+
+        if client_profile.get("coins", 0) > user.get("coins", 0):
+            user["coins"] = client_profile["coins"]
+
+        if client_profile.get("planet_stage", 1) > user.get("planet_stage", 1):
+            user["planet_stage"] = client_profile["planet_stage"]
+            user["planet_hp"] = client_profile.get("planet_hp", PLANET_HP_TABLE.get(user["planet_stage"], 100))
+
+        if client_profile.get("multi_tap", 1) > user.get("multi_tap", 1):
+            user["multi_tap"] = client_profile["multi_tap"]
+
+        if client_profile.get("max_energy", 1000) > user.get("max_energy", 1000):
+            user["max_energy"] = client_profile["max_energy"]
+
+        if client_profile.get("offline_miner_lvl", 0) > user.get("offline_miner_lvl", 0):
+            user["offline_miner_lvl"] = client_profile["offline_miner_lvl"]
+
+        if client_profile.get("radar_extra_slots", 0) > user.get("radar_extra_slots", 0):
+            user["radar_extra_slots"] = client_profile["radar_extra_slots"]
+
+        for th in client_profile.get("unlocked_themes", []):
+            if th not in user.get("unlocked_themes", []):
+                user["unlocked_themes"].append(th)
+
+        user["last_seen"] = now
+        save_json_atomic_sync(GAME_DB_PATH, db)
+
+        # Восстановление радара
+        if client_radar:
+            rdb = load_json_file(RADAR_DB_PATH, {})
+            if user_id not in rdb:
+                rdb[user_id] = []
+            for target in client_radar:
+                if target not in rdb[user_id]:
+                    rdb[user_id].append(target)
+            save_json_atomic_sync(RADAR_DB_PATH, rdb)
+
+        is_pro, pro_until = is_user_pro(user_id)
+        return {
+            "status": "ok",
+            "profile": user,
+            "is_pro": is_pro,
+            "pro_until": pro_until,
+            "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
+            "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
+        }
+
 @app.get("/api/game/state")
 async def get_game_state(user_id: str):
     async with DB_LOCK:
@@ -599,16 +678,14 @@ async def buy_game_item(request: Request):
         user = get_user_profile(db, user_id)
         now = int(time.time())
 
-        # ⚡ СТЕКИНГ ТУРБО-СКОРОСТИ (65 000 МОНЕТ)
         if item_id == "turbo_boost_15":
             if user["coins"] >= 65000:
                 user["coins"] -= 65000
                 cur_turbo = max(now, user.get("turbo_until", 0))
-                user["turbo_until"] = cur_turbo + (15 * 60) # Аккуратное продление времени (+15 мин)
+                user["turbo_until"] = cur_turbo + (15 * 60)
             else: 
                 return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-        # 🎯 +1 СЛОТ В РАДАРЕ (35 000 МОНЕТ)
         elif item_id == "radar_slot":
             if user["coins"] >= 35000:
                 user["coins"] -= 35000
@@ -616,7 +693,6 @@ async def buy_game_item(request: Request):
             else: 
                 return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-        # 🌌 КАСТОМНАЯ ТЕМА «НЕОНОВЫЙ КВАЗАР» (100 000 МОНЕТ)
         elif item_id == "theme_quasar":
             if "theme_quasar" in user.get("unlocked_themes", []):
                 return JSONResponse(status_code=400, content={"error": "already_owned"})
