@@ -98,7 +98,6 @@ def init_master_keys():
             "created_at": int(time.time()),
             "activated_status": "unused"
         }
-        
     save_json_atomic_sync(KEYS_DB_PATH, keys_db)
 
 init_master_keys()
@@ -140,6 +139,7 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     
     user = db[user_id]
     if "pro_until" not in user: user["pro_until"] = 0
+    if "unlocked_themes" not in user: user["unlocked_themes"] = []
     if "radar_extra_slots" not in user: user["radar_extra_slots"] = 0
     if "turbo_until" not in user: user["turbo_until"] = 0
     if "offline_pending" not in user: user["offline_pending"] = 0
@@ -154,6 +154,17 @@ def get_user_profile(db: dict, user_id: str) -> dict:
         user["energy"] = min(user["max_energy"], user["energy"] + regen_amount)
 
     return user
+
+# =========================================================================
+# 💎 БАЗА ЭЛИТНЫХ И БЛАГОЗВУЧНЫХ КОРНЕЙ
+# =========================================================================
+PREMIUM_PREFIXES = ["neo", "vox", "lux", "zen", "vex", "arc", "sol", "dex", "sky", "ray", "val", "nox"]
+PREMIUM_SUFFIXES = ["ex", "ix", "on", "ar", "is", "or", "us", "ax", "ox", "io", "ia", "en"]
+ELITE_ROOTS = [
+    "nova", "apex", "volt", "onyx", "flux", "aura", "lyra", "zane", "koda", "mira",
+    "dusk", "dawn", "vibe", "luna", "zeta", "echo", "myth", "pulse", "rift", "warp",
+    "neon", "zeal", "draco", "titus", "orion", "hydra", "frost", "blaze", "cyber", "prism"
+]
 
 AFFIX_DATABASE_20 = {
     "superheroes": ["hero", "lord", "prime", "knight", "origin", "verse", "force", "core", "squad", "shadow", "iron", "bat"],
@@ -199,25 +210,33 @@ def generate_keyword_custom_username(keyword: str, category: str, use_und: bool 
         return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
 
 def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_und: bool = False, strict_filter: bool = False) -> tuple[str, bool, bool]:
-    """Генерирует благозвучные никнеймы строго по заданной длине."""
-    if len_mode == "5-6":
-        target_len = random.choice([5, 6])
-    else:
-        target_len = random.choice([7, 8])
-
-    res = ""
-    start_with_consonant = random.choice([True, False])
-    for i in range(target_len):
-        if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
-            res += random.choice(CONSONANTS_EASY)
+    """Генерирует благозвучные, брендовые никнеймы высокой ценности."""
+    r_val = random.random()
+    
+    # 1. Элитные брендовые связки
+    if r_val < 0.45 and not strict_filter:
+        root = random.choice(ELITE_ROOTS)
+        if random.random() < 0.5:
+            res = root + random.choice(["x", "z", "r", "s", "o", "a"])
         else:
-            res += random.choice(VOWELS_EASY)
+            pref = random.choice(PREMIUM_PREFIXES)
+            res = pref + root[:3]
+    # 2. Фонетическая матрица CVCVC
+    else:
+        target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
+        res = ""
+        start_cons = random.choice([True, False])
+        for i in range(target_len):
+            if (i % 2 == 0 and start_cons) or (i % 2 == 1 and not start_cons):
+                res += random.choice(CONSONANTS_EASY)
+            else:
+                res += random.choice(VOWELS_EASY)
 
-    if use_und and len(res) >= 5:
+    if use_und and len(res) >= 5 and random.random() < 0.3:
         pos = random.randint(2, len(res) - 2)
         res = res[:pos] + "_" + res[pos+1:]
 
-    if use_num and len(res) >= 5:
+    if use_num and len(res) >= 5 and random.random() < 0.3:
         num = str(random.randint(1, 99))
         res = res[:-len(num)] + num
 
@@ -233,32 +252,17 @@ def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, h
     has_num = any(char.isdigit() for char in username)
     
     if has_und or has_num or length > 8:
-        return {"rank": "A", "status": "Обычный ник (~1-2 TON)", "color": "#3b82f6", "score": 20}
+        return {"rank": "A", "status": "Свободен (~1-2 TON)", "color": "#3b82f6", "score": 25}
 
-    cons_streak = 0
-    max_cons_streak = 0
-    for char in username:
-        if char not in vowels:
-            cons_streak += 1
-            max_cons_streak = max(max_cons_streak, cons_streak)
-        else:
-            cons_streak = 0
-
-    if max_cons_streak >= 3:
-        return {"rank": "A", "status": "Набор букв (~1 TON)", "color": "#3b82f6", "score": 10}
-
-    if length <= 4:
-        return {"rank": "SSS+", "status": "Fragment (~50-150 TON)", "color": "#29c75f", "score": 90}
-    elif length == 5:
-        return {"rank": "SS", "status": "Fragment (~15-40 TON)", "color": "#eab308", "score": 75}
+    if length == 5:
+        return {"rank": "SSS+", "status": "🔥 Fragment (~30-90+ TON)", "color": "#29c75f", "score": 95}
     elif length == 6:
-        return {"rank": "S", "status": "Красивый актив (~5-15 TON)", "color": "#a855f7", "score": 55}
+        return {"rank": "SS", "status": "💎 Редкий бренд (~10-35 TON)", "color": "#eab308", "score": 75}
+    elif length == 7:
+        return {"rank": "S", "status": "✨ Красивый актив (~4-10 TON)", "color": "#a855f7", "score": 55}
     
     return {"rank": "A", "status": "Свободен (~1-3 TON)", "color": "#29c75f", "score": 30}
 
-# =========================================================================
-# 🛡️ ПРОВЕРКА ЧЕРЕЗ TELETHON БЕЗ РАНДОМНЫХ ФОЛЛБЕКОВ
-# =========================================================================
 async def check_username_telethon(username: str) -> bool:
     global TELETHON_AVAILABLE
     username = username.replace("@", "").strip().lower()
@@ -272,18 +276,16 @@ async def check_username_telethon(username: str) -> bool:
             return cached_result
 
     if not TELETHON_AVAILABLE:
-        # Если Telethon не подключен — СТРОГО False, никаких фейковых "Свободен"!
         CHECK_CACHE[username] = (False, now)
         return False
 
     try:
         coro = telethon_client(CheckUsernameRequest(username=username))
-        result = await asyncio.wait_for(coro, timeout=1.5)
+        result = await asyncio.wait_for(coro, timeout=1.2)
         is_free = bool(result is True)
         CHECK_CACHE[username] = (is_free, now)
         return is_free
     except Exception:
-        # При любых ошибках или сетевых сбоях — возвращаем False
         CHECK_CACHE[username] = (False, now)
         return False
 
@@ -359,9 +361,6 @@ if dp and bot:
                 parse_mode="Markdown"
             )
 
-# =========================================================================
-# 🔔 ФОНОВЫЙ ВОРКЕР УВЕДОМЛЕНИЙ В БОТА (ЗА 24 ЧАСА ИЛИ ЗА 3 МИНУТЫ ДЛЯ ТЕСТА)
-# =========================================================================
 async def pro_expiry_worker():
     while True:
         try:
@@ -379,21 +378,16 @@ async def pro_expiry_worker():
                         continue
                     
                     diff = pro_until - now
-
-                    # Предупреждение: за 24 часа для обычных подписок, либо за 3 минуты для коротких тестов
                     should_warn = False
                     if diff > 600 and diff <= 86400 and not user.get("pro_warned", False):
-                        should_warn = True # За 24 часа
+                        should_warn = True
                     elif diff <= 180 and diff > 0 and not user.get("pro_warned", False):
-                        should_warn = True # За 3 минуты для теста
+                        should_warn = True
 
                     if should_warn:
                         user["pro_warned"] = True
                         changed = True
-                        if diff > 3600:
-                            time_left_str = f"{int(diff / 3600)} ч"
-                        else:
-                            time_left_str = f"{max(1, int(diff / 60))} мин"
+                        time_left_str = f"{int(diff / 3600)} ч" if diff > 3600 else f"{max(1, int(diff / 60))} мин"
 
                         try:
                             web_app_url = "https://user-bot-production-8a5d.up.railway.app"
@@ -419,7 +413,6 @@ async def pro_expiry_worker():
                         except Exception:
                             pass
 
-                    # Уведомление о полном завершении подписки
                     if diff <= 0 and not user.get("pro_expired_notified", False):
                         user["pro_expired_notified"] = True
                         user["rank"] = "Ловец"
@@ -483,9 +476,7 @@ async def lifespan(app: FastAPI):
     try:
         await telethon_client.connect()
         TELETHON_AVAILABLE = await telethon_client.is_user_authorized()
-        print(f"✅ Telethon подключен: {TELETHON_AVAILABLE}")
-    except Exception as e:
-        print(f"⚠️ Telethon автономный режим: {e}")
+    except Exception:
         TELETHON_AVAILABLE = False
     
     asyncio.create_task(radar_worker())
@@ -538,6 +529,7 @@ async def get_game_state(user_id: str):
             "is_pro": is_pro, 
             "pro_until": pro_until,
             "turbo_until": user.get("turbo_until", 0),
+            "unlocked_themes": user.get("unlocked_themes", []),
             "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
             "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
         }
@@ -607,7 +599,36 @@ async def buy_game_item(request: Request):
         user = get_user_profile(db, user_id)
         now = int(time.time())
 
-        if item_id == "multi_tap":
+        # ⚡ СТЕКИНГ ТУРБО-СКОРОСТИ (65 000 МОНЕТ)
+        if item_id == "turbo_boost_15":
+            if user["coins"] >= 65000:
+                user["coins"] -= 65000
+                cur_turbo = max(now, user.get("turbo_until", 0))
+                user["turbo_until"] = cur_turbo + (15 * 60) # Аккуратное продление времени (+15 мин)
+            else: 
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        # 🎯 +1 СЛОТ В РАДАРЕ (35 000 МОНЕТ)
+        elif item_id == "radar_slot":
+            if user["coins"] >= 35000:
+                user["coins"] -= 35000
+                user["radar_extra_slots"] += 1
+            else: 
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        # 🌌 КАСТОМНАЯ ТЕМА «НЕОНОВЫЙ КВАЗАР» (100 000 МОНЕТ)
+        elif item_id == "theme_quasar":
+            if "theme_quasar" in user.get("unlocked_themes", []):
+                return JSONResponse(status_code=400, content={"error": "already_owned"})
+            if user["coins"] >= 100000:
+                user["coins"] -= 100000
+                if "unlocked_themes" not in user:
+                    user["unlocked_themes"] = []
+                user["unlocked_themes"].append("theme_quasar")
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "multi_tap":
             cost = int(200 * (1.8 ** (user["multi_tap"] - 1)))
             if user["coins"] >= cost and user["multi_tap"] < 20:
                 user["coins"] -= cost
@@ -629,19 +650,6 @@ async def buy_game_item(request: Request):
             if user["coins"] >= cost and lvl < 10:
                 user["coins"] -= cost
                 user["offline_miner_lvl"] += 1
-            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
-
-        elif item_id == "radar_slot":
-            if user["coins"] >= 5000:
-                user["coins"] -= 5000
-                user["radar_extra_slots"] += 1
-            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
-
-        elif item_id == "turbo_boost_15":
-            if user["coins"] >= 2500:
-                user["coins"] -= 2500
-                cur_turbo = max(now, user.get("turbo_until", 0))
-                user["turbo_until"] = cur_turbo + (15 * 60)
             else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
         user["last_seen"] = now
@@ -737,8 +745,6 @@ async def generate_username(
     finder_id: str = Query("0") 
 ):
     is_pro, _ = is_user_pro(finder_id)
-
-    # Строгий перебор, пока не найдём реально свободный ник (до 10 попыток)
     generated = ""
     is_free = False
     eval_data = {}
@@ -755,7 +761,6 @@ async def generate_username(
 
         is_free = await check_username_telethon(generated)
         eval_data = calculate_catch_score(generated, is_free, is_pure, has_und)
-        
         if is_free:
             break
 
