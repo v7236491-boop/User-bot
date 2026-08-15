@@ -44,6 +44,20 @@ OFFLINE_RATES = {
     5: 8000, 6: 14000, 7: 22000, 8: 32000, 9: 45000, 10: 60000
 }
 
+# Порог HP (кликов) для каждой космической стадии
+PLANET_HP_TABLE = {
+    1: 100,       # Земля
+    2: 300,       # Луна
+    3: 800,       # Марс
+    4: 2000,      # Венера
+    5: 5000,      # Юпитер
+    6: 12000,     # Сатурн
+    7: 28000,     # Уран
+    8: 65000,     # Нептун
+    9: 150000,    # Солнце
+    10: 500000    # Чёрная Дыра
+}
+
 # =========================================================================
 # 💾 АТОМАРНАЯ РАБОТА С БАЗАМИ ДАННЫХ JSON
 # =========================================================================
@@ -94,6 +108,8 @@ def get_user_profile(db: dict, user_id: str) -> dict:
             "radar_extra_slots": 0,
             "turbo_until": 0,
             "offline_pending": 0,
+            "planet_stage": 1,
+            "planet_hp": PLANET_HP_TABLE[1],
             "rank": "Ловец",
             "pro_until": 0
         }
@@ -103,6 +119,8 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     if "radar_extra_slots" not in user: user["radar_extra_slots"] = 0
     if "turbo_until" not in user: user["turbo_until"] = 0
     if "offline_pending" not in user: user["offline_pending"] = 0
+    if "planet_stage" not in user: user["planet_stage"] = 1
+    if "planet_hp" not in user: user["planet_hp"] = PLANET_HP_TABLE.get(user["planet_stage"], 100)
 
     time_passed = now - user.get("last_seen", now)
     if time_passed > 0 and user["energy"] < user["max_energy"]:
@@ -270,7 +288,7 @@ if dp and bot:
         await message.answer(
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
             "🎯 Мгновенный поиск редких юзернеймов\n"
-            "⚡ 3D-майнинг Cosmic Core и прокачка навыков\n"
+            "🪐 3D-майнинг космических тел (10 уровней планет)\n"
             "👑 Радар на 100 слотов и авто-уведомления",
             reply_markup=kb,
             parse_mode="Markdown"
@@ -409,7 +427,8 @@ async def get_game_state(user_id: str):
             "is_pro": is_pro, 
             "pro_until": pro_until,
             "turbo_until": user.get("turbo_until", 0),
-            "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0)))
+            "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
+            "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
         }
 
 @app.post("/api/game/collect_offline")
@@ -430,6 +449,7 @@ async def sync_tap(request: Request):
     data = await request.json()
     user_id = str(data.get("user_id", "default_guest")).strip()
     taps = int(data.get("taps", 0))
+    damage = int(data.get("damage", 0))
     
     async with DB_LOCK:
         db = load_json_file(GAME_DB_PATH, {})
@@ -440,9 +460,27 @@ async def sync_tap(request: Request):
                 earned = actual_taps * user["multi_tap"]
                 user["coins"] += earned
                 user["energy"] = max(0, user["energy"] - actual_taps)
+                
+                # Урон планете
+                user["planet_hp"] = max(0, user["planet_hp"] - damage)
+                if user["planet_hp"] <= 0:
+                    if user["planet_stage"] < 10:
+                        user["planet_stage"] += 1
+                        user["planet_hp"] = PLANET_HP_TABLE.get(user["planet_stage"], 100)
+                        user["coins"] += user["planet_stage"] * 500  # Бонус за переход
+                    else:
+                        user["planet_hp"] = PLANET_HP_TABLE[10]
+                
                 user["last_seen"] = int(time.time())
                 save_json_atomic_sync(GAME_DB_PATH, db)
-        return {"status": "ok", "coins": user["coins"], "server_energy": user["energy"]}
+        return {
+            "status": "ok", 
+            "coins": user["coins"], 
+            "server_energy": user["energy"], 
+            "planet_stage": user["planet_stage"], 
+            "planet_hp": user["planet_hp"],
+            "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
+        }
 
 @app.post("/api/game/buy")
 async def buy_game_item(request: Request):
