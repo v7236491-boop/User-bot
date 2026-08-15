@@ -25,7 +25,7 @@ DB_LOCK = asyncio.Lock()
 CHECK_CACHE = {}
 CACHE_TTL = 86400
 TELETHON_AVAILABLE = False
-FAILED_ATTEMPTS = {}  # {user_id: [fail_count, lock_timestamp]}
+FAILED_ATTEMPTS = {}
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID", "38162572"))
@@ -46,31 +46,19 @@ OFFLINE_RATES = {
 }
 
 PLANET_HP_TABLE = {
-    1: 100,       # 1. Земля
-    2: 300,       # 2. Луна
-    3: 800,       # 3. Марс
-    4: 2000,      # 4. Венера
-    5: 5000,      # 5. Юпитер
-    6: 12000,     # 6. Сатурн
-    7: 28000,     # 7. Уран
-    8: 65000,     # 8. Нептун
-    9: 150000,    # 9. Солнце
-    10: 500000    # 10. Чёрная Дыра
+    1: 100, 2: 300, 3: 800, 4: 2000, 5: 5000,
+    6: 12000, 7: 28000, 8: 65000, 9: 150000, 10: 500000
 }
 
 KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
 def generate_secure_pro_key() -> str:
-    """Генерирует криптографически стойкий 16-значный ключ Base32."""
     p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
     p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
     p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
     p4 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
     return f"PRO-{p1}-{p2}-{p3}-{p4}"
 
-# =========================================================================
-# 💾 АТОМАРНАЯ РАБОТА С БАЗАМИ ДАННЫХ JSON
-# =========================================================================
 def load_json_file(filepath: str, default_val):
     if os.path.exists(filepath):
         try:
@@ -92,17 +80,30 @@ def save_json_atomic_sync(filepath: str, data):
         pass
 
 def init_master_keys():
-    """Автоматически инициализирует тестовый мастер-ключ при запуске сервера."""
+    """Инициализация тестовых ключей при старте сервера."""
     keys_db = load_json_file(KEYS_DB_PATH, {})
+    
+    # 1. Вечный ключ Lifetime
     master_key = "PRO-9X7K-4MRW-8N2T-H5VQ"
     if master_key not in keys_db:
         keys_db[master_key] = {
             "bound_user_id": None,
-            "days": -1,
+            "seconds": -1,
             "created_at": int(time.time()),
             "activated_status": "unused"
         }
-        save_json_atomic_sync(KEYS_DB_PATH, keys_db)
+
+    # 2. Тестовый ключ на 10 минут (600 секунд)
+    test_10m_key = "PRO-TEST-10MN-8K2R-9X4Q"
+    if test_10m_key not in keys_db:
+        keys_db[test_10m_key] = {
+            "bound_user_id": None,
+            "seconds": 600,
+            "created_at": int(time.time()),
+            "activated_status": "unused"
+        }
+        
+    save_json_atomic_sync(KEYS_DB_PATH, keys_db)
 
 init_master_keys()
 
@@ -136,7 +137,9 @@ def get_user_profile(db: dict, user_id: str) -> dict:
             "planet_stage": 1,
             "planet_hp": PLANET_HP_TABLE[1],
             "rank": "Ловец",
-            "pro_until": 0
+            "pro_until": 0,
+            "pro_warned": False,
+            "pro_expired_notified": True
         }
     
     user = db[user_id]
@@ -146,6 +149,8 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     if "offline_pending" not in user: user["offline_pending"] = 0
     if "planet_stage" not in user: user["planet_stage"] = 1
     if "planet_hp" not in user: user["planet_hp"] = PLANET_HP_TABLE.get(user["planet_stage"], 100)
+    if "pro_warned" not in user: user["pro_warned"] = False
+    if "pro_expired_notified" not in user: user["pro_expired_notified"] = True
 
     time_passed = now - user.get("last_seen", now)
     if time_passed > 0 and user["energy"] < user["max_energy"]:
@@ -154,9 +159,6 @@ def get_user_profile(db: dict, user_id: str) -> dict:
 
     return user
 
-# =========================================================================
-# 📚 БАЗА АФФИКСОВ (20 КАТЕГОРИЙ)
-# =========================================================================
 AFFIX_DATABASE_20 = {
     "superheroes": ["hero", "lord", "prime", "knight", "origin", "verse", "force", "core", "squad", "shadow", "iron", "bat"],
     "cinema": ["film", "cast", "media", "show", "tape", "scene", "star", "cinema", "cut", "movie", "reel", "premiere"],
@@ -204,11 +206,9 @@ CONSONANTS_EASY = "bcdfgklmnprstvwz"
 VOWELS_EASY = "aeiouy"
 
 def generate_keyword_custom_username(keyword: str, category: str, use_und: bool = False) -> str:
-    """Генерирует умный никнейм на основе ключевого слова и 20 категорий."""
     keyword = keyword.strip().lower().replace("@", "")
     affixes = AFFIX_DATABASE_20.get(category, AFFIX_DATABASE_20["superheroes"])
     affix = random.choice(affixes)
-    
     prefixes = ["iam", "the", "real", "get", "mr", "dr", "lord", "pro"]
     pattern = random.choice(["kw_affix", "affix_kw", "prefix_kw", "kw_prefix"])
     
@@ -315,14 +315,11 @@ async def check_username_telethon(username: str) -> bool:
         CHECK_CACHE[username] = (is_free, now)
         return is_free
 
-# =========================================================================
-# ⭐ ТАРИФЫ TELEGRAM STARS И ИНТЕГРАЦИЯ AIOGRAM
-# =========================================================================
 TARRIFS = {
-    "pro_30": {"days": 30, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-парсер + ∞ Энергия"},
-    "pro_60": {"days": 60, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
-    "pro_90": {"days": 90, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO функции"},
-    "pro_forever": {"days": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"}
+    "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-парсер + ∞ Энергия"},
+    "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
+    "pro_90": {"seconds": 90 * 86400, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO функции"},
+    "pro_forever": {"seconds": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"}
 }
 
 if dp and bot:
@@ -354,7 +351,7 @@ if dp and bot:
         tariff = TARRIFS.get(payload)
 
         if tariff:
-            days = tariff["days"]
+            secs = tariff["seconds"]
             now = int(time.time())
             key_code = generate_secure_pro_key()
             
@@ -362,7 +359,7 @@ if dp and bot:
                 keys_db = load_json_file(KEYS_DB_PATH, {})
                 keys_db[key_code] = {
                     "bound_user_id": user_id,
-                    "days": days,
+                    "seconds": secs,
                     "created_at": now,
                     "activated_status": "used",
                     "activated_at": now
@@ -371,22 +368,104 @@ if dp and bot:
 
                 game_db = load_json_file(GAME_DB_PATH, {})
                 user = get_user_profile(game_db, user_id)
-                if days == -1:
+                if secs == -1:
                     user["pro_until"] = -1
                 else:
                     cur_pro = max(now, user.get("pro_until", 0))
-                    user["pro_until"] = cur_pro + (days * 86400)
+                    user["pro_until"] = cur_pro + secs
                 user["rank"] = "👑 PRO Ловец"
+                user["pro_warned"] = False
+                user["pro_expired_notified"] = False
                 save_json_atomic_sync(GAME_DB_PATH, game_db)
 
-            duration_text = "Навсегда" if days == -1 else f"{days} дней"
+            duration_text = "Навсегда" if secs == -1 else f"{secs // 86400} дней"
             await message.answer(
                 f"🎉 **Оплата {tariff['stars']} ⭐ принята!**\n\n"
                 f"👑 **PRO статус активен:** {duration_text}\n"
-                f"🔑 **Ваш персональный криптостойкий ключ:**\n`{key_code}`\n\n"
+                f"🔑 **Ваш персональный ключ:**\n`{key_code}`\n\n"
                 f"_Привязан к вашему Telegram ID._",
                 parse_mode="Markdown"
             )
+
+# =========================================================================
+# 🔔 ФОНОВЫЙ ВОРКЕР УВЕДОМЛЕНИЙ ОБ ИСТЕЧЕНИИ PRO В ЛИЧКУ БОТА
+# =========================================================================
+async def pro_expiry_worker():
+    while True:
+        try:
+            now = int(time.time())
+            db = load_json_file(GAME_DB_PATH, {})
+            changed = False
+
+            if db and bot:
+                for uid, user in list(db.items()):
+                    if not uid.isdigit():
+                        continue
+                    
+                    pro_until = user.get("pro_until", 0)
+                    if pro_until == -1 or pro_until == 0:
+                        continue
+                    
+                    diff = pro_until - now
+
+                    # 1. Предупреждение за 3 минуты (180 секунд)
+                    if 0 < diff <= 180 and not user.get("pro_warned", False):
+                        user["pro_warned"] = True
+                        changed = True
+                        mins_left = max(1, int(diff / 60))
+                        try:
+                            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
+                            kb = InlineKeyboardMarkup(
+                                inline_keyboard=[
+                                    [InlineKeyboardButton(text="⭐ Продлить PRO Доступ", web_app=WebAppInfo(url=web_app_url))]
+                                ]
+                            )
+                            await bot.send_message(
+                                chat_id=int(uid),
+                                text=(
+                                    "⏳ **Внимание! Ваша PRO-подписка скоро истекает!** ⚠️\n\n"
+                                    f"Осталось менее **{mins_left} мин** ⏱️\n"
+                                    "После окончания отключится ∞ бесконечная энергия в 3D-майнинге, "
+                                    "конструктор 20 категорий и радар на 100 слотов 🔒\n\n"
+                                    "✨ Продлите подписку прямо сейчас, чтобы не потерять преимущества! 👑",
+                                ),
+                                parse_mode="Markdown",
+                                reply_markup=kb
+                            )
+                        except Exception:
+                            pass
+
+                    # 2. Уведомление об окончании подписки
+                    if diff <= 0 and not user.get("pro_expired_notified", False):
+                        user["pro_expired_notified"] = True
+                        user["rank"] = "Ловец"
+                        changed = True
+                        try:
+                            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
+                            kb = InlineKeyboardMarkup(
+                                inline_keyboard=[
+                                    [InlineKeyboardButton(text="🚀 Восстановить PRO", web_app=WebAppInfo(url=web_app_url))]
+                                ]
+                            )
+                            await bot.send_message(
+                                chat_id=int(uid),
+                                text=(
+                                    "🥺 **Ваша PRO-подписка завершилась!** 🔒\n\n"
+                                    "Аккаунт переведён на базовый тариф (3 слота радара, стандартная энергия) 🔋\n\n"
+                                    "👑 Оформите подписку заново в любой момент, чтобы вернуть турбо-парсер и суперспособности! ⭐"
+                                ),
+                                parse_mode="Markdown",
+                                reply_markup=kb
+                            )
+                        except Exception:
+                            pass
+
+            if changed:
+                save_json_atomic_sync(GAME_DB_PATH, db)
+
+        except Exception:
+            pass
+        await asyncio.sleep(10)
 
 async def radar_worker():
     while True:
@@ -426,6 +505,7 @@ async def lifespan(app: FastAPI):
         TELETHON_AVAILABLE = False
     
     asyncio.create_task(radar_worker())
+    asyncio.create_task(pro_expiry_worker())
     if bot and dp:
         asyncio.create_task(dp.start_polling(bot))
     
@@ -437,9 +517,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Username Scanner PRO", lifespan=lifespan)
 
-# =========================================================================
-# 🌐 РОУТЫ БЭКЕНДА
-# =========================================================================
 @app.get("/")
 async def read_root():
     if os.path.exists(INDEX_PATH): 
@@ -461,7 +538,7 @@ async def get_game_state(user_id: str):
         offline_earned = 0
         offline_seconds = 0
         if time_diff > 60 and user["offline_miner_lvl"] > 0:
-            offline_seconds = min(time_diff, 10800)  # Максимум 3 часа
+            offline_seconds = min(time_diff, 10800)
             rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
             offline_earned = int(offline_seconds * rate_per_sec)
             user["offline_pending"] = offline_earned
@@ -514,7 +591,6 @@ async def sync_tap(request: Request):
                 if not is_pro:
                     user["energy"] = max(0, user["energy"] - actual_taps)
                 
-                # Урон планете
                 user["planet_hp"] = max(0, user["planet_hp"] - damage)
                 if user["planet_hp"] <= 0:
                     if user["planet_stage"] < 10:
@@ -620,11 +696,10 @@ async def activate_pro_key(request: Request):
     key_code = str(data.get("key", "")).strip().upper()
     now = int(time.time())
 
-    # --- ЗАЩИТА ОТ БРУТФОРСА (RATE LIMIT) ---
     if user_id in FAILED_ATTEMPTS:
         fails, lock_time = FAILED_ATTEMPTS[user_id]
         if fails >= 5:
-            if now - lock_time < 300:  # Блокировка 5 минут
+            if now - lock_time < 300:
                 wait_sec = 300 - (now - lock_time)
                 return JSONResponse(status_code=429, content={"error": f"Слишком много попыток. Подождите {wait_sec} сек."})
             else:
@@ -641,7 +716,7 @@ async def activate_pro_key(request: Request):
         if k_data.get("bound_user_id") and k_data["bound_user_id"] != user_id:
             return JSONResponse(status_code=403, content={"error": "Этот ключ привязан к другому Telegram ID!"})
 
-        days = k_data["days"]
+        secs = k_data.get("seconds", 30 * 86400)
         k_data["bound_user_id"] = user_id
         k_data["activated_status"] = "used"
         k_data["activated_at"] = now
@@ -649,12 +724,14 @@ async def activate_pro_key(request: Request):
 
         game_db = load_json_file(GAME_DB_PATH, {})
         user = get_user_profile(game_db, user_id)
-        if days == -1:
+        if secs == -1:
             user["pro_until"] = -1
         else:
             cur_pro = max(now, user.get("pro_until", 0))
-            user["pro_until"] = cur_pro + (days * 86400)
+            user["pro_until"] = cur_pro + secs
         user["rank"] = "👑 PRO Ловец"
+        user["pro_warned"] = False
+        user["pro_expired_notified"] = False
         save_json_atomic_sync(GAME_DB_PATH, game_db)
 
         if user_id in FAILED_ATTEMPTS:
@@ -675,7 +752,11 @@ async def generate_username(
     finder_name: str = Query("Аноним"), 
     finder_id: str = Query("0") 
 ):
+    is_pro, _ = is_user_pro(finder_id)
+
     if custom_keyword.strip():
+        if not is_pro:
+            return JSONResponse(status_code=403, content={"error": "pro_required", "msg": "Конструктор по 20 категориям доступен только в PRO!"})
         generated = generate_keyword_custom_username(custom_keyword, custom_category, use_und)
         is_pure = True
         has_und = ("_" in generated)
