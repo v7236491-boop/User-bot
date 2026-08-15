@@ -14,6 +14,9 @@ from telethon.sessions import StringSession
 from telethon.tl.functions.account import CheckUsernameRequest
 import uvicorn
 
+# =========================================================================
+# 📂 ПУТИ К БАЗАМ ДАННЫХ И СЕССИЯМ
+# =========================================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
@@ -39,6 +42,9 @@ if SESSION_STRING:
 else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
+# =========================================================================
+# 💾 АТОМАРНЫЕ ОПЕРАЦИИ С ФАЙЛАМИ
+# =========================================================================
 def load_json_file(filepath: str, default_val):
     if os.path.exists(filepath):
         try:
@@ -64,7 +70,7 @@ def is_user_pro(user_id: str) -> tuple[bool, int]:
     user = db.get(str(user_id).strip(), {})
     pro_until = user.get("pro_until", 0)
     now = int(time.time())
-    if pro_until == -1:  # Навсегда
+    if pro_until == -1:
         return True, -1
     if pro_until > now:
         return True, pro_until
@@ -100,6 +106,9 @@ def get_user_profile(db: dict, user_id: str) -> dict:
 
     return user
 
+# =========================================================================
+# 📚 СЛОВАРИ И ГЕНЕРАТОР НИКОВ
+# =========================================================================
 TOP_BRANDS = set([
     "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
     "tesla", "bitcoin", "crypto", "pavel", "durov", "telegram", "starbucks", "prada",
@@ -198,7 +207,7 @@ async def check_username_telethon(username: str) -> bool:
 
     try:
         coro = telethon_client(CheckUsernameRequest(username=username))
-        result = await asyncio.wait_for(coro, timeout=0.7)
+        result = await asyncio.wait_for(coro, timeout=0.8)
         is_free = bool(result is True)
         CHECK_CACHE[username] = (is_free, now)
         return is_free
@@ -208,13 +217,13 @@ async def check_username_telethon(username: str) -> bool:
         return is_free
 
 # =========================================================================
-# ⭐ ОПЛАТА TELEGRAM STARS И АКТИВАЦИЯ КЛЮЧЕЙ (AIOGRAM)
+# ⭐ ТАРИФЫ TELEGRAM STARS И ОБРАБОТЧИК AIOGRAM
 # =========================================================================
 TARRIFS = {
-    "pro_30": {"days": 30, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-генерация"},
-    "pro_60": {"days": 60, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO привилегии"},
-    "pro_90": {"days": 90, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO привилегии"},
-    "pro_forever": {"days": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный PRO доступ без ограничений"}
+    "pro_30": {"days": 30, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-парсер"},
+    "pro_60": {"days": 60, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
+    "pro_90": {"days": 90, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO функции"},
+    "pro_forever": {"days": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"}
 }
 
 if dp and bot:
@@ -231,12 +240,9 @@ if dp and bot:
         if tariff:
             days = tariff["days"]
             now = int(time.time())
-            
-            # Генерация защищенного ключа
             key_code = f"PRO-{secrets.token_hex(4).upper()}-{secrets.token_hex(4).upper()}"
             
             async with DB_LOCK:
-                # 1. Запись ключа в базу
                 keys_db = load_json_file(KEYS_DB_PATH, {})
                 keys_db[key_code] = {
                     "bound_user_id": user_id,
@@ -246,7 +252,6 @@ if dp and bot:
                 }
                 save_json_atomic_sync(KEYS_DB_PATH, keys_db)
 
-                # 2. Мгновенная активация на аккаунт
                 game_db = load_json_file(GAME_DB_PATH, {})
                 user = get_user_profile(game_db, user_id)
                 if days == -1:
@@ -260,9 +265,9 @@ if dp and bot:
             duration_text = "Навсегда" if days == -1 else f"{days} дней"
             await message.answer(
                 f"🎉 **Оплата {tariff['stars']} ⭐ успешно принята!**\n\n"
-                f"👑 **PRO статус активирован на:** {duration_text}\n"
-                f"🔑 **Ваш персональный ключ:** `{key_code}`\n\n"
-                f"_Ключ привязан строго к вашему Telegram ID._",
+                f"👑 **PRO статус активен:** {duration_text}\n"
+                f"🔑 **Ваш ключ активации:** `{key_code}`\n\n"
+                f"_Ключ жестко привязан к вашему Telegram ID._",
                 parse_mode="Markdown"
             )
 
@@ -278,7 +283,7 @@ async def radar_worker():
                             try:
                                 await bot.send_message(
                                     chat_id=int(chat_id),
-                                    text=f"🚨 **РАДАР:** Ник `@{username}` освободился!\nБыстрее забирай!",
+                                    text=f"🚨 **РАДАР:** Ник `@{username}` освободился!\nЗабирай скорее!",
                                     parse_mode="Markdown"
                                 )
                                 db[chat_id].remove(username)
@@ -313,10 +318,10 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
-app = FastAPI(title="Username Scanner PRO", lifespan=lifespan)
+app = FastAPI(title="Username Scanner & Cosmic Core PRO", lifespan=lifespan)
 
 # =========================================================================
-# 🌐 РОУТЫ ДЛЯ PRO-ПОДПИСОК И ОПЛАТЫ
+# 👑 API PRO-ПОДПИСОК И КЛЮЧЕЙ
 # =========================================================================
 @app.post("/api/pro/buy_invoice")
 async def create_pro_invoice(request: Request):
@@ -335,7 +340,7 @@ async def create_pro_invoice(request: Request):
             title=tariff["title"],
             description=tariff["desc"],
             payload=tariff_id,
-            provider_token="",  # Для Telegram Stars provider_token всегда пустая строка
+            provider_token="",
             currency="XTR",
             prices=[LabeledPrice(label=tariff["title"], amount=tariff["stars"])]
         )
@@ -352,7 +357,7 @@ async def activate_pro_key(request: Request):
     async with DB_LOCK:
         keys_db = load_json_file(KEYS_DB_PATH, {})
         if key_code not in keys_db:
-            return JSONResponse(status_code=400, content={"error": "Ключ не найден"})
+            return JSONResponse(status_code=400, content={"error": "Ключ не существует"})
         
         k_data = keys_db[key_code]
         if k_data.get("bound_user_id") and k_data["bound_user_id"] != user_id:
@@ -377,13 +382,12 @@ async def activate_pro_key(request: Request):
         return {"status": "ok", "pro_until": user["pro_until"]}
 
 # =========================================================================
-# 🎮 ГЕЙМПЛЕЙ И ГЕНЕРАТОР
+# 🎮 ИГРОВОЙ ЭКРАН COSMIC CORE 3D
 # =========================================================================
-@app.get("/")
-async def read_root():
-    if os.path.exists(INDEX_PATH): 
-        return FileResponse(INDEX_PATH, media_type="text/html")
-    return JSONResponse(status_code=404, content={"error": "index.html не найден"})
+OFFLINE_RATES = {
+    0: 0, 1: 500, 2: 1200, 3: 2500, 4: 4500,
+    5: 8000, 6: 14000, 7: 22000, 8: 32000, 9: 45000, 10: 60000
+}
 
 @app.get("/api/game/state")
 async def get_game_state(user_id: str):
@@ -395,13 +399,116 @@ async def get_game_state(user_id: str):
         offline_earned = 0
         if time_diff > 60 and user["offline_miner_lvl"] > 0:
             clamped_time = min(time_diff, 10800)
-            offline_earned = int(clamped_time * (500 / 3600.0))
+            rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
+            offline_earned = int(clamped_time * rate_per_sec)
             user["coins"] += offline_earned
 
         user["last_seen"] = now
         save_json_atomic_sync(GAME_DB_PATH, db)
         is_pro, pro_until = is_user_pro(user_id)
         return {"status": "ok", "profile": user, "offline_earned": offline_earned, "is_pro": is_pro, "pro_until": pro_until}
+
+@app.post("/api/game/sync_tap")
+async def sync_tap(request: Request):
+    data = await request.json()
+    user_id = str(data.get("user_id", "default_guest")).strip()
+    taps = int(data.get("taps", 0))
+    
+    async with DB_LOCK:
+        db = load_json_file(GAME_DB_PATH, {})
+        user = get_user_profile(db, user_id)
+        if taps > 0:
+            actual_taps = min(taps, user["energy"])
+            if actual_taps > 0:
+                earned = actual_taps * user["multi_tap"]
+                user["coins"] += earned
+                user["energy"] = max(0, user["energy"] - actual_taps)
+                user["last_seen"] = int(time.time())
+                save_json_atomic_sync(GAME_DB_PATH, db)
+        return {
+            "status": "ok", 
+            "coins": user["coins"], 
+            "server_energy": user["energy"], 
+            "multi_tap": user["multi_tap"]
+        }
+
+@app.post("/api/game/buy")
+async def buy_item(request: Request):
+    data = await request.json()
+    user_id = str(data.get("user_id", "default_guest")).strip()
+    item_id = str(data.get("item_id", ""))
+    
+    async with DB_LOCK:
+        db = load_json_file(GAME_DB_PATH, {})
+        user = get_user_profile(db, user_id)
+
+        if item_id == "multi_tap":
+            cost = int(200 * (1.8 ** (user["multi_tap"] - 1)))
+            if user["coins"] >= cost and user["multi_tap"] < 20:
+                user["coins"] -= cost
+                user["multi_tap"] += 1
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "max_energy":
+            lvl = (user["max_energy"] - 1000) // 500
+            cost = int(150 * (1.6 ** lvl))
+            if user["coins"] >= cost and lvl < 20:
+                user["coins"] -= cost
+                user["max_energy"] += 500
+                user["energy"] = user["max_energy"]
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "offline_miner":
+            lvl = user["offline_miner_lvl"]
+            cost = 3000 if lvl == 0 else int(3000 * (2.2 ** lvl))
+            if user["coins"] >= cost and lvl < 10:
+                user["coins"] -= cost
+                user["offline_miner_lvl"] += 1
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "radar_slot":
+            if user["coins"] >= 5000:
+                user["coins"] -= 5000
+                user["radar_extra_slots"] += 1
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "turbo_parse":
+            if user["coins"] >= 3500:
+                user["coins"] -= 3500
+                user["has_turbo"] = True
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "theme_cyberpunk":
+            if user["coins"] >= 40000 and "cyberpunk" not in user["unlocked_themes"]:
+                user["coins"] -= 40000
+                user["unlocked_themes"].append("cyberpunk")
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "rank_legend":
+            if user["coins"] >= 100000:
+                user["coins"] -= 100000
+                user["rank"] = "👑 Легендарный Ловец"
+            else:
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        user["last_seen"] = int(time.time())
+        save_json_atomic_sync(GAME_DB_PATH, db)
+        return {"status": "ok", "profile": user}
+
+# =========================================================================
+# 🎯 ГЕНЕРАТОР, РАДАР И ЛИДЕРБОРД
+# =========================================================================
+@app.get("/")
+async def read_root():
+    if os.path.exists(INDEX_PATH): 
+        return FileResponse(INDEX_PATH, media_type="text/html")
+    return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
 @app.get("/api/generate")
 async def generate_username(
@@ -426,6 +533,22 @@ async def generate_username(
     is_free = await check_username_telethon(generated)
     eval_data = calculate_catch_score(generated, is_free, is_pure, has_und)
 
+    if is_free and eval_data["score"] >= 40:
+        lb = load_json_file(LEADERBOARD_PATH, [])
+        if not any(item["username"].lower() == generated.lower() for item in lb):
+            lb.append({
+                "username": generated,
+                "rank": eval_data["rank"],
+                "price": eval_data["status"],
+                "score": eval_data["score"],
+                "color": eval_data["color"],
+                "finder_name": finder_name or "Аноним",
+                "finder_id": finder_id or "0",
+                "timestamp": int(time.time())
+            })
+            lb = sorted(lb, key=lambda x: x.get("score", 0), reverse=True)[:1000]
+            save_json_atomic_sync(LEADERBOARD_PATH, lb)
+
     return {
         "status": "success",
         "generated_username": generated,
@@ -442,9 +565,8 @@ async def radar_add(chat_id: str, username: str):
     db = load_json_file(RADAR_DB_PATH, {})
     user_targets = db.get(chat_id, [])
 
-    # ОГРАНИЧЕНИЕ: Бесплатно только 3 слота
     if not is_pro and len(user_targets) >= 3:
-        return JSONResponse(status_code=403, content={"error": "limit_reached", "msg": "Достигнут лимит Free-версии (3 ника). Купите PRO для 100 слотов!"})
+        return JSONResponse(status_code=403, content={"error": "limit_reached", "msg": "Достигнут лимит Free (3 ника). Оформите PRO для 100 слотов!"})
 
     if chat_id not in db: 
         db[chat_id] = []
@@ -473,6 +595,14 @@ async def radar_remove(chat_id: str, username: str):
 @app.get("/api/leaderboard")
 async def get_leaderboard(period: str = Query("all")):
     lb = load_json_file(LEADERBOARD_PATH, [])
+    now = int(time.time())
+    if period == "day":
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 86400]
+    elif period == "week":
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 604800]
+    elif period == "month":
+        lb = [x for x in lb if now - x.get("timestamp", 0) <= 2592000]
+
     return {"status": "ok", "leaderboard": lb[:1000]}
 
 if __name__ == "__main__":
