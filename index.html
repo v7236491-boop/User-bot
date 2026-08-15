@@ -39,7 +39,7 @@
             transition: background 0.4s ease;
         }
 
-        /* 🎨 СЕКРЕТНЫЕ И КАСТОМНЫЕ ТЕМЫ */
+        /* 🎨 ТЕМЫ */
         body.theme-matrix { background: #030a05 !important; color: #00ff66 !important; font-family: monospace !important; }
         body.theme-cyber { background: #0b001a !important; color: #00f0ff !important; }
         body.theme-vapor { background: linear-gradient(180deg, #1f0b35, #680068, #ff499e) !important; color: #fff !important; }
@@ -84,7 +84,7 @@
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
         }
 
-        /* 👑 ШАПКА: УВЕЛИЧЕННАЯ КНОПКА PRO БЕЗ НАЕЗДА */
+        /* 👑 ШАПКА */
         header { 
             display: flex; 
             justify-content: space-between; 
@@ -745,7 +745,7 @@
         </div>
     </div>
 
-    <!-- 🛒 МАГАЗИН БУСТЕРОВ И ПРОКАЧКИ (ОБНОВЛЕННЫЕ ЦЕНЫ) 🛒 -->
+    <!-- 🛒 МАГАЗИН БУСТЕРОВ И ПРОКАЧКИ 🛒 -->
     <div class="modal-overlay" id="modal-shop">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -922,13 +922,19 @@
             localStorage.setItem('vh_permanent_tg_id', tgChatId);
         }
 
-        let userProfile = { 
+        // 💾 ИНИЦИАЛИЗАЦИЯ И ВОССТАНОВЛЕНИЕ ИЗ LOCALSTORAGE
+        let localSavedProfile = JSON.parse(localStorage.getItem('vh_saved_profile') || 'null');
+        let userProfile = localSavedProfile || { 
             coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, 
             offline_miner_lvl: 0, rank: "Ловец", planet_stage: 1, planet_hp: 100,
-            unlocked_themes: []
+            unlocked_themes: [], pro_until: 0, radar_extra_slots: 0
         };
         let planetHpMax = 100;
         let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
+
+        function saveProfileLocally() {
+            localStorage.setItem('vh_saved_profile', JSON.stringify(userProfile));
+        }
 
         let stats = {
             generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
@@ -990,9 +996,19 @@
             }).join('');
         }
 
+        // 🛡️ ВОССТАНОВЛЕНИЕ ДАННЫХ ИЗ LOCALSTORAGE НА СЕРВЕР ПРИ ДЕПЛОЯХ
         async function loadGameState() {
             try {
-                const res = await fetch(`/api/game/state?user_id=${tgChatId}`);
+                const localRadar = JSON.parse(localStorage.getItem('vh_local_radar_targets') || '[]');
+                const res = await fetch('/api/game/restore_sync', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: tgChatId,
+                        client_profile: userProfile,
+                        client_radar: localRadar
+                    })
+                });
                 const data = await res.json();
                 if (data.status === 'ok') {
                     userProfile = data.profile;
@@ -1001,6 +1017,7 @@
                     turboUntil = data.turbo_until || 0;
                     maxRadarSlots = data.max_radar_slots || 3;
                     planetHpMax = data.planet_hp_max || 100;
+                    saveProfileLocally();
 
                     const lockBadge = document.getElementById('kw-pro-lock-badge');
                     const kwInput = document.getElementById('custom-kw-input');
@@ -1021,10 +1038,9 @@
                         if (catSelect) { catSelect.disabled = true; catSelect.style.opacity = "0.45"; }
                     }
 
-                    // Проверка купленной темы
                     const quasarBtn = document.getElementById('btn-theme-quasar');
                     const quasarBuyBtn = document.getElementById('btn-buy-theme-quasar');
-                    if (data.unlocked_themes && data.unlocked_themes.includes('theme_quasar')) {
+                    if (data.profile.unlocked_themes && data.profile.unlocked_themes.includes('theme_quasar')) {
                         if (quasarBtn) quasarBtn.style.display = 'inline-block';
                         if (quasarBuyBtn) { quasarBuyBtn.innerText = "Куплено ✓"; quasarBuyBtn.disabled = true; quasarBuyBtn.style.background = "#444"; }
                     }
@@ -1032,17 +1048,6 @@
                     updateTycoonUI();
                     updateTurboTimer();
                     updateProHeaderTimer();
-
-                    if (data.offline_earned && data.offline_earned > 0) {
-                        let mins = Math.max(1, Math.floor(data.offline_seconds / 60));
-                        let hrs = Math.floor(mins / 60);
-                        let remMins = mins % 60;
-                        let timeStr = hrs > 0 ? `${hrs} ч ${remMins} мин` : `${mins} мин`;
-
-                        document.getElementById('offline-time-text').innerText = timeStr;
-                        document.getElementById('offline-earned-amount').innerText = data.offline_earned;
-                        openModal('modal-offline-reward');
-                    }
                 }
             } catch(e){}
         }
@@ -1076,6 +1081,8 @@
                     }
                 } else {
                     isProUser = false;
+                    userProfile.pro_until = 0;
+                    saveProfileLocally();
                     headerProBtn.innerText = "👑 PRO Доступ";
                     headerProBtn.classList.remove('expiring-soon');
                 }
@@ -1102,6 +1109,7 @@
                 const data = await res.json();
                 if (data.status === 'ok') {
                     userProfile.coins = data.coins;
+                    saveProfileLocally();
                     updateTycoonUI();
                     closeModal('modal-offline-reward');
                     showToast(`🟡 Получено +${data.collected} монет!`);
@@ -1290,7 +1298,7 @@
         }
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С НАДЕЖНЫМ КУЛДАУНОМ)
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С КУЛДАУНОМ)
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
@@ -1323,7 +1331,6 @@
             checkAchievementProgress();
 
             const isTurbo = turboUntil > Math.floor(Date.now() / 1000);
-            // Безопасная пауза анимации (защита Telethon)
             const minDelay = isTurbo ? 700 : 1400;
             const maxDelay = isTurbo ? 950 : 2000;
             const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
@@ -1666,6 +1673,7 @@
                 document.body.appendChild(floatNum);
                 setTimeout(() => floatNum.remove(), 700);
             });
+            saveProfileLocally();
             updateTycoonUI();
             clearTimeout(syncTimer);
             syncTimer = setTimeout(syncTapsWithServer, 500);
@@ -1693,6 +1701,7 @@
                     userProfile.planet_hp = data.planet_hp;
                     planetHpMax = data.planet_hp_max;
                     isProUser = data.is_pro;
+                    saveProfileLocally();
                     updateTycoonUI();
                 }
             } catch(e){}
@@ -1713,6 +1722,7 @@
                 const data = await res.json();
                 if (data.status === 'ok') {
                     userProfile = data.profile;
+                    saveProfileLocally();
                     updateTycoonUI();
                     loadGameState();
                     showToast('✅ Успешно куплено!');
@@ -1761,6 +1771,9 @@
                 });
                 const data = await res.json();
                 if (data.status === 'ok') {
+                    userProfile.pro_until = data.pro_until;
+                    userProfile.rank = "👑 PRO Ловец";
+                    saveProfileLocally();
                     showToast("👑 PRO ключ активирован!");
                     loadGameState();
                 } else {
@@ -1781,6 +1794,7 @@
             const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
             const data = await res.json();
             const list = data.targets || [];
+            localStorage.setItem('vh_local_radar_targets', JSON.stringify(list));
             document.getElementById('settings-radar-slot-count').innerText = `${list.length}/${maxRadarSlots}`;
             document.getElementById('radar-list-settings').innerHTML = list.map(t => `
                 <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:12px; font-size:0.85rem;">
@@ -1926,13 +1940,27 @@
             document.documentElement.style.setProperty('--fog-rgb', rgbStr);
             document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
             if (el) el.classList.add('active');
+            localStorage.setItem('vh_theme_color', colorHex);
+            localStorage.setItem('vh_fog_rgb', rgbStr);
             showToast("Тема обновлена");
         }
 
         function setSecretTheme(themeClass, rgbStr) {
             document.body.className = themeClass;
             document.documentElement.style.setProperty('--fog-rgb', rgbStr || '41, 199, 95');
+            localStorage.setItem('vh_secret_theme', themeClass);
+            localStorage.setItem('vh_fog_rgb', rgbStr || '41, 199, 95');
             showToast("Стиль активирован!");
+        }
+
+        const savedTheme = localStorage.getItem('vh_secret_theme');
+        const savedFog = localStorage.getItem('vh_fog_rgb');
+        const savedColor = localStorage.getItem('vh_theme_color');
+        if (savedTheme) document.body.className = savedTheme;
+        if (savedFog) document.documentElement.style.setProperty('--fog-rgb', savedFog);
+        if (savedColor) {
+            document.documentElement.style.setProperty('--primary', savedColor);
+            document.documentElement.style.setProperty('--primary-glow', savedColor + '35');
         }
 
         function openModal(id) {
