@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Username Scanner PRO & Cosmic Core 3D</title>
     
-    <script src="https://telegram.org/js/telegram-web-app.js?v=4.0"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=5.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
@@ -47,6 +47,10 @@
             background: linear-gradient(45deg, #ff0055, #ff9900, #ffee00, #00ff66, #00eeff, #9900ff) !important;
             background-size: 400% 400% !important; animation: rainbowBG 6s ease infinite !important;
         }
+        body.theme-blackhole {
+            background: radial-gradient(circle at center, #000000 0%, #0d001a 60%, #030008 100%) !important;
+            color: #e0b0ff !important;
+        }
         @keyframes rainbowBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
         #fog-canvas { 
@@ -65,7 +69,7 @@
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
         }
 
-        /* ШАПКА С ЧЁТКИМИ ЗАКРУГЛЁННЫМИ КНОПКАМИ */
+        /* ШАПКА С ОБЪЕМНЫМИ ЗАКРУГЛЕННЫМИ КНОПКАМИ */
         header { 
             display: flex; 
             justify-content: space-between; 
@@ -77,7 +81,7 @@
             margin: 0 auto; 
         }
         .nav-btn { 
-            background: rgba(255, 255, 255, 0.07); 
+            background: rgba(255, 255, 255, 0.08); 
             border: 1px solid rgba(255, 255, 255, 0.12); 
             color: var(--text-main); 
             font-size: 0.88rem; 
@@ -91,7 +95,7 @@
             backdrop-filter: blur(10px);
             transition: transform 0.15s ease, background 0.2s ease;
         }
-        .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.14); }
+        .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
 
         .btn-buy-pro-header {
             background: linear-gradient(135deg, #eab308, #ca8a04);
@@ -247,7 +251,7 @@
             display: flex; align-items: center; gap: 6px; cursor: pointer;
         }
 
-        /* 🪐 3D КЛИКЕР COSMIC CORE & 10 ПЛАНЕТ */
+        /* 🪐 3D КЛИКЕР COSMIC CORE */
         #tycoon-overlay { 
             position: fixed; inset: 0; background: radial-gradient(circle, #0b1510, #010306); z-index: 2000; display: none;
             flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; overflow: hidden; 
@@ -264,7 +268,6 @@
             transition: transform 0.5s ease-out, opacity 0.5s ease-out;
         }
         
-        /* Анимация перехода на новую планету */
         .planet-fly-left { transform: translateX(-400px) scale(0.6) !important; opacity: 0 !important; }
         .planet-enter-right { transform: translateX(400px) scale(0.6) !important; opacity: 0 !important; }
         
@@ -280,7 +283,6 @@
             text-align: center; pointer-events: none; z-index: 6; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
 
-        /* Индикатор прогресса до следующего космического тела */
         .stage-progress-panel {
             width: 100%; max-width: 320px; z-index: 10;
             background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(15px);
@@ -373,7 +375,6 @@
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 14px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 16px; cursor: pointer; }
 
-        /* ОТДЕЛЬНЫЕ КНОПКИ ДЛЯ КАЖДОГО НИКА В ОТЧЁТЕ */
         .report-nick-btn {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(41, 199, 95, 0.3);
@@ -403,7 +404,8 @@
 
         .history-card { background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; touch-action: pan-y; }
         .lb-card { background: rgba(18, 25, 21, 0.8); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        
+        .lb-card.vip-pro-card { border: 1px solid #eab308; background: linear-gradient(90deg, rgba(234,179,8,0.15), rgba(18,25,21,0.85)); box-shadow: 0 0 15px rgba(234,179,8,0.3); }
+
         .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; opacity: 0.6; filter: grayscale(0.8); }
         .achieve-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
         .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-top: 8px;}
@@ -498,7 +500,7 @@
                         <span class="acc-corner-arrow"></span>
                     </div>
                     <div class="accordion-content">
-                        <p style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;">Снятие всех лимитов, 100 слотов радара и турбо-парсер:</p>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;">Снятие лимитов, 100 слотов радара, ∞ Энергия и Конструктор 20 категорий:</p>
                         <button class="tariff-btn" style="width:100%; padding:12px;" onclick="closeModal('modal-settings'); openModal('modal-pro');">Посмотреть тарифы Stars ⭐</button>
                     </div>
                 </div>
@@ -526,8 +528,8 @@
                         <span class="acc-corner-arrow"></span>
                     </div>
                     <div class="accordion-content">
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;">Введите промокод на монеты или PRO-ключ:</div>
-                        <input type="text" id="promo-input" class="form-input" placeholder="ПРОМОКОД ИЛИ PRO-XXXX">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;">Введите промокод на монеты или 16-значный PRO-ключ:</div>
+                        <input type="text" id="promo-input" class="form-input" placeholder="PRO-XXXX-XXXX-XXXX-XXXX">
                         <button class="form-btn" onclick="applyPromoOrKey()">Активировать</button>
                     </div>
                 </div>
@@ -560,6 +562,7 @@
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#00f0ff;" onclick="setSecretTheme('theme-cyber', '0, 240, 255')">Cyberpunk</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#ff499e;" onclick="setSecretTheme('theme-vapor', '255, 73, 158')">Vaporwave</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#eab308;" onclick="setSecretTheme('theme-rainbow', '234, 179, 8')">Rainbow</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#bf5af2;" onclick="setSecretTheme('theme-blackhole', '191, 90, 242')">🌌 Чёрная Дыра</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#222; color:#fff;" onclick="setSecretTheme('', '41, 199, 95')">Сброс</button>
                         </div>
                     </div>
@@ -582,13 +585,40 @@
                     </div>
                 </div>
 
-                <!-- 6. 🛠️ ФИЛЬТРЫ -->
+                <!-- 6. 🛠️ ФИЛЬТРЫ И 20 КАТЕГОРИЙ КОНСТРУКТОРА -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <span>🛠️ Фильтры генерации</span>
+                        <span>🛠️ Конструктор и Фильтры</span>
                         <span class="acc-corner-arrow"></span>
                     </div>
                     <div class="accordion-content">
+                        <div style="font-size:0.8rem; color:#eab308; margin-top:8px; font-weight:bold;">⚡ Поиск по вашему слову (20 категорий):</div>
+                        <input type="text" id="custom-kw-input" class="form-input" placeholder="Напр. spiderman, crypto, batman..." style="margin-top:6px;">
+                        
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Категория стиля:</div>
+                        <select id="custom-cat-select" style="width:100%; background:#111; color:#fff; border:1px solid #333; border-radius:10px; padding:8px; font-size:0.85rem; margin-bottom:12px;">
+                            <option value="superheroes">🦸 Супергерои (lord, origin, verse, squad)</option>
+                            <option value="cinema">🎬 Кино и Сериалы (film, cast, show, reel)</option>
+                            <option value="anime">⛩️ Аниме (kun, chan, senpai, ninja, titan)</option>
+                            <option value="gaming">🎮 Видеоигры (play, gg, clan, craft, arena)</option>
+                            <option value="esports">🏆 Киберспорт (pro, major, apex, frag, ace)</option>
+                            <option value="crypto">💎 Крипта и Web3 (ton, coin, vault, dex, dao)</option>
+                            <option value="music">🎵 Музыка и Рэп (beat, sound, wave, flow, mix)</option>
+                            <option value="business">💼 Бизнес и Бренды (hub, inc, store, trade)</option>
+                            <option value="auto">🏎️ Авто и Тюнинг (drive, speed, turbo, drift)</option>
+                            <option value="sports">⚽ Спорт и Фитнес (fit, gym, flex, champ, lift)</option>
+                            <option value="it">💻 Наука и IT (dev, code, bot, lab, cloud)</option>
+                            <option value="luxury">👑 Роскошь и Luxury (gold, vip, royal, elite)</option>
+                            <option value="blog">📱 Личный бренд и Блог (vibe, daily, official)</option>
+                            <option value="memes">🐸 Мемы и Культура (pepe, sigma, chad, based)</option>
+                            <option value="twitch">🔴 Стриминг и Твич (tv, live, stream, cast)</option>
+                            <option value="art">🎨 Искусство и Дизайн (art, design, gallery)</option>
+                            <option value="food">🍔 Еда и Рестораны (fresh, kitchen, taste, chef)</option>
+                            <option value="cities">🌍 Города и Страны (tokyo, dubai, miami, nyc)</option>
+                            <option value="space">🚀 Космос (star, cosmic, orbit, nova, galaxy)</option>
+                            <option value="mythology">⚡ Мифология (zeus, thor, titan, phoenix)</option>
+                        </select>
+
                         <div class="setting-row">
                             <span>Включить умный фильтр</span>
                             <label class="switch"><input type="checkbox" id="filter-active"><span class="slider"></span></label>
@@ -746,7 +776,7 @@
             </div>
             <div class="modal-body">
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                    PRO даёт 100 слотов в радаре, моментальный автопарсер без лимитов и золотой статус.
+                    PRO даёт 100 слотов радара, Конструктор 20 категорий, ∞ Энергию и золотой VIP статус.
                 </div>
 
                 <div class="tariff-card">
@@ -968,13 +998,21 @@
 
         function updateTycoonUI() {
             document.getElementById('tycoon-coins').innerText = userProfile.coins;
-            document.getElementById('energy-val').innerText = userProfile.energy;
-            document.getElementById('max-energy-val').innerText = userProfile.max_energy;
-            document.getElementById('user-rank-text').innerText = userProfile.rank;
-            let fillPercent = Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
-            document.getElementById('energy-fill').style.width = fillPercent + "%";
             
-            // Прогресс разрушения текущего объекта
+            if (isProUser) {
+                document.getElementById('energy-val').innerText = "∞";
+                document.getElementById('max-energy-val').innerText = "∞";
+                document.getElementById('energy-fill').style.width = "100%";
+            } else {
+                document.getElementById('energy-val').innerText = userProfile.energy;
+                document.getElementById('max-energy-val').innerText = userProfile.max_energy;
+                let fillPercent = Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
+                document.getElementById('energy-fill').style.width = fillPercent + "%";
+            }
+
+            document.getElementById('user-rank-text').innerText = userProfile.rank;
+            
+            // Прогресс разрушения текущего космического тела
             document.getElementById('stage-num-text').innerText = `${userProfile.planet_stage}/10`;
             let hpPercent = Math.min(100, Math.max(0, Math.floor((userProfile.planet_hp / planetHpMax) * 100)));
             document.getElementById('stage-percent-text').innerText = `${hpPercent}%`;
@@ -1049,7 +1087,6 @@
             const fogRGB = getComputedStyle(document.documentElement).getPropertyValue('--fog-rgb').trim() || "41, 199, 95";
 
             particles.forEach(p => {
-                // Плавное следование за пальцем / курсором (параллакс)
                 let dx = mouseX - p.x;
                 let dy = mouseY - p.y;
                 p.x += p.vx + dx * 0.003;
@@ -1074,7 +1111,7 @@
         }
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С УЧЕТОМ 20 КАТЕГОРИЙ)
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
@@ -1115,9 +1152,11 @@
             const lenMode = document.getElementById('filter-len').value;
             const useNum = document.getElementById('filter-num').checked;
             const useUnd = document.getElementById('filter-und').checked;
+            const customKw = document.getElementById('custom-kw-input').value.trim();
+            const customCat = document.getElementById('custom-cat-select').value;
 
             try {
-                const url = `/api/generate?platform=${currentPlatform}&finder_id=${tgChatId}&finder_name=${encodeURIComponent(finderName)}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}`;
+                const url = `/api/generate?platform=${currentPlatform}&finder_id=${tgChatId}&finder_name=${encodeURIComponent(finderName)}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}&custom_keyword=${encodeURIComponent(customKw)}&custom_category=${encodeURIComponent(customCat)}`;
                 const [res] = await Promise.all([fetch(url), delayPromise]);
                 const data = await res.json();
 
@@ -1185,7 +1224,6 @@
             if (autoSessionFound.length === 0) {
                 list.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:10px;">Свободных ников не поймано</div>`;
             } else {
-                // Каждый найденный никнейм — отдельная кнопка для копирования
                 list.innerHTML = autoSessionFound.map(u => `
                     <button class="report-nick-btn" onclick="copySingleNick('${u}')">
                         <span>@${u}</span>
@@ -1208,17 +1246,20 @@
         let isThreeInit = false;
         let targetScale = 1.0, currentScale = 1.0;
 
-        // Генерация процедурных текстур для всех 10 космических тел
         function generateProceduralTexture(type) {
             const canvasTex = document.createElement('canvas');
             canvasTex.width = 1024; canvasTex.height = 512;
             const ctxTex = canvasTex.getContext('2d');
 
             if (type === "earth") {
-                ctxTex.fillStyle = '#0d3b66'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#0a2e5c'; ctxTex.fillRect(0, 0, 1024, 512);
                 ctxTex.fillStyle = '#2d6a4f';
                 for (let i = 0; i < 450; i++) {
                     ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 45 + 10, 0, Math.PI * 2); ctxTex.fill();
+                }
+                ctxTex.fillStyle = 'rgba(255,255,255,0.3)';
+                for (let i = 0; i < 150; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 30 + 5, 0, Math.PI * 2); ctxTex.fill();
                 }
             } else if (type === "moon") {
                 ctxTex.fillStyle = '#808588'; ctxTex.fillRect(0, 0, 1024, 512);
@@ -1291,13 +1332,12 @@
             const spec = CELESTIAL_BODIES[stage] || CELESTIAL_BODIES[1];
 
             if (spec.isBlackHole) {
-                // Чёрная Дыра: Абсолютная тьма в центре + Аккреционный диск
                 const sphereGeo = new THREE.SphereGeometry(spec.size, 48, 48);
                 const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
                 currentBodyMesh = new THREE.Mesh(sphereGeo, blackMat);
                 sceneEarth.add(currentBodyMesh);
 
-                const ringGeo = new THREE.RingGeometry(1.35, 2.3, 64);
+                const ringGeo = new THREE.RingGeometry(1.35, 2.4, 64);
                 const ringMat = new THREE.MeshBasicMaterial({ 
                     color: 0xbf5af2, side: THREE.DoubleSide, transparent: true, opacity: 0.85 
                 });
@@ -1310,7 +1350,7 @@
                 if (spec.emissive) {
                     mat = new THREE.MeshStandardMaterial({ 
                         map: generateProceduralTexture(spec.type), 
-                        emissive: 0xff5500, emissiveIntensity: 0.6, roughness: 0.2 
+                        emissive: 0xff5500, emissiveIntensity: 0.7, roughness: 0.2 
                     });
                 } else {
                     mat = new THREE.MeshStandardMaterial({ 
@@ -1322,9 +1362,9 @@
                 sceneEarth.add(currentBodyMesh);
 
                 if (spec.hasRing) {
-                    const ringGeo = new THREE.RingGeometry(1.5, 2.2, 64);
+                    const ringGeo = new THREE.RingGeometry(1.5, 2.3, 64);
                     const ringMat = new THREE.MeshStandardMaterial({ 
-                        color: 0xcbb077, side: THREE.DoubleSide, transparent: true, opacity: 0.8 
+                        color: 0xcbb077, side: THREE.DoubleSide, transparent: true, opacity: 0.85 
                     });
                     saturnRingMesh = new THREE.Mesh(ringGeo, ringMat);
                     saturnRingMesh.rotation.x = Math.PI / 2.8;
@@ -1401,8 +1441,9 @@
 
             let touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
             touches.forEach(touch => {
-                if (userProfile.energy < 1) return;
-                userProfile.energy -= 1;
+                if (!isProUser && userProfile.energy < 1) return;
+                if (!isProUser) userProfile.energy -= 1;
+                
                 let gain = userProfile.multi_tap;
                 userProfile.coins += gain;
                 pendingTaps++;
@@ -1413,7 +1454,6 @@
                 userProfile.planet_hp -= 1;
                 if (userProfile.planet_hp <= 0) {
                     if (userProfile.planet_stage < 10) {
-                        let prevStage = userProfile.planet_stage;
                         userProfile.planet_stage += 1;
                         showToast(`🚀 Переход на космический объект ${userProfile.planet_stage}/10!`);
                         switchPlanetWithAnimation(userProfile.planet_stage);
@@ -1453,6 +1493,7 @@
                     userProfile.planet_stage = data.planet_stage;
                     userProfile.planet_hp = data.planet_hp;
                     planetHpMax = data.planet_hp_max;
+                    isProUser = data.is_pro;
                     updateTycoonUI();
                 }
             } catch(e){}
@@ -1482,7 +1523,7 @@
         }
 
         // =========================================================================
-        // ⭐ PRO ПОДПИСКА И КЛЮЧИ
+        // ⭐ PRO ПОДПИСКА И КРИПТОСТОЙКИЕ КЛЮЧИ
         // =========================================================================
         async function buyProTariff(tariffId) {
             try {
@@ -1522,7 +1563,9 @@
                 if (data.status === 'ok') {
                     showToast("👑 PRO ключ активирован!");
                     loadGameState();
-                } else showToast(`❌ ${data.error || "Неверный ключ"}`);
+                } else {
+                    showToast(`❌ ${data.error || "Неверный ключ"}`);
+                }
             } else if (input.toUpperCase() === "BONUS1000") {
                 showToast("🎁 +1000 монет начислено!");
             } else {
@@ -1570,7 +1613,7 @@
         }
 
         // =========================================================================
-        // 📜 СВАЙП-ИСТОРИЯ (ВПРАВО = УДАЛЕНИЕ, ВЛЕВО = ШЕРИНГ)
+        // 📜 СВАЙП-ИСТОРИЯ
         // =========================================================================
         function saveToHistory(item) {
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -1655,18 +1698,21 @@
                 const res = await fetch('/api/leaderboard');
                 const data = await res.json();
                 if (data.status === 'ok') {
-                    container.innerHTML = data.leaderboard.map((item, idx) => `
-                        <div class="lb-card" style="border-left: 4px solid ${item.color};">
-                            <div>
-                                <div style="font-weight:bold; color:#fff;">#${idx+1} @${item.username}</div>
-                                <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: ${item.finder_name}</div>
+                    container.innerHTML = data.leaderboard.map((item, idx) => {
+                        const isVip = isProUser && item.finder_id === tgChatId;
+                        return `
+                            <div class="lb-card ${isVip ? 'vip-pro-card' : ''}" style="border-left: 4px solid ${item.color};">
+                                <div>
+                                    <div style="font-weight:bold; color:#fff;">#${idx+1} @${item.username}</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">${isVip ? '👑 PRO ' : ''}Ловец: ${item.finder_name}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
+                                    <div style="font-size:0.7rem; color:#eab308;">${item.price}</div>
+                                </div>
                             </div>
-                            <div style="text-align:right;">
-                                <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
-                                <div style="font-size:0.7rem; color:#eab308;">${item.price}</div>
-                            </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
             } catch(e){}
         }
