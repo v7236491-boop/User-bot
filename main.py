@@ -14,9 +14,6 @@ from telethon.sessions import StringSession
 from telethon.tl.functions.account import CheckUsernameRequest
 import uvicorn
 
-# =========================================================================
-# 📂 ПУТИ К БАЗАМ ДАННЫХ И СЕССИЯМ
-# =========================================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
@@ -43,7 +40,7 @@ else:
     telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
 
 # =========================================================================
-# 💾 АТОМАРНЫЕ ОПЕРАЦИИ С ФАЙЛАМИ
+# 💾 АТОМАРНАЯ РАБОТА С БАЗАМИ ДАННЫХ JSON
 # =========================================================================
 def load_json_file(filepath: str, default_val):
     if os.path.exists(filepath):
@@ -107,50 +104,72 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     return user
 
 # =========================================================================
-# 📚 СЛОВАРИ И ГЕНЕРАТОР НИКОВ
+# 📚 БАЗА АФФИКСОВ ИЗ ТВОЕГО ОРИГИНАЛА (15 КАТЕГОРИЙ + СЛОВАРЬ)
 # =========================================================================
-TOP_BRANDS = set([
-    "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
-    "tesla", "bitcoin", "crypto", "pavel", "durov", "telegram", "starbucks", "prada",
-    "gucci", "porsche", "bmw", "mercedes", "ferrari", "redbull", "steam", "roblox"
-])
+AFFIX_DATABASE = {
+    "personal": ["official", "real", "prime", "live", "blog", "vibe", "zone", "one", "daily", "fan", "hq", "club"],
+    "military": ["core", "tactics", "force", "unit", "prime", "zone", "command", "shield", "squad", "base", "lead"],
+    "media": ["media", "universe", "zone", "hero", "studio", "space", "channel", "feed", "vision", "press", "cast"],
+    "tech": ["lab", "hub", "space", "core", "app", "dev", "tech", "base", "net", "cloud", "desk", "code", "bot"],
+    "crypto": ["vault", "pay", "trade", "node", "coin", "drop", "capital", "cash", "chain", "pool", "dex", "mint"],
+    "gaming": ["play", "zone", "clan", "gg", "craft", "squad", "hero", "skill", "arena", "guild", "win", "rush"],
+    "sports": ["fit", "run", "pro", "team", "cup", "champ", "sport", "gym", "league", "arena", "flex", "power"],
+    "business": ["store", "shop", "brand", "market", "line", "boutique", "supply", "group", "co", "outlet", "style"],
+    "auto": ["drive", "garage", "motors", "auto", "speed", "custom", "track", "power", "racing", "club"],
+    "design": ["art", "studio", "design", "space", "lab", "craft", "visual", "frame", "gallery", "concept"],
+    "food": ["fresh", "food", "cafe", "kitchen", "supply", "lounge", "taste", "craft", "market", "bar"],
+    "music": ["sound", "beat", "wave", "records", "fm", "audio", "track", "vibe", "studio", "label"],
+    "education": ["academy", "study", "hub", "mind", "center", "pioneer", "lab", "learn", "skill", "base"],
+    "estate": ["estate", "realty", "place", "loft", "space", "house", "group", "park", "point", "living"],
+    "auto_detect": ["my", "get", "go", "hq", "one", "vibe", "space", "zone", "core", "hub", "lab", "pro"]
+}
+
+TRANSLIT_WORDS = [
+    "vostok", "imperia", "pobeda", "bereg", "kultura", "sovet", "otklik", "zvezda", 
+    "priboy", "vektor", "osnova", "nasledie", "prikaz", "tishina", "metel", "avangard",
+    "rubin", "granit", "polus", "sfera", "sigma", "vertex", "gamma", "luna", "altair"
+]
 
 PURE_WORDS = (
     "apple world music house light dream space power smart stone water earth cloud storm "
     "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
     "spring sunset sunrise silent secret future vision wonder action energy galaxy cosmic "
     "infinity legend hero master leader pioneer champion starlight moonlight diamond emerald "
-    "sapphire phoenix dragon falcon freedom victory passion harmony destiny horizon paradise "
-    "eternity velvet breeze velocity aurora solitude serenity zenith vortex nebula castle "
-    "kingdom throne emperor knight shield sword crown dynasty legacy empire symbol beacon "
-    "summit peak vertex vector matrix orbit alpha beta gamma delta echo tango fox wolf bear "
-    "eagle lion tiger shark panther snake cobra viper raven hawk owl deer midnight dawn dusk "
-    "abyss nova pulsar quasar comet meteor planet star sun moon sky wind rain snow ice frost "
-    "fire ash ember spark glow ray beam wave tide surf shore coast island mountain hill valley"
+    "sapphire phoenix dragon falcon freedom victory passion harmony destiny horizon paradise"
 ).split()
 
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
 VOWELS_EASY = "aeiouy"
 
-def generate_smart_username(len_mode: str, use_num: bool, use_und: bool) -> tuple[str, bool, bool]:
-    target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
-    res = ""
-    start_with_consonant = random.choice([True, False])
-    for i in range(target_len):
-        if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
-            res += random.choice(CONSONANTS_EASY)
+def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_und: bool = False) -> tuple[str, bool, bool]:
+    # 35% шанс взять красивое слово из базы транслита или категорий
+    if random.random() < 0.35:
+        category = random.choice(list(AFFIX_DATABASE.keys()))
+        affix = random.choice(AFFIX_DATABASE[category])
+        base = random.choice(TRANSLIT_WORDS)
+        if random.random() < 0.5 and len(base) + len(affix) <= 12:
+            res = f"{base}_{affix}" if use_und else f"{base}{affix}"
         else:
-            res += random.choice(VOWELS_EASY)
+            res = base
+    else:
+        target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
+        res = ""
+        start_with_consonant = random.choice([True, False])
+        for i in range(target_len):
+            if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
+                res += random.choice(CONSONANTS_EASY)
+            else:
+                res += random.choice(VOWELS_EASY)
 
-    if use_und and len(res) >= 5:
-        pos = random.randint(2, len(res) - 2)
-        res = res[:pos] + "_" + res[pos+1:]
+        if use_und and len(res) >= 5:
+            pos = random.randint(2, len(res) - 2)
+            res = res[:pos] + "_" + res[pos+1:]
 
-    if use_num and len(res) >= 5:
-        num = str(random.randint(1, 99))
-        res = res[:-len(num)] + num
+        if use_num and len(res) >= 5:
+            num = str(random.randint(1, 99))
+            res = res[:-len(num)] + num
 
-    return res, True, use_und
+    return res.lower(), True, ("_" in res)
 
 def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, has_und: bool = False):
     if not is_free:
@@ -163,20 +182,8 @@ def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, h
     
     if has_und or has_num or length > 8:
         return {"rank": "A", "status": "Обычный ник (~1-2 TON)", "color": "#3b82f6", "score": 20}
-    
-    cons_streak = 0
-    max_cons_streak = 0
-    for char in username:
-        if char not in vowels:
-            cons_streak += 1
-            max_cons_streak = max(max_cons_streak, cons_streak)
-        else:
-            cons_streak = 0
 
-    if max_cons_streak >= 3:
-        return {"rank": "A", "status": "Набор букв (~1 TON)", "color": "#3b82f6", "score": 10}
-
-    if username in TOP_BRANDS or username in PURE_WORDS:
+    if username in TRANSLIT_WORDS or username in PURE_WORDS:
         return {"rank": "SSS+", "status": "Fragment: High Value (~100-500+ TON)", "color": "#29c75f", "score": 100}
 
     if length <= 4:
@@ -217,7 +224,7 @@ async def check_username_telethon(username: str) -> bool:
         return is_free
 
 # =========================================================================
-# ⭐ ТАРИФЫ TELEGRAM STARS И ОБРАБОТЧИК AIOGRAM
+# ⭐ ТАРИФЫ TELEGRAM STARS И ИНТЕГРАЦИЯ AIOGRAM
 # =========================================================================
 TARRIFS = {
     "pro_30": {"days": 30, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-парсер"},
@@ -264,10 +271,10 @@ if dp and bot:
 
             duration_text = "Навсегда" if days == -1 else f"{days} дней"
             await message.answer(
-                f"🎉 **Оплата {tariff['stars']} ⭐ успешно принята!**\n\n"
+                f"🎉 **Оплата {tariff['stars']} ⭐ принята!**\n\n"
                 f"👑 **PRO статус активен:** {duration_text}\n"
-                f"🔑 **Ваш ключ активации:** `{key_code}`\n\n"
-                f"_Ключ жестко привязан к вашему Telegram ID._",
+                f"🔑 **Ваш персональный ключ:** `{key_code}`\n\n"
+                f"_Привязан к вашему Telegram ID._",
                 parse_mode="Markdown"
             )
 
@@ -283,7 +290,7 @@ async def radar_worker():
                             try:
                                 await bot.send_message(
                                     chat_id=int(chat_id),
-                                    text=f"🚨 **РАДАР:** Ник `@{username}` освободился!\nЗабирай скорее!",
+                                    text=f"🚨 **РАДАР:** Ник `@{username}` освободился!\nЗабирай быстрее!",
                                     parse_mode="Markdown"
                                 )
                                 db[chat_id].remove(username)
@@ -318,10 +325,10 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
-app = FastAPI(title="Username Scanner & Cosmic Core PRO", lifespan=lifespan)
+app = FastAPI(title="Username Scanner PRO", lifespan=lifespan)
 
 # =========================================================================
-# 👑 API PRO-ПОДПИСОК И КЛЮЧЕЙ
+# 🌐 РОУТЫ ДЛЯ PRO-ПОДПИСОК И КЛЮЧЕЙ
 # =========================================================================
 @app.post("/api/pro/buy_invoice")
 async def create_pro_invoice(request: Request):
@@ -382,12 +389,13 @@ async def activate_pro_key(request: Request):
         return {"status": "ok", "pro_until": user["pro_until"]}
 
 # =========================================================================
-# 🎮 ИГРОВОЙ ЭКРАН COSMIC CORE 3D
+# 🎮 ГЕЙМПЛЕЙ И ГЕНЕРАТОР
 # =========================================================================
-OFFLINE_RATES = {
-    0: 0, 1: 500, 2: 1200, 3: 2500, 4: 4500,
-    5: 8000, 6: 14000, 7: 22000, 8: 32000, 9: 45000, 10: 60000
-}
+@app.get("/")
+async def read_root():
+    if os.path.exists(INDEX_PATH): 
+        return FileResponse(INDEX_PATH, media_type="text/html")
+    return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
 @app.get("/api/game/state")
 async def get_game_state(user_id: str):
@@ -399,8 +407,7 @@ async def get_game_state(user_id: str):
         offline_earned = 0
         if time_diff > 60 and user["offline_miner_lvl"] > 0:
             clamped_time = min(time_diff, 10800)
-            rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
-            offline_earned = int(clamped_time * rate_per_sec)
+            offline_earned = int(clamped_time * (500 / 3600.0))
             user["coins"] += offline_earned
 
         user["last_seen"] = now
@@ -469,46 +476,9 @@ async def buy_item(request: Request):
             else:
                 return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
-        elif item_id == "radar_slot":
-            if user["coins"] >= 5000:
-                user["coins"] -= 5000
-                user["radar_extra_slots"] += 1
-            else:
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
-
-        elif item_id == "turbo_parse":
-            if user["coins"] >= 3500:
-                user["coins"] -= 3500
-                user["has_turbo"] = True
-            else:
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
-
-        elif item_id == "theme_cyberpunk":
-            if user["coins"] >= 40000 and "cyberpunk" not in user["unlocked_themes"]:
-                user["coins"] -= 40000
-                user["unlocked_themes"].append("cyberpunk")
-            else:
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
-
-        elif item_id == "rank_legend":
-            if user["coins"] >= 100000:
-                user["coins"] -= 100000
-                user["rank"] = "👑 Легендарный Ловец"
-            else:
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
-
         user["last_seen"] = int(time.time())
         save_json_atomic_sync(GAME_DB_PATH, db)
         return {"status": "ok", "profile": user}
-
-# =========================================================================
-# 🎯 ГЕНЕРАТОР, РАДАР И ЛИДЕРБОРД
-# =========================================================================
-@app.get("/")
-async def read_root():
-    if os.path.exists(INDEX_PATH): 
-        return FileResponse(INDEX_PATH, media_type="text/html")
-    return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
 @app.get("/api/generate")
 async def generate_username(
@@ -524,30 +494,10 @@ async def generate_username(
     if use_filter:
         generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
     else:
-        if random.random() < 0.3:
-            generated = random.choice(list(TOP_BRANDS) + PURE_WORDS)
-            is_pure, has_und = True, False
-        else:
-            generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
+        generated, is_pure, has_und = generate_smart_username()
 
     is_free = await check_username_telethon(generated)
     eval_data = calculate_catch_score(generated, is_free, is_pure, has_und)
-
-    if is_free and eval_data["score"] >= 40:
-        lb = load_json_file(LEADERBOARD_PATH, [])
-        if not any(item["username"].lower() == generated.lower() for item in lb):
-            lb.append({
-                "username": generated,
-                "rank": eval_data["rank"],
-                "price": eval_data["status"],
-                "score": eval_data["score"],
-                "color": eval_data["color"],
-                "finder_name": finder_name or "Аноним",
-                "finder_id": finder_id or "0",
-                "timestamp": int(time.time())
-            })
-            lb = sorted(lb, key=lambda x: x.get("score", 0), reverse=True)[:1000]
-            save_json_atomic_sync(LEADERBOARD_PATH, lb)
 
     return {
         "status": "success",
@@ -595,14 +545,6 @@ async def radar_remove(chat_id: str, username: str):
 @app.get("/api/leaderboard")
 async def get_leaderboard(period: str = Query("all")):
     lb = load_json_file(LEADERBOARD_PATH, [])
-    now = int(time.time())
-    if period == "day":
-        lb = [x for x in lb if now - x.get("timestamp", 0) <= 86400]
-    elif period == "week":
-        lb = [x for x in lb if now - x.get("timestamp", 0) <= 604800]
-    elif period == "month":
-        lb = [x for x in lb if now - x.get("timestamp", 0) <= 2592000]
-
     return {"status": "ok", "leaderboard": lb[:1000]}
 
 if __name__ == "__main__":
