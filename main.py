@@ -80,10 +80,7 @@ def save_json_atomic_sync(filepath: str, data):
         pass
 
 def init_master_keys():
-    """Инициализация тестовых ключей при старте сервера."""
     keys_db = load_json_file(KEYS_DB_PATH, {})
-    
-    # 1. Вечный ключ Lifetime
     master_key = "PRO-9X7K-4MRW-8N2T-H5VQ"
     if master_key not in keys_db:
         keys_db[master_key] = {
@@ -93,7 +90,6 @@ def init_master_keys():
             "activated_status": "unused"
         }
 
-    # 2. Тестовый ключ на 10 минут (600 секунд)
     test_10m_key = "PRO-TEST-10MN-8K2R-9X4Q"
     if test_10m_key not in keys_db:
         keys_db[test_10m_key] = {
@@ -182,26 +178,6 @@ AFFIX_DATABASE_20 = {
     "mythology": ["zeus", "thor", "odin", "ares", "hades", "titan", "hydra", "phoenix", "dragon", "valkyrie", "anubis", "chronos"]
 }
 
-TRANSLIT_WORDS = [
-    "vostok", "imperia", "pobeda", "bereg", "kultura", "sovet", "otklik", "zvezda", 
-    "priboy", "vektor", "osnova", "nasledie", "prikaz", "tishina", "metel", "avangard",
-    "rubin", "granit", "polus", "sfera", "sigma", "vertex", "gamma", "luna", "altair"
-]
-
-PURE_WORDS = (
-    "apple world music house light dream space power smart stone water earth cloud storm "
-    "river ocean flame shadow silver golden crystal magic spirit nature forest winter summer "
-    "spring sunset sunrise silent secret future vision wonder action energy galaxy cosmic "
-    "infinity legend hero master leader pioneer champion starlight moonlight diamond emerald "
-    "sapphire phoenix dragon falcon freedom victory passion harmony destiny horizon paradise"
-).split()
-
-TOP_BRANDS = set([
-    "mcdonalds", "subway", "ronaldo", "messi", "nike", "adidas", "apple", "google",
-    "tesla", "bitcoin", "crypto", "pavel", "durov", "telegram", "starbucks", "prada",
-    "gucci", "porsche", "bmw", "mercedes", "ferrari", "redbull", "steam", "roblox"
-])
-
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
 VOWELS_EASY = "aeiouy"
 
@@ -222,38 +198,34 @@ def generate_keyword_custom_username(keyword: str, category: str, use_und: bool 
     else:
         return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
 
-def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_und: bool = False) -> tuple[str, bool, bool]:
-    if random.random() < 0.35:
-        category = random.choice(list(AFFIX_DATABASE_20.keys()))
-        affix = random.choice(AFFIX_DATABASE_20[category])
-        base = random.choice(TRANSLIT_WORDS)
-        if random.random() < 0.5 and len(base) + len(affix) <= 12:
-            res = f"{base}_{affix}" if use_und else f"{base}{affix}"
-        else:
-            res = base
+def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_und: bool = False, strict_filter: bool = False) -> tuple[str, bool, bool]:
+    """Генерирует благозвучные никнеймы строго по заданной длине."""
+    if len_mode == "5-6":
+        target_len = random.choice([5, 6])
     else:
-        target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
-        res = ""
-        start_with_consonant = random.choice([True, False])
-        for i in range(target_len):
-            if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
-                res += random.choice(CONSONANTS_EASY)
-            else:
-                res += random.choice(VOWELS_EASY)
+        target_len = random.choice([7, 8])
 
-        if use_und and len(res) >= 5:
-            pos = random.randint(2, len(res) - 2)
-            res = res[:pos] + "_" + res[pos+1:]
+    res = ""
+    start_with_consonant = random.choice([True, False])
+    for i in range(target_len):
+        if (i % 2 == 0 and start_with_consonant) or (i % 2 == 1 and not start_with_consonant):
+            res += random.choice(CONSONANTS_EASY)
+        else:
+            res += random.choice(VOWELS_EASY)
 
-        if use_num and len(res) >= 5:
-            num = str(random.randint(1, 99))
-            res = res[:-len(num)] + num
+    if use_und and len(res) >= 5:
+        pos = random.randint(2, len(res) - 2)
+        res = res[:pos] + "_" + res[pos+1:]
+
+    if use_num and len(res) >= 5:
+        num = str(random.randint(1, 99))
+        res = res[:-len(num)] + num
 
     return res.lower(), True, ("_" in res)
 
 def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, has_und: bool = False):
     if not is_free:
-        return {"rank": "F", "status": "Занят", "color": "#ef4444", "score": 0}
+        return {"rank": "F", "status": "Занят в Telegram", "color": "#ef4444", "score": 0}
     
     username = username.lower().replace("@", "").strip()
     length = len(username)
@@ -275,9 +247,6 @@ def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, h
     if max_cons_streak >= 3:
         return {"rank": "A", "status": "Набор букв (~1 TON)", "color": "#3b82f6", "score": 10}
 
-    if username in TOP_BRANDS or username in PURE_WORDS or username in TRANSLIT_WORDS:
-        return {"rank": "SSS+", "status": "Fragment: High Value (~100-500+ TON)", "color": "#29c75f", "score": 100}
-
     if length <= 4:
         return {"rank": "SSS+", "status": "Fragment (~50-150 TON)", "color": "#29c75f", "score": 90}
     elif length == 5:
@@ -287,6 +256,9 @@ def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, h
     
     return {"rank": "A", "status": "Свободен (~1-3 TON)", "color": "#29c75f", "score": 30}
 
+# =========================================================================
+# 🛡️ ПРОВЕРКА ЧЕРЕЗ TELETHON БЕЗ РАНДОМНЫХ ФОЛЛБЕКОВ
+# =========================================================================
 async def check_username_telethon(username: str) -> bool:
     global TELETHON_AVAILABLE
     username = username.replace("@", "").strip().lower()
@@ -300,20 +272,20 @@ async def check_username_telethon(username: str) -> bool:
             return cached_result
 
     if not TELETHON_AVAILABLE:
-        is_free = (random.random() < 0.65)
-        CHECK_CACHE[username] = (is_free, now)
-        return is_free
+        # Если Telethon не подключен — СТРОГО False, никаких фейковых "Свободен"!
+        CHECK_CACHE[username] = (False, now)
+        return False
 
     try:
         coro = telethon_client(CheckUsernameRequest(username=username))
-        result = await asyncio.wait_for(coro, timeout=0.8)
+        result = await asyncio.wait_for(coro, timeout=1.5)
         is_free = bool(result is True)
         CHECK_CACHE[username] = (is_free, now)
         return is_free
     except Exception:
-        is_free = (random.random() < 0.55)
-        CHECK_CACHE[username] = (is_free, now)
-        return is_free
+        # При любых ошибках или сетевых сбоях — возвращаем False
+        CHECK_CACHE[username] = (False, now)
+        return False
 
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-парсер + ∞ Энергия"},
@@ -388,7 +360,7 @@ if dp and bot:
             )
 
 # =========================================================================
-# 🔔 ФОНОВЫЙ ВОРКЕР УВЕДОМЛЕНИЙ ОБ ИСТЕЧЕНИИ PRO В ЛИЧКУ БОТА
+# 🔔 ФОНОВЫЙ ВОРКЕР УВЕДОМЛЕНИЙ В БОТА (ЗА 24 ЧАСА ИЛИ ЗА 3 МИНУТЫ ДЛЯ ТЕСТА)
 # =========================================================================
 async def pro_expiry_worker():
     while True:
@@ -408,11 +380,21 @@ async def pro_expiry_worker():
                     
                     diff = pro_until - now
 
-                    # 1. Предупреждение за 3 минуты (180 секунд)
-                    if 0 < diff <= 180 and not user.get("pro_warned", False):
+                    # Предупреждение: за 24 часа для обычных подписок, либо за 3 минуты для коротких тестов
+                    should_warn = False
+                    if diff > 600 and diff <= 86400 and not user.get("pro_warned", False):
+                        should_warn = True # За 24 часа
+                    elif diff <= 180 and diff > 0 and not user.get("pro_warned", False):
+                        should_warn = True # За 3 минуты для теста
+
+                    if should_warn:
                         user["pro_warned"] = True
                         changed = True
-                        mins_left = max(1, int(diff / 60))
+                        if diff > 3600:
+                            time_left_str = f"{int(diff / 3600)} ч"
+                        else:
+                            time_left_str = f"{max(1, int(diff / 60))} мин"
+
                         try:
                             web_app_url = "https://user-bot-production-8a5d.up.railway.app"
                             kb = InlineKeyboardMarkup(
@@ -424,10 +406,12 @@ async def pro_expiry_worker():
                                 chat_id=int(uid),
                                 text=(
                                     "⏳ **Внимание! Ваша PRO-подписка скоро истекает!** ⚠️\n\n"
-                                    f"Осталось менее **{mins_left} мин** ⏱️\n"
-                                    "После окончания отключится ∞ бесконечная энергия в 3D-майнинге, "
-                                    "конструктор 20 категорий и радар на 100 слотов 🔒\n\n"
-                                    "✨ Продлите подписку прямо сейчас, чтобы не потерять преимущества! 👑",
+                                    f"До окончания осталось: **{time_left_str}** ⏱️\n\n"
+                                    "После завершения отключатся:\n"
+                                    "• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
+                                    "• 🛠️ Конструктор ников по 20 категориям\n"
+                                    "• 🎯 Расширенный радар на 100 слотов\n\n"
+                                    "👑 Продлите подписку, чтобы не потерять преимущества! ⭐"
                                 ),
                                 parse_mode="Markdown",
                                 reply_markup=kb
@@ -435,7 +419,7 @@ async def pro_expiry_worker():
                         except Exception:
                             pass
 
-                    # 2. Уведомление об окончании подписки
+                    # Уведомление о полном завершении подписки
                     if diff <= 0 and not user.get("pro_expired_notified", False):
                         user["pro_expired_notified"] = True
                         user["rank"] = "Ловец"
@@ -754,21 +738,28 @@ async def generate_username(
 ):
     is_pro, _ = is_user_pro(finder_id)
 
-    if custom_keyword.strip():
-        if not is_pro:
-            return JSONResponse(status_code=403, content={"error": "pro_required", "msg": "Конструктор по 20 категориям доступен только в PRO!"})
-        generated = generate_keyword_custom_username(custom_keyword, custom_category, use_und)
-        is_pure = True
-        has_und = ("_" in generated)
-    elif use_filter:
-        generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und)
-    else:
-        generated, is_pure, has_und = generate_smart_username()
+    # Строгий перебор, пока не найдём реально свободный ник (до 10 попыток)
+    generated = ""
+    is_free = False
+    eval_data = {}
 
-    is_free = await check_username_telethon(generated)
-    eval_data = calculate_catch_score(generated, is_free, is_pure, has_und)
+    for _ in range(12):
+        if custom_keyword.strip():
+            if not is_pro:
+                return JSONResponse(status_code=403, content={"error": "pro_required", "msg": "Конструктор по 20 категориям доступен только в PRO!"})
+            generated = generate_keyword_custom_username(custom_keyword, custom_category, use_und)
+            is_pure = True
+            has_und = ("_" in generated)
+        else:
+            generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und, strict_filter=use_filter)
 
-    if is_free and eval_data["score"] >= 40:
+        is_free = await check_username_telethon(generated)
+        eval_data = calculate_catch_score(generated, is_free, is_pure, has_und)
+        
+        if is_free:
+            break
+
+    if is_free and eval_data.get("score", 0) >= 40:
         lb = load_json_file(LEADERBOARD_PATH, [])
         if not any(item["username"].lower() == generated.lower() for item in lb):
             lb.append({
