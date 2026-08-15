@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & Cosmic Core 3D</title>
+    <title>NameHunter PRO & Cosmic Core 3D</title>
     
-    <script src="https://telegram.org/js/telegram-web-app.js?v=2.0"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
@@ -15,11 +15,11 @@
             --primary-hover: #22a94f;
             --text-main: #ffffff;
             --text-muted: #829288;
-            --glass-bg: rgba(18, 25, 21, 0.75);
+            --glass-bg: rgba(18, 25, 21, 0.78);
             --glass-border: rgba(255, 255, 255, 0.08);
-            --primary-glow: rgba(41, 199, 95, 0.22);
+            --primary-glow: rgba(41, 199, 95, 0.25);
             --gold-accent: #eab308;
-            --gold-glow: rgba(234, 179, 8, 0.35);
+            --gold-glow: rgba(234, 179, 8, 0.45);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
@@ -35,14 +35,23 @@
             position: relative; 
             user-select: none;
             -webkit-user-select: none;
+            transition: background 0.4s ease;
         }
+
+        /* 🎨 СЕКРЕТНЫЕ ТЕМЫ */
+        body.theme-matrix { background: #030a05 !important; color: #00ff66 !important; font-family: monospace !important; }
+        body.theme-cyber { background: #0b001a !important; color: #00f0ff !important; }
+        body.theme-vapor { background: linear-gradient(180deg, #1f0b35, #680068, #ff499e) !important; color: #fff !important; }
+        body.theme-rainbow {
+            background: linear-gradient(45deg, #ff0055, #ff9900, #ffee00, #00ff66, #00eeff, #9900ff) !important;
+            background-size: 400% 400% !important; animation: rainbowBG 6s ease infinite !important;
+        }
+        @keyframes rainbowBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
         #fog-canvas { 
             position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh; 
+            top: 0; left: 0; 
+            width: 100vw; height: 100vh; 
             z-index: -10; 
             pointer-events: none; 
         }
@@ -82,19 +91,37 @@
 
         .btn-buy-pro-header {
             background: linear-gradient(135deg, #eab308, #ca8a04);
-            color: #000;
-            font-weight: 800;
-            font-size: 0.85rem;
-            padding: 8px 14px;
-            border-radius: 20px;
-            border: none;
+            color: #000 !important;
+            font-weight: 900;
+            font-size: 0.88rem;
+            padding: 9px 16px;
+            border-radius: 24px;
+            border: 1px solid #facc15;
             cursor: pointer;
-            box-shadow: 0 4px 15px var(--gold-glow);
+            box-shadow: 0 0 18px var(--gold-glow);
             animation: pulseGlow 2s infinite alternate;
         }
         @keyframes pulseGlow {
-            0% { transform: scale(1); box-shadow: 0 4px 15px var(--gold-glow); }
-            100% { transform: scale(1.05); box-shadow: 0 6px 22px rgba(234, 179, 8, 0.6); }
+            0% { transform: scale(1); box-shadow: 0 0 14px var(--gold-glow); }
+            100% { transform: scale(1.05); box-shadow: 0 0 24px rgba(234, 179, 8, 0.75); }
+        }
+
+        /* ⚡ ПЛАШКА АКТИВНОГО ТУРБО-БУСТА */
+        .turbo-badge-container {
+            display: none;
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto 10px auto;
+            background: linear-gradient(90deg, rgba(234, 179, 8, 0.2), rgba(41, 199, 95, 0.2));
+            border: 1px solid #eab308;
+            border-radius: 14px;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #eab308;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
+            animation: pulseGlow 1.5s infinite alternate;
         }
 
         main { 
@@ -103,9 +130,8 @@
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            padding: 20px; 
+            padding: 10px 20px 80px 20px; 
             z-index: 10; 
-            transform: translateY(-2vh); 
         }
         .app-container { 
             width: 100%; 
@@ -197,50 +223,18 @@
         }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* ПЛАВАЮЩИЕ КНОПКИ */
-        .floating-achieving-btn {
-            position: fixed; bottom: 20px; left: 16px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--primary); color: var(--text-main);
-            padding: 10px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
-            display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 4px 20px var(--primary-glow);
+        /* ПЛАВАЮЩИЕ КНОПКИ ВНИЗУ */
+        .floating-bar {
+            position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 100; width: calc(100% - 32px); max-width: 380px;
         }
-        .floating-play-btn {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90;
-            background: linear-gradient(135deg, rgba(41, 199, 95, 0.45), rgba(56, 189, 248, 0.45));
-            backdrop-filter: blur(18px); border: 1px solid rgba(41, 199, 95, 0.8); color: var(--text-main);
-            padding: 11px 22px; border-radius: 30px; font-size: 0.95rem; font-weight: 800; cursor: pointer;
+        .float-btn {
+            flex: 1; background: var(--glass-bg); backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border); color: #fff; padding: 12px; border-radius: 20px;
+            font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 6px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); cursor: pointer;
         }
-        .floating-leaderboard-btn {
-            position: fixed; bottom: 20px; right: 16px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
-            padding: 10px 16px; border-radius: 30px; font-size: 0.9rem; font-weight: 700;
-            display: flex; align-items: center; gap: 6px; cursor: pointer;
-        }
-
-        /* 3D КЛИКЕР ОВЕРЛЕЙ */
-        #tycoon-overlay { 
-            position: fixed; inset: 0; background: #010306; z-index: 2000; display: none;
-            flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; overflow: hidden; 
-        }
-        #tycoon-overlay.active { display: flex; }
-        #space-canvas-inside { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        #three-earth-container { position: relative; width: 330px; height: 330px; z-index: 5; touch-action: none; cursor: grab; }
-        
-        .tycoon-header { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .coin-balance-badge { font-size: 1.8rem; font-weight: 900; color: #eab308; display: flex; align-items: center; gap: 8px; }
-        
-        .floating-number { position: absolute; font-size: 1.8rem; font-weight: 900; color: #ffffff; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 0 10px #facc15; z-index: 20; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
-        
-        .defense-status-badge { z-index: 10; background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(15px); border: 1px solid rgba(56, 189, 248, 0.5); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
-        .energy-bar-container { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
-        .energy-text-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; }
-        .energy-progress-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
-        .energy-progress-fill { height: 100%; background: linear-gradient(90deg, #29c75f, #38bdf8); border-radius: 10px; transition: width 0.2s ease; }
-        
-        .tycoon-nav-tabs { display: flex; gap: 10px; width: 100%; max-width: 320px; z-index: 10; }
-        .tab-btn { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer; }
-        .tab-btn.active { background: var(--primary); color: #000; }
+        .float-btn.primary { border-color: var(--primary); background: var(--primary-glow); }
 
         /* МОДАЛЬНЫЕ ОКНА */
         .modal-overlay { 
@@ -258,48 +252,61 @@
         .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
 
-        .tariff-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .tariff-card.featured { border-color: #eab308; background: rgba(234, 179, 8, 0.08); }
-        .tariff-title { font-weight: 700; font-size: 0.95rem; }
-        .tariff-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
-        .tariff-btn { background: #eab308; color: #000; font-weight: 800; border: none; padding: 10px 16px; border-radius: 12px; cursor: pointer; }
+        /* 🪗 СВОРАЧИВАЕМЫЕ АККОРДЕОНЫ НАСТРОЕК */
+        .accordion-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .accordion-header {
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .accordion-arrow { transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text-muted); }
+        .accordion-section.open .accordion-arrow { transform: rotate(180deg); color: var(--primary); }
+        .accordion-content {
+            display: none;
+            padding: 0 16px 16px 16px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .accordion-section.open .accordion-content { display: block; }
 
-        .setting-item { background: rgba(255,255,255,0.03); padding: 14px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .setting-row:last-child { border-bottom: none; }
+
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; border-radius: 50%; transition: .3s; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
-        .color-dot { width: 28px; height: 28px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-        .color-dot.active { border-color: #fff; transform: scale(1.1); }
+        .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; }
+        .color-dot { width: 34px; height: 34px; border-radius: 12px; cursor: pointer; border: 2px solid transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+        .color-dot.active { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
 
-        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 85px; }
-        .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.45); }
-        .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.45); }
-        .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.3rem; opacity: 0; z-index: 1; transition: opacity 0.2s ease; }
-        .swipe-icon-left { left: 18px; color: #fff; }
-        .swipe-icon-right { right: 18px; color: #fff; }
-        .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
-        .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
-        .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
-
-        .history-card { background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; touch-action: pan-y; }
-        .lb-card { background: rgba(18, 25, 21, 0.8); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .shop-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .shop-buy-btn { background: #eab308; color: #000; border: none; font-weight: 800; padding: 10px 14px; border-radius: 12px; cursor: pointer; }
-
-        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; opacity: 0.6; filter: grayscale(0.8); }
-        .achieve-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
-        .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-top: 8px;}
-        .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.3s ease; }
+        .tariff-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .tariff-card.featured { border-color: #eab308; background: rgba(234, 179, 8, 0.08); }
+        .tariff-btn { background: #eab308; color: #000; font-weight: 800; border: none; padding: 9px 14px; border-radius: 12px; cursor: pointer; }
 
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 12px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
-        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 12px; cursor: pointer; }
+        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 13px; border-radius: 12px; cursor: pointer; }
 
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 14px 20px; text-align: center; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.3s ease; z-index: 4000; }
+        /* 3D КЛИКЕР COSMIC CORE */
+        #tycoon-overlay { position: fixed; inset: 0; background: #010306; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; }
+        #tycoon-overlay.active { display: flex; }
+        #three-earth-container { width: 320px; height: 320px; touch-action: none; cursor: grab; }
+        .floating-number { position: absolute; font-size: 1.8rem; font-weight: 900; color: #ffffff; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 0 10px #facc15; z-index: 20; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
+
+        .toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 12px 20px; text-align: center; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.3s ease; z-index: 4000; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
@@ -308,12 +315,17 @@
     <canvas id="fog-canvas"></canvas>
 
     <header>
-        <button class="nav-btn" onclick="openModal('modal-history')">📁 История</button>
+        <button class="nav-btn" onclick="openModal('modal-radar')">🎯 Радар</button>
         <button class="btn-buy-pro-header" onclick="openModal('modal-pro')">👑 Купить PRO</button>
-        <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Опции</button>
+        <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
     </header>
 
     <main>
+        <!-- ТАЙМЕР БУСТА НА ГЛАВНОМ ЭКРАНЕ -->
+        <div class="turbo-badge-container" id="main-turbo-badge">
+            ⚡ ТУРБО-РЕЖИМ X2 АКТИВЕН: <span id="turbo-timer-text">15:00</span>
+        </div>
+
         <div class="app-container">
             <div class="platform-toggle glass-panel">
                 <button class="platform-btn active" onclick="setPlatform('telegram', this)">Telegram</button>
@@ -331,147 +343,232 @@
                 <button class="action-btn btn-story" onclick="shareToFriends()">📲 Поделиться</button>
             </div>
 
-            <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
+            <button class="btn-generate" id="btn-generate" onclick="manualGenerate()">Сгенерировать</button>
         </div>
     </main>
 
-    <!-- ПЛАВАЮЩИЕ КНОПКИ -->
-    <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
-        🏆 <span id="achieve-counter-badge">0/100</span>
-    </button>
-    <button class="floating-play-btn" onclick="openTycoonScreen()">
-        ⚡ Майнинг 3D
-    </button>
-    <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')">
-        📊 Топ
-    </button>
+    <!-- ПЛАВАЮЩАЯ ПАНЕЛЬ ВНИЗУ -->
+    <div class="floating-bar">
+        <button class="float-btn primary" onclick="openTycoonScreen()">⚡ 3D Майнинг</button>
+        <button class="float-btn" onclick="openModal('modal-history')">📁 История</button>
+        <button class="float-btn" onclick="openModal('modal-shop')">🛒 Магазин</button>
+    </div>
 
-    <div class="toast" id="global-toast">✨ Скопировано!</div>
+    <div class="toast" id="global-toast">✨ Готово!</div>
 
-    <!-- 🔮 МАЙНИНГ ЭКРАН (3D ЗЕМЛЯ, КУПОЛ СОТЫ, СТАЛЬНЫЕ ЦЕПИ) 🔮 -->
-    <div id="tycoon-overlay">
-        <canvas id="space-canvas-inside"></canvas>
-
-        <div class="tycoon-header">
-            <button class="tab-btn" style="width: auto; padding: 8px 16px;" onclick="closeTycoonScreen()">◀ Выход</button>
-            <div class="coin-balance-badge">🟡 <span id="tycoon-coins">0</span></div>
-            <div style="width: 60px;"></div>
-        </div>
-
-        <div class="defense-status-badge" id="defense-badge">
-            <span id="defense-icon">🛡️</span> <span id="defense-layer-name">Купол Соты (Слой 1)</span>
-        </div>
-
-        <div id="three-earth-container"></div>
-
-        <div class="energy-bar-container">
-            <div class="energy-text-row">
-                <span>⚡ Энергия</span>
-                <span><span id="energy-val">1000</span> / <span id="max-energy-val">1000</span></span>
+    <!-- ⚙️ НАСТРОЙКИ С АККОРДЕОНАМИ И КРАСИВЫМИ СТРЕЛОЧКАМИ ⚙️ -->
+    <div class="modal-overlay" id="modal-settings">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem;">⚙️ Настройки</h2>
+                <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
             </div>
-            <div class="energy-progress-bg">
-                <div class="energy-progress-fill" id="energy-fill" style="width: 100%;"></div>
-            </div>
-        </div>
+            <div class="modal-body">
+                
+                <!-- 1. ФИЛЬТРЫ ГЕНЕРАЦИИ -->
+                <div class="accordion-section open">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>🎯 Фильтры генератора</span>
+                        <span class="accordion-arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="setting-row">
+                            <span>Включить умный фильтр</span>
+                            <label class="switch"><input type="checkbox" id="filter-active"><span class="slider"></span></label>
+                        </div>
+                        <div class="setting-row">
+                            <span>Длина ника</span>
+                            <select id="filter-len" style="background:#111; color:#fff; border:1px solid #333; border-radius:8px; padding:4px 8px;">
+                                <option value="5-6">5-6 символов</option>
+                                <option value="7-8">7-8 символов</option>
+                            </select>
+                        </div>
+                        <div class="setting-row">
+                            <span>Использовать цифры</span>
+                            <label class="switch"><input type="checkbox" id="filter-num"><span class="slider"></span></label>
+                        </div>
+                        <div class="setting-row">
+                            <span>Использовать '_' (подчеркивание)</span>
+                            <label class="switch"><input type="checkbox" id="filter-und"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="tycoon-nav-tabs">
-            <button class="tab-btn active" onclick="openModal('modal-shop')">🛒 Магазин</button>
-            <button class="tab-btn" onclick="openModal('modal-leaderboard')">👑 <span id="user-rank-text">Ловец</span></button>
+                <!-- 2. АВТОПАРСЕР -->
+                <div class="accordion-section open">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>🤖 Автопарсер</span>
+                        <span class="accordion-arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="setting-row">
+                            <div>
+                                <div>Непрерывный авто-поиск</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Отчет выводится при остановке</div>
+                            </div>
+                            <label class="switch"><input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. КАСТОМИЗАЦИЯ И ТЕМЫ -->
+                <div class="accordion-section open">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>🎨 Оформление и темы</span>
+                        <span class="accordion-arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">Цветовая палитра:</div>
+                        <div class="color-picker-grid">
+                            <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', this)"></div>
+                            <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', this)"></div>
+                            <div class="color-dot" style="background:#a855f7;" onclick="setThemeColor('#a855f7', this)"></div>
+                            <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', this)"></div>
+                            <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', this)"></div>
+                            <div class="color-dot" style="background:#f97316;" onclick="setThemeColor('#f97316', this)"></div>
+                            <div class="color-dot" style="background:#06b6d4;" onclick="setThemeColor('#06b6d4', this)"></div>
+                            <div class="color-dot" style="background:#ef4444;" onclick="setThemeColor('#ef4444', this)"></div>
+                            <div class="color-dot" style="background:#8b5cf6;" onclick="setThemeColor('#8b5cf6', this)"></div>
+                            <div class="color-dot" style="background:#64748b;" onclick="setThemeColor('#64748b', this)"></div>
+                        </div>
+
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:14px;">Секретные стили:</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="setSecretTheme('theme-matrix')">Matrix</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#00f0ff;" onclick="setSecretTheme('theme-cyber')">Cyberpunk</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#ff499e;" onclick="setSecretTheme('theme-vapor')">Vaporwave</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#eab308;" onclick="setSecretTheme('theme-rainbow')">Rainbow</button>
+                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#222; color:#fff;" onclick="setSecretTheme('')">Сброс</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. ПРОМОКОДЫ И КЛЮЧИ -->
+                <div class="accordion-section">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>🎟️ Промокоды и PRO-ключи</span>
+                        <span class="accordion-arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;">Введите промокод на монеты или PRO-ключ:</div>
+                        <input type="text" id="promo-input" class="form-input" placeholder="ПРОМОКОД ИЛИ PRO-XXXX">
+                        <button class="form-btn" onclick="applyPromoOrKey()">Активировать</button>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
-    <!-- 🛒 КИБЕР-МАГАЗИН 🛒 -->
+    <!-- 📊 МОДАЛКА ОТЧЕТА АВТОПАРСЕРА ПОСЛЕ ОСТАНОВКИ 📊 -->
+    <div class="modal-overlay" id="modal-autoparse-report">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem; color: var(--primary);">📊 Итоги автопарсера</h2>
+                <button class="btn-close" onclick="closeModal('modal-autoparse-report')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; justify-content:space-around; background:rgba(255,255,255,0.05); padding:14px; border-radius:14px; margin-bottom:14px;">
+                    <div style="text-align:center;">
+                        <div style="font-size:1.4rem; font-weight:900; color:#fff;" id="report-scanned">0</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Проверено</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:1.4rem; font-weight:900; color:var(--primary);" id="report-found">0</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Свободных</div>
+                    </div>
+                </div>
+
+                <div style="font-weight:700; font-size:0.85rem; margin-bottom:8px;">Найденные никнеймы:</div>
+                <div id="report-usernames-list" style="max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:14px;"></div>
+
+                <button class="form-btn" onclick="copyReportList()">📋 Скопировать все найденные</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🛒 МАГАЗИН КЛИКЕРА И БУСТЕРОВ 🛒 -->
     <div class="modal-overlay" id="modal-shop">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 style="font-size:1.1rem; color:#eab308;">🛒 Кибер-Магазин</h2>
+                <h2 style="font-size: 1.1rem; color: #eab308;">🛒 Магазин бустеров</h2>
                 <button class="btn-close" onclick="closeModal('modal-shop')">✕</button>
             </div>
             <div class="modal-body">
-                <h3 style="font-size: 0.95rem; color: var(--primary); margin-bottom: 8px;">⚡ Прокачка Кликера</h3>
-                <div class="shop-card">
+                <div style="font-weight:bold; color:var(--primary); margin-bottom:8px;">🔥 Синхронизация с ботом:</div>
+                
+                <div class="tariff-card">
                     <div>
-                        <div style="font-weight:bold;">👆 Мульти-Тап (Lvl. <span id="lvl-multitap">1</span>)</div>
+                        <div style="font-weight:bold;">⚡ X2 Скорость (15 минут)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускоряет поиск в 2 раза</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyShopItem('turbo_boost_15')">2 500 🟡</button>
+                </div>
+
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">🎯 +1 Слот в Радаре</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Расширяет лимит слежки</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyShopItem('radar_slot')">5 000 🟡</button>
+                </div>
+
+                <div style="font-weight:bold; color:var(--primary); margin: 14px 0 8px 0;">⚡ Прокачка кликера:</div>
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">👆 Мульти-Тап</div>
                         <div style="font-size:0.75rem; color:var(--text-muted);">+1 монета за клик</div>
                     </div>
-                    <button class="shop-buy-btn" onclick="buyItem('multi_tap')"><span id="cost-multitap">200</span> 🟡</button>
+                    <button class="tariff-btn" onclick="buyShopItem('multi_tap')">200 🟡</button>
                 </div>
-                <div class="shop-card">
+
+                <div class="tariff-card">
                     <div>
-                        <div style="font-weight:bold;">🔋 Запас Батареи (Lvl. <span id="lvl-energy">1</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">+500 к макс. энергии</div>
+                        <div style="font-weight:bold;">🔋 Запас батареи (+500)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Больше энергии для кликов</div>
                     </div>
-                    <button class="shop-buy-btn" onclick="buyItem('max_energy')"><span id="cost-energy">150</span> 🟡</button>
-                </div>
-                <div class="shop-card">
-                    <div>
-                        <div style="font-weight:bold;">🚜 Автосборщик (Lvl. <span id="lvl-miner">0</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Пассивный фарм (3 часа макс)</div>
-                    </div>
-                    <button class="shop-buy-btn" onclick="buyItem('offline_miner')"><span id="cost-miner">3000</span> 🟡</button>
+                    <button class="tariff-btn" onclick="buyShopItem('max_energy')">150 🟡</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 👑 МОДАЛКА PRO ПОДПИСКИ (TELEGRAM STARS) 👑 -->
+    <!-- 👑 МОДАЛКА PRO ПОДПИСКИ 👑 -->
     <div class="modal-overlay" id="modal-pro">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #eab308;">👑 Оформление PRO</h2>
+                <h2 style="font-size: 1.1rem; color: #eab308;">👑 PRO Доступ</h2>
                 <button class="btn-close" onclick="closeModal('modal-pro')">✕</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                    PRO даёт 100 слотов в радаре, моментальный автопарсер без лимитов и золотой статус.
-                </div>
-
                 <div class="tariff-card">
                     <div>
-                        <div class="tariff-title">1 Месяц (30 дней)</div>
-                        <div class="tariff-desc">Базовый PRO доступ</div>
+                        <div style="font-weight:bold;">1 Месяц (30 дней)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">100 слотов радара + турбо</div>
                     </div>
                     <button class="tariff-btn" onclick="buyProTariff('pro_30')">75 ⭐</button>
                 </div>
-
                 <div class="tariff-card">
                     <div>
-                        <div class="tariff-title">2 Месяца (60 дней)</div>
-                        <div class="tariff-desc">Скидка 20% на подписку</div>
+                        <div style="font-weight:bold;">2 Месяца (60 дней)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Скидка 20%</div>
                     </div>
                     <button class="tariff-btn" onclick="buyProTariff('pro_60')">120 ⭐</button>
                 </div>
-
                 <div class="tariff-card">
                     <div>
-                        <div class="tariff-title">3 Месяца (90 дней)</div>
-                        <div class="tariff-desc">Скидка 30% на подписку</div>
+                        <div style="font-weight:bold;">3 Месяца (90 дней)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Скидка 30%</div>
                     </div>
                     <button class="tariff-btn" onclick="buyProTariff('pro_90')">160 ⭐</button>
                 </div>
-
                 <div class="tariff-card featured">
                     <div>
-                        <div class="tariff-title" style="color: #eab308;">👑 Навсегда (Lifetime)</div>
-                        <div class="tariff-desc">Вечный PRO статус без продлений</div>
+                        <div style="font-weight:bold; color:#eab308;">👑 Навсегда (Lifetime)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Вечный доступ</div>
                     </div>
-                    <button class="tariff-btn" style="background: #eab308;" onclick="buyProTariff('pro_forever')">490 ⭐</button>
+                    <button class="tariff-btn" onclick="buyProTariff('pro_forever')">490 ⭐</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🔑 МОДАЛКА АКТИВАЦИИ КЛЮЧА 🔑 -->
-    <div class="modal-overlay" id="modal-key">
-        <div class="modal-content glass-panel" style="max-width: 360px;">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #fff;">🔑 Ввод PRO ключа</h2>
-                <button class="btn-close" onclick="closeModal('modal-key')">✕</button>
-            </div>
-            <div class="modal-body" style="text-align: center;">
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Введите ключ формата PRO-XXXX-XXXX:</p>
-                <input type="text" id="input-pro-key" class="form-input" style="text-align: center; font-weight: bold; letter-spacing: 1px;" placeholder="PRO-ABCD-1234">
-                <button class="form-btn" onclick="submitActivationKey()">Активировать</button>
             </div>
         </div>
     </div>
@@ -480,234 +577,136 @@
     <div class="modal-overlay" id="modal-radar">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: var(--primary);">🎯 Радар (Слежка)</h2>
+                <h2 style="font-size: 1.1rem; color: var(--primary);">🎯 Радар</h2>
                 <button class="btn-close" onclick="closeModal('modal-radar')">✕</button>
             </div>
             <div class="modal-body">
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
-                    Слоты: <b id="radar-slot-count" style="color: var(--primary);">0/3</b> (В PRO 100 слотов)
+                    Слоты: <b id="radar-slot-count" style="color: var(--primary);">0/3</b>
                 </div>
                 <input type="text" id="radar-input" class="form-input" placeholder="@username">
-                <button class="form-btn" onclick="addRadarTarget()">Следить за ником</button>
+                <button class="form-btn" onclick="addRadarTarget()">Следить</button>
                 <div id="radar-list" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- ⚙️ НАСТРОЙКИ И ОФОРМЛЕНИЕ ⚙️ -->
-    <div class="modal-overlay" id="modal-settings">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #fff;">Настройки и Опции</h2>
-                <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="setting-item" style="cursor:pointer; border-color:#eab308;" onclick="openModal('modal-key')">
-                    <div style="font-weight:bold; color:#eab308;">🔑 Активировать PRO-ключ</div>
-                    <span>→</span>
-                </div>
-                <div class="setting-item">
-                    <div>
-                        <div style="font-weight:bold;">Автопарсер</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Непрерывный авто-поиск</div>
-                    </div>
-                    <label class="switch"><input type="checkbox" id="toggle-auto" onchange="toggleAutoSearch(this)"><span class="slider"></span></label>
-                </div>
-                <div style="font-size: 0.85rem; font-weight: 700; margin: 15px 0 8px 0;">Цвет темы</div>
-                <div class="color-picker-grid" id="theme-dots-grid">
-                    <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', this)"></div>
-                    <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', this)"></div>
-                    <div class="color-dot" style="background:#a855f7;" onclick="setThemeColor('#a855f7', this)"></div>
-                    <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', this)"></div>
-                    <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', this)"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 📁 ИСТОРИЯ СВАЙПЫ 📁 -->
+    <!-- 📁 МОДАЛКА ИСТОРИИ 📁 -->
     <div class="modal-overlay" id="modal-history">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 style="font-size: 1.1rem;">История улова</h2>
-                <button style="background:transparent; border:none; color:#ef4444; font-size:0.8rem; cursor:pointer;" onclick="clearHistory()">🗑 Очистить</button>
+                <h2 style="font-size: 1.1rem;">📁 История улова</h2>
                 <button class="btn-close" onclick="closeModal('modal-history')">✕</button>
             </div>
-            <div class="modal-body">
-                <div id="history-container"></div>
+            <div class="modal-body" id="history-list-box"></div>
+        </div>
+    </div>
+
+    <!-- 🔮 3D КЛИКЕР COSMIC CORE 🔮 -->
+    <div id="tycoon-overlay">
+        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+            <button class="form-btn" style="width:auto; padding:8px 14px;" onclick="closeTycoonScreen()">◀ Назад</button>
+            <div style="font-size:1.6rem; font-weight:900; color:#eab308;">🟡 <span id="tycoon-coins">0</span></div>
+            <div style="width:50px;"></div>
+        </div>
+        <div id="three-earth-container"></div>
+        <div style="width:100%; max-width:300px; text-align:center;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:0.85rem; margin-bottom:4px;">
+                <span>⚡ Энергия</span>
+                <span><span id="energy-val">1000</span>/<span id="max-energy-val">1000</span></span>
+            </div>
+            <div style="width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:10px; overflow:hidden;">
+                <div id="energy-fill" style="width:100%; height:100%; background:var(--primary); transition:width 0.2s;"></div>
             </div>
         </div>
     </div>
 
-    <!-- 📊 ЛИДЕРБОРД 📊 -->
-    <div class="modal-overlay" id="modal-leaderboard">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #eab308;">👑 ТОП Улова</h2>
-                <button class="btn-close" onclick="closeModal('modal-leaderboard')">✕</button>
-            </div>
-            <div class="modal-body">
-                <div id="leaderboard-list-container"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🏆 100 ДОСТИЖЕНИЙ 🏆 -->
-    <div class="modal-overlay" id="modal-achievements">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem;">🏆 Награды (<span id="achieve-count-modal">0</span>/100)</h2>
-                <button class="btn-close" onclick="closeModal('modal-achievements')">✕</button>
-            </div>
-            <div class="modal-body" id="achievements-list-container"></div>
-        </div>
-    </div>
-
-    <!-- =========================================================================
-         JAVASCRIPT ЛОГИКА
-    ========================================================================= -->
     <script>
         let currentPlatform = 'telegram';
-        let isAuto = false;
         let isFetching = false;
-        let lastGenerated = "";
+        let isAuto = false;
         let slotInterval = null;
-        let finderName = "Аноним";
+        let lastGenerated = "";
         let isProUser = false;
+        let turboUntil = 0;
+        let maxRadarSlots = 3;
+
+        // Статистика сессии автопарсера
+        let autoSessionScanned = 0;
+        let autoSessionFound = [];
 
         let tgChatId = localStorage.getItem('vh_uid') || "user_" + Math.random().toString(36).substring(2, 10);
         localStorage.setItem('vh_uid', tgChatId);
 
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-            const user = window.Telegram.WebApp.initDataUnsafe.user;
-            tgChatId = user.id.toString();
-            finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
+            tgChatId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
         }
 
-        let userProfile = { coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, offline_miner_lvl: 0, rank: "Ловец" };
-        let pendingTaps = 0, syncTimer = null;
+        let userProfile = { coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1 };
 
-        let stats = {
-            generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
-            radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
-            themesChanged: parseInt(localStorage.getItem('vh_stat_themes') || '0'),
-            fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0')
-        };
-
-        const ACHIEVEMENTS_DATA = [];
-        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
-        for (let i = 1; i <= 100; i++) {
-            ACHIEVEMENTS_DATA.push({
-                id: `ach_${i}`,
-                title: i === 1 ? "Первый поиск" : `Индекс поиска Lvl.${i}`,
-                desc: `Сделать ${i * 10} генераций`,
-                icon: EMOJI_LIST[i % EMOJI_LIST.length],
-                target: i * 10,
-                statKey: "generations"
-            });
-        }
-        let unlockedAchievements = JSON.parse(localStorage.getItem('vh_unlocked_achievements') || '[]');
-
-        function checkAchievementProgress() {
-            ACHIEVEMENTS_DATA.forEach(ach => {
-                const currentVal = stats[ach.statKey] || 0;
-                if (currentVal >= ach.target && !unlockedAchievements.includes(ach.id)) {
-                    unlockedAchievements.push(ach.id);
-                    localStorage.setItem('vh_unlocked_achievements', JSON.stringify(unlockedAchievements));
-                    showToast(`🏆 Награда: ${ach.title}!`);
-                }
-            });
-            renderAchievements();
-        }
-
-        function renderAchievements() {
-            const container = document.getElementById('achievements-list-container');
-            document.getElementById('achieve-counter-badge').innerText = `${unlockedAchievements.length}/100`;
-            document.getElementById('achieve-count-modal').innerText = unlockedAchievements.length;
-            if (!container) return;
-            container.innerHTML = ACHIEVEMENTS_DATA.map(item => {
-                const isUnlocked = unlockedAchievements.includes(item.id);
-                const currentVal = Math.min(stats[item.statKey] || 0, item.target);
-                const percent = Math.min(100, Math.floor((currentVal / item.target) * 100));
-                return `
-                    <div class="achieve-card ${isUnlocked ? 'unlocked' : ''}">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="font-size:1.8rem;">${item.icon}</div>
-                            <div style="flex:1;">
-                                <div style="font-size:0.9rem; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
-                                    <span>${item.title}</span>
-                                    <span style="font-size:0.75rem; color:var(--primary);">${currentVal}/${item.target}</span>
-                                </div>
-                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${item.desc}</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${percent}%;"></div></div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function loadGameState() {
+        async function refreshUserState() {
             try {
                 const res = await fetch(`/api/game/state?user_id=${tgChatId}`);
                 const data = await res.json();
                 if (data.status === 'ok') {
                     userProfile = data.profile;
                     isProUser = data.is_pro;
+                    turboUntil = data.turbo_until;
+                    maxRadarSlots = data.max_radar_slots;
+
                     if (isProUser) {
-                        const b = document.querySelector('.btn-buy-pro-header');
-                        if (b) b.innerText = "👑 PRO АКТИВЕН";
+                        const btn = document.querySelector('.btn-buy-pro-header');
+                        if (btn) btn.innerText = "👑 PRO АКТИВЕН";
                     }
                     updateTycoonUI();
+                    updateTurboTimer();
                 }
             } catch(e){}
         }
-        loadGameState();
+        refreshUserState();
 
         function updateTycoonUI() {
             document.getElementById('tycoon-coins').innerText = userProfile.coins;
             document.getElementById('energy-val').innerText = userProfile.energy;
             document.getElementById('max-energy-val').innerText = userProfile.max_energy;
-            document.getElementById('user-rank-text').innerText = userProfile.rank;
-            let fillPercent = Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
-            document.getElementById('energy-fill').style.width = fillPercent + "%";
-            document.getElementById('lvl-multitap').innerText = userProfile.multi_tap;
-            document.getElementById('cost-multitap').innerText = Math.floor(200 * (1.8 ** (userProfile.multi_tap - 1)));
-            let energyLvl = (userProfile.max_energy - 1000) / 500;
-            document.getElementById('lvl-energy').innerText = energyLvl + 1;
-            document.getElementById('cost-energy').innerText = Math.floor(150 * (1.6 ** energyLvl));
-            document.getElementById('lvl-miner').innerText = userProfile.offline_miner_lvl;
-            document.getElementById('cost-miner').innerText = userProfile.offline_miner_lvl === 0 ? 3000 : Math.floor(3000 * (2.2 ** userProfile.offline_miner_lvl));
+            let percent = Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
+            document.getElementById('energy-fill').style.width = percent + "%";
         }
 
-        // =========================================================================
+        // ⏱️ ОБНОВЛЕНИЕ ТАЙМЕРА ТУРБО-БУСТА
+        function updateTurboTimer() {
+            const badge = document.getElementById('main-turbo-badge');
+            const text = document.getElementById('turbo-timer-text');
+            const now = Math.floor(Date.now() / 1000);
+
+            if (turboUntil > now) {
+                badge.style.display = 'block';
+                let diff = turboUntil - now;
+                let mins = Math.floor(diff / 60);
+                let secs = diff % 60;
+                text.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        setInterval(updateTurboTimer, 1000);
+
         // 🌫️ ТУМАН CANVAS
-        // =========================================================================
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
         let width, height, particles = [];
-
         function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize);
         resize();
-
-        for (let i = 0; i < 5; i++) {
-            particles.push({
-                x: Math.random() * width, y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 0.8, vy: (Math.random() - 0.5) * 0.8,
-                radius: 260
-            });
-        }
-
+        for (let i = 0; i < 5; i++) particles.push({ x: Math.random() * width, y: Math.random() * height, vx: (Math.random() - 0.5) * 0.8, vy: (Math.random() - 0.5) * 0.8, radius: 250 });
         function drawFog() {
             ctx.clearRect(0, 0, width, height);
             particles.forEach(p => {
                 p.x += p.vx; p.y += p.vy;
                 if (p.x < -100 || p.x > width + 100) p.vx *= -1;
                 if (p.y < -100 || p.y > height + 100) p.vy *= -1;
-
                 let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-                grad.addColorStop(0, 'rgba(41, 199, 95, 0.22)');
+                grad.addColorStop(0, 'rgba(41, 199, 95, 0.20)');
                 grad.addColorStop(1, 'transparent');
                 ctx.fillStyle = grad;
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
@@ -716,9 +715,13 @@
         }
         drawFog();
 
-        // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР
-        // =========================================================================
+        // 🪗 АККОРДЕОНЫ
+        function toggleAccordion(header) {
+            const parent = header.parentElement;
+            parent.classList.toggle('open');
+        }
+
+        // 🎯 ГЕНЕРАТОР
         function startSlotMachine() {
             const el = document.getElementById('res-username');
             const chars = "abcdefghijklmnopqrstuvwxyz";
@@ -736,24 +739,27 @@
             document.getElementById('res-username').textContent = "@" + finalName;
         }
 
-        async function manualGenerate(event) {
+        async function manualGenerate() {
             if (isFetching) return;
             isFetching = true;
             
             const btn = document.getElementById('btn-generate');
-            btn.disabled = true;
-            btn.textContent = "Поиск...";
+            if (!isAuto) { btn.disabled = true; btn.textContent = "Поиск..."; }
             startSlotMachine();
 
-            stats.generations++;
-            localStorage.setItem('vh_stat_gen', stats.generations.toString());
-            checkAchievementProgress();
-
-            const randomDelay = Math.floor(Math.random() * (900 - 400 + 1)) + 400;
+            const isTurboActive = turboUntil > Math.floor(Date.now() / 1000);
+            const baseMin = isTurboActive ? 200 : 400;
+            const baseMax = isTurboActive ? 450 : 900;
+            const randomDelay = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
             const delayPromise = new Promise(r => setTimeout(r, randomDelay));
 
+            const useFilter = document.getElementById('filter-active').checked;
+            const lenMode = document.getElementById('filter-len').value;
+            const useNum = document.getElementById('filter-num').checked;
+            const useUnd = document.getElementById('filter-und').checked;
+
             try {
-                const url = `/api/generate?platform=${currentPlatform}&finder_id=${tgChatId}&finder_name=${encodeURIComponent(finderName)}`;
+                const url = `/api/generate?platform=${currentPlatform}&finder_id=${tgChatId}&use_filter=${useFilter}&len_mode=${lenMode}&use_num=${useNum}&use_und=${useUnd}`;
                 const [res] = await Promise.all([fetch(url), delayPromise]);
                 const data = await res.json();
 
@@ -768,273 +774,154 @@
                 sEl.textContent = evalData.status;
                 sEl.style.color = evalData.color;
 
+                if (isAuto) {
+                    autoSessionScanned++;
+                    if (data.is_free) autoSessionFound.push(lastGenerated);
+                }
+
                 if (data.is_free) {
                     document.getElementById('quick-actions').style.display = 'flex';
-                    saveToHistory({ user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color });
+                    saveToHistory(lastGenerated, evalData.rank, evalData.status, evalData.color);
                 }
             } catch (e) {
                 stopSlotMachine("stellar");
-                document.getElementById('res-status').textContent = "Свободен (~1 TON)";
-                document.getElementById('res-status').style.color = "#29c75f";
             } finally {
                 isFetching = false;
-                btn.disabled = false;
-                btn.textContent = "Сгенерировать";
+                if (!isAuto) { btn.disabled = false; btn.textContent = "Сгенерировать"; }
             }
         }
 
+        // 🤖 АВТОПАРСЕР И ОТЧЕТ ПРИ ВЫКЛЮЧЕНИИ
         function toggleAutoSearch(cb) {
             isAuto = cb.checked;
             const btn = document.getElementById('btn-generate');
             if (isAuto) {
-                btn.disabled = true; btn.textContent = "Парсинг...";
-                runAutoCycle();
+                autoSessionScanned = 0;
+                autoSessionFound = [];
+                btn.disabled = true; 
+                btn.textContent = "Автопоиск...";
+                runAutoLoop();
+                closeModal('modal-settings');
+                showToast("🤖 Автопарсер запущен!");
             } else {
-                btn.disabled = false; btn.textContent = "Сгенерировать";
+                btn.disabled = false; 
+                btn.textContent = "Сгенерировать";
+                showAutoParseReport();
             }
         }
 
-        async function runAutoCycle() {
+        async function runAutoLoop() {
             if (!isAuto) return;
             if (!isFetching) await manualGenerate();
-            if (isAuto) setTimeout(runAutoCycle, isProUser ? 800 : 2500);
-        }
-
-        // =========================================================================
-        // 🔮 3D КЛИКЕР COSMIC CORE
-        // =========================================================================
-        let sceneEarth, cameraEarth, rendererEarth, earthMesh, hexShieldMesh, lockMesh;
-        let chainGroups = [], isThreeInit = false;
-        let currentDefenseLayer = 1, layerHealth = 100, targetScale = 1.0, currentScale = 1.0;
-
-        function createProceduralEarthTexture() {
-            const canvasTex = document.createElement('canvas');
-            canvasTex.width = 1024; canvasTex.height = 512;
-            const ctxTex = canvasTex.getContext('2d');
-            ctxTex.fillStyle = '#0d3b66'; ctxTex.fillRect(0, 0, 1024, 512);
-            ctxTex.fillStyle = '#2d6a4f';
-            for (let i = 0; i < 400; i++) {
-                ctxTex.beginPath();
-                ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 40 + 10, 0, Math.PI * 2);
-                ctxTex.fill();
+            if (isAuto) {
+                const isTurbo = turboUntil > Math.floor(Date.now() / 1000);
+                setTimeout(runAutoLoop, isTurbo ? 600 : (isProUser ? 900 : 2200));
             }
-            return new THREE.CanvasTexture(canvasTex);
         }
 
-        function init3DEarth() {
-            if (isThreeInit) return;
-            const container = document.getElementById('three-earth-container');
-            container.innerHTML = "";
-
-            sceneEarth = new THREE.Scene();
-            cameraEarth = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-            cameraEarth.position.z = 4.2;
-
-            rendererEarth = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-            rendererEarth.setSize(330, 330);
-            rendererEarth.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-            container.appendChild(rendererEarth.domElement);
-
-            sceneEarth.add(new THREE.AmbientLight(0xffffff, 0.9));
-            const sun = new THREE.DirectionalLight(0xffffff, 1.3);
-            sun.position.set(5, 3, 5);
-            sceneEarth.add(sun);
-
-            earthMesh = new THREE.Mesh(
-                new THREE.SphereGeometry(1.2, 48, 48),
-                new THREE.MeshStandardMaterial({ map: createProceduralEarthTexture(), roughness: 0.5 })
-            );
-            sceneEarth.add(earthMesh);
-
-            buildHexShield();
-            buildSteelChains();
-
-            isThreeInit = true;
-            animateEarth();
-        }
-
-        function buildHexShield() {
-            if(hexShieldMesh) sceneEarth.remove(hexShieldMesh);
-            hexShieldMesh = new THREE.Mesh(
-                new THREE.IcosahedronGeometry(1.36, 3),
-                new THREE.MeshStandardMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.8 })
-            );
-            sceneEarth.add(hexShieldMesh);
-        }
-
-        function buildSteelChains() {
-            chainGroups.forEach(cg => sceneEarth.remove(cg.group));
-            chainGroups = [];
-            if (lockMesh) sceneEarth.remove(lockMesh);
-
-            const angles = [{ x: 0, y: 0, z: 0 }, { x: Math.PI / 3, y: Math.PI / 6, z: 0 }];
-            angles.forEach(rot => {
-                const group = new THREE.Group();
-                for (let i = 0; i < 30; i++) {
-                    const mesh = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.03, 8, 16), new THREE.MeshStandardMaterial({ color: 0x828b94, metalness: 0.9 }));
-                    const a = (i / 30) * Math.PI * 2;
-                    mesh.position.set(Math.cos(a) * 1.26, 0, Math.sin(a) * 1.26);
-                    mesh.lookAt(0, 0, 0);
-                    group.add(mesh);
-                }
-                group.rotation.set(rot.x, rot.y, rot.z);
-                sceneEarth.add(group);
-                chainGroups.push({ group: group, breaking: false, life: 1.0 });
-            });
-
-            lockMesh = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.14), new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.9 }));
-            lockMesh.position.set(0, 0, 1.32);
-            sceneEarth.add(lockMesh);
-        }
-
-        function animateEarth() {
-            if (document.getElementById('tycoon-overlay').classList.contains('active') && document.visibilityState === 'visible') {
-                currentScale += (targetScale - currentScale) * 0.25;
-                if (earthMesh) { earthMesh.scale.set(currentScale, currentScale, currentScale); earthMesh.rotation.y += 0.002; }
-                if (hexShieldMesh) { hexShieldMesh.scale.set(currentScale, currentScale, currentScale); hexShieldMesh.rotation.y -= 0.003; }
-                rendererEarth.render(sceneEarth, cameraEarth);
+        function showAutoParseReport() {
+            document.getElementById('report-scanned').innerText = autoSessionScanned;
+            document.getElementById('report-found').innerText = autoSessionFound.length;
+            const list = document.getElementById('report-usernames-list');
+            if (autoSessionFound.length === 0) {
+                list.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center;">Свободных ников не поймано</div>`;
+            } else {
+                list.innerHTML = autoSessionFound.map(u => `
+                    <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:10px; font-weight:bold; color:var(--primary);">@${u}</div>
+                `).join('');
             }
-            requestAnimationFrame(animateEarth);
+            openModal('modal-autoparse-report');
         }
 
-        const earthContainer = document.getElementById('three-earth-container');
-        function handleEarthTap(e) {
-            e.preventDefault();
-            let touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
-            touches.forEach(touch => {
-                if (userProfile.energy < 1) return;
-                userProfile.energy -= 1;
-                let gain = userProfile.multi_tap * (currentDefenseLayer === 3 ? 2 : 1);
-                userProfile.coins += gain;
-                pendingTaps++;
-
-                targetScale = 0.94; setTimeout(() => { targetScale = 1.0; }, 70);
-
-                layerHealth -= 5;
-                if (currentDefenseLayer === 1 && layerHealth <= 0) {
-                    currentDefenseLayer = 2; layerHealth = 100;
-                    if(hexShieldMesh) sceneEarth.remove(hexShieldMesh);
-                    showToast('💥 Купол сот сломан! Открыты Стальные Цепи ⛓️');
-                } else if (currentDefenseLayer === 2 && layerHealth <= 0) {
-                    currentDefenseLayer = 3; layerHealth = 100;
-                    chainGroups.forEach(cg => sceneEarth.remove(cg.group));
-                    if(lockMesh) sceneEarth.remove(lockMesh);
-                    userProfile.coins += userProfile.multi_tap * 10;
-                    showToast('🌍 Ядро планеты открыто [БОНУС +10х] 🟡');
-                    setTimeout(() => {
-                        currentDefenseLayer = 1; layerHealth = 100;
-                        buildHexShield(); buildSteelChains();
-                    }, 12000);
-                }
-
-                const floatNum = document.createElement('div');
-                floatNum.className = 'floating-number';
-                floatNum.innerText = `+${gain} 🟡`;
-                floatNum.style.left = `${touch.clientX - 20}px`; floatNum.style.top = `${touch.clientY - 20}px`;
-                document.body.appendChild(floatNum);
-                setTimeout(() => floatNum.remove(), 700);
-            });
-            updateTycoonUI();
-            clearTimeout(syncTimer);
-            syncTimer = setTimeout(syncTapsWithServer, 500);
+        function copyReportList() {
+            if (autoSessionFound.length === 0) return showToast("Список пуст");
+            navigator.clipboard.writeText(autoSessionFound.map(u => "@" + u).join('\n'));
+            showToast("📋 Все ники скопированы!");
         }
 
-        earthContainer.addEventListener('touchstart', handleEarthTap, { passive: false });
-        earthContainer.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') handleEarthTap(e); });
-
-        async function syncTapsWithServer() {
-            if (pendingTaps === 0) return;
-            let tapsToSend = pendingTaps; pendingTaps = 0;
-            try {
-                const res = await fetch('/api/game/sync_tap', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile.energy = data.server_energy;
-                    updateTycoonUI();
-                }
-            } catch(e){}
+        // 🎨 КАСТОМИЗАЦИЯ И СЕКРЕТНЫЕ ПРОМОКОДЫ
+        function setThemeColor(hex, el) {
+            document.documentElement.style.setProperty('--primary', hex);
+            document.documentElement.style.setProperty('--primary-glow', hex + '35');
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            if (el) el.classList.add('active');
+            showToast("Тема обновлена");
         }
 
-        function openTycoonScreen() {
-            document.getElementById('tycoon-overlay').classList.add('active');
-            init3DEarth();
-        }
-        function closeTycoonScreen() { document.getElementById('tycoon-overlay').classList.remove('active'); }
-
-        async function buyItem(itemId) {
-            try {
-                const res = await fetch('/api/game/buy', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, item_id: itemId })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile = data.profile;
-                    updateTycoonUI();
-                    showToast('✅ Успешно прокачано!');
-                } else {
-                    showToast('❌ Недостаточно монет!');
-                }
-            } catch(e){}
+        function setSecretTheme(themeClass) {
+            document.body.className = themeClass;
+            showToast("Стиль активирован!");
         }
 
-        // =========================================================================
-        // ⭐ PRO ПОДПИСКА И КЛЮЧИ
-        // =========================================================================
-        async function buyProTariff(tariffId) {
-            try {
-                showToast("⏳ Формирование счета Stars...");
-                const res = await fetch('/api/pro/buy_invoice', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, tariff_id: tariffId })
-                });
-                const data = await res.json();
-                if (data.status === 'ok' && data.invoice_link) {
-                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
-                        window.Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
-                            if (status === 'paid') {
-                                showToast("🎉 PRO активирован!");
-                                loadGameState();
-                                closeModal('modal-pro');
-                            }
-                        });
-                    } else {
-                        window.open(data.invoice_link, '_blank');
-                    }
-                }
-            } catch (e) { showToast("Сбой соединения"); }
-        }
+        async function applyPromoOrKey() {
+            const input = document.getElementById('promo-input').value.trim();
+            if (!input) return;
 
-        async function submitActivationKey() {
-            const key = document.getElementById('input-pro-key').value.trim();
-            if (!key) return;
-            try {
+            if (input.toUpperCase().startsWith("PRO-")) {
+                // Активация ключа PRO
                 const res = await fetch('/api/pro/activate_key', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, key: key })
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, key: input })
                 });
                 const data = await res.json();
                 if (data.status === 'ok') {
-                    showToast("👑 PRO статус активирован!");
-                    loadGameState();
-                    closeModal('modal-key');
-                } else {
-                    showToast(`❌ ${data.error || "Неверный ключ"}`);
-                }
-            } catch (e) { showToast("Ошибка связи"); }
+                    showToast("👑 PRO ключ активирован!");
+                    refreshUserState();
+                } else showToast(`❌ ${data.error}`);
+            } else if (input.toUpperCase() === "BONUS1000") {
+                showToast("🎁 +1000 монет начислено!");
+            } else {
+                showToast("❌ Неверный промокод");
+            }
+            document.getElementById('promo-input').value = "";
         }
 
-        // =========================================================================
-        // 🎯 РАДАР (С ОГРАНИЧЕНИЕМ В 3 СЛОТА)
-        // =========================================================================
+        // 🛒 ПОКУПКА В МАГАЗИНЕ
+        async function buyShopItem(itemId) {
+            const res = await fetch('/api/game/buy', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: tgChatId, item_id: itemId })
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                showToast("✅ Куплено!");
+                refreshUserState();
+            } else {
+                showToast("❌ Недостаточно монет!");
+            }
+        }
+
+        // 👑 PRO ОПЛАТА
+        async function buyProTariff(tariffId) {
+            const res = await fetch('/api/pro/buy_invoice', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: tgChatId, tariff_id: tariffId })
+            });
+            const data = await res.json();
+            if (data.status === 'ok' && data.invoice_link) {
+                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
+                    window.Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
+                        if (status === 'paid') {
+                            showToast("🎉 PRO успешно активирован!");
+                            refreshUserState();
+                            closeModal('modal-pro');
+                        }
+                    });
+                } else {
+                    window.open(data.invoice_link, '_blank');
+                }
+            }
+        }
+
+        // 🎯 РАДАР
         async function fetchRadarList() {
             const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
             const data = await res.json();
             const list = data.targets || [];
-            document.getElementById('radar-slot-count').innerText = `${list.length}/${isProUser ? '100' : '3'}`;
+            document.getElementById('radar-slot-count').innerText = `${list.length}/${maxRadarSlots}`;
             document.getElementById('radar-list').innerHTML = list.map(t => `
                 <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:12px;">
                     <span>@${t}</span>
@@ -1049,150 +936,111 @@
             if (!val) return;
 
             const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
-            const data = await res.json();
-
             if (res.status === 403) {
                 closeModal('modal-radar');
                 openModal('modal-pro');
-                showToast("⚠️ Лимит Free (3 ника). Оформите PRO!");
+                showToast("⚠️ Лимит слотов исчерпан! Оформите PRO");
                 return;
             }
-
             inp.value = "";
             showToast("Взято на мушку!");
             fetchRadarList();
         }
 
-        async function removeRadarTarget(username) {
-            await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${username}`);
+        async function removeRadarTarget(u) {
+            await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${u}`);
             fetchRadarList();
         }
 
-        // =========================================================================
-        // 📜 СВАЙП-ИСТОРИЯ
-        // =========================================================================
-        function saveToHistory(item) {
-            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
-            if (historyData.some(i => i.user === item.user)) return;
-            historyData.unshift(item);
-            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData.slice(0, 50)));
+        // 📁 ИСТОРИЯ
+        function saveToHistory(u, r, p, c) {
+            let hist = JSON.parse(localStorage.getItem('vh_hist') || '[]');
+            if (hist.some(x => x.u === u)) return;
+            hist.unshift({ u, r, p, c });
+            localStorage.setItem('vh_hist', JSON.stringify(hist.slice(0, 40)));
         }
 
         function renderHistory() {
-            const cont = document.getElementById('history-container');
-            cont.innerHTML = '';
-            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
-            if (historyData.length === 0) {
-                cont.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">История пуста</div>';
-                return;
-            }
-
-            historyData.forEach((item, index) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'history-wrapper';
-                wrapper.id = `hist-wrap-${index}`;
-                wrapper.innerHTML = `
-                    <div class="swipe-action-icon swipe-icon-left">🗑</div>
-                    <div class="history-card" data-index="${index}" data-user="${item.user}">
-                        <div>
-                            <div style="color:${item.color}; font-weight:bold;">@${item.user}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
-                            <div style="font-size:0.75rem; opacity:0.8;">${item.price}</div>
-                        </div>
-                    </div>
-                    <div class="swipe-action-icon swipe-icon-right">🔗</div>
-                `;
-
-                const card = wrapper.querySelector('.history-card');
-                let startX = 0, currentX = 0;
-                card.ontouchstart = (e) => { startX = e.touches[0].clientX; card.style.transition = 'none'; };
-                card.ontouchmove = (e) => {
-                    currentX = e.touches[0].clientX;
-                    let diffX = currentX - startX;
-                    if (diffX > 0) { wrapper.classList.add('swiping-right'); wrapper.classList.remove('swiping-left'); }
-                    else { wrapper.classList.add('swiping-left'); wrapper.classList.remove('swiping-right'); }
-                    card.style.transform = `translate3d(${diffX}px, 0, 0)`;
-                };
-                card.ontouchend = () => {
-                    let diffX = currentX - startX;
-                    if (diffX > 120) {
-                        wrapper.classList.add('deleting');
-                        setTimeout(() => {
-                            historyData.splice(index, 1);
-                            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
-                            renderHistory();
-                        }, 300);
-                    } else if (diffX < -120) {
-                        card.style.transform = 'translate3d(0, 0, 0)';
-                        const url = `https://t.me/share/url?url=https://t.me/selectionusername_bot&text=Поймал ник @${item.user}`;
-                        window.open(url, '_blank');
-                    } else {
-                        card.style.transition = 'transform 0.2s ease';
-                        card.style.transform = 'translate3d(0, 0, 0)';
-                        wrapper.classList.remove('swiping-right', 'swiping-left');
-                    }
-                };
-                cont.appendChild(wrapper);
-            });
+            let hist = JSON.parse(localStorage.getItem('vh_hist') || '[]');
+            const box = document.getElementById('history-list-box');
+            if (hist.length === 0) return box.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">История пуста</div>`;
+            box.innerHTML = hist.map(h => `
+                <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.04); padding:12px 14px; border-radius:14px; margin-bottom:8px;">
+                    <div><b style="color:${h.c}">@${h.u}</b></div>
+                    <div style="color:${h.c}; font-weight:bold;">${h.r} (${h.p})</div>
+                </div>
+            `).join('');
         }
 
-        function clearHistory() {
-            localStorage.removeItem('vpn_parser_history');
-            renderHistory();
-        }
+        // 🔮 3D КЛИКЕР
+        let scene, camera, renderer, earthMesh, isThreeInit = false;
+        function init3DEarth() {
+            if (isThreeInit) return;
+            const container = document.getElementById('three-earth-container');
+            container.innerHTML = "";
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            camera.position.z = 3.5;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(320, 320);
+            container.appendChild(renderer.domElement);
 
-        // =========================================================================
-        // 📊 ТОП И ЛИДЕРБОРД
-        // =========================================================================
-        async function fetchLeaderboard() {
-            const container = document.getElementById('leaderboard-list-container');
-            container.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка...</div>';
-            try {
-                const res = await fetch('/api/leaderboard');
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    container.innerHTML = data.leaderboard.map((item, idx) => `
-                        <div class="lb-card" style="border-left: 4px solid ${item.color};">
-                            <div>
-                                <div style="font-weight:bold; color:#fff;">#${idx+1} @${item.username}</div>
-                                <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: ${item.finder_name}</div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
-                                <div style="font-size:0.7rem; color:#eab308;">${item.price}</div>
-                            </div>
-                        </div>
-                    `).join('');
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+            sun.position.set(5, 3, 5);
+            scene.add(sun);
+
+            earthMesh = new THREE.Mesh(
+                new THREE.SphereGeometry(1.1, 32, 32),
+                new THREE.MeshStandardMaterial({ color: 0x29c75f, wireframe: true })
+            );
+            scene.add(earthMesh);
+
+            function anim() {
+                if (document.getElementById('tycoon-overlay').classList.contains('active')) {
+                    earthMesh.rotation.y += 0.005;
+                    renderer.render(scene, camera);
                 }
-            } catch(e){}
+                requestAnimationFrame(anim);
+            }
+            anim();
+            isThreeInit = true;
         }
 
-        // =========================================================================
-        // 🎨 ТЕМЫ
-        // =========================================================================
-        function setThemeColor(colorHex, el) {
-            document.documentElement.style.setProperty('--primary', colorHex);
-            document.documentElement.style.setProperty('--primary-glow', colorHex + '35');
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-            if (el) el.classList.add('active');
-        }
+        document.getElementById('three-earth-container').addEventListener('pointerdown', (e) => {
+            if (userProfile.energy < 1) return;
+            userProfile.energy--;
+            userProfile.coins += userProfile.multi_tap;
+            updateTycoonUI();
+
+            const f = document.createElement('div');
+            f.className = 'floating-number';
+            f.innerText = `+${userProfile.multi_tap} 🟡`;
+            f.style.left = `${e.clientX - 20}px`; f.style.top = `${e.clientY - 20}px`;
+            document.body.appendChild(f);
+            setTimeout(() => f.remove(), 700);
+
+            fetch('/api/game/sync_tap', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: tgChatId, taps: 1 })
+            });
+        });
+
+        function openTycoonScreen() { document.getElementById('tycoon-overlay').classList.add('active'); init3DEarth(); }
+        function closeTycoonScreen() { document.getElementById('tycoon-overlay').classList.remove('active'); }
 
         function openModal(id) {
             document.getElementById(id).classList.add('active');
             if (id === 'modal-radar') fetchRadarList();
             if (id === 'modal-history') renderHistory();
-            if (id === 'modal-leaderboard') fetchLeaderboard();
-            if (id === 'modal-achievements') renderAchievements();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function showToast(msg) {
-            const toast = document.getElementById('global-toast');
-            toast.innerText = msg; toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            const t = document.getElementById('global-toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
         }
 
         function setPlatform(plat, btn) {
@@ -1203,15 +1051,13 @@
 
         function takeUsername() {
             navigator.clipboard.writeText(lastGenerated);
-            showToast("✨ Никнейм скопирован!");
+            showToast("✨ Скопировано в буфер!");
         }
 
         function shareToFriends() {
             const url = `https://t.me/share/url?url=https://t.me/selectionusername_bot&text=Поймал ник @${lastGenerated}`;
             window.open(url, '_blank');
         }
-
-        renderAchievements();
     </script>
 </body>
 </html>
