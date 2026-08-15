@@ -39,7 +39,7 @@
             transition: background 0.4s ease;
         }
 
-        /* 🎨 СЕКРЕТНЫЕ ТЕМЫ */
+        /* 🎨 СЕКРЕТНЫЕ И КАСТОМНЫЕ ТЕМЫ */
         body.theme-matrix { background: #030a05 !important; color: #00ff66 !important; font-family: monospace !important; }
         body.theme-cyber { background: #0b001a !important; color: #00f0ff !important; }
         body.theme-vapor { background: linear-gradient(180deg, #1f0b35, #680068, #ff499e) !important; color: #fff !important; }
@@ -50,6 +50,10 @@
         body.theme-blackhole {
             background: #000000 !important;
             color: #d8b4fe !important;
+        }
+        body.theme-quasar {
+            background: radial-gradient(circle at center, #1e1b4b 0%, #09090b 70%, #000000 100%) !important;
+            color: #38bdf8 !important;
         }
         @keyframes rainbowBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
@@ -80,30 +84,30 @@
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
         }
 
-        /* КОМПАКТНАЯ ШАПКА БЕЗ ПЕРЕКРЫТИЙ */
+        /* 👑 ШАПКА: УВЕЛИЧЕННАЯ КНОПКА PRO БЕЗ НАЕЗДА */
         header { 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            padding: 12px 14px; 
+            padding: 12px 16px; 
             z-index: 50; 
             width: 100%; 
             max-width: 480px; 
             margin: 0 auto; 
-            gap: 8px;
+            gap: 10px;
         }
         .nav-btn { 
             background: rgba(255, 255, 255, 0.08); 
             border: 1px solid rgba(255, 255, 255, 0.12); 
             color: var(--text-main); 
-            font-size: 0.8rem; 
+            font-size: 0.82rem; 
             font-weight: 600; 
             cursor: pointer; 
-            padding: 8px 12px; 
+            padding: 9px 12px; 
             display: flex; 
             align-items: center; 
-            gap: 4px; 
-            border-radius: 16px; 
+            gap: 5px; 
+            border-radius: 18px; 
             backdrop-filter: blur(10px);
             transition: transform 0.15s ease, background 0.2s ease;
             white-space: nowrap;
@@ -115,16 +119,18 @@
             background: linear-gradient(135deg, #eab308, #ca8a04);
             color: #000 !important;
             font-weight: 900;
-            font-size: 0.78rem;
-            padding: 8px 12px;
-            border-radius: 18px;
+            font-size: 0.84rem;
+            padding: 9px 15px;
+            border-radius: 20px;
             border: 1px solid #facc15;
             cursor: pointer;
-            box-shadow: 0 0 14px var(--gold-glow);
+            box-shadow: 0 0 16px var(--gold-glow);
             white-space: nowrap;
-            flex-shrink: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
         .btn-buy-pro-header.expiring-soon {
             background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
@@ -443,7 +449,7 @@
 
     <header>
         <button class="nav-btn" onclick="openModal('modal-history')">📁 История</button>
-        <button class="btn-buy-pro-header" id="pro-header-btn" onclick="openModal('modal-pro')">👑 PRO</button>
+        <button class="btn-buy-pro-header" id="pro-header-btn" onclick="openModal('modal-pro')">👑 PRO Доступ</button>
         <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
     </header>
 
@@ -577,13 +583,14 @@
                             <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', '234, 179, 8', this)"></div>
                         </div>
 
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:12px;">Секретные стили:</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:12px;">Стили и купленные темы:</div>
                         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="setSecretTheme('theme-matrix', '0, 255, 102')">Matrix</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#00f0ff;" onclick="setSecretTheme('theme-cyber', '0, 240, 255')">Cyberpunk</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#ff499e;" onclick="setSecretTheme('theme-vapor', '255, 73, 158')">Vaporwave</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#eab308;" onclick="setSecretTheme('theme-rainbow', '234, 179, 8')">Rainbow</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#bf5af2;" onclick="setSecretTheme('theme-blackhole', '191, 90, 242')">🌌 Чёрная Дыра</button>
+                            <button class="form-btn" id="btn-theme-quasar" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#38bdf8; display:none;" onclick="setSecretTheme('theme-quasar', '56, 189, 248')">✨ Неоновый Квазар</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#222; color:#fff;" onclick="setSecretTheme('', '41, 199, 95')">Сброс</button>
                         </div>
                     </div>
@@ -738,7 +745,7 @@
         </div>
     </div>
 
-    <!-- 🛒 МАГАЗИН БУСТЕРОВ И ПРОКАЧКИ 🛒 -->
+    <!-- 🛒 МАГАЗИН БУСТЕРОВ И ПРОКАЧКИ (ОБНОВЛЕННЫЕ ЦЕНЫ) 🛒 -->
     <div class="modal-overlay" id="modal-shop">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -751,9 +758,9 @@
                 <div class="tariff-card">
                     <div>
                         <div style="font-weight:bold;">⚡ X2 Турбо-Скорость (15 мин)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускоряет генерацию в 2 раза</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускоряет генерацию в 2 раза (+15 мин)</div>
                     </div>
-                    <button class="tariff-btn" onclick="buyShopItem('turbo_boost_15')">2 500 🟡</button>
+                    <button class="tariff-btn" onclick="buyShopItem('turbo_boost_15')">65 000 🟡</button>
                 </div>
 
                 <div class="tariff-card">
@@ -761,7 +768,15 @@
                         <div style="font-weight:bold;">🎯 +1 Слот в Радаре</div>
                         <div style="font-size:0.75rem; color:var(--text-muted);">Расширяет лимит слежки за никами</div>
                     </div>
-                    <button class="tariff-btn" onclick="buyShopItem('radar_slot')">5 000 🟡</button>
+                    <button class="tariff-btn" onclick="buyShopItem('radar_slot')">35 000 🟡</button>
+                </div>
+
+                <div class="tariff-card" id="card-theme-quasar">
+                    <div>
+                        <div style="font-weight:bold;">🌌 Тема «Неоновый Квазар»</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Эксклюзивный глубокий космо-стиль</div>
+                    </div>
+                    <button class="tariff-btn" id="btn-buy-theme-quasar" onclick="buyShopItem('theme_quasar')">100 000 🟡</button>
                 </div>
 
                 <h3 style="font-size: 0.9rem; color: var(--primary); margin: 14px 0 8px 0;">⚡ Прокачка кликера:</h3>
@@ -909,7 +924,8 @@
 
         let userProfile = { 
             coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, 
-            offline_miner_lvl: 0, rank: "Ловец", planet_stage: 1, planet_hp: 100 
+            offline_miner_lvl: 0, rank: "Ловец", planet_stage: 1, planet_hp: 100,
+            unlocked_themes: []
         };
         let planetHpMax = 100;
         let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
@@ -997,12 +1013,20 @@
                         if (catSelect) { catSelect.disabled = false; catSelect.style.opacity = "1"; }
                     } else {
                         if (headerProBtn) { 
-                            headerProBtn.innerText = "👑 PRO"; 
+                            headerProBtn.innerText = "👑 PRO Доступ"; 
                             headerProBtn.classList.remove('expiring-soon'); 
                         }
                         if (lockBadge) { lockBadge.innerText = "🔒 PRO ONLY"; lockBadge.style.background = "#eab308"; }
                         if (kwInput) { kwInput.disabled = true; kwInput.style.opacity = "0.45"; }
                         if (catSelect) { catSelect.disabled = true; catSelect.style.opacity = "0.45"; }
+                    }
+
+                    // Проверка купленной темы
+                    const quasarBtn = document.getElementById('btn-theme-quasar');
+                    const quasarBuyBtn = document.getElementById('btn-buy-theme-quasar');
+                    if (data.unlocked_themes && data.unlocked_themes.includes('theme_quasar')) {
+                        if (quasarBtn) quasarBtn.style.display = 'inline-block';
+                        if (quasarBuyBtn) { quasarBuyBtn.innerText = "Куплено ✓"; quasarBuyBtn.disabled = true; quasarBuyBtn.style.background = "#444"; }
                     }
 
                     updateTycoonUI();
@@ -1024,7 +1048,6 @@
         }
         loadGameState();
 
-        // ⏱️ ДИНАМИЧЕСКИЙ ТАЙМЕР ПОДПИСКИ В ШАПКЕ
         function updateProHeaderTimer() {
             const headerProBtn = document.getElementById('pro-header-btn');
             const settingsTitle = document.getElementById('settings-pro-title');
@@ -1042,7 +1065,7 @@
                     let secs = diff % 60;
                     let timeFormatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                     
-                    headerProBtn.innerText = `👑 ${timeFormatted}`;
+                    headerProBtn.innerText = `👑 PRO: ${timeFormatted}`;
                     if (settingsTitle) settingsTitle.innerText = `👑 PRO Активен: ${timeFormatted}`;
 
                     if (diff <= 180) {
@@ -1053,7 +1076,7 @@
                     }
                 } else {
                     isProUser = false;
-                    headerProBtn.innerText = "👑 PRO";
+                    headerProBtn.innerText = "👑 PRO Доступ";
                     headerProBtn.classList.remove('expiring-soon');
                 }
             }
@@ -1101,7 +1124,6 @@
             }
 
             document.getElementById('user-rank-text').innerText = userProfile.rank;
-            
             document.getElementById('stage-num-text').innerText = `${userProfile.planet_stage}/10`;
             let hpPercent = Math.min(100, Math.max(0, Math.floor((userProfile.planet_hp / planetHpMax) * 100)));
             document.getElementById('stage-percent-text').innerText = `${hpPercent}%`;
@@ -1134,7 +1156,7 @@
         setInterval(updateTurboTimer, 1000);
 
         // =========================================================================
-        // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН CANVAS
+        // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН
         // =========================================================================
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
@@ -1236,9 +1258,7 @@
             bhParticles.forEach(p => {
                 p.angle += p.speed;
                 p.dist -= 0.4;
-                if (p.dist < 50) {
-                    p.dist = Math.random() * 300 + 100;
-                }
+                if (p.dist < 50) p.dist = Math.random() * 300 + 100;
 
                 let px = cx + Math.cos(p.angle) * p.dist;
                 let py = cy + Math.sin(p.angle) * p.dist * 0.6;
@@ -1266,12 +1286,11 @@
         drawBlackHoleBackground();
 
         function toggleAccordion(header) {
-            const parent = header.parentElement;
-            parent.classList.toggle('open');
+            header.parentElement.classList.toggle('open');
         }
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С НАДЕЖНЫМ КУЛДАУНОМ)
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
@@ -1280,9 +1299,9 @@
             if (slotInterval) clearInterval(slotInterval);
             slotInterval = setInterval(() => {
                 let rand = "";
-                for (let i = 0; i < 6; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+                for (let i = 0; i < 5; i++) rand += chars[Math.floor(Math.random() * chars.length)];
                 el.textContent = "@" + rand;
-            }, 50);
+            }, 60);
         }
 
         function stopSlotMachine(finalName) {
@@ -1295,7 +1314,8 @@
             isFetching = true;
             
             const btn = document.getElementById('btn-generate');
-            if (!isAuto) { btn.disabled = true; btn.textContent = "Поиск..."; }
+            btn.disabled = true; 
+            btn.textContent = "Поиск...";
             startSlotMachine();
 
             stats.generations++;
@@ -1303,9 +1323,10 @@
             checkAchievementProgress();
 
             const isTurbo = turboUntil > Math.floor(Date.now() / 1000);
-            const baseMin = isTurbo ? 200 : 400;
-            const baseMax = isTurbo ? 450 : 900;
-            const randomDelay = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
+            // Безопасная пауза анимации (защита Telethon)
+            const minDelay = isTurbo ? 700 : 1400;
+            const maxDelay = isTurbo ? 950 : 2000;
+            const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
             const delayPromise = new Promise(r => setTimeout(r, randomDelay));
 
             const useFilter = document.getElementById('filter-active').checked;
@@ -1382,7 +1403,7 @@
             if (!isFetching) await manualGenerate();
             if (isAuto) {
                 const isTurbo = turboUntil > Math.floor(Date.now() / 1000);
-                setTimeout(runAutoCycle, isTurbo ? 600 : (isProUser ? 800 : 2500));
+                setTimeout(runAutoCycle, isTurbo ? 1000 : (isProUser ? 1500 : 3000));
             }
         }
 
@@ -1409,7 +1430,7 @@
         }
 
         // =========================================================================
-        // 🪐 РЕАЛИСТИЧНЫЙ 3D ДВИЖОК 10 ПЛАНЕТ
+        // 🪐 3D ДВИЖОК 10 ПЛАНЕТ
         // =========================================================================
         let sceneEarth, cameraEarth, rendererEarth, currentBodyMesh, saturnRingMesh, blackHoleGlowMesh;
         let isThreeInit = false;
@@ -1693,7 +1714,8 @@
                 if (data.status === 'ok') {
                     userProfile = data.profile;
                     updateTycoonUI();
-                    showToast('✅ Успешно прокачано!');
+                    loadGameState();
+                    showToast('✅ Успешно куплено!');
                 } else {
                     showToast('❌ Недостаточно монет!');
                 }
@@ -1701,7 +1723,7 @@
         }
 
         // =========================================================================
-        // ⭐ PRO ПОДПИСКА И КРИПТОСТОЙКИЕ КЛЮЧИ
+        // ⭐ PRO ПОДПИСКА
         // =========================================================================
         async function buyProTariff(tariffId) {
             try {
