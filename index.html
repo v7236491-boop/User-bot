@@ -80,30 +80,34 @@
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
         }
 
+        /* КОМПАКТНАЯ ШАПКА БЕЗ ПЕРЕКРЫТИЙ */
         header { 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            padding: 15px 20px; 
+            padding: 12px 14px; 
             z-index: 50; 
             width: 100%; 
-            max-width: 600px; 
+            max-width: 480px; 
             margin: 0 auto; 
+            gap: 8px;
         }
         .nav-btn { 
             background: rgba(255, 255, 255, 0.08); 
             border: 1px solid rgba(255, 255, 255, 0.12); 
             color: var(--text-main); 
-            font-size: 0.88rem; 
+            font-size: 0.8rem; 
             font-weight: 600; 
             cursor: pointer; 
-            padding: 10px 16px; 
+            padding: 8px 12px; 
             display: flex; 
             align-items: center; 
-            gap: 6px; 
-            border-radius: 20px; 
+            gap: 4px; 
+            border-radius: 16px; 
             backdrop-filter: blur(10px);
             transition: transform 0.15s ease, background 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
 
@@ -111,13 +115,16 @@
             background: linear-gradient(135deg, #eab308, #ca8a04);
             color: #000 !important;
             font-weight: 900;
-            font-size: 0.88rem;
-            padding: 10px 18px;
-            border-radius: 24px;
+            font-size: 0.78rem;
+            padding: 8px 12px;
+            border-radius: 18px;
             border: 1px solid #facc15;
             cursor: pointer;
-            box-shadow: 0 0 18px var(--gold-glow);
-            animation: pulseGlow 2s infinite alternate;
+            box-shadow: 0 0 14px var(--gold-glow);
+            white-space: nowrap;
+            flex-shrink: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .btn-buy-pro-header.expiring-soon {
             background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
@@ -125,13 +132,9 @@
             border-color: #f87171 !important;
             animation: urgentPulse 1s infinite alternate !important;
         }
-        @keyframes pulseGlow {
-            0% { transform: scale(1); box-shadow: 0 0 14px var(--gold-glow); }
-            100% { transform: scale(1.05); box-shadow: 0 0 24px rgba(234, 179, 8, 0.75); }
-        }
         @keyframes urgentPulse {
-            0% { transform: scale(1); box-shadow: 0 0 14px rgba(239, 68, 68, 0.5); }
-            100% { transform: scale(1.06); box-shadow: 0 0 26px rgba(239, 68, 68, 0.9); }
+            0% { transform: scale(1); box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
+            100% { transform: scale(1.04); box-shadow: 0 0 20px rgba(239, 68, 68, 0.85); }
         }
 
         .turbo-badge-container {
@@ -148,7 +151,6 @@
             color: #eab308;
             text-align: center;
             box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
-            animation: pulseGlow 1.5s infinite alternate;
         }
 
         main { 
@@ -441,7 +443,7 @@
 
     <header>
         <button class="nav-btn" onclick="openModal('modal-history')">📁 История</button>
-        <button class="btn-buy-pro-header" id="pro-header-btn" onclick="openModal('modal-pro')">👑 Купить PRO</button>
+        <button class="btn-buy-pro-header" id="pro-header-btn" onclick="openModal('modal-pro')">👑 PRO</button>
         <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
     </header>
 
@@ -995,7 +997,7 @@
                         if (catSelect) { catSelect.disabled = false; catSelect.style.opacity = "1"; }
                     } else {
                         if (headerProBtn) { 
-                            headerProBtn.innerText = "👑 Купить PRO"; 
+                            headerProBtn.innerText = "👑 PRO"; 
                             headerProBtn.classList.remove('expiring-soon'); 
                         }
                         if (lockBadge) { lockBadge.innerText = "🔒 PRO ONLY"; lockBadge.style.background = "#eab308"; }
@@ -1031,7 +1033,7 @@
 
             if (isProUser) {
                 if (userProUntil === -1) {
-                    headerProBtn.innerText = "👑 PRO (Вечный)";
+                    headerProBtn.innerText = "👑 PRO ∞";
                     headerProBtn.classList.remove('expiring-soon');
                     if (settingsTitle) settingsTitle.innerText = "👑 PRO Статус: Вечный (Lifetime)";
                 } else if (userProUntil > now) {
@@ -1040,10 +1042,10 @@
                     let secs = diff % 60;
                     let timeFormatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                     
-                    headerProBtn.innerText = `👑 PRO: ${timeFormatted}`;
+                    headerProBtn.innerText = `👑 ${timeFormatted}`;
                     if (settingsTitle) settingsTitle.innerText = `👑 PRO Активен: ${timeFormatted}`;
 
-                    if (diff <= 180) { // Меньше 3 минут — тревога
+                    if (diff <= 180) {
                         headerProBtn.classList.add('expiring-soon');
                         if (settingsDesc) settingsDesc.innerHTML = `<b style="color:#ef4444;">⚠️ Подписка истекает менее чем через 3 мин!</b> Продлите доступ:`;
                     } else {
@@ -1051,7 +1053,7 @@
                     }
                 } else {
                     isProUser = false;
-                    headerProBtn.innerText = "👑 Купить PRO";
+                    headerProBtn.innerText = "👑 PRO";
                     headerProBtn.classList.remove('expiring-soon');
                 }
             }
@@ -1344,11 +1346,13 @@
                 if (data.is_free) {
                     document.getElementById('quick-actions').style.display = 'flex';
                     saveToHistory({ user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color });
+                } else {
+                    document.getElementById('quick-actions').style.display = 'none';
                 }
             } catch (e) {
-                stopSlotMachine("stellar");
-                document.getElementById('res-status').textContent = "Свободен (~1 TON)";
-                document.getElementById('res-status').style.color = "#29c75f";
+                stopSlotMachine("error");
+                document.getElementById('res-status').textContent = "Ошибка проверки";
+                document.getElementById('res-status').style.color = "#ef4444";
             } finally {
                 isFetching = false;
                 if (!isAuto) { btn.disabled = false; btn.textContent = "Сгенерировать"; }
