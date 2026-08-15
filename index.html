@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Username Scanner PRO & Cosmic Core 3D</title>
     
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
@@ -37,17 +37,7 @@
             -webkit-user-select: none;
         }
 
-        /* ТЕМЫ */
-        body.theme-terminal { background-color: #050b05 !important; color: #00ff66 !important; font-family: 'Courier New', monospace !important; }
-        body.theme-glitch { background-color: #0d021a !important; color: #00f0ff !important; }
-        body.theme-vapor { background: linear-gradient(180deg, #241442 0%, #8b008b 50%, #ff69b4 100%) !important; color: #fff !important; }
-        body.theme-rainbow {
-            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8) !important;
-            background-size: 400% 400% !important; animation: rainbow-bg 8s ease infinite !important;
-        }
-        @keyframes rainbow-bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-        #fog-canvas, #secret-canvas { 
+        #fog-canvas { 
             position: fixed; 
             top: 0; 
             left: 0; 
@@ -55,35 +45,6 @@
             height: 100vh; 
             z-index: -10; 
             pointer-events: none; 
-        }
-        #secret-canvas { display: none; z-index: -8; }
-        #emoji-layer { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh; 
-            z-index: -5; 
-            pointer-events: none; 
-            overflow: hidden; 
-        }
-        .floating-emoji { position: absolute; user-select: none; will-change: transform; opacity: 0.75; }
-
-        .screen-ripple {
-            position: fixed; border-radius: 50%;
-            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 60%);
-            transform: scale(0); opacity: 1; pointer-events: none; z-index: 100;
-            animation: rippleExplode 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-        }
-        @keyframes rippleExplode { 100% { transform: scale(50); opacity: 0; } }
-
-        .jackpot-particle {
-            position: fixed; font-size: 2rem; pointer-events: none; z-index: 9999;
-            animation: explode 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-        @keyframes explode {
-            0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 1; }
-            100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5) rotate(var(--rot)); opacity: 0; }
         }
 
         .glass-panel {
@@ -204,10 +165,6 @@
             border: 1px solid rgba(234, 179, 8, 0.3);
         }
         .price-text { font-size: 0.85rem; opacity: 0.7; }
-        .golden-mode { 
-            border-color: #FFD700 !important; 
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3) !important; 
-        }
 
         .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; }
         .action-btn { 
@@ -349,8 +306,6 @@
 <body>
 
     <canvas id="fog-canvas"></canvas>
-    <canvas id="secret-canvas"></canvas>
-    <div id="emoji-layer"></div>
 
     <header>
         <button class="nav-btn" onclick="openModal('modal-history')">📁 История</button>
@@ -551,10 +506,6 @@
                     <div style="font-weight:bold; color:#eab308;">🔑 Активировать PRO-ключ</div>
                     <span>→</span>
                 </div>
-                <div class="setting-item" style="cursor:pointer; border-color:#a855f7;" onclick="openModal('modal-secret-code')">
-                    <div style="font-weight:bold; color:#a855f7;">🎟️ Секретный промокод</div>
-                    <span>→</span>
-                </div>
                 <div class="setting-item">
                     <div>
                         <div style="font-weight:bold;">Автопарсер</div>
@@ -570,20 +521,6 @@
                     <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', this)"></div>
                     <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', this)"></div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🎟️ СЕКРЕТНЫЙ КОД 🎟️ -->
-    <div class="modal-overlay" id="modal-secret-code">
-        <div class="modal-content glass-panel" style="max-width: 360px;">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #a855f7;">🎟️ Ввод промокода</h2>
-                <button class="btn-close" onclick="closeModal('modal-secret-code')">✕</button>
-            </div>
-            <div class="modal-body" style="text-align: center;">
-                <input type="text" id="secret-code-input" class="form-input" style="text-align: center; font-weight: bold;" placeholder="ПРОМОКОД...">
-                <button class="form-btn" onclick="submitSecretCode()">Применить</button>
             </div>
         </div>
     </div>
@@ -648,14 +585,13 @@
         }
 
         let userProfile = { coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, offline_miner_lvl: 0, rank: "Ловец" };
-        let pendingTaps = 0, syncTimer = null, lastTapTime = 0;
+        let pendingTaps = 0, syncTimer = null;
 
         let stats = {
             generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
             radarAdded: parseInt(localStorage.getItem('vh_stat_radar') || '0'),
             themesChanged: parseInt(localStorage.getItem('vh_stat_themes') || '0'),
-            fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0'),
-            secretsFound: parseInt(localStorage.getItem('vh_stat_secrets') || '0')
+            fragmentFound: parseInt(localStorage.getItem('vh_stat_fragment') || '0')
         };
 
         const ACHIEVEMENTS_DATA = [];
@@ -745,7 +681,7 @@
         }
 
         // =========================================================================
-        // 🌫️ ИСПРАВЛЕННЫЙ ТУМАН
+        // 🌫️ ТУМАН CANVAS
         // =========================================================================
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
@@ -781,13 +717,12 @@
         drawFog();
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И РАНДОМИЗИРОВАННАЯ ЗАДЕРЖКА (400-1100 мс)
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
             const chars = "abcdefghijklmnopqrstuvwxyz";
             document.getElementById('res-market').style.display = 'none';
-            document.getElementById('result-box').classList.remove('golden-mode');
             if (slotInterval) clearInterval(slotInterval);
             slotInterval = setInterval(() => {
                 let rand = "";
@@ -811,7 +746,6 @@
             startSlotMachine();
 
             stats.generations++;
-            stats.generations = stats.generations;
             localStorage.setItem('vh_stat_gen', stats.generations.toString());
             checkAchievementProgress();
 
@@ -867,10 +801,10 @@
         }
 
         // =========================================================================
-        // 🔮 3D КЛИКЕР COSMIC CORE (THREE.JS)
+        // 🔮 3D КЛИКЕР COSMIC CORE
         // =========================================================================
         let sceneEarth, cameraEarth, rendererEarth, earthMesh, hexShieldMesh, lockMesh;
-        let chainGroups = [], flyingCoins = [], isThreeInit = false;
+        let chainGroups = [], isThreeInit = false;
         let currentDefenseLayer = 1, layerHealth = 100, targetScale = 1.0, currentScale = 1.0;
 
         function createProceduralEarthTexture() {
@@ -1135,7 +1069,7 @@
         }
 
         // =========================================================================
-        // 📜 СВАЙП-ИСТОРИЯ (ВПРАВО = УДАЛЕНИЕ, ВЛЕВО = ШЕРИНГ)
+        // 📜 СВАЙП-ИСТОРИЯ
         // =========================================================================
         function saveToHistory(item) {
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -1237,7 +1171,7 @@
         }
 
         // =========================================================================
-        // 🎨 ТЕМЫ И ПРОМОКОДЫ
+        // 🎨 ТЕМЫ
         // =========================================================================
         function setThemeColor(colorHex, el) {
             document.documentElement.style.setProperty('--primary', colorHex);
@@ -1246,23 +1180,6 @@
             if (el) el.classList.add('active');
         }
 
-        function submitSecretCode() {
-            const val = document.getElementById('secret-code-input').value.trim().toUpperCase();
-            if (val === "REDPILL") {
-                document.body.className = "theme-terminal";
-                showToast("💻 Режим Matrix активирован!");
-            } else if (val === "CYBER") {
-                document.body.className = "theme-glitch";
-                showToast("⚡ Киберпанк включен!");
-            } else {
-                showToast("❌ Неверный промокод");
-            }
-            closeModal('modal-secret-code');
-        }
-
-        // =========================================================================
-        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-        // =========================================================================
         function openModal(id) {
             document.getElementById(id).classList.add('active');
             if (id === 'modal-radar') fetchRadarList();
