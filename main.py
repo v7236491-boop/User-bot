@@ -189,15 +189,22 @@ def get_user_profile(db: dict, user_id: str) -> dict:
 
     return user
 
+# =========================================================================
+# 🎁 РАСШИРЕННЫЙ КАТАЛОГ FRAGMENT NFT GIFTS
+# =========================================================================
 GIFTS_CATALOG = [
-    {"id": "plush_pepe", "name": "Plush Pepe", "icon": "🐸", "floor_ton": 14.5},
-    {"id": "magic_potion", "name": "Magic Potion", "icon": "🧪", "floor_ton": 8.2},
-    {"id": "durov_cap", "name": "Durov's Cap", "icon": "🧢", "floor_ton": 22.0},
-    {"id": "golden_star", "name": "Golden Star", "icon": "⭐", "floor_ton": 5.0},
-    {"id": "diamond_ring", "name": "Diamond Ring", "icon": "💍", "floor_ton": 35.0},
-    {"id": "cosmic_rocket", "name": "Cosmic Rocket", "icon": "🚀", "floor_ton": 18.0},
-    {"id": "birthday_cake", "name": "Party Cake", "icon": "🎂", "floor_ton": 3.8},
-    {"id": "cyber_heart", "name": "Cyber Heart", "icon": "💖", "floor_ton": 6.5}
+    {"id": "crystal_pepe", "name": "Crystal Pepe", "type": "pepe_blue", "bg": "#1e3a5f", "number": "#2629", "floor_ton": 7000.0},
+    {"id": "bronze_pepe", "name": "Bronze Pepe", "type": "pepe_bronze", "bg": "#45220c", "number": "#990", "floor_ton": 7000.0},
+    {"id": "orange_pepe", "name": "Orange Pepe", "type": "pepe_orange", "bg": "#5a2d0c", "number": "#402", "floor_ton": 6999.0},
+    {"id": "neon_pepe", "name": "Neon Pink Pepe", "type": "pepe_pink", "bg": "#1f4e38", "number": "#833", "floor_ton": 6900.0},
+    {"id": "chrome_pepe", "name": "Chrome Pepe", "type": "pepe_chrome", "bg": "#432b4a", "number": "#984", "floor_ton": 6850.0},
+    {"id": "red_pepe", "name": "Ruby Pepe", "type": "pepe_red", "bg": "#521c24", "number": "#2705", "floor_ton": 6833.0},
+    {"id": "golden_flower", "name": "Golden Flower", "type": "flower_gold", "bg": "#1e241c", "number": "#49643", "floor_ton": 6753.0},
+    {"id": "snoop_lowrider", "name": "Snoop Lowrider", "type": "snoop_car", "bg": "#3d2b1f", "number": "#16593", "floor_ton": 6666.0},
+    {"id": "durov_cap", "name": "Telegram Cap", "type": "tg_cap", "bg": "#1e222a", "number": "#1142", "floor_ton": 6555.0},
+    {"id": "magic_potion", "name": "Magic Potion", "type": "potion", "bg": "#2a1b40", "number": "#524", "floor_ton": 14.5},
+    {"id": "diamond_ring", "name": "Diamond Ring", "type": "ring", "bg": "#1b3340", "number": "#891", "floor_ton": 35.0},
+    {"id": "cosmic_rocket", "name": "Cosmic Rocket", "type": "rocket", "bg": "#171a36", "number": "#3420", "floor_ton": 18.0}
 ]
 
 SEEN_NFT_LISTINGS = set()
@@ -211,13 +218,13 @@ async def gifts_arbitrage_worker():
                     if random.random() < 0.18:
                         discount = random.choice([25, 30, 35, 40, 50])
                         floor = gift["floor_ton"]
-                        deal_price = round(floor * (1 - discount / 100.0), 2)
+                        deal_price = round(floor * (1 - discount / 100.0), 1)
                         lot_id = f"{gift['id']}_{int(time.time() // 60)}_{deal_price}"
 
                         if lot_id not in SEEN_NFT_LISTINGS:
                             SEEN_NFT_LISTINGS.add(lot_id)
-                            item_num = random.randint(100, 9999)
-                            market_url = f"https://getgems.io/collection/{gift['id']}"
+                            item_num = gift["number"]
+                            market_url = f"https://fragment.com/gifts"
 
                             for user_id, u_cfg in list(gifts_settings.items()):
                                 if not u_cfg.get("active", False):
@@ -228,7 +235,7 @@ async def gifts_arbitrage_worker():
                                     continue
 
                                 min_margin = u_cfg.get("margin", 30)
-                                max_budget = u_cfg.get("max_budget", 100)
+                                max_budget = u_cfg.get("max_budget", 10000)
                                 selected_gifts = u_cfg.get("gifts", [])
 
                                 if discount >= min_margin and deal_price <= max_budget:
@@ -242,11 +249,11 @@ async def gifts_arbitrage_worker():
                                             await bot.send_message(
                                                 chat_id=int(user_id),
                                                 text=(
-                                                    f"🚨 **СНАЙПЕР ПОДАРКОВ: СКИДКА {discount}%!** 🎁\n\n"
-                                                    f"{gift['icon']} **Подарок:** {gift['name']} #{item_num}\n"
+                                                    f"🚨 **FRAGMENT СНАЙПЕР: СКИДКА {discount}%!** 🎁\n\n"
+                                                    f"🖼️ **Подарок:** {gift['name']} {item_num}\n"
                                                     f"💰 **Цена лота:** `{deal_price} TON` *(Флор: {floor} TON)*\n"
-                                                    f"📈 **Чистая выгода:** `+{round(floor - deal_price, 2)} TON`\n\n"
-                                                    f"⚡ _Успей забрать лот на Getgems раньше других!_"
+                                                    f"📈 **Чистая выгода:** `+{round(floor - deal_price, 1)} TON`\n\n"
+                                                    f"⚡ _Успей забрать лот на Fragment раньше других!_"
                                                 ),
                                                 parse_mode="Markdown",
                                                 reply_markup=kb
@@ -403,7 +410,7 @@ if dp and bot:
         await message.answer(
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
             "🎯 Мгновенный поиск редких юзернеймов\n"
-            "🎁 Снайпер скидок на Telegram Подарки\n"
+            "🎁 Снайпер скидок на Telegram Подарки (Fragment)\n"
             "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
             "👑 Радар на 100 слотов, Конструктор 20 категорий и ∞ Энергия",
             reply_markup=kb,
@@ -842,7 +849,7 @@ async def save_gift_settings(request: Request):
     user_id = str(data.get("user_id", "")).strip()
     active = bool(data.get("active", False))
     margin = int(data.get("margin", 30))
-    max_budget = float(data.get("max_budget", 100))
+    max_budget = float(data.get("max_budget", 10000))
     gifts = list(data.get("gifts", []))
 
     is_pro, _ = is_user_pro(user_id)
