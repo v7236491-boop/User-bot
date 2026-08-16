@@ -236,7 +236,7 @@
         }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* 📱 НИЖНЯЯ ПАНЕЛЬ: СТРОГО 3 КНОПКИ */
+        /* 📱 НИЖНЯЯ ПАНЕЛЬ */
         .bottom-nav-container {
             position: fixed; bottom: 16px; left: 0; right: 0; z-index: 90;
             display: flex; justify-content: space-between; align-items: center;
@@ -262,30 +262,31 @@
             align-items: center; cursor: pointer; margin-top: 10px;
         }
 
-        /* 🖼️ СТИЛЬ ВИТРИНЫ FRAGMENT NFT GIFTS */
+        /* 🖼️ ТОЧНЫЙ ДИЗАЙН КАРТОЧЕК FRAGMENT NFT GIFTS */
         .fragment-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
         .fragment-card {
-            border-radius: 20px; padding: 12px; display: flex; flex-direction: column;
-            align-items: center; justify-content: space-between; height: 190px;
-            position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 22px; padding: 12px; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; height: 215px;
+            position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.12);
             cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .fragment-card:active { transform: scale(0.96); }
-        .fragment-card.selected { border: 2px solid #29c75f; box-shadow: 0 0 16px rgba(41, 199, 95, 0.5); }
+        .fragment-card.selected { border: 2px solid #29c75f; box-shadow: 0 0 18px rgba(41, 199, 95, 0.55); }
         
         .fragment-card-badge {
             position: absolute; bottom: 44px; left: 10px;
-            background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);
             color: #fff; font-size: 0.72rem; font-weight: 800;
             padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15);
+            z-index: 2;
         }
-        .fragment-card-art { width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; margin-top: 6px; }
-        .fragment-card-art svg { width: 100%; height: 100%; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5)); }
+        .fragment-card-art { width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin-top: 4px; z-index: 1; }
+        .fragment-card-art svg { width: 100%; height: 100%; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.45)); }
         
         .fragment-card-footer {
             width: 100%; display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(10px);
-            padding: 6px 10px; border-radius: 12px; margin-top: 4px;
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(10px);
+            padding: 7px 10px; border-radius: 14px; margin-top: 4px; z-index: 2;
         }
         .fragment-price-ton { font-size: 0.85rem; font-weight: 900; color: #38bdf8; display: flex; align-items: center; gap: 4px; }
         .fragment-status-sold { font-size: 0.68rem; font-weight: 700; color: #ef4444; text-transform: uppercase; }
@@ -473,7 +474,7 @@
         </div>
     </main>
 
-    <!-- 📱 НИЖНЯЯ ПАНЕЛЬ: 3 КНОПКИ -->
+    <!-- 📱 НИЖНЯЯ ПАНЕЛЬ -->
     <div class="bottom-nav-container">
         <button class="nav-pill-btn" onclick="openModal('modal-achievements')">
             🏆 <span id="achieve-counter-badge">0/100</span>
@@ -563,8 +564,7 @@
                             <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', '234, 179, 8', this)"></div>
                         </div>
 
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:12px;">Стили и купленные темы:</div>
-                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;">
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="setSecretTheme('theme-matrix', '0, 255, 102')">Matrix</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#00f0ff;" onclick="setSecretTheme('theme-cyber', '0, 240, 255')">Cyberpunk</button>
                             <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#ff499e;" onclick="setSecretTheme('theme-vapor', '255, 73, 158')">Vaporwave</button>
@@ -666,7 +666,6 @@
             </div>
             <div class="modal-body">
                 
-                <!-- ПАНЕЛЬ УПРАВЛЕНИЯ СНАЙПЕРОМ -->
                 <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px; margin-bottom: 12px;">
                     <div class="setting-row" style="padding:0 0 8px 0;">
                         <div>
@@ -698,7 +697,6 @@
                     <span style="font-size:0.75rem; color:var(--text-muted);">Нажми для слежки</span>
                 </div>
 
-                <!-- 🖼️ СЕТКА FRAGMENT ПОДАРКОВ -->
                 <div class="fragment-grid" id="fragment-gifts-grid"></div>
 
                 <button class="form-btn" style="background:#29c75f; color:#000; font-weight:900; margin-top:16px;" onclick="handleGiftControlChange(event, 'save')">
@@ -954,7 +952,6 @@
         let planetHpMax = 100;
         let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
 
-        // ☁️ CLOUDSTORAGE + LOCALSTORAGE
         function saveProfileEverywhere() {
             localStorage.setItem('vh_saved_profile', JSON.stringify(userProfile));
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
@@ -1007,99 +1004,123 @@
                     maxRadarSlots = data.max_radar_slots || 3;
                     planetHpMax = data.planet_hp_max || 100;
                     saveProfileEverywhere();
-
-                    const lockBadge = document.getElementById('kw-pro-lock-badge');
-                    const kwInput = document.getElementById('custom-kw-input');
-                    const catSelect = document.getElementById('custom-cat-select');
-                    const headerProBtn = document.getElementById('pro-header-btn');
-                    
-                    if (isProUser) {
-                        if (lockBadge) { lockBadge.innerText = "✓ PRO АКТИВЕН"; lockBadge.style.background = "var(--primary)"; }
-                        if (kwInput) { kwInput.disabled = false; kwInput.style.opacity = "1"; }
-                        if (catSelect) { catSelect.disabled = false; catSelect.style.opacity = "1"; }
-                    } else {
-                        if (headerProBtn) { 
-                            headerProBtn.innerText = "👑 PRO Доступ"; 
-                            headerProBtn.classList.remove('expiring-soon'); 
-                        }
-                        if (lockBadge) { lockBadge.innerText = "🔒 PRO ONLY"; lockBadge.style.background = "#eab308"; }
-                        if (kwInput) { kwInput.disabled = true; kwInput.style.opacity = "0.45"; }
-                        if (catSelect) { catSelect.disabled = true; catSelect.style.opacity = "0.45"; }
-                    }
-
-                    const quasarBtn = document.getElementById('btn-theme-quasar');
-                    const quasarBuyBtn = document.getElementById('btn-buy-theme-quasar');
-                    if (data.profile.unlocked_themes && data.profile.unlocked_themes.includes('theme_quasar')) {
-                        if (quasarBtn) quasarBtn.style.display = 'inline-block';
-                        if (quasarBuyBtn) { quasarBuyBtn.innerText = "Куплено ✓"; quasarBuyBtn.disabled = true; quasarBuyBtn.style.background = "#444"; }
-                    }
-
-                    updateTycoonUI();
-                    updateTurboTimer();
-                    updateProHeaderTimer();
+                    applyProStateToUI();
                 }
             } catch(e){}
         }
         loadProfileFromCloudAndServer();
 
-        // 🎨 ВЕКТОРНЫЙ ГЕНЕРАТОР FRAGMENT ПОДАРКОВ
+        function applyProStateToUI() {
+            const lockBadge = document.getElementById('kw-pro-lock-badge');
+            const kwInput = document.getElementById('custom-kw-input');
+            const catSelect = document.getElementById('custom-cat-select');
+            const headerProBtn = document.getElementById('pro-header-btn');
+            
+            if (isProUser) {
+                if (lockBadge) { lockBadge.innerText = "✓ PRO АКТИВЕН"; lockBadge.style.background = "var(--primary)"; }
+                if (kwInput) { kwInput.disabled = false; kwInput.style.opacity = "1"; }
+                if (catSelect) { catSelect.disabled = false; catSelect.style.opacity = "1"; }
+            } else {
+                if (headerProBtn) { 
+                    headerProBtn.innerText = "👑 PRO Доступ"; 
+                    headerProBtn.classList.remove('expiring-soon'); 
+                }
+                if (lockBadge) { lockBadge.innerText = "🔒 PRO ONLY"; lockBadge.style.background = "#eab308"; }
+                if (kwInput) { kwInput.disabled = true; kwInput.style.opacity = "0.45"; }
+                if (catSelect) { catSelect.disabled = true; catSelect.style.opacity = "0.45"; }
+            }
+
+            const quasarBtn = document.getElementById('btn-theme-quasar');
+            const quasarBuyBtn = document.getElementById('btn-buy-theme-quasar');
+            if (userProfile.unlocked_themes && userProfile.unlocked_themes.includes('theme_quasar')) {
+                if (quasarBtn) quasarBtn.style.display = 'inline-block';
+                if (quasarBuyBtn) { quasarBuyBtn.innerText = "Куплено ✓"; quasarBuyBtn.disabled = true; quasarBuyBtn.style.background = "#444"; }
+            }
+
+            updateTycoonUI();
+            updateTurboTimer();
+            updateProHeaderTimer();
+        }
+
+        // 🎨 ОФИЦИАЛЬНАЯ ДЕТАЛИЗИРОВАННАЯ ГРАФИКА FRAGMENT GIFTS
         function getFragmentGiftSVG(type) {
             if (type.startsWith('pepe_')) {
-                let color = "#38bdf8";
-                if (type === 'pepe_bronze') color = "#c28544";
-                if (type === 'pepe_orange') color = "#f97316";
-                if (type === 'pepe_pink') color = "#ec4899";
-                if (type === 'pepe_chrome') color = "#cbd5e1";
-                if (type === 'pepe_red') color = "#ef4444";
-                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="38" fill="${color}" fill-opacity="0.25"/>
-                    <path d="M25 45C25 32 36 22 50 22C64 22 75 32 75 45C75 58 64 68 50 68C36 68 25 58 25 45Z" fill="${color}"/>
-                    <circle cx="40" cy="38" r="9" fill="#fff"/>
-                    <circle cx="40" cy="38" r="4" fill="#000"/>
-                    <circle cx="60" cy="38" r="9" fill="#fff"/>
-                    <circle cx="60" cy="38" r="4" fill="#000"/>
-                    <path d="M36 54C42 60 58 60 64 54" stroke="#000" stroke-width="4" stroke-linecap="round"/>
-                    <path d="M50 64C45 56 35 60 38 68C42 74 50 78 50 78C50 78 58 74 62 68C65 60 55 56 50 64Z" fill="#ff499e"/>
+                let skinGrad1 = "#67e8f9", skinGrad2 = "#0284c7", heartCol = "#facc15";
+                if (type === 'pepe_bronze') { skinGrad1 = "#d97706"; skinGrad2 = "#78350f"; heartCol = "#38bdf8"; }
+                if (type === 'pepe_orange') { skinGrad1 = "#fb923c"; skinGrad2 = "#c2410c"; heartCol = "#22c55e"; }
+                if (type === 'pepe_pink')   { skinGrad1 = "#f472b6"; skinGrad2 = "#db2777"; heartCol = "#06b6d4"; }
+                if (type === 'pepe_chrome') { skinGrad1 = "#f1f5f9"; skinGrad2 = "#64748b"; heartCol = "#eab308"; }
+                if (type === 'pepe_red')    { skinGrad1 = "#f87171"; skinGrad2 = "#b91c1c"; heartCol = "#ffffff"; }
+
+                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="pepeGrad_${type}" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(70 60) rotate(90) scale(60 50)">
+                            <stop stop-color="${skinGrad1}"/>
+                            <stop offset="1" stop-color="${skinGrad2}"/>
+                        </radialGradient>
+                    </defs>
+                    <!-- Тело и силуэт лягушки в позе с сердечком -->
+                    <path d="M45 125C35 125 30 115 36 100C40 90 48 85 55 85C62 85 68 88 74 94C80 88 88 85 96 85C108 85 118 95 115 110C112 122 100 125 90 125H45Z" fill="url(#pepeGrad_${type})"/>
+                    <!-- Лапы сбоку -->
+                    <path d="M35 115C20 118 18 128 30 132C42 136 50 125 50 125" stroke="#000" stroke-width="4" stroke-linecap="round" fill="url(#pepeGrad_${type})"/>
+                    <path d="M105 125C115 125 135 135 142 128C148 120 135 112 120 115" stroke="#000" stroke-width="4" stroke-linecap="round" fill="url(#pepeGrad_${type})"/>
+                    <!-- Голова -->
+                    <ellipse cx="80" cy="65" rx="42" ry="34" fill="url(#pepeGrad_${type})" stroke="#000" stroke-width="4.5"/>
+                    <!-- Выпуклые пуговичные глаза -->
+                    <ellipse cx="60" cy="42" rx="15" ry="17" fill="#ffffff" stroke="#000" stroke-width="4"/>
+                    <ellipse cx="100" cy="42" rx="15" ry="17" fill="#ffffff" stroke="#000" stroke-width="4"/>
+                    <circle cx="62" cy="42" r="7" fill="#000000"/><circle cx="65" cy="39" r="2.5" fill="#ffffff"/>
+                    <circle cx="98" cy="42" r="7" fill="#000000"/><circle cx="101" cy="39" r="2.5" fill="#ffffff"/>
+                    <!-- Губы/улыбка -->
+                    <path d="M45 72C60 88 100 88 115 72" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M52 74C65 84 95 84 108 74" stroke="#e11d48" stroke-width="4" stroke-linecap="round" fill="#fda4af"/>
+                    <!-- Сердечко в лапках -->
+                    <path d="M80 110C70 95 52 98 56 112C60 124 80 134 80 134C80 134 100 124 104 112C108 98 90 95 80 110Z" fill="${heartCol}" stroke="#000" stroke-width="4"/>
+                    <!-- Лапки обнимающие сердце -->
+                    <circle cx="62" cy="112" r="9" fill="url(#pepeGrad_${type})" stroke="#000" stroke-width="3.5"/>
+                    <circle cx="98" cy="112" r="9" fill="url(#pepeGrad_${type})" stroke="#000" stroke-width="3.5"/>
                 </svg>`;
             } else if (type === 'flower_gold') {
-                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="24" r="14" fill="#facc15"/>
-                    <circle cx="50" cy="76" r="14" fill="#facc15"/>
-                    <circle cx="24" cy="50" r="14" fill="#facc15"/>
-                    <circle cx="76" cy="50" r="14" fill="#facc15"/>
-                    <circle cx="32" cy="32" r="14" fill="#facc15"/>
-                    <circle cx="68" cy="32" r="14" fill="#facc15"/>
-                    <circle cx="32" cy="68" r="14" fill="#facc15"/>
-                    <circle cx="68" cy="68" r="14" fill="#facc15"/>
-                    <circle cx="50" cy="50" r="18" fill="#fff"/>
-                    <circle cx="43" cy="46" r="3" fill="#000"/><circle cx="57" cy="46" r="3" fill="#000"/>
-                    <path d="M42 54C46 58 54 58 58 54" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 6px 12px rgba(0,0,0,0.5))">
+                        <circle cx="80" cy="45" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                        <circle cx="80" cy="115" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                        <circle cx="45" cy="80" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                        <circle cx="115" cy="80" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                        <circle cx="55" cy="55" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                        <circle cx="105" cy="55" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                        <circle cx="55" cy="105" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                        <circle cx="105" cy="105" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+                        <circle cx="80" cy="80" r="28" fill="#ffffff" stroke="#000" stroke-width="5"/>
+                        <circle cx="70" cy="74" r="4" fill="#000"/><circle cx="90" cy="74" r="4" fill="#000"/>
+                        <path d="M68 86C74 94 86 94 92 86" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+                    </g>
                 </svg>`;
             } else if (type === 'snoop_car') {
-                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="20" y="68" width="60" height="12" rx="4" fill="#ca8a04"/>
-                    <path d="M15 56L28 42H72L85 56H15Z" fill="#eab308"/>
-                    <rect x="10" y="54" width="80" height="12" rx="3" fill="#facc15"/>
-                    <circle cx="28" cy="66" r="7" fill="#1e293b" stroke="#e2e8f0" stroke-width="3"/>
-                    <circle cx="72" cy="66" r="7" fill="#1e293b" stroke="#e2e8f0" stroke-width="3"/>
+                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="25" y="105" width="110" height="26" rx="6" fill="#b45309" stroke="#000" stroke-width="4"/>
+                    <text x="80" y="123" fill="#fef08a" font-size="11" font-weight="900" text-anchor="middle" font-family="sans-serif">Snoop Dogg</text>
+                    <path d="M20 90L40 65H120L140 90H20Z" fill="#eab308" stroke="#000" stroke-width="4"/>
+                    <rect x="15" y="85" width="130" height="22" rx="5" fill="#facc15" stroke="#000" stroke-width="4"/>
+                    <circle cx="45" cy="105" r="12" fill="#1e293b" stroke="#ffffff" stroke-width="4"/>
+                    <circle cx="115" cy="105" r="12" fill="#1e293b" stroke="#ffffff" stroke-width="4"/>
                 </svg>`;
             } else if (type === 'tg_cap') {
-                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 55C22 35 34 26 50 26C66 26 78 35 78 55H22Z" fill="#6366f1"/>
-                    <path d="M15 55C15 55 35 62 60 62C78 62 88 55 88 55C88 55 80 50 50 50C25 50 15 55 15 55Z" fill="#4338ca"/>
-                    <path d="M42 42L56 36L48 50L46 45L42 42Z" fill="#fff"/>
+                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M35 88C35 55 55 40 80 40C105 40 125 55 125 88H35Z" fill="#6366f1" stroke="#312e81" stroke-width="5"/>
+                    <path d="M22 88C22 88 50 100 95 100C125 100 142 88 142 88C142 88 130 80 80 80C38 80 22 88 22 88Z" fill="#4338ca" stroke="#312e81" stroke-width="5"/>
+                    <path d="M68 66L92 56L80 78L76 70L68 66Z" fill="#ffffff"/>
                 </svg>`;
             } else {
-                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="35" fill="#38bdf8" fill-opacity="0.4"/><polygon points="50,20 80,75 20,75" fill="#38bdf8"/></svg>`;
+                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="80" cy="80" r="50" fill="#38bdf8" fill-opacity="0.3"/><polygon points="80,35 125,120 35,120" fill="#38bdf8" stroke="#0284c7" stroke-width="5"/></svg>`;
             }
         }
 
-        // 🔒 ПРОВЕРКА PAYWALL НА ВСЕ ДЕЙСТВИЯ В GIFTS
         function handleGiftControlChange(event, action) {
             if (!isProUser) {
                 if (event) { event.preventDefault(); event.stopPropagation(); }
                 document.getElementById('gift-radar-active').checked = false;
-                showToast("👑 Доступно только в PRO подписке!");
+                showToast("👑 Снайпер доступен только в PRO!");
                 closeModal('modal-gifts-sniper');
                 openModal('modal-pro');
                 return;
@@ -1173,6 +1194,47 @@
             } catch(e) {
                 showToast("Ошибка сохранения");
             }
+        }
+
+        // =========================================================================
+        // 🔑 АКТИВАЦИЯ КЛЮЧЕЙ И ПРОМОКОДОВ
+        // =========================================================================
+        async function applyPromoOrKey() {
+            const input = document.getElementById('promo-input').value.trim();
+            if (!input) return;
+
+            if (input.toUpperCase().startsWith("PRO-")) {
+                try {
+                    const res = await fetch('/api/pro/activate_key', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ user_id: tgChatId, key: input })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok') {
+                        isProUser = true;
+                        userProfile.pro_until = data.pro_until;
+                        userProfile.rank = data.rank || "👑 PRO Ловец";
+                        userProUntil = data.pro_until;
+                        saveProfileEverywhere();
+                        applyProStateToUI();
+                        showToast("🎉 PRO успешно активирован! Чек отправлен в бота.");
+                        closeModal('modal-settings');
+                    } else {
+                        showToast(`❌ ${data.error || "Неверный ключ"}`);
+                    }
+                } catch(e) {
+                    showToast("Ошибка сети при активации");
+                }
+            } else if (input.toUpperCase() === "BONUS1000") {
+                userProfile.coins += 1000;
+                saveProfileEverywhere();
+                updateTycoonUI();
+                showToast("🎁 +1000 монет начислено!");
+            } else {
+                showToast("❌ Неверный промокод");
+            }
+            document.getElementById('promo-input').value = "";
         }
 
         let stats = {
@@ -1926,6 +1988,8 @@
                     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
                         window.Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
                             if (status === 'paid') {
+                                isProUser = true;
+                                applyProStateToUI();
                                 showToast("🎉 PRO активирован!");
                                 loadProfileFromCloudAndServer();
                                 closeModal('modal-pro');
@@ -1936,34 +2000,6 @@
                     }
                 }
             } catch (e) { showToast("Сбой соединения"); }
-        }
-
-        async function applyPromoOrKey() {
-            const input = document.getElementById('promo-input').value.trim();
-            if (!input) return;
-
-            if (input.toUpperCase().startsWith("PRO-")) {
-                const res = await fetch('/api/pro/activate_key', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, key: input })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile.pro_until = data.pro_until;
-                    userProfile.rank = "👑 PRO Ловец";
-                    saveProfileEverywhere();
-                    showToast("👑 PRO ключ активирован!");
-                    loadProfileFromCloudAndServer();
-                } else {
-                    showToast(`❌ ${data.error || "Неверный ключ"}`);
-                }
-            } else if (input.toUpperCase() === "BONUS1000") {
-                showToast("🎁 +1000 монет начислено!");
-            } else {
-                showToast("❌ Неверный промокод");
-            }
-            document.getElementById('promo-input').value = "";
         }
 
         async function fetchRadarListSettings() {
