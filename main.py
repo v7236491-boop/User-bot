@@ -224,7 +224,7 @@ async def gifts_arbitrage_worker():
                         if lot_id not in SEEN_NFT_LISTINGS:
                             SEEN_NFT_LISTINGS.add(lot_id)
                             item_num = gift["number"]
-                            market_url = f"https://fragment.com/gifts"
+                            market_url = "https://fragment.com/gifts"
 
                             for user_id, u_cfg in list(gifts_settings.items()):
                                 if not u_cfg.get("active", False):
@@ -308,7 +308,7 @@ def generate_keyword_custom_username(keyword: str, category: str, use_und: bool 
     if pattern == "kw_affix":
         return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
     elif pattern == "affix_kw":
-        return f"{affix}_{keyword}" if use_und else f"{affix}{keyword}"
+        return f"{affix}_{keyword}" if use_und else f"{keyword}{affix}"
     elif pattern == "prefix_kw":
         pref = random.choice(prefixes)
         return f"{pref}_{keyword}" if use_und else f"{pref}{keyword}"
@@ -893,6 +893,9 @@ async def create_pro_invoice(request: Request):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+# =========================================================================
+# 🔑 ИСПРАВЛЕННАЯ АКТИВАЦИЯ КЛЮЧА С МОМЕНТАЛЬНЫМ PUSH В БОТ
+# =========================================================================
 @app.post("/api/pro/activate_key")
 async def activate_pro_key(request: Request):
     data = await request.json()
@@ -941,7 +944,41 @@ async def activate_pro_key(request: Request):
         if user_id in FAILED_ATTEMPTS:
             del FAILED_ATTEMPTS[user_id]
 
-        return {"status": "ok", "pro_until": user["pro_until"]}
+        duration_text = "Навсегда (Lifetime) 🌌" if secs == -1 else f"{secs // 86400} дней 📅"
+
+        if bot and user_id.isdigit():
+            try:
+                web_app_url = "https://user-bot-production-8a5d.up.railway.app"
+                kb = InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton(text="🚀 Запустить PRO Функции", web_app=WebAppInfo(url=web_app_url))]
+                    ]
+                )
+                await bot.send_message(
+                    chat_id=int(user_id),
+                    text=(
+                        f"🎉 **ВАША PRO-ПОДПИСКА УСПЕШНО АКТИВИРОВАНА!** 👑\n\n"
+                        f"🔑 **Ключ:** `{key_code}`\n"
+                        f"⏳ **Срок действия:** {duration_text}\n\n"
+                        f"✨ **Вам разблокированы все возможности:**\n"
+                        f"• 🎁 Снайпер подарков Fragment (Auto-Buy)\n"
+                        f"• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
+                        f"• 🎯 Радар на 100 слотов\n"
+                        f"• 🛠️ Конструктор ников по 20 категориям\n\n"
+                        f"🌟 _Желаем приятного использования и удачной ловли!_"
+                    ),
+                    parse_mode="Markdown",
+                    reply_markup=kb
+                )
+            except Exception:
+                pass
+
+        return {
+            "status": "ok", 
+            "is_pro": True, 
+            "pro_until": user["pro_until"], 
+            "rank": user["rank"]
+        }
 
 @app.get("/api/generate")
 async def generate_username(
