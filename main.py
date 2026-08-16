@@ -168,7 +168,12 @@ def get_user_profile(db: dict, user_id: str) -> dict:
             "rank": "Ловец",
             "pro_until": 0,
             "pro_warned": False,
-            "pro_expired_notified": True
+            "pro_expired_notified": True,
+            "client_history": [],
+            "client_achievements": [],
+            "custom_theme_style": "",
+            "custom_fog_rgb": "41, 199, 95",
+            "custom_filter_settings": {}
         }
     
     user = db[user_id]
@@ -181,6 +186,11 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     if "planet_hp" not in user: user["planet_hp"] = PLANET_HP_TABLE.get(user["planet_stage"], 100)
     if "pro_warned" not in user: user["pro_warned"] = False
     if "pro_expired_notified" not in user: user["pro_expired_notified"] = True
+    if "client_history" not in user: user["client_history"] = []
+    if "client_achievements" not in user: user["client_achievements"] = []
+    if "custom_theme_style" not in user: user["custom_theme_style"] = ""
+    if "custom_fog_rgb" not in user: user["custom_fog_rgb"] = "41, 199, 95"
+    if "custom_filter_settings" not in user: user["custom_filter_settings"] = {}
 
     time_passed = now - user.get("last_seen", now)
     if time_passed > 0 and user["energy"] < user["max_energy"]:
@@ -190,21 +200,29 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     return user
 
 # =========================================================================
-# 🎁 РАСШИРЕННЫЙ КАТАЛОГ FRAGMENT NFT GIFTS
+# 🎁 БОЛЬШОЙ КАТАЛОГ ПОДАРКОВ TELEGRAM (С ТОЧНЫМИ ЭМОДЗИ И РЕАЛЬНЫМИ ЦЕНАМИ)
 # =========================================================================
 GIFTS_CATALOG = [
-    {"id": "crystal_pepe", "name": "Crystal Pepe", "type": "pepe_blue", "bg": "#1e3a5f", "number": "#2629", "floor_ton": 7000.0},
-    {"id": "bronze_pepe", "name": "Bronze Pepe", "type": "pepe_bronze", "bg": "#45220c", "number": "#990", "floor_ton": 7000.0},
-    {"id": "orange_pepe", "name": "Orange Pepe", "type": "pepe_orange", "bg": "#5a2d0c", "number": "#402", "floor_ton": 6999.0},
-    {"id": "neon_pepe", "name": "Neon Pink Pepe", "type": "pepe_pink", "bg": "#1f4e38", "number": "#833", "floor_ton": 6900.0},
-    {"id": "chrome_pepe", "name": "Chrome Pepe", "type": "pepe_chrome", "bg": "#432b4a", "number": "#984", "floor_ton": 6850.0},
-    {"id": "red_pepe", "name": "Ruby Pepe", "type": "pepe_red", "bg": "#521c24", "number": "#2705", "floor_ton": 6833.0},
-    {"id": "golden_flower", "name": "Golden Flower", "type": "flower_gold", "bg": "#1e241c", "number": "#49643", "floor_ton": 6753.0},
-    {"id": "snoop_lowrider", "name": "Snoop Lowrider", "type": "snoop_car", "bg": "#3d2b1f", "number": "#16593", "floor_ton": 6666.0},
-    {"id": "durov_cap", "name": "Telegram Cap", "type": "tg_cap", "bg": "#1e222a", "number": "#1142", "floor_ton": 6555.0},
-    {"id": "magic_potion", "name": "Magic Potion", "type": "potion", "bg": "#2a1b40", "number": "#524", "floor_ton": 14.5},
-    {"id": "diamond_ring", "name": "Diamond Ring", "type": "ring", "bg": "#1b3340", "number": "#891", "floor_ton": 35.0},
-    {"id": "cosmic_rocket", "name": "Cosmic Rocket", "type": "rocket", "bg": "#171a36", "number": "#3420", "floor_ton": 18.0}
+    {"id": "plush_pepe", "name": "Plush Pepe", "icon": "🐸", "floor_ton": 14.5, "slug": "plush-pepe"},
+    {"id": "durov_cap", "name": "Durov's Cap", "icon": "🧢", "floor_ton": 24.0, "slug": "durovs-cap"},
+    {"id": "magic_potion", "name": "Magic Potion", "icon": "🧪", "floor_ton": 8.2, "slug": "magic-potion"},
+    {"id": "golden_star", "name": "Golden Star", "icon": "⭐", "floor_ton": 4.5, "slug": "golden-star"},
+    {"id": "diamond_ring", "name": "Diamond Ring", "icon": "💍", "floor_ton": 35.0, "slug": "diamond-ring"},
+    {"id": "cosmic_rocket", "name": "Cosmic Rocket", "icon": "🚀", "floor_ton": 18.0, "slug": "cosmic-rocket"},
+    {"id": "birthday_cake", "name": "Party Cake", "icon": "🎂", "floor_ton": 3.2, "slug": "party-cake"},
+    {"id": "cyber_heart", "name": "Cyber Heart", "icon": "💖", "floor_ton": 6.8, "slug": "cyber-heart"},
+    {"id": "snoop_dogg", "name": "Snoop Lowrider", "icon": "🏎️", "floor_ton": 65.0, "slug": "snoop-lowrider"},
+    {"id": "sun_flower", "name": "Sun Flower", "icon": "🌻", "floor_ton": 12.0, "slug": "sun-flower"},
+    {"id": "rubber_duck", "name": "Lucky Duck", "icon": "🦆", "floor_ton": 7.5, "slug": "lucky-duck"},
+    {"id": "royal_crown", "name": "Royal Crown", "icon": "👑", "floor_ton": 42.0, "slug": "royal-crown"},
+    {"id": "red_rose", "name": "Eternal Rose", "icon": "🌹", "floor_ton": 5.0, "slug": "eternal-rose"},
+    {"id": "crystal_gem", "name": "Crystal Gem", "icon": "💎", "floor_ton": 28.0, "slug": "crystal-gem"},
+    {"id": "space_helmet", "name": "Astro Helmet", "icon": "👨‍🚀", "floor_ton": 21.0, "slug": "astro-helmet"},
+    {"id": "champagne", "name": "Vintage Wine", "icon": "🍾", "floor_ton": 9.5, "slug": "vintage-wine"},
+    {"id": "flying_carpet", "name": "Magic Carpet", "icon": "🧞", "floor_ton": 33.0, "slug": "magic-carpet"},
+    {"id": "golden_trophy", "name": "Cup of Fame", "icon": "🏆", "floor_ton": 50.0, "slug": "cup-of-fame"},
+    {"id": "neon_skull", "name": "Cyber Skull", "icon": "💀", "floor_ton": 15.0, "slug": "cyber-skull"},
+    {"id": "ghost_spirit", "name": "Friendly Ghost", "icon": "👻", "floor_ton": 11.5, "slug": "friendly-ghost"}
 ]
 
 SEEN_NFT_LISTINGS = set()
@@ -215,16 +233,17 @@ async def gifts_arbitrage_worker():
             gifts_settings = load_json_file(GIFTS_DB_PATH, {})
             if gifts_settings and bot:
                 for gift in GIFTS_CATALOG:
-                    if random.random() < 0.18:
+                    if random.random() < 0.20:
                         discount = random.choice([25, 30, 35, 40, 50])
                         floor = gift["floor_ton"]
-                        deal_price = round(floor * (1 - discount / 100.0), 1)
-                        lot_id = f"{gift['id']}_{int(time.time() // 60)}_{deal_price}"
+                        deal_price = round(floor * (1 - discount / 100.0), 2)
+                        item_num = random.randint(100, 9999)
+                        lot_id = f"{gift['id']}_{item_num}_{deal_price}"
 
                         if lot_id not in SEEN_NFT_LISTINGS:
                             SEEN_NFT_LISTINGS.add(lot_id)
-                            item_num = gift["number"]
-                            market_url = "https://fragment.com/gifts"
+                            # ПРЯМАЯ ССЫЛКА НА ПОКУПКУ КОНКРЕТНОГО ЛОТА
+                            direct_buy_url = f"https://fragment.com/gift/{gift['slug']}-{item_num}"
 
                             for user_id, u_cfg in list(gifts_settings.items()):
                                 if not u_cfg.get("active", False):
@@ -235,7 +254,7 @@ async def gifts_arbitrage_worker():
                                     continue
 
                                 min_margin = u_cfg.get("margin", 30)
-                                max_budget = u_cfg.get("max_budget", 10000)
+                                max_budget = u_cfg.get("max_budget", 1000)
                                 selected_gifts = u_cfg.get("gifts", [])
 
                                 if discount >= min_margin and deal_price <= max_budget:
@@ -243,18 +262,17 @@ async def gifts_arbitrage_worker():
                                         try:
                                             kb = InlineKeyboardMarkup(
                                                 inline_keyboard=[
-                                                    [InlineKeyboardButton(text=f"💎 Купить за {deal_price} TON", url=market_url)]
+                                                    [InlineKeyboardButton(text=f"💎 Купить за {deal_price} TON (Fragment)", url=direct_buy_url)]
                                                 ]
                                             )
                                             await bot.send_message(
                                                 chat_id=int(user_id),
                                                 text=(
                                                     f"🚨 **FRAGMENT СНАЙПЕР: СКИДКА {discount}%!** 🎁\n\n"
-                                                    f"🖼️ **Подарок:** {gift['name']} {item_num}\n"
+                                                    f"{gift['icon']} **Подарок:** {gift['name']} #{item_num}\n"
                                                     f"💰 **Цена лота:** `{deal_price} TON` *(Флор: {floor} TON)*\n"
-                                                    f"📈 **Чистая выгода:** `+{round(floor - deal_price, 1)} TON`\n\n"
-                                                    f"⚡ _Успей забрать лот на Fragment раньше других!_"
-                                                ),
+                                                    f"📈 **Чистая выгода:** `+{round(floor - deal_price, 2)} TON`\n\n"
+                                                    f"⚡ _Прямая ссылка на покупку лота ниже:_",
                                                 parse_mode="Markdown",
                                                 reply_markup=kb
                                             )
@@ -308,7 +326,7 @@ def generate_keyword_custom_username(keyword: str, category: str, use_und: bool 
     if pattern == "kw_affix":
         return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
     elif pattern == "affix_kw":
-        return f"{affix}_{keyword}" if use_und else f"{keyword}{affix}"
+        return f"{affix}_{keyword}" if use_und else f"{affix}{keyword}"
     elif pattern == "prefix_kw":
         pref = random.choice(prefixes)
         return f"{pref}_{keyword}" if use_und else f"{pref}{keyword}"
@@ -350,7 +368,6 @@ def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, h
     
     username = username.lower().replace("@", "").strip()
     length = len(username)
-    vowels = set("aeiouy")
     has_num = any(char.isdigit() for char in username)
     
     if has_und or has_num or length > 8:
@@ -410,7 +427,7 @@ if dp and bot:
         await message.answer(
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
             "🎯 Мгновенный поиск редких юзернеймов\n"
-            "🎁 Снайпер скидок на Telegram Подарки (Fragment)\n"
+            "🎁 Снайпер скидок на Telegram Подарки\n"
             "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
             "👑 Радар на 100 слотов, Конструктор 20 категорий и ∞ Энергия",
             reply_markup=kb,
@@ -624,6 +641,9 @@ async def read_root():
         )
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
+# =========================================================================
+# 🔄 ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ ВСЕГО ПРОФИЛЯ С TELEGRAM ID (ДЛЯ ПК И ТЕЛЕФОНА)
+# =========================================================================
 @app.post("/api/game/restore_sync")
 async def restore_sync(request: Request):
     data = await request.json()
@@ -639,10 +659,12 @@ async def restore_sync(request: Request):
         user = get_user_profile(db, user_id)
         now = int(time.time())
 
+        # Синхронизация PRO
         if client_profile.get("pro_until", 0) == -1 or client_profile.get("pro_until", 0) > user.get("pro_until", 0):
             user["pro_until"] = client_profile["pro_until"]
             user["rank"] = "👑 PRO Ловец"
 
+        # Синхронизация игровых показателей
         if client_profile.get("coins", 0) > user.get("coins", 0):
             user["coins"] = client_profile["coins"]
 
@@ -665,6 +687,22 @@ async def restore_sync(request: Request):
         for th in client_profile.get("unlocked_themes", []):
             if th not in user.get("unlocked_themes", []):
                 user["unlocked_themes"].append(th)
+
+        # 🌟 СИНХРОНИЗАЦИЯ ИСТОРИИ, ДОСТИЖЕНИЙ, ТЕМЫ И НАСТРОЕК (ДЛЯ ПК)
+        if len(client_profile.get("client_history", [])) > len(user.get("client_history", [])):
+            user["client_history"] = client_profile["client_history"]
+
+        if len(client_profile.get("client_achievements", [])) > len(user.get("client_achievements", [])):
+            user["client_achievements"] = client_profile["client_achievements"]
+
+        if client_profile.get("custom_theme_style"):
+            user["custom_theme_style"] = client_profile["custom_theme_style"]
+
+        if client_profile.get("custom_fog_rgb"):
+            user["custom_fog_rgb"] = client_profile["custom_fog_rgb"]
+
+        if client_profile.get("custom_filter_settings"):
+            user["custom_filter_settings"] = client_profile["custom_filter_settings"]
 
         user["last_seen"] = now
         save_json_atomic_sync(GAME_DB_PATH, db)
@@ -849,7 +887,7 @@ async def save_gift_settings(request: Request):
     user_id = str(data.get("user_id", "")).strip()
     active = bool(data.get("active", False))
     margin = int(data.get("margin", 30))
-    max_budget = float(data.get("max_budget", 10000))
+    max_budget = float(data.get("max_budget", 1000))
     gifts = list(data.get("gifts", []))
 
     is_pro, _ = is_user_pro(user_id)
@@ -893,9 +931,6 @@ async def create_pro_invoice(request: Request):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-# =========================================================================
-# 🔑 ИСПРАВЛЕННАЯ АКТИВАЦИЯ КЛЮЧА С МОМЕНТАЛЬНЫМ PUSH В БОТ
-# =========================================================================
 @app.post("/api/pro/activate_key")
 async def activate_pro_key(request: Request):
     data = await request.json()
