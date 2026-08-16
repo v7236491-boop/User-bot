@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & Fragment NFT Gifts</title>
+    <title>Username Scanner PRO & Gifts Sniper</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js?v=7.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -262,34 +262,19 @@
             align-items: center; cursor: pointer; margin-top: 10px;
         }
 
-        /* 🖼️ ТОЧНЫЙ ДИЗАЙН КАРТОЧЕК FRAGMENT NFT GIFTS */
-        .fragment-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
-        .fragment-card {
-            border-radius: 22px; padding: 12px; display: flex; flex-direction: column;
-            align-items: center; justify-content: space-between; height: 215px;
-            position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.12);
-            cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
+        /* 🎁 СТИЛЬ КАРТОЧЕК GIFTS СО СМАЙЛИКАМИ */
+        .emoji-gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+        .emoji-gift-card {
+            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.2s ease;
         }
-        .fragment-card:active { transform: scale(0.96); }
-        .fragment-card.selected { border: 2px solid #29c75f; box-shadow: 0 0 18px rgba(41, 199, 95, 0.55); }
-        
-        .fragment-card-badge {
-            position: absolute; bottom: 44px; left: 10px;
-            background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);
-            color: #fff; font-size: 0.72rem; font-weight: 800;
-            padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15);
-            z-index: 2;
-        }
-        .fragment-card-art { width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin-top: 4px; z-index: 1; }
-        .fragment-card-art svg { width: 100%; height: 100%; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.45)); }
-        
-        .fragment-card-footer {
-            width: 100%; display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(10px);
-            padding: 7px 10px; border-radius: 14px; margin-top: 4px; z-index: 2;
-        }
-        .fragment-price-ton { font-size: 0.85rem; font-weight: 900; color: #38bdf8; display: flex; align-items: center; gap: 4px; }
-        .fragment-status-sold { font-size: 0.68rem; font-weight: 700; color: #ef4444; text-transform: uppercase; }
+        .emoji-gift-card:active { transform: scale(0.96); }
+        .emoji-gift-card.selected { border-color: #29c75f; background: rgba(41, 199, 95, 0.12); box-shadow: 0 0 14px rgba(41, 199, 95, 0.35); }
+        .emoji-gift-icon { font-size: 2.5rem; margin-bottom: 6px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+        .emoji-gift-title { font-size: 0.85rem; font-weight: 800; color: #ffffff; }
+        .emoji-gift-price { font-size: 0.75rem; color: #38bdf8; font-weight: 700; margin-top: 2px; }
 
         /* 🪐 3D КЛИКЕР COSMIC CORE */
         #tycoon-overlay { 
@@ -604,10 +589,10 @@
                         </div>
                         
                         <div id="kw-input-wrapper" onclick="checkKwProAccess(event)">
-                            <input type="text" id="custom-kw-input" class="form-input" placeholder="Напр. spiderman, crypto..." style="margin-top:6px;">
+                            <input type="text" id="custom-kw-input" class="form-input" placeholder="Напр. spiderman, crypto..." style="margin-top:6px;" oninput="saveCurrentFilterSettings()">
                             
                             <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Категория стиля:</div>
-                            <select id="custom-cat-select" style="width:100%; background:#111; color:#fff; border:1px solid #333; border-radius:10px; padding:8px; font-size:0.85rem; margin-bottom:12px;">
+                            <select id="custom-cat-select" style="width:100%; background:#111; color:#fff; border:1px solid #333; border-radius:10px; padding:8px; font-size:0.85rem; margin-bottom:12px;" onchange="saveCurrentFilterSettings()">
                                 <option value="superheroes">🦸 Супергерои (lord, origin, verse, squad)</option>
                                 <option value="cinema">🎬 Кино и Сериалы (film, cast, show, reel)</option>
                                 <option value="anime">⛩️ Аниме (kun, chan, senpai, ninja, titan)</option>
@@ -633,22 +618,22 @@
 
                         <div class="setting-row">
                             <span>Включить умный фильтр</span>
-                            <label class="switch"><input type="checkbox" id="filter-active"><span class="slider"></span></label>
+                            <label class="switch"><input type="checkbox" id="filter-active" onchange="saveCurrentFilterSettings()"><span class="slider"></span></label>
                         </div>
                         <div class="setting-row">
                             <span>Длина ника</span>
-                            <select id="filter-len" style="background:#111; color:#fff; border:1px solid #333; border-radius:8px; padding:4px 8px;">
+                            <select id="filter-len" style="background:#111; color:#fff; border:1px solid #333; border-radius:8px; padding:4px 8px;" onchange="saveCurrentFilterSettings()">
                                 <option value="5-6">5-6 символов</option>
                                 <option value="7-8">7-8 символов</option>
                             </select>
                         </div>
                         <div class="setting-row">
                             <span>Использовать цифры</span>
-                            <label class="switch"><input type="checkbox" id="filter-num"><span class="slider"></span></label>
+                            <label class="switch"><input type="checkbox" id="filter-num" onchange="saveCurrentFilterSettings()"><span class="slider"></span></label>
                         </div>
                         <div class="setting-row">
                             <span>Использовать '_'</span>
-                            <label class="switch"><input type="checkbox" id="filter-und"><span class="slider"></span></label>
+                            <label class="switch"><input type="checkbox" id="filter-und" onchange="saveCurrentFilterSettings()"><span class="slider"></span></label>
                         </div>
                     </div>
                 </div>
@@ -657,11 +642,11 @@
         </div>
     </div>
 
-    <!-- 🎁 МОДАЛКА СНАЙПЕРА GIFTS В СТИЛЕ FRAGMENT 🎁 -->
+    <!-- 🎁 МОДАЛКА СНАЙПЕРА GIFTS СО СМАЙЛИКАМИ И ПРЯМЫМИ ССЫЛКАМИ 🎁 -->
     <div class="modal-overlay" id="modal-gifts-sniper">
         <div class="modal-content glass-panel" style="max-width: 440px;">
             <div class="modal-header">
-                <h2 style="font-size: 1.15rem; color: #fff; font-weight: 900; letter-spacing: 0.5px;">💎 FRAGMENT GIFTS</h2>
+                <h2 style="font-size: 1.15rem; color: #fda4af; font-weight: 900;">🎁 СНАЙПЕР ПОДАРКОВ</h2>
                 <button class="btn-close" onclick="closeModal('modal-gifts-sniper')">✕</button>
             </div>
             <div class="modal-body">
@@ -688,18 +673,19 @@
 
                     <div style="margin-top: 6px;">
                         <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:4px;">Максимальный бюджет (TON):</div>
-                        <input type="number" id="gift-budget-input" class="form-input" placeholder="Напр. 7000 TON" value="7000" style="margin-bottom:0;" onchange="handleGiftControlChange(event, 'budget')">
+                        <input type="number" id="gift-budget-input" class="form-input" placeholder="Напр. 50 TON" value="50" style="margin-bottom:0;" onchange="handleGiftControlChange(event, 'budget')">
                     </div>
                 </div>
 
                 <div style="font-size:0.85rem; font-weight:800; color:#fff; display:flex; justify-content:space-between; align-items:center;">
-                    <span>Коллекция Fragment:</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Нажми для слежки</span>
+                    <span>Каталог подарков Telegram:</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Нажми для выбора</span>
                 </div>
 
-                <div class="fragment-grid" id="fragment-gifts-grid"></div>
+                <!-- 🎁 СЕТКА СМАЙЛИКОВ GIFTS -->
+                <div class="emoji-gifts-grid" id="emoji-gifts-grid"></div>
 
-                <button class="form-btn" style="background:#29c75f; color:#000; font-weight:900; margin-top:16px;" onclick="handleGiftControlChange(event, 'save')">
+                <button class="form-btn" style="background:#f43f5e; color:#fff; font-weight:900; margin-top:16px;" onclick="handleGiftControlChange(event, 'save')">
                     💾 Сохранить фильтры снайпера
                 </button>
             </div>
@@ -947,11 +933,14 @@
         let userProfile = { 
             coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, 
             offline_miner_lvl: 0, rank: "Ловец", planet_stage: 1, planet_hp: 100,
-            unlocked_themes: [], pro_until: 0, radar_extra_slots: 0
+            unlocked_themes: [], pro_until: 0, radar_extra_slots: 0,
+            client_history: [], client_achievements: [], custom_theme_style: "",
+            custom_fog_rgb: "41, 199, 95", custom_filter_settings: {}
         };
         let planetHpMax = 100;
         let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
 
+        // ☁️ СОХРАНЕНИЕ ВСЕХ ДАННЫХ В ОБЛАКО TELEGRAM
         function saveProfileEverywhere() {
             localStorage.setItem('vh_saved_profile', JSON.stringify(userProfile));
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
@@ -961,6 +950,7 @@
             }
         }
 
+        // 🔄 СИНХРОНИЗАЦИЯ СЕРВЕРА ПРИ ВХОДЕ С ПК ИЛИ ТЕЛЕФОНА
         async function loadProfileFromCloudAndServer() {
             let loadedProfile = JSON.parse(localStorage.getItem('vh_saved_profile') || 'null');
 
@@ -1003,12 +993,53 @@
                     turboUntil = data.turbo_until || 0;
                     maxRadarSlots = data.max_radar_slots || 3;
                     planetHpMax = data.planet_hp_max || 100;
+                    
+                    // Восстановление истории и ачивок на ПК
+                    if (data.profile.client_history && data.profile.client_history.length > 0) {
+                        localStorage.setItem('vpn_parser_history', JSON.stringify(data.profile.client_history));
+                    }
+                    if (data.profile.client_achievements && data.profile.client_achievements.length > 0) {
+                        unlockedAchievements = data.profile.client_achievements;
+                        localStorage.setItem('vh_unlocked_achievements', JSON.stringify(unlockedAchievements));
+                    }
+                    if (data.profile.custom_theme_style) {
+                        document.body.className = data.profile.custom_theme_style;
+                    }
+                    if (data.profile.custom_fog_rgb) {
+                        document.documentElement.style.setProperty('--fog-rgb', data.profile.custom_fog_rgb);
+                    }
+                    if (data.profile.custom_filter_settings) {
+                        restoreFilterInputs(data.profile.custom_filter_settings);
+                    }
+
                     saveProfileEverywhere();
                     applyProStateToUI();
+                    renderAchievements();
                 }
             } catch(e){}
         }
         loadProfileFromCloudAndServer();
+
+        function restoreFilterInputs(cfg) {
+            if (cfg.keyword) document.getElementById('custom-kw-input').value = cfg.keyword;
+            if (cfg.category) document.getElementById('custom-cat-select').value = cfg.category;
+            if (cfg.filterActive !== undefined) document.getElementById('filter-active').checked = cfg.filterActive;
+            if (cfg.lenMode) document.getElementById('filter-len').value = cfg.lenMode;
+            if (cfg.useNum !== undefined) document.getElementById('filter-num').checked = cfg.useNum;
+            if (cfg.useUnd !== undefined) document.getElementById('filter-und').checked = cfg.useUnd;
+        }
+
+        function saveCurrentFilterSettings() {
+            userProfile.custom_filter_settings = {
+                keyword: document.getElementById('custom-kw-input').value,
+                category: document.getElementById('custom-cat-select').value,
+                filterActive: document.getElementById('filter-active').checked,
+                lenMode: document.getElementById('filter-len').value,
+                useNum: document.getElementById('filter-num').checked,
+                useUnd: document.getElementById('filter-und').checked
+            };
+            saveProfileEverywhere();
+        }
 
         function applyProStateToUI() {
             const lockBadge = document.getElementById('kw-pro-lock-badge');
@@ -1042,77 +1073,41 @@
             updateProHeaderTimer();
         }
 
-        // 🎨 ОФИЦИАЛЬНАЯ ДЕТАЛИЗИРОВАННАЯ ГРАФИКА FRAGMENT GIFTS
-        function getFragmentGiftSVG(type) {
-            if (type.startsWith('pepe_')) {
-                let skinGrad1 = "#67e8f9", skinGrad2 = "#0284c7", heartCol = "#facc15";
-                if (type === 'pepe_bronze') { skinGrad1 = "#d97706"; skinGrad2 = "#78350f"; heartCol = "#38bdf8"; }
-                if (type === 'pepe_orange') { skinGrad1 = "#fb923c"; skinGrad2 = "#c2410c"; heartCol = "#22c55e"; }
-                if (type === 'pepe_pink')   { skinGrad1 = "#f472b6"; skinGrad2 = "#db2777"; heartCol = "#06b6d4"; }
-                if (type === 'pepe_chrome') { skinGrad1 = "#f1f5f9"; skinGrad2 = "#64748b"; heartCol = "#eab308"; }
-                if (type === 'pepe_red')    { skinGrad1 = "#f87171"; skinGrad2 = "#b91c1c"; heartCol = "#ffffff"; }
+        // =========================================================================
+        // 🎁 СНАЙПЕР ПОДАРКОВ (СМАЙЛИКИ И МУЛЬТИ-ВЫБОР)
+        // =========================================================================
+        async function loadGiftsCatalog() {
+            const grid = document.getElementById('emoji-gifts-grid');
+            try {
+                const res = await fetch('/api/gifts/catalog');
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    grid.innerHTML = data.catalog.map(g => {
+                        const isSelected = selectedGiftsList.includes(g.id);
+                        return `
+                            <div class="emoji-gift-card ${isSelected ? 'selected' : ''}" id="emoji-gift-${g.id}" onclick="toggleEmojiGiftSelection('${g.id}', event)">
+                                <div class="emoji-gift-icon">${g.icon}</div>
+                                <div class="emoji-gift-title">${g.name}</div>
+                                <div class="emoji-gift-price">Флор: ~${g.floor_ton} TON</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch(e){}
+        }
 
-                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <radialGradient id="pepeGrad_${type}" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(70 60) rotate(90) scale(60 50)">
-                            <stop stop-color="${skinGrad1}"/>
-                            <stop offset="1" stop-color="${skinGrad2}"/>
-                        </radialGradient>
-                    </defs>
-                    <!-- Тело и силуэт лягушки в позе с сердечком -->
-                    <path d="M45 125C35 125 30 115 36 100C40 90 48 85 55 85C62 85 68 88 74 94C80 88 88 85 96 85C108 85 118 95 115 110C112 122 100 125 90 125H45Z" fill="url(#pepeGrad_${type})"/>
-                    <!-- Лапы сбоку -->
-                    <path d="M35 115C20 118 18 128 30 132C42 136 50 125 50 125" stroke="#000" stroke-width="4" stroke-linecap="round" fill="url(#pepeGrad_${type})"/>
-                    <path d="M105 125C115 125 135 135 142 128C148 120 135 112 120 115" stroke="#000" stroke-width="4" stroke-linecap="round" fill="url(#pepeGrad_${type})"/>
-                    <!-- Голова -->
-                    <ellipse cx="80" cy="65" rx="42" ry="34" fill="url(#pepeGrad_${type})" stroke="#000" stroke-width="4.5"/>
-                    <!-- Выпуклые пуговичные глаза -->
-                    <ellipse cx="60" cy="42" rx="15" ry="17" fill="#ffffff" stroke="#000" stroke-width="4"/>
-                    <ellipse cx="100" cy="42" rx="15" ry="17" fill="#ffffff" stroke="#000" stroke-width="4"/>
-                    <circle cx="62" cy="42" r="7" fill="#000000"/><circle cx="65" cy="39" r="2.5" fill="#ffffff"/>
-                    <circle cx="98" cy="42" r="7" fill="#000000"/><circle cx="101" cy="39" r="2.5" fill="#ffffff"/>
-                    <!-- Губы/улыбка -->
-                    <path d="M45 72C60 88 100 88 115 72" stroke="#000" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M52 74C65 84 95 84 108 74" stroke="#e11d48" stroke-width="4" stroke-linecap="round" fill="#fda4af"/>
-                    <!-- Сердечко в лапках -->
-                    <path d="M80 110C70 95 52 98 56 112C60 124 80 134 80 134C80 134 100 124 104 112C108 98 90 95 80 110Z" fill="${heartCol}" stroke="#000" stroke-width="4"/>
-                    <!-- Лапки обнимающие сердце -->
-                    <circle cx="62" cy="112" r="9" fill="url(#pepeGrad_${type})" stroke="#000" stroke-width="3.5"/>
-                    <circle cx="98" cy="112" r="9" fill="url(#pepeGrad_${type})" stroke="#000" stroke-width="3.5"/>
-                </svg>`;
-            } else if (type === 'flower_gold') {
-                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g filter="drop-shadow(0 6px 12px rgba(0,0,0,0.5))">
-                        <circle cx="80" cy="45" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
-                        <circle cx="80" cy="115" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
-                        <circle cx="45" cy="80" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
-                        <circle cx="115" cy="80" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
-                        <circle cx="55" cy="55" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
-                        <circle cx="105" cy="55" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
-                        <circle cx="55" cy="105" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
-                        <circle cx="105" cy="105" r="22" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
-                        <circle cx="80" cy="80" r="28" fill="#ffffff" stroke="#000" stroke-width="5"/>
-                        <circle cx="70" cy="74" r="4" fill="#000"/><circle cx="90" cy="74" r="4" fill="#000"/>
-                        <path d="M68 86C74 94 86 94 92 86" stroke="#000" stroke-width="4" stroke-linecap="round"/>
-                    </g>
-                </svg>`;
-            } else if (type === 'snoop_car') {
-                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="25" y="105" width="110" height="26" rx="6" fill="#b45309" stroke="#000" stroke-width="4"/>
-                    <text x="80" y="123" fill="#fef08a" font-size="11" font-weight="900" text-anchor="middle" font-family="sans-serif">Snoop Dogg</text>
-                    <path d="M20 90L40 65H120L140 90H20Z" fill="#eab308" stroke="#000" stroke-width="4"/>
-                    <rect x="15" y="85" width="130" height="22" rx="5" fill="#facc15" stroke="#000" stroke-width="4"/>
-                    <circle cx="45" cy="105" r="12" fill="#1e293b" stroke="#ffffff" stroke-width="4"/>
-                    <circle cx="115" cy="105" r="12" fill="#1e293b" stroke="#ffffff" stroke-width="4"/>
-                </svg>`;
-            } else if (type === 'tg_cap') {
-                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M35 88C35 55 55 40 80 40C105 40 125 55 125 88H35Z" fill="#6366f1" stroke="#312e81" stroke-width="5"/>
-                    <path d="M22 88C22 88 50 100 95 100C125 100 142 88 142 88C142 88 130 80 80 80C38 80 22 88 22 88Z" fill="#4338ca" stroke="#312e81" stroke-width="5"/>
-                    <path d="M68 66L92 56L80 78L76 70L68 66Z" fill="#ffffff"/>
-                </svg>`;
+        function toggleEmojiGiftSelection(giftId, event) {
+            if (!isProUser) {
+                handleGiftControlChange(event, 'select');
+                return;
+            }
+            const card = document.getElementById(`emoji-gift-${giftId}`);
+            if (selectedGiftsList.includes(giftId)) {
+                selectedGiftsList = selectedGiftsList.filter(id => id !== giftId);
+                card.classList.remove('selected');
             } else {
-                return `<svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="80" cy="80" r="50" fill="#38bdf8" fill-opacity="0.3"/><polygon points="80,35 125,120 35,120" fill="#38bdf8" stroke="#0284c7" stroke-width="5"/></svg>`;
+                selectedGiftsList.push(giftId);
+                card.classList.add('selected');
             }
         }
 
@@ -1134,46 +1129,11 @@
             }
         }
 
-        async function loadGiftsCatalog() {
-            const grid = document.getElementById('fragment-gifts-grid');
-            try {
-                const res = await fetch('/api/gifts/catalog');
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    grid.innerHTML = data.catalog.map(g => `
-                        <div class="fragment-card" id="fragment-card-${g.id}" style="background: radial-gradient(circle at center, ${g.bg} 0%, #0c0f14 100%);" onclick="toggleFragmentGiftSelection('${g.id}', event)">
-                            <div class="fragment-card-badge">${g.number}</div>
-                            <div class="fragment-card-art">${getFragmentGiftSVG(g.type)}</div>
-                            <div class="fragment-card-footer">
-                                <div class="fragment-price-ton">💎 ${g.floor_ton.toLocaleString()}</div>
-                                <div class="fragment-status-sold">Sold</div>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch(e){}
-        }
-
-        function toggleFragmentGiftSelection(giftId, event) {
-            if (!isProUser) {
-                handleGiftControlChange(event, 'select');
-                return;
-            }
-            const card = document.getElementById(`fragment-card-${giftId}`);
-            if (selectedGiftsList.includes(giftId)) {
-                selectedGiftsList = selectedGiftsList.filter(id => id !== giftId);
-                card.classList.remove('selected');
-            } else {
-                selectedGiftsList.push(giftId);
-                card.classList.add('selected');
-            }
-        }
-
         async function saveGiftSniperSettings() {
             if (!isProUser) return;
             const active = document.getElementById('gift-radar-active').checked;
             const margin = parseInt(document.getElementById('gift-margin-slider').value);
-            const budget = parseFloat(document.getElementById('gift-budget-input').value) || 10000;
+            const budget = parseFloat(document.getElementById('gift-budget-input').value) || 1000;
 
             try {
                 const res = await fetch('/api/gifts/settings', {
@@ -1264,6 +1224,8 @@
                 if (currentVal >= ach.target && !unlockedAchievements.includes(ach.id)) {
                     unlockedAchievements.push(ach.id);
                     localStorage.setItem('vh_unlocked_achievements', JSON.stringify(unlockedAchievements));
+                    userProfile.client_achievements = unlockedAchievements;
+                    saveProfileEverywhere();
                     showToast(`🏆 Награда: ${ach.title}!`);
                 }
             });
@@ -2043,6 +2005,8 @@
             if (historyData.some(i => i.user === item.user)) return;
             historyData.unshift(item);
             localStorage.setItem('vpn_parser_history', JSON.stringify(historyData.slice(0, 50)));
+            userProfile.client_history = historyData.slice(0, 50);
+            saveProfileEverywhere();
         }
 
         function renderHistory() {
@@ -2090,6 +2054,8 @@
                         setTimeout(() => {
                             historyData.splice(index, 1);
                             localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
+                            userProfile.client_history = historyData;
+                            saveProfileEverywhere();
                             renderHistory();
                         }, 300);
                     } else if (diffX < -120) {
@@ -2108,6 +2074,8 @@
 
         function clearHistory() {
             localStorage.removeItem('vpn_parser_history');
+            userProfile.client_history = [];
+            saveProfileEverywhere();
             renderHistory();
         }
 
@@ -2145,6 +2113,8 @@
             if (el) el.classList.add('active');
             localStorage.setItem('vh_theme_color', colorHex);
             localStorage.setItem('vh_fog_rgb', rgbStr);
+            userProfile.custom_fog_rgb = rgbStr;
+            saveProfileEverywhere();
             showToast("Тема обновлена");
         }
 
@@ -2153,6 +2123,9 @@
             document.documentElement.style.setProperty('--fog-rgb', rgbStr || '41, 199, 95');
             localStorage.setItem('vh_secret_theme', themeClass);
             localStorage.setItem('vh_fog_rgb', rgbStr || '41, 199, 95');
+            userProfile.custom_theme_style = themeClass;
+            userProfile.custom_fog_rgb = rgbStr || '41, 199, 95';
+            saveProfileEverywhere();
             showToast("Стиль активирован!");
         }
 
