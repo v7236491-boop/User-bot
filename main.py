@@ -199,9 +199,6 @@ def get_user_profile(db: dict, user_id: str) -> dict:
 
     return user
 
-# =========================================================================
-# 🎁 БОЛЬШОЙ КАТАЛОГ ПОДАРКОВ TELEGRAM (С ТОЧНЫМИ ЭМОДЗИ И РЕАЛЬНЫМИ ЦЕНАМИ)
-# =========================================================================
 GIFTS_CATALOG = [
     {"id": "plush_pepe", "name": "Plush Pepe", "icon": "🐸", "floor_ton": 14.5, "slug": "plush-pepe"},
     {"id": "durov_cap", "name": "Durov's Cap", "icon": "🧢", "floor_ton": 24.0, "slug": "durovs-cap"},
@@ -242,7 +239,6 @@ async def gifts_arbitrage_worker():
 
                         if lot_id not in SEEN_NFT_LISTINGS:
                             SEEN_NFT_LISTINGS.add(lot_id)
-                            # ПРЯМАЯ ССЫЛКА НА ПОКУПКУ КОНКРЕТНОГО ЛОТА
                             direct_buy_url = f"https://fragment.com/gift/{gift['slug']}-{item_num}"
 
                             for user_id, u_cfg in list(gifts_settings.items()):
@@ -272,7 +268,8 @@ async def gifts_arbitrage_worker():
                                                     f"{gift['icon']} **Подарок:** {gift['name']} #{item_num}\n"
                                                     f"💰 **Цена лота:** `{deal_price} TON` *(Флор: {floor} TON)*\n"
                                                     f"📈 **Чистая выгода:** `+{round(floor - deal_price, 2)} TON`\n\n"
-                                                    f"⚡ _Прямая ссылка на покупку лота ниже:_",
+                                                    f"⚡ _Прямая ссылка на покупку лота ниже:_"
+                                                ),
                                                 parse_mode="Markdown",
                                                 reply_markup=kb
                                             )
@@ -427,7 +424,7 @@ if dp and bot:
         await message.answer(
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
             "🎯 Мгновенный поиск редких юзернеймов\n"
-            "🎁 Снайпер скидок на Telegram Подарки\n"
+            "🎁 Снайпер скидок на Telegram Подарки (Fragment)\n"
             "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
             "👑 Радар на 100 слотов, Конструктор 20 категорий и ∞ Энергия",
             reply_markup=kb,
@@ -641,9 +638,6 @@ async def read_root():
         )
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
-# =========================================================================
-# 🔄 ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ ВСЕГО ПРОФИЛЯ С TELEGRAM ID (ДЛЯ ПК И ТЕЛЕФОНА)
-# =========================================================================
 @app.post("/api/game/restore_sync")
 async def restore_sync(request: Request):
     data = await request.json()
@@ -659,12 +653,10 @@ async def restore_sync(request: Request):
         user = get_user_profile(db, user_id)
         now = int(time.time())
 
-        # Синхронизация PRO
         if client_profile.get("pro_until", 0) == -1 or client_profile.get("pro_until", 0) > user.get("pro_until", 0):
             user["pro_until"] = client_profile["pro_until"]
             user["rank"] = "👑 PRO Ловец"
 
-        # Синхронизация игровых показателей
         if client_profile.get("coins", 0) > user.get("coins", 0):
             user["coins"] = client_profile["coins"]
 
@@ -688,7 +680,6 @@ async def restore_sync(request: Request):
             if th not in user.get("unlocked_themes", []):
                 user["unlocked_themes"].append(th)
 
-        # 🌟 СИНХРОНИЗАЦИЯ ИСТОРИИ, ДОСТИЖЕНИЙ, ТЕМЫ И НАСТРОЕК (ДЛЯ ПК)
         if len(client_profile.get("client_history", [])) > len(user.get("client_history", [])):
             user["client_history"] = client_profile["client_history"]
 
