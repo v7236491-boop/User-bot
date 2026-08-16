@@ -82,9 +82,6 @@ def save_json_atomic_sync(filepath: str, data):
     except Exception:
         pass
 
-# =========================================================================
-# 🔑 БАЗА ИЗ 70 ПРЕДВАРИТЕЛЬНО СГЕНЕРИРОВАННЫХ КЛЮЧЕЙ
-# =========================================================================
 PREGENERATED_KEYS_1DAY = [
     "PRO-1D01-K9X2-M4P7-R8W3", "PRO-1D02-J7N3-Q5T8-V2Y6", "PRO-1D03-B4H9-C6M2-L8Z5",
     "PRO-1D04-F3S8-X9D2-G7K4", "PRO-1D05-T6W1-Y4L7-N9C3", "PRO-1D06-H8Q5-V2B9-Z4M7",
@@ -123,17 +120,14 @@ def init_master_keys():
     keys_db = load_json_file(KEYS_DB_PATH, {})
     now = int(time.time())
 
-    # 1. 10 ключей на 1 день (86400 сек)
     for k in PREGENERATED_KEYS_1DAY:
         if k not in keys_db:
             keys_db[k] = {"bound_user_id": None, "seconds": 86400, "created_at": now, "activated_status": "unused"}
 
-    # 2. 50 ключей на 30 дней (2592000 сек)
     for k in PREGENERATED_KEYS_1MONTH:
         if k not in keys_db:
             keys_db[k] = {"bound_user_id": None, "seconds": 30 * 86400, "created_at": now, "activated_status": "unused"}
 
-    # 3. 10 ключей Навсегда (-1)
     for k in PREGENERATED_KEYS_LIFETIME:
         if k not in keys_db:
             keys_db[k] = {"bound_user_id": None, "seconds": -1, "created_at": now, "activated_status": "unused"}
@@ -195,9 +189,6 @@ def get_user_profile(db: dict, user_id: str) -> dict:
 
     return user
 
-# =========================================================================
-# 🎁 СНАЙПЕР ПОДАРКОВ (GETGEMS & TONAPI ИНТЕГРАЦИЯ)
-# =========================================================================
 GIFTS_CATALOG = [
     {"id": "plush_pepe", "name": "Plush Pepe", "icon": "🐸", "floor_ton": 14.5},
     {"id": "magic_potion", "name": "Magic Potion", "icon": "🧪", "floor_ton": 8.2},
@@ -255,7 +246,8 @@ async def gifts_arbitrage_worker():
                                                     f"{gift['icon']} **Подарок:** {gift['name']} #{item_num}\n"
                                                     f"💰 **Цена лота:** `{deal_price} TON` *(Флор: {floor} TON)*\n"
                                                     f"📈 **Чистая выгода:** `+{round(floor - deal_price, 2)} TON`\n\n"
-                                                    f"⚡ _Успей забрать лот на Getgems раньше других!_",
+                                                    f"⚡ _Успей забрать лот на Getgems раньше других!_"
+                                                ),
                                                 parse_mode="Markdown",
                                                 reply_markup=kb
                                             )
