@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & Cosmic Core 3D</title>
+    <title>Username Scanner PRO & Gifts Arbitrage 3D</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js?v=7.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -84,7 +84,6 @@
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
         }
 
-        /* 👑 ШАПКА */
         header { 
             display: flex; 
             justify-content: space-between; 
@@ -258,25 +257,40 @@
         }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* ПЛАВАЮЩИЕ КНОПКИ ВНИЗУ */
-        .floating-achieving-btn {
-            position: fixed; bottom: 20px; left: 16px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--primary); color: var(--text-main);
-            padding: 12px 16px; border-radius: 24px; font-size: 0.85rem; font-weight: 700;
-            display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 4px 20px var(--primary-glow);
+        /* 📱 ПЛАВАЮЩИЕ КНОПКИ ВНИЗУ (С НОВОЙ КНОПКОЙ GIFTS) */
+        .bottom-nav-container {
+            position: fixed; bottom: 16px; left: 0; right: 0; z-index: 90;
+            display: flex; justify-content: space-between; align-items: center;
+            max-width: 480px; margin: 0 auto; padding: 0 14px; gap: 8px;
         }
-        .floating-play-btn {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90;
-            background: linear-gradient(135deg, rgba(41, 199, 95, 0.45), rgba(56, 189, 248, 0.45));
-            backdrop-filter: blur(18px); border: 1px solid rgba(41, 199, 95, 0.8); color: var(--text-main);
-            padding: 12px 24px; border-radius: 24px; font-size: 0.95rem; font-weight: 800; cursor: pointer;
+
+        .nav-pill-btn {
+            background: var(--glass-bg); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text-main);
+            padding: 10px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+            display: flex; align-items: center; gap: 5px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            white-space: nowrap;
         }
-        .floating-leaderboard-btn {
-            position: fixed; bottom: 20px; right: 16px; z-index: 90;
-            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid rgba(234, 179, 8, 0.6); color: var(--text-main);
-            padding: 12px 18px; border-radius: 24px; font-size: 0.9rem; font-weight: 700;
-            display: flex; align-items: center; gap: 6px; cursor: pointer;
+        .nav-pill-btn.gifts-btn {
+            border-color: #f43f5e; color: #fda4af; box-shadow: 0 0 14px rgba(244, 63, 94, 0.35);
         }
+        .nav-pill-btn.mining-btn {
+            background: linear-gradient(135deg, rgba(41, 199, 95, 0.4), rgba(56, 189, 248, 0.4));
+            border-color: var(--primary); font-size: 0.85rem; font-weight: 800;
+        }
+
+        /* 🎁 КАРТОЧКИ ПОДАРКОВ В СНАЙПЕРЕ */
+        .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+        .gift-card {
+            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px; padding: 12px; display: flex; flex-direction: column; align-items: center;
+            text-align: center; cursor: pointer; transition: 0.2s ease; position: relative;
+        }
+        .gift-card.selected { border-color: #f43f5e; background: rgba(244, 63, 94, 0.12); box-shadow: 0 0 12px rgba(244, 63, 94, 0.3); }
+        .gift-card-icon { font-size: 2.2rem; margin-bottom: 6px; }
+        .gift-card-title { font-size: 0.85rem; font-weight: 700; color: #fff; }
+        .gift-card-floor { font-size: 0.75rem; color: #38bdf8; margin-top: 2px; }
 
         /* 🪐 3D КЛИКЕР COSMIC CORE */
         #tycoon-overlay { 
@@ -344,7 +358,6 @@
         .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
 
-        /* 🪗 АККОРДЕОНЫ НАСТРОЕК */
         .accordion-section {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
@@ -401,23 +414,6 @@
 
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 14px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 16px; cursor: pointer; }
-
-        .report-nick-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(41, 199, 95, 0.3);
-            color: var(--primary);
-            padding: 12px 16px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            text-align: left;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-        }
-        .report-nick-btn:active { background: var(--primary-glow); transform: scale(0.98); }
 
         .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 85px; }
         .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.45); }
@@ -479,18 +475,68 @@
         </div>
     </main>
 
-    <button class="floating-achieving-btn" onclick="openModal('modal-achievements')">
-        🏆 <span id="achieve-counter-badge">0/100</span>
-    </button>
-    <button class="floating-play-btn" onclick="openTycoonScreen()">
-        ⚡ 3D Майнинг
-    </button>
-    <button class="floating-leaderboard-btn" onclick="openModal('modal-leaderboard')">
-        📊 Топ
-    </button>
+    <!-- 📱 ПЛАВАЮЩИЕ КНОПКИ ВНИЗУ (С НОВОЙ КНОПКОЙ GIFTS) -->
+    <div class="bottom-nav-container">
+        <button class="nav-pill-btn" onclick="openModal('modal-achievements')">
+            🏆 <span id="achieve-counter-badge">0/100</span>
+        </button>
+        <button class="nav-pill-btn gifts-btn" onclick="openModal('modal-gifts-sniper')">
+            🎁 Снайпер Gifts
+        </button>
+        <button class="nav-pill-btn mining-btn" onclick="openTycoonScreen()">
+            ⚡ 3D Майнинг
+        </button>
+        <button class="nav-pill-btn" onclick="openModal('modal-leaderboard')">
+            📊 Топ
+        </button>
+    </div>
 
     <div class="toast" id="global-toast">✨ Готово!</div>
 
+    <!-- 🎁 МОДАЛКА СНАЙПЕРА ПОДАРКОВ TELEGRAM (PRO ONLY) 🎁 -->
+    <div class="modal-overlay" id="modal-gifts-sniper">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem; color: #fda4af;">🎁 Снайпер Подарков</h2>
+                <button class="btn-close" onclick="closeModal('modal-gifts-sniper')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                    Вылавливает лоты с большой скидкой на Getgems и присылает пуш в бота с кнопкой покупки.
+                </div>
+
+                <div class="setting-row">
+                    <div>
+                        <div style="font-weight: bold; color: #fff;">🎯 Радар Скидок (Auto-Buy)</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Мгновенные сигналы в личку</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="gift-radar-active" onchange="saveGiftSniperSettings()"><span class="slider"></span></label>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+                        <span>Минимальная скидка (маржа):</span>
+                        <b id="gift-margin-val" style="color:#29c75f;">30%</b>
+                    </div>
+                    <input type="range" id="gift-margin-slider" min="20" max="60" step="5" value="30" style="width:100%; margin: 6px 0;" oninput="updateMarginLabel()">
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Максимальный бюджет (TON):</div>
+                    <input type="number" id="gift-budget-input" class="form-input" placeholder="Напр. 25 TON" value="50" onchange="saveGiftSniperSettings()">
+                </div>
+
+                <div style="font-size:0.85rem; font-weight:bold; margin-top:14px; color:#fff;">Выберите подарки для слежки:</div>
+                <div class="gifts-grid" id="gifts-catalog-grid"></div>
+
+                <button class="form-btn" style="background:#f43f5e; color:#fff; margin-top:15px;" onclick="saveGiftSniperSettings()">
+                    💾 Сохранить фильтры
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🎁 ПРИВЕТСТВЕННОЕ ОКНО ОФФЛАЙН-ДОХОДА 🎁 -->
     <div class="modal-overlay" id="modal-offline-reward">
         <div class="modal-content glass-panel" style="max-width: 360px; text-align: center;">
             <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
@@ -517,8 +563,6 @@
                 <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
             </div>
             <div class="modal-body">
-                
-                <!-- 1. 👑 КУПИТЬ PRO / СТАТУС -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span style="color: #eab308;" id="settings-pro-title">👑 Купить PRO подписку</span>
@@ -526,13 +570,12 @@
                     </div>
                     <div class="accordion-content">
                         <p style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;" id="settings-pro-desc">
-                            Снятие лимитов, 100 слотов радара, ∞ Энергия и Конструктор 20 категорий:
+                            Снятие лимитов, 100 слотов радара, Снайпер Подарков, ∞ Энергия:
                         </p>
                         <button class="tariff-btn" style="width:100%; padding:12px;" onclick="closeModal('modal-settings'); openModal('modal-pro');">Посмотреть тарифы Stars ⭐</button>
                     </div>
                 </div>
 
-                <!-- 2. 🎯 РАДАР -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span style="color: var(--primary);">🎯 Радар (Слежка за никами)</span>
@@ -548,7 +591,6 @@
                     </div>
                 </div>
 
-                <!-- 3. 🎟️ ПРОМОКОДЫ И КЛЮЧИ -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🎟️ Промокоды и PRO-ключи</span>
@@ -561,7 +603,6 @@
                     </div>
                 </div>
 
-                <!-- 4. 🎨 КАСТОМИЗАЦИЯ И ТУМАН -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🎨 Кастомизация и эффекты</span>
@@ -596,7 +637,6 @@
                     </div>
                 </div>
 
-                <!-- 5. 🤖 АВТОПАРСЕР -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🤖 Автопарсер</span>
@@ -613,7 +653,6 @@
                     </div>
                 </div>
 
-                <!-- 6. 🛠️ ФИЛЬТРЫ И КОНСТРУКТОР -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🛠️ Конструктор и Фильтры</span>
@@ -675,31 +714,6 @@
                     </div>
                 </div>
 
-            </div>
-        </div>
-    </div>
-
-    <!-- 📊 МОДАЛКА ОТЧЕТА АВТОПАРСЕРА ПОСЛЕ ОСТАНОВКИ 📊 -->
-    <div class="modal-overlay" id="modal-autoparse-report">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: var(--primary);">📊 Итоги автопарсера</h2>
-                <button class="btn-close" onclick="closeModal('modal-autoparse-report')">✕</button>
-            </div>
-            <div class="modal-body">
-                <div style="display:flex; justify-content:space-around; background:rgba(255,255,255,0.05); padding:14px; border-radius:14px; margin-bottom:14px;">
-                    <div style="text-align:center;">
-                        <div style="font-size:1.4rem; font-weight:900; color:#fff;" id="report-scanned">0</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Проверено</div>
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:1.4rem; font-weight:900; color:var(--primary);" id="report-found">0</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Свободных</div>
-                    </div>
-                </div>
-
-                <div style="font-weight:700; font-size:0.85rem; margin-bottom:8px;">Нажмите на нужный ник для копирования:</div>
-                <div id="report-usernames-list" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
             </div>
         </div>
     </div>
@@ -817,7 +831,7 @@
             </div>
             <div class="modal-body">
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                    PRO даёт 100 слотов радара, Конструктор 20 категорий, ∞ Энергию и золотой VIP статус.
+                    PRO даёт Снайпер Подарков, 100 слотов радара, Конструктор 20 категорий, ∞ Энергию и VIP статус.
                 </div>
 
                 <div class="tariff-card">
@@ -910,6 +924,7 @@
 
         let autoSessionScanned = 0;
         let autoSessionFound = [];
+        let selectedGiftsList = [];
 
         let tgChatId = null;
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -922,7 +937,6 @@
             localStorage.setItem('vh_permanent_tg_id', tgChatId);
         }
 
-        // 💾 ИНИЦИАЛИЗАЦИЯ И ВОССТАНОВЛЕНИЕ ИЗ LOCALSTORAGE
         let localSavedProfile = JSON.parse(localStorage.getItem('vh_saved_profile') || 'null');
         let userProfile = localSavedProfile || { 
             coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, 
@@ -996,7 +1010,6 @@
             }).join('');
         }
 
-        // 🛡️ ВОССТАНОВЛЕНИЕ ДАННЫХ ИЗ LOCALSTORAGE НА СЕРВЕР ПРИ ДЕПЛОЯХ
         async function loadGameState() {
             try {
                 const localRadar = JSON.parse(localStorage.getItem('vh_local_radar_targets') || '[]');
@@ -1099,6 +1112,75 @@
             }
         }
 
+        // =========================================================================
+        // 🎁 СНАЙПЕР ПОДАРКОВ JS
+        // =========================================================================
+        async function loadGiftsCatalog() {
+            const grid = document.getElementById('gifts-catalog-grid');
+            try {
+                const res = await fetch('/api/gifts/catalog');
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    grid.innerHTML = data.catalog.map(g => `
+                        <div class="gift-card" id="gift-card-${g.id}" onclick="toggleGiftSelection('${g.id}')">
+                            <div class="gift-card-icon">${g.icon}</div>
+                            <div class="gift-card-title">${g.name}</div>
+                            <div class="gift-card-floor">Флор: ${g.floor_ton} TON</div>
+                        </div>
+                    `).join('');
+                }
+            } catch(e){}
+        }
+
+        function toggleGiftSelection(giftId) {
+            const card = document.getElementById(`gift-card-${giftId}`);
+            if (selectedGiftsList.includes(giftId)) {
+                selectedGiftsList = selectedGiftsList.filter(id => id !== giftId);
+                card.classList.remove('selected');
+            } else {
+                selectedGiftsList.push(giftId);
+                card.classList.add('selected');
+            }
+        }
+
+        function updateMarginLabel() {
+            const val = document.getElementById('gift-margin-slider').value;
+            document.getElementById('gift-margin-val').innerText = `${val}%`;
+        }
+
+        async function saveGiftSniperSettings() {
+            if (!isProUser) {
+                showToast("👑 Снайпер Подарков доступен только в PRO!");
+                closeModal('modal-gifts-sniper');
+                openModal('modal-pro');
+                return;
+            }
+
+            const active = document.getElementById('gift-radar-active').checked;
+            const margin = parseInt(document.getElementById('gift-margin-slider').value);
+            const budget = parseFloat(document.getElementById('gift-budget-input').value) || 100;
+
+            try {
+                const res = await fetch('/api/gifts/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: tgChatId,
+                        active: active,
+                        margin: margin,
+                        max_budget: budget,
+                        gifts: selectedGiftsList
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(active ? "🎯 Снайпер подарков активен!" : "⏸️ Снайпер приостановлен");
+                }
+            } catch(e) {
+                showToast("Ошибка сохранения");
+            }
+        }
+
         async function collectOfflineReward() {
             try {
                 const res = await fetch('/api/game/collect_offline', {
@@ -1164,7 +1246,7 @@
         setInterval(updateTurboTimer, 1000);
 
         // =========================================================================
-        // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН
+        // 🌫️ ТУМАН
         // =========================================================================
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
@@ -1225,7 +1307,7 @@
         drawFog();
 
         // =========================================================================
-        // 🌌 ЖИВАЯ ЧЁРНАЯ ДЫРА
+        // 🌌 ЧЁРНАЯ ДЫРА
         // =========================================================================
         const bhCanvas = document.getElementById('blackhole-bg-canvas');
         const bhCtx = bhCanvas.getContext('2d');
@@ -1298,7 +1380,7 @@
         }
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С КУЛДАУНОМ)
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
@@ -1827,7 +1909,7 @@
         }
 
         // =========================================================================
-        // 📜 СВАЙП-ИСТОРИЯ
+        // 📜 ИСТОРИЯ
         // =========================================================================
         function saveToHistory(item) {
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
@@ -1969,6 +2051,7 @@
             if (id === 'modal-history') renderHistory();
             if (id === 'modal-leaderboard') fetchLeaderboard();
             if (id === 'modal-achievements') renderAchievements();
+            if (id === 'modal-gifts-sniper') loadGiftsCatalog();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
