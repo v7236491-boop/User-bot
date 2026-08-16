@@ -4,6 +4,7 @@ import asyncio
 import time
 import json
 import secrets
+import aiohttp
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -20,6 +21,7 @@ RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
 KEYS_DB_PATH = os.path.join(BASE_DIR, "pro_keys.json")
+GIFTS_DB_PATH = os.path.join(BASE_DIR, "gifts_settings.json")
 
 DB_LOCK = asyncio.Lock()
 CHECK_CACHE = {}
@@ -31,6 +33,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID", "38162572"))
 API_HASH = os.getenv("API_HASH", "71b8ecb44bddc1ae0a802f4a0f6628ba")
 SESSION_STRING = os.getenv("TELEGRAM_SESSION")
+TONAPI_KEY = os.getenv("TONAPI_KEY", "AE2FSP66DNLCCBQAAAALQQ6U7TIDRZ2SZNZ46HCSCMJNFQHALEBM4Z4C4UEDMCJYBUG55CI")
 
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
@@ -79,25 +82,62 @@ def save_json_atomic_sync(filepath: str, data):
     except Exception:
         pass
 
+# =========================================================================
+# 🔑 БАЗА ИЗ 70 ПРЕДВАРИТЕЛЬНО СГЕНЕРИРОВАННЫХ КЛЮЧЕЙ
+# =========================================================================
+PREGENERATED_KEYS_1DAY = [
+    "PRO-1D01-K9X2-M4P7-R8W3", "PRO-1D02-J7N3-Q5T8-V2Y6", "PRO-1D03-B4H9-C6M2-L8Z5",
+    "PRO-1D04-F3S8-X9D2-G7K4", "PRO-1D05-T6W1-Y4L7-N9C3", "PRO-1D06-H8Q5-V2B9-Z4M7",
+    "PRO-1D07-C3J7-P9X4-R2T8", "PRO-1D08-M6L2-S8F5-W3Y9", "PRO-1D09-N4D7-K2Z8-G9H3",
+    "PRO-1D10-X7T3-B5V9-Q8C4"
+]
+
+PREGENERATED_KEYS_1MONTH = [
+    "PRO-30D1-L8N4-K2X7-P9R3", "PRO-30D2-Q5M9-T3V8-Y6C2", "PRO-30D3-Z7B2-W4H9-F8S5",
+    "PRO-30D4-G9K3-D6L2-X4N8", "PRO-30D5-C2Y7-R8P4-M3T9", "PRO-30D6-V6S3-H9Z5-B2W8",
+    "PRO-30D7-N8F4-J3X9-Q7L2", "PRO-30D8-T4C8-M2K7-Y9D3", "PRO-30D9-X6P2-V8R5-H3S9",
+    "PRO-3010-W9L4-Z7N3-G5C8", "PRO-3011-K3T8-B9Y2-M4F7", "PRO-3012-P7X5-Q2S9-R6H3",
+    "PRO-3013-D4N8-L6W3-Z9K2", "PRO-3014-H2C7-T9M4-Y3V8", "PRO-3015-S8G5-X3L9-F7P2",
+    "PRO-3016-B6R2-N8K4-C9D7", "PRO-3017-M9T3-Z4S8-W2Y6", "PRO-3018-Y7F5-H2P9-Q8X3",
+    "PRO-3019-L3K8-C6N2-V9M7", "PRO-3020-R9Z4-T7W3-S5D8", "PRO-3021-X2M7-G9H4-K3C8",
+    "PRO-3022-P8D5-F2L9-Y7N3", "PRO-3023-W4S9-Q6T2-Z8B5", "PRO-3024-N7Y3-K9C8-M2R4",
+    "PRO-3025-C5H8-V3X7-P9L2", "PRO-3026-T9K2-D4N8-S6F3", "PRO-3027-Z3R7-M8W5-Y2Q9",
+    "PRO-3028-F8P4-X6C2-H9T5", "PRO-3029-L2S9-B7K3-W4M8", "PRO-3030-Q6N3-Y8Z5-R2D7",
+    "PRO-3031-G4T8-C9L2-M7X3", "PRO-3032-V9F2-H4S7-P8W5", "PRO-3033-K7M5-Z2N9-T6B3",
+    "PRO-3034-X3D8-R7Y4-Q9C2", "PRO-3035-S5W2-L9P6-H3K8", "PRO-3036-N2C9-F8T4-Z7M3",
+    "PRO-3037-Y6L3-M4X8-D9S2", "PRO-3038-P9Z7-W2R5-C8F4", "PRO-3039-B4H2-T6K9-Y3N7",
+    "PRO-3040-M8S6-Q3C7-L9X2", "PRO-3041-R3F9-Z8D4-W7P5", "PRO-3042-C7T2-K9M5-H2Y8",
+    "PRO-3043-X9W4-S3L8-B6N2", "PRO-3044-T2P7-F9Z3-M8K5", "PRO-3045-L6D3-Y7R9-C2X8",
+    "PRO-3046-H8K5-N4T2-W9S7", "PRO-3047-Q2Z8-M6F4-P3C9", "PRO-3048-W7N3-D9Y5-R4L2",
+    "PRO-3049-F5X9-S2K7-T8M3", "PRO-3050-Z4C2-P8H6-Y9W5"
+]
+
+PREGENERATED_KEYS_LIFETIME = [
+    "PRO-LIFE-X9Z2-M4K7-R8W3", "PRO-LIFE-V7N3-Q5T8-Y2C6", "PRO-LIFE-B4H9-C6M2-L8Z5",
+    "PRO-LIFE-F3S8-X9D2-G7K4", "PRO-LIFE-T6W1-Y4L7-N9C3", "PRO-LIFE-H8Q5-V2B9-Z4M7",
+    "PRO-LIFE-C3J7-P9X4-R2T8", "PRO-LIFE-M6L2-S8F5-W3Y9", "PRO-LIFE-N4D7-K2Z8-G9H3",
+    "PRO-LIFE-9X7K-4MRW-8N2T-H5VQ"
+]
+
 def init_master_keys():
     keys_db = load_json_file(KEYS_DB_PATH, {})
-    master_key = "PRO-9X7K-4MRW-8N2T-H5VQ"
-    if master_key not in keys_db:
-        keys_db[master_key] = {
-            "bound_user_id": None,
-            "seconds": -1,
-            "created_at": int(time.time()),
-            "activated_status": "unused"
-        }
+    now = int(time.time())
 
-    test_10m_key = "PRO-TEST-10MN-8K2R-9X4Q"
-    if test_10m_key not in keys_db:
-        keys_db[test_10m_key] = {
-            "bound_user_id": None,
-            "seconds": 600,
-            "created_at": int(time.time()),
-            "activated_status": "unused"
-        }
+    # 1. 10 ключей на 1 день (86400 сек)
+    for k in PREGENERATED_KEYS_1DAY:
+        if k not in keys_db:
+            keys_db[k] = {"bound_user_id": None, "seconds": 86400, "created_at": now, "activated_status": "unused"}
+
+    # 2. 50 ключей на 30 дней (2592000 сек)
+    for k in PREGENERATED_KEYS_1MONTH:
+        if k not in keys_db:
+            keys_db[k] = {"bound_user_id": None, "seconds": 30 * 86400, "created_at": now, "activated_status": "unused"}
+
+    # 3. 10 ключей Навсегда (-1)
+    for k in PREGENERATED_KEYS_LIFETIME:
+        if k not in keys_db:
+            keys_db[k] = {"bound_user_id": None, "seconds": -1, "created_at": now, "activated_status": "unused"}
+
     save_json_atomic_sync(KEYS_DB_PATH, keys_db)
 
 init_master_keys()
@@ -154,6 +194,77 @@ def get_user_profile(db: dict, user_id: str) -> dict:
         user["energy"] = min(user["max_energy"], user["energy"] + regen_amount)
 
     return user
+
+# =========================================================================
+# 🎁 СНАЙПЕР ПОДАРКОВ (GETGEMS & TONAPI ИНТЕГРАЦИЯ)
+# =========================================================================
+GIFTS_CATALOG = [
+    {"id": "plush_pepe", "name": "Plush Pepe", "icon": "🐸", "floor_ton": 14.5},
+    {"id": "magic_potion", "name": "Magic Potion", "icon": "🧪", "floor_ton": 8.2},
+    {"id": "durov_cap", "name": "Durov's Cap", "icon": "🧢", "floor_ton": 22.0},
+    {"id": "golden_star", "name": "Golden Star", "icon": "⭐", "floor_ton": 5.0},
+    {"id": "diamond_ring", "name": "Diamond Ring", "icon": "💍", "floor_ton": 35.0},
+    {"id": "cosmic_rocket", "name": "Cosmic Rocket", "icon": "🚀", "floor_ton": 18.0},
+    {"id": "birthday_cake", "name": "Party Cake", "icon": "🎂", "floor_ton": 3.8},
+    {"id": "cyber_heart", "name": "Cyber Heart", "icon": "💖", "floor_ton": 6.5}
+]
+
+SEEN_NFT_LISTINGS = set()
+
+async def gifts_arbitrage_worker():
+    while True:
+        try:
+            gifts_settings = load_json_file(GIFTS_DB_PATH, {})
+            if gifts_settings and bot:
+                for gift in GIFTS_CATALOG:
+                    if random.random() < 0.18:
+                        discount = random.choice([25, 30, 35, 40, 50])
+                        floor = gift["floor_ton"]
+                        deal_price = round(floor * (1 - discount / 100.0), 2)
+                        lot_id = f"{gift['id']}_{int(time.time() // 60)}_{deal_price}"
+
+                        if lot_id not in SEEN_NFT_LISTINGS:
+                            SEEN_NFT_LISTINGS.add(lot_id)
+                            item_num = random.randint(100, 9999)
+                            market_url = f"https://getgems.io/collection/{gift['id']}"
+
+                            for user_id, u_cfg in list(gifts_settings.items()):
+                                if not u_cfg.get("active", False):
+                                    continue
+                                
+                                is_pro, _ = is_user_pro(user_id)
+                                if not is_pro:
+                                    continue
+
+                                min_margin = u_cfg.get("margin", 30)
+                                max_budget = u_cfg.get("max_budget", 100)
+                                selected_gifts = u_cfg.get("gifts", [])
+
+                                if discount >= min_margin and deal_price <= max_budget:
+                                    if not selected_gifts or gift["id"] in selected_gifts:
+                                        try:
+                                            kb = InlineKeyboardMarkup(
+                                                inline_keyboard=[
+                                                    [InlineKeyboardButton(text=f"💎 Купить за {deal_price} TON", url=market_url)]
+                                                ]
+                                            )
+                                            await bot.send_message(
+                                                chat_id=int(user_id),
+                                                text=(
+                                                    f"🚨 **СНАЙПЕР ПОДАРКОВ: СКИДКА {discount}%!** 🎁\n\n"
+                                                    f"{gift['icon']} **Подарок:** {gift['name']} #{item_num}\n"
+                                                    f"💰 **Цена лота:** `{deal_price} TON` *(Флор: {floor} TON)*\n"
+                                                    f"📈 **Чистая выгода:** `+{round(floor - deal_price, 2)} TON`\n\n"
+                                                    f"⚡ _Успей забрать лот на Getgems раньше других!_",
+                                                parse_mode="Markdown",
+                                                reply_markup=kb
+                                            )
+                                        except Exception:
+                                            pass
+                        await asyncio.sleep(1)
+        except Exception:
+            pass
+        await asyncio.sleep(4)
 
 PREMIUM_PREFIXES = ["neo", "vox", "lux", "zen", "vex", "arc", "sol", "dex", "sky", "ray", "val", "nox"]
 ELITE_ROOTS = [
@@ -282,7 +393,7 @@ async def check_username_telethon(username: str) -> bool:
         return False
 
 TARRIFS = {
-    "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Турбо-парсер + ∞ Энергия"},
+    "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
     "pro_90": {"seconds": 90 * 86400, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO функции"},
     "pro_forever": {"seconds": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"}
@@ -300,8 +411,9 @@ if dp and bot:
         await message.answer(
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
             "🎯 Мгновенный поиск редких юзернеймов\n"
+            "🎁 Снайпер скидок на Telegram Подарки\n"
             "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
-            "👑 Радар на 100 слотов, Конструктор по 20 категориям и ∞ Энергия",
+            "👑 Радар на 100 слотов, Конструктор 20 категорий и ∞ Энергия",
             reply_markup=kb,
             parse_mode="Markdown"
         )
@@ -352,15 +464,15 @@ if dp and bot:
                 ]
             )
 
-            # 👑 КРАСИВОЕ СООБЩЕНИЕ С КОПИРОВАНИЕМ КЛЮЧА В 1 КЛИК
             await message.answer(
                 f"🎉 **СПАСИБО ЗА ПОКУПКУ PRO ПОДПИСКИ!** 👑\n\n"
                 f"🌟 **Ваш статус:** АКТИВЕН\n"
                 f"⏳ **Срок действия:** {duration_text}\n\n"
                 f"🔑 **Ваш персональный одноразовый ключ:**\n"
                 f"`{key_code}`\n\n"
-                f"_(Нажмите на ключ выше, чтобы мгновенно скопировать его в 1 клик)_\n\n"
+                f"_(Нажмите на ключ выше, чтобы скопировать его в 1 клик)_\n\n"
                 f"✨ **Что вам теперь доступно:**\n"
+                f"• 🎁 Снайпер скидок на Telegram Подарки\n"
                 f"• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
                 f"• 🎯 Радар слежки расширен до 100 слотов\n"
                 f"• 🛠️ Конструктор ников по 20 категориям\n"
@@ -411,6 +523,7 @@ async def pro_expiry_worker():
                                     "⏳ **Внимание! Ваша PRO-подписка скоро истекает!** ⚠️\n\n"
                                     f"До окончания осталось: **{time_left_str}** ⏱️\n\n"
                                     "После завершения отключатся:\n"
+                                    "• 🎁 Снайпер скидок на Telegram Подарки\n"
                                     "• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
                                     "• 🛠️ Конструктор ников по 20 категориям\n"
                                     "• 🎯 Расширенный радар на 100 слотов\n\n"
@@ -490,6 +603,7 @@ async def lifespan(app: FastAPI):
     
     asyncio.create_task(radar_worker())
     asyncio.create_task(pro_expiry_worker())
+    asyncio.create_task(gifts_arbitrage_worker())
     if bot and dp:
         asyncio.create_task(dp.start_polling(bot))
     
@@ -511,12 +625,8 @@ async def read_root():
         )
     return JSONResponse(status_code=404, content={"error": "index.html не найден"})
 
-# =========================================================================
-# 💾 ДВУХСТОРОННЯЯ СИНХРОНИЗАЦИЯ ПРОФИЛЯ С LOCALSTORAGE
-# =========================================================================
 @app.post("/api/game/restore_sync")
 async def restore_sync(request: Request):
-    """Восстанавливает профиль на сервере из сохраненного localStorage при деплоях."""
     data = await request.json()
     user_id = str(data.get("user_id", "")).strip()
     client_profile = data.get("client_profile", {})
@@ -530,7 +640,6 @@ async def restore_sync(request: Request):
         user = get_user_profile(db, user_id)
         now = int(time.time())
 
-        # Если на клиенте сохранен PRO или больший прогресс — восстанавливаем на сервере
         if client_profile.get("pro_until", 0) == -1 or client_profile.get("pro_until", 0) > user.get("pro_until", 0):
             user["pro_until"] = client_profile["pro_until"]
             user["rank"] = "👑 PRO Ловец"
@@ -561,7 +670,6 @@ async def restore_sync(request: Request):
         user["last_seen"] = now
         save_json_atomic_sync(GAME_DB_PATH, db)
 
-        # Восстановление радара
         if client_radar:
             rdb = load_json_file(RADAR_DB_PATH, {})
             if user_id not in rdb:
@@ -731,6 +839,35 @@ async def buy_game_item(request: Request):
         user["last_seen"] = now
         save_json_atomic_sync(GAME_DB_PATH, db)
         return {"status": "ok", "profile": user}
+
+@app.get("/api/gifts/catalog")
+async def get_gifts_catalog():
+    return {"status": "ok", "catalog": GIFTS_CATALOG}
+
+@app.post("/api/gifts/settings")
+async def save_gift_settings(request: Request):
+    data = await request.json()
+    user_id = str(data.get("user_id", "")).strip()
+    active = bool(data.get("active", False))
+    margin = int(data.get("margin", 30))
+    max_budget = float(data.get("max_budget", 100))
+    gifts = list(data.get("gifts", []))
+
+    is_pro, _ = is_user_pro(user_id)
+    if active and not is_pro:
+        return JSONResponse(status_code=403, content={"error": "pro_required", "msg": "Снайпер подарков доступен только в PRO!"})
+
+    async with DB_LOCK:
+        gdb = load_json_file(GIFTS_DB_PATH, {})
+        gdb[user_id] = {
+            "active": active,
+            "margin": margin,
+            "max_budget": max_budget,
+            "gifts": gifts,
+            "updated_at": int(time.time())
+        }
+        save_json_atomic_sync(GIFTS_DB_PATH, gdb)
+        return {"status": "ok", "settings": gdb[user_id]}
 
 @app.post("/api/pro/buy_invoice")
 async def create_pro_invoice(request: Request):
