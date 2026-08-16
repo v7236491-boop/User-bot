@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & Cloud System 3D</title>
+    <title>Username Scanner PRO & Fragment NFT Gifts</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js?v=7.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -46,14 +46,8 @@
             background: linear-gradient(45deg, #ff0055, #ff9900, #ffee00, #00ff66, #00eeff, #9900ff) !important;
             background-size: 400% 400% !important; animation: rainbowBG 6s ease infinite !important;
         }
-        body.theme-blackhole {
-            background: #000000 !important;
-            color: #d8b4fe !important;
-        }
-        body.theme-quasar {
-            background: radial-gradient(circle at center, #1e1b4b 0%, #09090b 70%, #000000 100%) !important;
-            color: #38bdf8 !important;
-        }
+        body.theme-blackhole { background: #000000 !important; color: #d8b4fe !important; }
+        body.theme-quasar { background: radial-gradient(circle at center, #1e1b4b 0%, #09090b 70%, #000000 100%) !important; color: #38bdf8 !important; }
         @keyframes rainbowBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
         #fog-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; }
@@ -268,16 +262,33 @@
             align-items: center; cursor: pointer; margin-top: 10px;
         }
 
-        .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
-        .gift-card {
-            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px; padding: 12px; display: flex; flex-direction: column; align-items: center;
-            text-align: center; cursor: pointer; transition: 0.2s ease;
+        /* 🖼️ СТИЛЬ ВИТРИНЫ FRAGMENT NFT GIFTS */
+        .fragment-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+        .fragment-card {
+            border-radius: 20px; padding: 12px; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; height: 190px;
+            position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
-        .gift-card.selected { border-color: #f43f5e; background: rgba(244, 63, 94, 0.12); box-shadow: 0 0 12px rgba(244, 63, 94, 0.3); }
-        .gift-card-icon { font-size: 2.2rem; margin-bottom: 6px; }
-        .gift-card-title { font-size: 0.85rem; font-weight: 700; color: #fff; }
-        .gift-card-floor { font-size: 0.75rem; color: #38bdf8; margin-top: 2px; }
+        .fragment-card:active { transform: scale(0.96); }
+        .fragment-card.selected { border: 2px solid #29c75f; box-shadow: 0 0 16px rgba(41, 199, 95, 0.5); }
+        
+        .fragment-card-badge {
+            position: absolute; bottom: 44px; left: 10px;
+            background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px);
+            color: #fff; font-size: 0.72rem; font-weight: 800;
+            padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .fragment-card-art { width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; margin-top: 6px; }
+        .fragment-card-art svg { width: 100%; height: 100%; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5)); }
+        
+        .fragment-card-footer {
+            width: 100%; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(10px);
+            padding: 6px 10px; border-radius: 12px; margin-top: 4px;
+        }
+        .fragment-price-ton { font-size: 0.85rem; font-weight: 900; color: #38bdf8; display: flex; align-items: center; gap: 4px; }
+        .fragment-status-sold { font-size: 0.68rem; font-weight: 700; color: #ef4444; text-transform: uppercase; }
 
         /* 🪐 3D КЛИКЕР COSMIC CORE */
         #tycoon-overlay { 
@@ -462,7 +473,7 @@
         </div>
     </main>
 
-    <!-- 📱 НИЖНЯЯ ПАНЕЛЬ: СТРОГО 3 КНОПКИ -->
+    <!-- 📱 НИЖНЯЯ ПАНЕЛЬ: 3 КНОПКИ -->
     <div class="bottom-nav-container">
         <button class="nav-pill-btn" onclick="openModal('modal-achievements')">
             🏆 <span id="achieve-counter-badge">0/100</span>
@@ -477,7 +488,7 @@
 
     <div class="toast" id="global-toast">✨ Готово!</div>
 
-    <!-- ⚙️ НАСТРОЙКИ (С КНОПКОЙ GIFTS ВНУТРИ) -->
+    <!-- ⚙️ НАСТРОЙКИ -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -485,8 +496,6 @@
                 <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
             </div>
             <div class="modal-body">
-                
-                <!-- 👑 КУПИТЬ PRO -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span style="color: #eab308;" id="settings-pro-title">👑 Купить PRO подписку</span>
@@ -500,13 +509,12 @@
                     </div>
                 </div>
 
-                <!-- 🎁 АККУРАТНАЯ КНОПКА СНАЙПЕРА GIFTS ПОД НАСТРОЙКАМИ -->
+                <!-- 🎁 КНОПКА СНАЙПЕРА GIFTS ВНУТРИ НАСТРОЕК -->
                 <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
-                    <span>🎁 Снайпер Telegram Подарков</span>
-                    <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Открыть ➔</span>
+                    <span>🎁 Снайпер Fragment Подарков</span>
+                    <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
                 </div>
 
-                <!-- 🎯 РАДАР -->
                 <div class="accordion-section" style="margin-top:10px;">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span style="color: var(--primary);">🎯 Радар (Слежка за никами)</span>
@@ -522,7 +530,6 @@
                     </div>
                 </div>
 
-                <!-- 🎟️ ПРОМОКОДЫ -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🎟️ Промокоды и PRO-ключи</span>
@@ -535,7 +542,6 @@
                     </div>
                 </div>
 
-                <!-- 🎨 КАСТОМИЗАЦИЯ -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🎨 Кастомизация и эффекты</span>
@@ -570,7 +576,6 @@
                     </div>
                 </div>
 
-                <!-- 🤖 АВТОПАРСЕР -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🤖 Автопарсер</span>
@@ -587,7 +592,6 @@
                     </div>
                 </div>
 
-                <!-- 🛠️ КОНСТРУКТОР -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🛠️ Конструктор и Фильтры</span>
@@ -653,50 +657,58 @@
         </div>
     </div>
 
-    <!-- 🎁 МОДАЛКА СНАЙПЕРА ПОДАРКОВ (PRO ONLY) 🎁 -->
+    <!-- 🎁 МОДАЛКА СНАЙПЕРА GIFTS В СТИЛЕ FRAGMENT 🎁 -->
     <div class="modal-overlay" id="modal-gifts-sniper">
-        <div class="modal-content glass-panel">
+        <div class="modal-content glass-panel" style="max-width: 440px;">
             <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #fda4af;">🎁 Снайпер Подарков</h2>
+                <h2 style="font-size: 1.15rem; color: #fff; font-weight: 900; letter-spacing: 0.5px;">💎 FRAGMENT GIFTS</h2>
                 <button class="btn-close" onclick="closeModal('modal-gifts-sniper')">✕</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
-                    Вылавливает лоты со скидкой на Getgems и присылает сигнал в личные сообщения бота.
-                </div>
-
-                <div class="setting-row">
-                    <div>
-                        <div style="font-weight: bold; color: #fff;">🎯 Радар Скидок (Auto-Buy)</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Мгновенные сигналы в личку</div>
+                
+                <!-- ПАНЕЛЬ УПРАВЛЕНИЯ СНАЙПЕРОМ -->
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px; margin-bottom: 12px;">
+                    <div class="setting-row" style="padding:0 0 8px 0;">
+                        <div>
+                            <div style="font-weight: 800; color: #fff;">🎯 Снайпер Скидок (Auto-Buy)</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">Мгновенные пуши в бота при сливе</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="gift-radar-active" onchange="handleGiftControlChange(event, 'toggle')">
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <label class="switch"><input type="checkbox" id="gift-radar-active" onchange="saveGiftSniperSettings()"><span class="slider"></span></label>
-                </div>
 
-                <div style="margin-top: 10px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-                        <span>Минимальная скидка (маржа):</span>
-                        <b id="gift-margin-val" style="color:#29c75f;">30%</b>
+                    <div style="margin-top: 6px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-muted);">
+                            <span>Ловить скидки от (маржа):</span>
+                            <b id="gift-margin-val" style="color:#29c75f;">30%</b>
+                        </div>
+                        <input type="range" id="gift-margin-slider" min="20" max="60" step="5" value="30" style="width:100%; margin: 6px 0;" oninput="handleGiftControlChange(event, 'slider')">
                     </div>
-                    <input type="range" id="gift-margin-slider" min="20" max="60" step="5" value="30" style="width:100%; margin: 6px 0;" oninput="updateMarginLabel()">
+
+                    <div style="margin-top: 6px;">
+                        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:4px;">Максимальный бюджет (TON):</div>
+                        <input type="number" id="gift-budget-input" class="form-input" placeholder="Напр. 7000 TON" value="7000" style="margin-bottom:0;" onchange="handleGiftControlChange(event, 'budget')">
+                    </div>
                 </div>
 
-                <div style="margin-top: 10px;">
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Максимальный бюджет (TON):</div>
-                    <input type="number" id="gift-budget-input" class="form-input" placeholder="Напр. 25 TON" value="50" onchange="saveGiftSniperSettings()">
+                <div style="font-size:0.85rem; font-weight:800; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+                    <span>Коллекция Fragment:</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Нажми для слежки</span>
                 </div>
 
-                <div style="font-size:0.85rem; font-weight:bold; margin-top:14px; color:#fff;">Выберите подарки для слежки:</div>
-                <div class="gifts-grid" id="gifts-catalog-grid"></div>
+                <!-- 🖼️ СЕТКА FRAGMENT ПОДАРКОВ -->
+                <div class="fragment-grid" id="fragment-gifts-grid"></div>
 
-                <button class="form-btn" style="background:#f43f5e; color:#fff; margin-top:15px;" onclick="saveGiftSniperSettings()">
-                    💾 Сохранить фильтры
+                <button class="form-btn" style="background:#29c75f; color:#000; font-weight:900; margin-top:16px;" onclick="handleGiftControlChange(event, 'save')">
+                    💾 Сохранить фильтры снайпера
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 🎁 ПРИВЕТСТВЕННОЕ ОКНО ОФФЛАЙН-ДОХОДА 🎁 -->
+    <!-- 🎁 ПРИВЕТСТВЕННОЕ ОКНО ОФФЛАЙН-ДОХОДА -->
     <div class="modal-overlay" id="modal-offline-reward">
         <div class="modal-content glass-panel" style="max-width: 360px; text-align: center;">
             <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
@@ -828,7 +840,7 @@
             </div>
             <div class="modal-body">
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                    PRO даёт Снайпер Подарков, 100 слотов радара, Конструктор 20 категорий, ∞ Энергию и VIP статус.
+                    PRO даёт Снайпер Fragment Подарков, 100 слотов радара, Конструктор 20 категорий, ∞ Энергию и VIP статус.
                 </div>
 
                 <div class="tariff-card">
@@ -905,7 +917,7 @@
     </div>
 
     <!-- =========================================================================
-         JAVASCRIPT ЛОГИКА С TELEGRAM CLOUDSTORAGE
+         JAVASCRIPT ЛОГИКА
     ========================================================================= -->
     <script>
         let currentPlatform = 'telegram';
@@ -942,7 +954,7 @@
         let planetHpMax = 100;
         let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
 
-        // ☁️ ДВУХСТОРОННЯЯ ЗАПИСЬ В TELEGRAM CLOUDSTORAGE + LOCALSTORAGE
+        // ☁️ CLOUDSTORAGE + LOCALSTORAGE
         function saveProfileEverywhere() {
             localStorage.setItem('vh_saved_profile', JSON.stringify(userProfile));
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
@@ -952,7 +964,6 @@
             }
         }
 
-        // ☁️ ПОЛНАЯ ЗАГРУЗКА И ВОССТАНОВЛЕНИЕ ИЗ ОБЛАКА ПРИ СМЕНЕ ТЕЛЕФОНА
         async function loadProfileFromCloudAndServer() {
             let loadedProfile = JSON.parse(localStorage.getItem('vh_saved_profile') || 'null');
 
@@ -974,9 +985,7 @@
                 } catch(e){}
             }
 
-            if (loadedProfile) {
-                userProfile = loadedProfile;
-            }
+            if (loadedProfile) userProfile = loadedProfile;
 
             try {
                 const localRadar = JSON.parse(localStorage.getItem('vh_local_radar_targets') || '[]');
@@ -1032,6 +1041,139 @@
             } catch(e){}
         }
         loadProfileFromCloudAndServer();
+
+        // 🎨 ВЕКТОРНЫЙ ГЕНЕРАТОР FRAGMENT ПОДАРКОВ
+        function getFragmentGiftSVG(type) {
+            if (type.startsWith('pepe_')) {
+                let color = "#38bdf8";
+                if (type === 'pepe_bronze') color = "#c28544";
+                if (type === 'pepe_orange') color = "#f97316";
+                if (type === 'pepe_pink') color = "#ec4899";
+                if (type === 'pepe_chrome') color = "#cbd5e1";
+                if (type === 'pepe_red') color = "#ef4444";
+                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="38" fill="${color}" fill-opacity="0.25"/>
+                    <path d="M25 45C25 32 36 22 50 22C64 22 75 32 75 45C75 58 64 68 50 68C36 68 25 58 25 45Z" fill="${color}"/>
+                    <circle cx="40" cy="38" r="9" fill="#fff"/>
+                    <circle cx="40" cy="38" r="4" fill="#000"/>
+                    <circle cx="60" cy="38" r="9" fill="#fff"/>
+                    <circle cx="60" cy="38" r="4" fill="#000"/>
+                    <path d="M36 54C42 60 58 60 64 54" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M50 64C45 56 35 60 38 68C42 74 50 78 50 78C50 78 58 74 62 68C65 60 55 56 50 64Z" fill="#ff499e"/>
+                </svg>`;
+            } else if (type === 'flower_gold') {
+                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="24" r="14" fill="#facc15"/>
+                    <circle cx="50" cy="76" r="14" fill="#facc15"/>
+                    <circle cx="24" cy="50" r="14" fill="#facc15"/>
+                    <circle cx="76" cy="50" r="14" fill="#facc15"/>
+                    <circle cx="32" cy="32" r="14" fill="#facc15"/>
+                    <circle cx="68" cy="32" r="14" fill="#facc15"/>
+                    <circle cx="32" cy="68" r="14" fill="#facc15"/>
+                    <circle cx="68" cy="68" r="14" fill="#facc15"/>
+                    <circle cx="50" cy="50" r="18" fill="#fff"/>
+                    <circle cx="43" cy="46" r="3" fill="#000"/><circle cx="57" cy="46" r="3" fill="#000"/>
+                    <path d="M42 54C46 58 54 58 58 54" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+                </svg>`;
+            } else if (type === 'snoop_car') {
+                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="68" width="60" height="12" rx="4" fill="#ca8a04"/>
+                    <path d="M15 56L28 42H72L85 56H15Z" fill="#eab308"/>
+                    <rect x="10" y="54" width="80" height="12" rx="3" fill="#facc15"/>
+                    <circle cx="28" cy="66" r="7" fill="#1e293b" stroke="#e2e8f0" stroke-width="3"/>
+                    <circle cx="72" cy="66" r="7" fill="#1e293b" stroke="#e2e8f0" stroke-width="3"/>
+                </svg>`;
+            } else if (type === 'tg_cap') {
+                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 55C22 35 34 26 50 26C66 26 78 35 78 55H22Z" fill="#6366f1"/>
+                    <path d="M15 55C15 55 35 62 60 62C78 62 88 55 88 55C88 55 80 50 50 50C25 50 15 55 15 55Z" fill="#4338ca"/>
+                    <path d="M42 42L56 36L48 50L46 45L42 42Z" fill="#fff"/>
+                </svg>`;
+            } else {
+                return `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="35" fill="#38bdf8" fill-opacity="0.4"/><polygon points="50,20 80,75 20,75" fill="#38bdf8"/></svg>`;
+            }
+        }
+
+        // 🔒 ПРОВЕРКА PAYWALL НА ВСЕ ДЕЙСТВИЯ В GIFTS
+        function handleGiftControlChange(event, action) {
+            if (!isProUser) {
+                if (event) { event.preventDefault(); event.stopPropagation(); }
+                document.getElementById('gift-radar-active').checked = false;
+                showToast("👑 Доступно только в PRO подписке!");
+                closeModal('modal-gifts-sniper');
+                openModal('modal-pro');
+                return;
+            }
+
+            if (action === 'slider') {
+                const val = document.getElementById('gift-margin-slider').value;
+                document.getElementById('gift-margin-val').innerText = `${val}%`;
+            } else if (action === 'save' || action === 'toggle' || action === 'budget') {
+                saveGiftSniperSettings();
+            }
+        }
+
+        async function loadGiftsCatalog() {
+            const grid = document.getElementById('fragment-gifts-grid');
+            try {
+                const res = await fetch('/api/gifts/catalog');
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    grid.innerHTML = data.catalog.map(g => `
+                        <div class="fragment-card" id="fragment-card-${g.id}" style="background: radial-gradient(circle at center, ${g.bg} 0%, #0c0f14 100%);" onclick="toggleFragmentGiftSelection('${g.id}', event)">
+                            <div class="fragment-card-badge">${g.number}</div>
+                            <div class="fragment-card-art">${getFragmentGiftSVG(g.type)}</div>
+                            <div class="fragment-card-footer">
+                                <div class="fragment-price-ton">💎 ${g.floor_ton.toLocaleString()}</div>
+                                <div class="fragment-status-sold">Sold</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch(e){}
+        }
+
+        function toggleFragmentGiftSelection(giftId, event) {
+            if (!isProUser) {
+                handleGiftControlChange(event, 'select');
+                return;
+            }
+            const card = document.getElementById(`fragment-card-${giftId}`);
+            if (selectedGiftsList.includes(giftId)) {
+                selectedGiftsList = selectedGiftsList.filter(id => id !== giftId);
+                card.classList.remove('selected');
+            } else {
+                selectedGiftsList.push(giftId);
+                card.classList.add('selected');
+            }
+        }
+
+        async function saveGiftSniperSettings() {
+            if (!isProUser) return;
+            const active = document.getElementById('gift-radar-active').checked;
+            const margin = parseInt(document.getElementById('gift-margin-slider').value);
+            const budget = parseFloat(document.getElementById('gift-budget-input').value) || 10000;
+
+            try {
+                const res = await fetch('/api/gifts/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: tgChatId,
+                        active: active,
+                        margin: margin,
+                        max_budget: budget,
+                        gifts: selectedGiftsList
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(active ? "🎯 Снайпер подарков активен!" : "⏸️ Снайпер приостановлен");
+                }
+            } catch(e) {
+                showToast("Ошибка сохранения");
+            }
+        }
 
         let stats = {
             generations: parseInt(localStorage.getItem('vh_stat_gen') || '0'),
@@ -1136,72 +1278,6 @@
                 showToast("👑 Конструктор по 20 категориям доступен только в PRO!");
                 closeModal('modal-settings');
                 openModal('modal-pro');
-            }
-        }
-
-        async function loadGiftsCatalog() {
-            const grid = document.getElementById('gifts-catalog-grid');
-            try {
-                const res = await fetch('/api/gifts/catalog');
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    grid.innerHTML = data.catalog.map(g => `
-                        <div class="gift-card" id="gift-card-${g.id}" onclick="toggleGiftSelection('${g.id}')">
-                            <div class="gift-card-icon">${g.icon}</div>
-                            <div class="gift-card-title">${g.name}</div>
-                            <div class="gift-card-floor">Флор: ${g.floor_ton} TON</div>
-                        </div>
-                    `).join('');
-                }
-            } catch(e){}
-        }
-
-        function toggleGiftSelection(giftId) {
-            const card = document.getElementById(`gift-card-${giftId}`);
-            if (selectedGiftsList.includes(giftId)) {
-                selectedGiftsList = selectedGiftsList.filter(id => id !== giftId);
-                card.classList.remove('selected');
-            } else {
-                selectedGiftsList.push(giftId);
-                card.classList.add('selected');
-            }
-        }
-
-        function updateMarginLabel() {
-            const val = document.getElementById('gift-margin-slider').value;
-            document.getElementById('gift-margin-val').innerText = `${val}%`;
-        }
-
-        async function saveGiftSniperSettings() {
-            if (!isProUser) {
-                showToast("👑 Снайпер Подарков доступен только в PRO!");
-                closeModal('modal-gifts-sniper');
-                openModal('modal-pro');
-                return;
-            }
-
-            const active = document.getElementById('gift-radar-active').checked;
-            const margin = parseInt(document.getElementById('gift-margin-slider').value);
-            const budget = parseFloat(document.getElementById('gift-budget-input').value) || 100;
-
-            try {
-                const res = await fetch('/api/gifts/settings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        user_id: tgChatId,
-                        active: active,
-                        margin: margin,
-                        max_budget: budget,
-                        gifts: selectedGiftsList
-                    })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    showToast(active ? "🎯 Снайпер подарков активен!" : "⏸️ Снайпер приостановлен");
-                }
-            } catch(e) {
-                showToast("Ошибка сохранения");
             }
         }
 
