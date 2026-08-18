@@ -164,7 +164,7 @@
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            padding: 10px 20px 80px 20px; 
+            padding: 10px 20px 105px 20px; 
             z-index: 10; 
         }
         .app-container { 
@@ -256,6 +256,26 @@
             box-shadow: 0 8px 25px var(--primary-glow); 
         }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
+
+        /* ⚖️ НЕЗАМЕТНАЯ ПРАВОВАЯ СТРОКА ВНИЗУ */
+        .legal-notice-footer {
+            font-size: 0.68rem;
+            color: rgba(130, 146, 136, 0.65);
+            text-align: center;
+            line-height: 1.35;
+            margin-top: 4px;
+            padding: 0 10px;
+        }
+        .legal-notice-link {
+            color: rgba(41, 199, 95, 0.85);
+            text-decoration: none;
+            cursor: pointer;
+            border-bottom: 1px dotted rgba(41, 199, 95, 0.4);
+        }
+        .legal-notice-link:hover {
+            color: var(--primary);
+            border-bottom-style: solid;
+        }
 
         /* 📱 НИЖНЯЯ ПАНЕЛЬ */
         .bottom-nav-container {
@@ -472,6 +492,7 @@
             ⚡ ТУРБО-РЕЖИМ X2 АКТИВЕН: <span id="turbo-timer-text">15:00</span>
         </div>
 
+        <!-- 📊 СЧЁТЧИК ЛИМИТА ГЕНЕРАЦИЙ -->
         <div class="daily-limit-badge" id="daily-limit-bar">
             <span>🎯 Генераций сегодня:</span>
             <b id="daily-gens-text" style="color: var(--primary);">0 / 100</b>
@@ -495,9 +516,17 @@
             </div>
 
             <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
+
+            <!-- ⚖️ НЕЗАМЕТНАЯ ПРАВОВАЯ СТРОКА ПОД КНОПКОЙ -->
+            <div class="legal-notice-footer">
+                Используя сервис, вы принимаете условия 
+                <span class="legal-notice-link" onclick="openModal('modal-terms')">Оферты</span> и 
+                <span class="legal-notice-link" onclick="openModal('modal-privacy')">Конфиденциальности</span>
+            </div>
         </div>
     </main>
 
+    <!-- 📱 НИЖНЯЯ ПАНЕЛЬ -->
     <div class="bottom-nav-container">
         <button class="nav-pill-btn" onclick="openModal('modal-achievements')">
             🏆 <span id="achieve-counter-badge">0/100</span>
@@ -533,6 +562,7 @@
                     </div>
                 </div>
 
+                <!-- 🎁 КНОПКА СНАЙПЕРА GIFTS ВНУТРИ НАСТРОЕК -->
                 <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
                     <span>🎁 Снайпер Fragment Подарков (1000 шт)</span>
                     <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
@@ -959,6 +989,10 @@
                         <div class="tariff-desc">Вечный PRO статус без продлений</div>
                     </div>
                     <button class="tariff-btn" style="background: #eab308;" onclick="buyProTariff('pro_forever')">490 ⭐</button>
+                </div>
+
+                <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 10px;">
+                    Оплачивая, вы соглашаетесь с условиями <span class="legal-notice-link" onclick="openModal('modal-terms')">Оферты</span>. Цифровые услуги надлежащего качества возврату не подлежат.
                 </div>
             </div>
         </div>
@@ -1496,7 +1530,7 @@
         setInterval(updateTurboTimer, 1000);
 
         // =========================================================================
-        // 🌫️ ТУМАН
+        // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН
         // =========================================================================
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
