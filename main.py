@@ -5,6 +5,7 @@ import time
 import json
 import secrets
 import aiohttp
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -13,7 +14,7 @@ from aiogram.types import LabeledPrice, PreCheckoutQuery, InlineKeyboardMarkup, 
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl.functions.account import CheckUsernameRequest
-from telethon.errors import FloodWaitError, RPCError
+from telethon.errors import FloodWaitError
 import uvicorn
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,9 +27,11 @@ GIFTS_DB_PATH = os.path.join(BASE_DIR, "gifts_settings.json")
 
 DB_LOCK = asyncio.Lock()
 CHECK_CACHE = {}
-CACHE_TTL = 3600
+CACHE_TTL = 1800
 TELETHON_AVAILABLE = False
 FAILED_ATTEMPTS = {}
+
+FREE_DAILY_LIMIT = 100
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_ID = int(os.getenv("API_ID", "38162572"))
@@ -148,9 +151,14 @@ def is_user_pro(user_id: str) -> tuple[bool, int]:
         return True, pro_until
     return False, 0
 
+def get_current_date_str() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
 def get_user_profile(db: dict, user_id: str) -> dict:
     now = int(time.time())
     user_id = str(user_id).strip()
+    today_str = get_current_date_str()
+    
     if user_id not in db:
         db[user_id] = {
             "coins": 0,
@@ -170,6 +178,8 @@ def get_user_profile(db: dict, user_id: str) -> dict:
             "pro_until": 0,
             "pro_warned": False,
             "pro_expired_notified": True,
+            "daily_gens_count": 0,
+            "daily_gens_date": today_str,
             "client_history": [],
             "client_achievements": [],
             "custom_theme_style": "",
@@ -187,11 +197,17 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     if "planet_hp" not in user: user["planet_hp"] = PLANET_HP_TABLE.get(user["planet_stage"], 100)
     if "pro_warned" not in user: user["pro_warned"] = False
     if "pro_expired_notified" not in user: user["pro_expired_notified"] = True
+    if "daily_gens_count" not in user: user["daily_gens_count"] = 0
+    if "daily_gens_date" not in user: user["daily_gens_date"] = today_str
     if "client_history" not in user: user["client_history"] = []
     if "client_achievements" not in user: user["client_achievements"] = []
     if "custom_theme_style" not in user: user["custom_theme_style"] = ""
     if "custom_fog_rgb" not in user: user["custom_fog_rgb"] = "41, 199, 95"
     if "custom_filter_settings" not in user: user["custom_filter_settings"] = {}
+
+    if user.get("daily_gens_date") != today_str:
+        user["daily_gens_count"] = 0
+        user["daily_gens_date"] = today_str
 
     time_passed = now - user.get("last_seen", now)
     if time_passed > 0 and user["energy"] < user["max_energy"]:
@@ -201,7 +217,7 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     return user
 
 # =========================================================================
-# 🎁 1000 ПОДАРКОВ TELEGRAM / FRAGMENT С РЕАЛИСТИЧНЫМИ ЦЕНАМИ
+# 🎁 КАТАЛОГ ПОДАРКОВ (1000 ШТ)
 # =========================================================================
 BASE_GIFT_TYPES = [
     {"base_id": "pepe", "name": "Plush Pepe", "icon": "🐸", "base_price": 14.5, "slug": "plush-pepe"},
@@ -398,26 +414,8 @@ def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, h
     return {"rank": "A", "status": "Свободен (~1-3 TON)", "color": "#29c75f", "score": 30}
 
 # =========================================================================
-# 🛡️ НАДЁЖНЫЙ ЧЕКЕР С РЕЗЕРВНЫМ HTTP-ПРОВЕРЩИКОМ (БАГ ПОЛНОСТЬЮ УСТРАНЕН)
+# 🔍 ЧЕКЕР ЧЕРЕЗ TELETHON MTPROTO
 # =========================================================================
-async def check_username_http_fallback(username: str) -> bool:
-    url = f"https://t.me/{username}"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=2.0)) as response:
-                if response.status == 200:
-                    text = await response.text()
-                    # Если страницы канала/пользователя нет — ник свободен
-                    if "tgme_page_action" not in text or "View in Telegram" not in text:
-                        return True
-                    if "If you have Telegram, you can contact" not in text and "tgme_page_extra" not in text:
-                        return True
-                    return False
-                return False
-    except Exception:
-        return random.random() < 0.35
-
 async def check_username_telethon(username: str) -> bool:
     global TELETHON_AVAILABLE
     username = username.replace("@", "").strip().lower()
@@ -430,11 +428,10 @@ async def check_username_telethon(username: str) -> bool:
         if now - cached_time < CACHE_TTL:
             return cached_result
 
-    # 1. Попытка через Telethon
     if TELETHON_AVAILABLE:
         try:
             coro = telethon_client(CheckUsernameRequest(username=username))
-            result = await asyncio.wait_for(coro, timeout=1.2)
+            result = await asyncio.wait_for(coro, timeout=1.5)
             is_free = bool(result is True)
             CHECK_CACHE[username] = (is_free, now)
             return is_free
@@ -443,10 +440,20 @@ async def check_username_telethon(username: str) -> bool:
         except Exception:
             pass
 
-    # 2. Резервная проверка через HTTP парсер
-    is_free = await check_username_http_fallback(username)
-    CHECK_CACHE[username] = (is_free, now)
-    return is_free
+    # Резервная прямая проверка
+    try:
+        url = f"https://t.me/{username}"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=2.0)) as resp:
+                text = await resp.text()
+                if '<div class="tgme_page_title' not in text and '<a class="tgme_action_button_new' not in text:
+                    CHECK_CACHE[username] = (True, now)
+                    return True
+                CHECK_CACHE[username] = (False, now)
+                return False
+    except Exception:
+        return False
 
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
@@ -532,8 +539,7 @@ if dp and bot:
                 f"• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
                 f"• 🎯 Радар слежки расширен до 100 слотов\n"
                 f"• 🛠️ Конструктор ников по 20 категориям\n"
-                f"• ⚡ Турбо-парсер без задержек\n"
-                f"• 👑 Золотой VIP статус в топе игроков",
+                f"• ⚡ Турбо-парсер без задержек и безлимитный поиск",
                 parse_mode="Markdown",
                 reply_markup=kb
             )
@@ -606,8 +612,8 @@ async def pro_expiry_worker():
                                 chat_id=int(uid),
                                 text=(
                                     "🥺 **Ваша PRO-подписка завершилась!** 🔒\n\n"
-                                    "Аккаунт переведён на базовый тариф (3 слота радара, стандартная энергия) 🔋\n\n"
-                                    "👑 Оформите подписку заново в любой момент, чтобы вернуть турбо-парсер и суперспособности! ⭐"
+                                    "Аккаунт переведён на базовый тариф (3 слота радара, лимит 100 поисков в день) 🔋\n\n"
+                                    "👑 Оформите подписку заново в любой момент, чтобы вернуть все суперспособности! ⭐"
                                 ),
                                 parse_mode="Markdown",
                                 reply_markup=kb
@@ -756,6 +762,8 @@ async def restore_sync(request: Request):
             "profile": user,
             "is_pro": is_pro,
             "pro_until": pro_until,
+            "daily_gens_count": user.get("daily_gens_count", 0),
+            "daily_limit": FREE_DAILY_LIMIT,
             "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
             "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
         }
@@ -786,6 +794,8 @@ async def get_game_state(user_id: str):
             "offline_seconds": offline_seconds,
             "is_pro": is_pro, 
             "pro_until": pro_until,
+            "daily_gens_count": user.get("daily_gens_count", 0),
+            "daily_limit": FREE_DAILY_LIMIT,
             "turbo_until": user.get("turbo_until", 0),
             "unlocked_themes": user.get("unlocked_themes", []),
             "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
@@ -1033,7 +1043,8 @@ async def activate_pro_key(request: Request):
                         f"• 🎁 Снайпер подарков Fragment (Auto-Buy)\n"
                         f"• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
                         f"• 🎯 Радар на 100 слотов\n"
-                        f"• 🛠️ Конструктор ников по 20 категориям\n\n"
+                        f"• 🛠️ Конструктор ников по 20 категориям\n"
+                        f"• ⚡ Безлимитные генерации без дневных лимитов\n\n"
                         f"🌟 _Желаем приятного использования и удачной ловли!_"
                     ),
                     parse_mode="Markdown",
@@ -1049,6 +1060,9 @@ async def activate_pro_key(request: Request):
             "rank": user["rank"]
         }
 
+# =========================================================================
+# 🎲 ГЕНЕРАЦИЯ С ПРОВЕРКОЙ ЛИМИТА 100 ПОИСКОВ / ДЕНЬ
+# =========================================================================
 @app.get("/api/generate")
 async def generate_username(
     request: Request, 
@@ -1062,16 +1076,38 @@ async def generate_username(
     finder_name: str = Query("Аноним"), 
     finder_id: str = Query("0") 
 ):
-    is_pro, _ = is_user_pro(finder_id)
+    async with DB_LOCK:
+        game_db = load_json_file(GAME_DB_PATH, {})
+        user = get_user_profile(game_db, finder_id)
+        is_pro, _ = is_user_pro(finder_id)
+        
+        # Проверка лимита для Free-пользователей
+        if not is_pro:
+            if user.get("daily_gens_count", 0) >= FREE_DAILY_LIMIT:
+                return JSONResponse(
+                    status_code=429, 
+                    content={
+                        "error": "limit_reached",
+                        "msg": f"Дневной лимит ({FREE_DAILY_LIMIT} поисков) исчерпан!",
+                        "daily_gens_count": user["daily_gens_count"],
+                        "daily_limit": FREE_DAILY_LIMIT
+                    }
+                )
+            user["daily_gens_count"] = user.get("daily_gens_count", 0) + 1
+            save_json_atomic_sync(GAME_DB_PATH, game_db)
+
     generated = ""
     is_free = False
     eval_data = {}
 
+    # Если фильтр выключен пользователем — игнорируем ключевое слово
+    clean_keyword = custom_keyword.strip() if use_filter else ""
+
     for _ in range(12):
-        if custom_keyword.strip():
+        if clean_keyword:
             if not is_pro:
                 return JSONResponse(status_code=403, content={"error": "pro_required", "msg": "Конструктор по 20 категориям доступен только в PRO!"})
-            generated = generate_keyword_custom_username(custom_keyword, custom_category, use_und)
+            generated = generate_keyword_custom_username(clean_keyword, custom_category, use_und)
             is_pure = True
             has_und = ("_" in generated)
         else:
@@ -1103,7 +1139,10 @@ async def generate_username(
         "generated_username": generated,
         "platform": platform,
         "is_free": is_free,
-        "evaluation": eval_data
+        "evaluation": eval_data,
+        "daily_gens_count": user.get("daily_gens_count", 0),
+        "daily_limit": FREE_DAILY_LIMIT,
+        "is_pro": is_pro
     }
 
 @app.get("/api/radar/add")
