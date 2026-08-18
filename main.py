@@ -216,9 +216,6 @@ def get_user_profile(db: dict, user_id: str) -> dict:
 
     return user
 
-# =========================================================================
-# 🎁 КАТАЛОГ ПОДАРКОВ (1000 ШТ)
-# =========================================================================
 BASE_GIFT_TYPES = [
     {"base_id": "pepe", "name": "Plush Pepe", "icon": "🐸", "base_price": 14.5, "slug": "plush-pepe"},
     {"base_id": "cap", "name": "Durov's Cap", "icon": "🧢", "base_price": 24.0, "slug": "durovs-cap"},
@@ -413,9 +410,6 @@ def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, h
     
     return {"rank": "A", "status": "Свободен (~1-3 TON)", "color": "#29c75f", "score": 30}
 
-# =========================================================================
-# 🔍 ЧЕКЕР ЧЕРЕЗ TELETHON MTPROTO
-# =========================================================================
 async def check_username_telethon(username: str) -> bool:
     global TELETHON_AVAILABLE
     username = username.replace("@", "").strip().lower()
@@ -440,7 +434,6 @@ async def check_username_telethon(username: str) -> bool:
         except Exception:
             pass
 
-    # Резервная прямая проверка
     try:
         url = f"https://t.me/{username}"
         headers = {"User-Agent": "Mozilla/5.0"}
@@ -1060,9 +1053,6 @@ async def activate_pro_key(request: Request):
             "rank": user["rank"]
         }
 
-# =========================================================================
-# 🎲 ГЕНЕРАЦИЯ С ПРОВЕРКОЙ ЛИМИТА 100 ПОИСКОВ / ДЕНЬ
-# =========================================================================
 @app.get("/api/generate")
 async def generate_username(
     request: Request, 
@@ -1081,7 +1071,6 @@ async def generate_username(
         user = get_user_profile(game_db, finder_id)
         is_pro, _ = is_user_pro(finder_id)
         
-        # Проверка лимита для Free-пользователей
         if not is_pro:
             if user.get("daily_gens_count", 0) >= FREE_DAILY_LIMIT:
                 return JSONResponse(
@@ -1100,7 +1089,6 @@ async def generate_username(
     is_free = False
     eval_data = {}
 
-    # Если фильтр выключен пользователем — игнорируем ключевое слово
     clean_keyword = custom_keyword.strip() if use_filter else ""
 
     for _ in range(12):
