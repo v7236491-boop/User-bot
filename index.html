@@ -137,7 +137,6 @@
             box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
         }
 
-        /* 📊 ПЛАШКА СЧЁТЧИКА ЛИМИТА */
         .daily-limit-badge {
             width: 100%;
             max-width: 360px;
@@ -356,7 +355,7 @@
         .modal-overlay.active { opacity: 1; visibility: visible; }
         
         .modal-content { 
-            width: 100%; max-width: 420px; max-height: 84vh; display: flex; flex-direction: column; 
+            width: 100%; max-width: 440px; max-height: 86vh; display: flex; flex-direction: column; 
             border-radius: 24px; overflow: hidden; background: var(--glass-bg); border: 1px solid rgba(255,255,255,0.08);
         }
         .modal-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
@@ -420,6 +419,20 @@
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 14px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 16px; cursor: pointer; }
 
+        .legal-text-block {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .legal-text-block h3 {
+            font-size: 0.85rem;
+            color: #fff;
+            margin-top: 4px;
+        }
+
         .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 85px; }
         .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.45); }
         .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.45); }
@@ -459,7 +472,6 @@
             ⚡ ТУРБО-РЕЖИМ X2 АКТИВЕН: <span id="turbo-timer-text">15:00</span>
         </div>
 
-        <!-- 📊 СЧЁТЧИК ЛИМИТА ГЕНЕРАЦИЙ -->
         <div class="daily-limit-badge" id="daily-limit-bar">
             <span>🎯 Генераций сегодня:</span>
             <b id="daily-gens-text" style="color: var(--primary);">0 / 100</b>
@@ -486,7 +498,6 @@
         </div>
     </main>
 
-    <!-- 📱 НИЖНЯЯ ПАНЕЛЬ -->
     <div class="bottom-nav-container">
         <button class="nav-pill-btn" onclick="openModal('modal-achievements')">
             🏆 <span id="achieve-counter-badge">0/100</span>
@@ -522,7 +533,6 @@
                     </div>
                 </div>
 
-                <!-- 🎁 КНОПКА СНАЙПЕРА GIFTS ВНУТРИ НАСТРОЕК -->
                 <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
                     <span>🎁 Снайпер Fragment Подарков (1000 шт)</span>
                     <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
@@ -666,6 +676,71 @@
                     </div>
                 </div>
 
+                <!-- ⚖️ ЮРИДИЧЕСКИЙ РАЗДЕЛ (ОФЕРТА И КОНФИДЕНЦИАЛЬНОСТЬ) -->
+                <div class="accordion-section">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span style="color: #60a5fa;">⚖️ Правовая информация</span>
+                        <span class="acc-corner-arrow"></span>
+                    </div>
+                    <div class="accordion-content">
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                            <button class="form-btn" style="background:rgba(255,255,255,0.06); color:#fff; font-size:0.8rem; padding:10px;" onclick="openModal('modal-terms')">📄 Пользовательское соглашение (Оферта)</button>
+                            <button class="form-btn" style="background:rgba(255,255,255,0.06); color:#fff; font-size:0.8rem; padding:10px;" onclick="openModal('modal-privacy')">🔒 Политика конфиденциальности</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 📄 МОДАЛКА: ПОЛЬЗОВАТЕЛЬСКОЕ СОГЛАШЕНИЕ (ОФЕРТА) 📄 -->
+    <div class="modal-overlay" id="modal-terms">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem; color: #60a5fa;">📄 Публичная оферта</h2>
+                <button class="btn-close" onclick="closeModal('modal-terms')">✕</button>
+            </div>
+            <div class="modal-body legal-text-block">
+                <h3>1. Предмет соглашения</h3>
+                <p>Настоящее Пользовательское соглашение (далее — «Оферта») регулирует порядок использования сервиса «NameHunter PRO» (далее — «Сервис»). Сервис предоставляет пользователям доступ к программным алгоритмам автоматического анализа доступности публичных идентификаторов (юзернеймов) и мониторинга открытых NFT-листингов Telegram Gifts.</p>
+                
+                <h3>2. Характер услуг и отказ от гарантий</h3>
+                <p>Все функциональные возможности предоставляются на условиях <b>«КАК ЕСТЬ» («AS IS»)</b>. Администрация Сервиса не гарантирует 100% точность сторонних API Telegram/Fragment, абсолютную доступность выбранных юзернеймов на момент их ручной регистрации пользователем, а также гарантированную прибыль от покупки NFT-подарков.</p>
+                
+                <h3>3. Платные услуги (PRO Доступ)</h3>
+                <p>Покупка PRO-доступа через Telegram Stars (XTR) является приобретением доступа к неисключительным цифровым правам и расширенному функционалу программного обеспечения. В соответствии со ст. 450.1 ГК РФ и международными нормами права, цифровая услуга считается оказанной в полном объеме в момент активации PRO-статуса в аккаунте. Возврат средств за активированные ключи и периоды подписки не осуществляется.</p>
+                
+                <h3>4. Ограничение ответственности</h3>
+                <p>Администрация не несёт ответственности за действия третьих лиц, блокировки или изменения правил платформы Telegram, а также за любые прямые или косвенные убытки, возникшие в результате использования информации, полученной через Сервис.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔒 МОДАЛКА: ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ 🔒 -->
+    <div class="modal-overlay" id="modal-privacy">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem; color: var(--primary);">🔒 Конфиденциальность (152-ФЗ)</h2>
+                <button class="btn-close" onclick="closeModal('modal-privacy')">✕</button>
+            </div>
+            <div class="modal-body legal-text-block">
+                <h3>1. Собираемые данные</h3>
+                <p>Сервис уважает конфиденциальность пользователей и соблюдает принципы минимизации обработки данных (согласно 152-ФЗ РФ и GDPR). Сервис обрабатывает исключительно общедоступные технические идентификаторы:</p>
+                <ul style="padding-left: 18px;">
+                    <li>Уникальный числовой идентификатор Telegram (Telegram ID);</li>
+                    <li>Имя профиля Telegram (First Name / Last Name) для отображения в таблице лидеров;</li>
+                    <li>Игровой прогресс (монеты, этапы планет, слоты радара, статус подписки).</li>
+                </ul>
+                
+                <h3>2. Запрет на сбор чувствительных данных</h3>
+                <p>Сервис <b>НЕ собирает, НЕ обрабатывает и НЕ хранит</b>: паспортные данные, номера телефонов, адреса электронной почты, биометрию, реквизиты банковских карт и данные о платежах (все транзакции проводятся через защищенный нативный шлюз Telegram Stars).</p>
+                
+                <h3>3. Цели обработки</h3>
+                <p>Идентификатор Telegram ID используется исключительно для сохранения игрового баланса, авторизации PRO-подписки на различных устройствах и отправки уведомлений от бота по запросу пользователя.</p>
+                
+                <h3>4. Передача третьим лицам</h3>
+                <p>Данные пользователей хранятся в защищенной базе и ни при каких обстоятельствах не продаются, не передаются рекламным сетям или третьим лицам.</p>
             </div>
         </div>
     </div>
@@ -710,7 +785,6 @@
                     <span style="font-size:0.75rem; color:var(--text-muted);">Нажми для выбора</span>
                 </div>
 
-                <!-- 🎁 СЕТКА СМАЙЛИКОВ GIFTS -->
                 <div class="emoji-gifts-grid" id="emoji-gifts-grid"></div>
 
                 <button class="form-btn" style="background:#f43f5e; color:#fff; font-weight:900; margin-top:16px;" onclick="handleGiftControlChange(event, 'save')">
@@ -1556,7 +1630,7 @@
         }
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С ПРОВЕРКОЙ ЛИМИТА И СЧЁТЧИКОМ)
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
@@ -1578,7 +1652,6 @@
         async function manualGenerate(event) {
             if (isFetching) return;
 
-            // Проверка лимита перед запуском
             if (!isProUser && dailyGensCount >= dailyLimitMax) {
                 showToast("⚠️ Дневной лимит (100 поисков) исчерпан! Купите PRO для безлимита.");
                 openModal('modal-pro');
@@ -1606,7 +1679,6 @@
             const useNum = document.getElementById('filter-num').checked;
             const useUnd = document.getElementById('filter-und').checked;
             
-            // Если тумблер выключен — передаём строго пустую строку
             const customKw = (useFilter && isProUser) ? document.getElementById('custom-kw-input').value.trim() : "";
             const customCat = document.getElementById('custom-cat-select').value;
 
