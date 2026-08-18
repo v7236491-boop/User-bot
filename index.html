@@ -137,6 +137,28 @@
             box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
         }
 
+        /* 📊 ПЛАШКА СЧЁТЧИКА ЛИМИТА */
+        .daily-limit-badge {
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto 8px auto;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+        .daily-limit-badge.limit-reached {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+        }
+
         main { 
             flex: 1; 
             display: flex; 
@@ -151,7 +173,7 @@
             max-width: 360px; 
             display: flex; 
             flex-direction: column; 
-            gap: 14px; 
+            gap: 12px; 
         }
 
         .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
@@ -262,7 +284,6 @@
             align-items: center; cursor: pointer; margin-top: 10px;
         }
 
-        /* 🎁 СТИЛЬ КАРТОЧЕК СМАЙЛИКОВ */
         .emoji-gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
         .emoji-gift-card {
             background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
@@ -438,6 +459,12 @@
             ⚡ ТУРБО-РЕЖИМ X2 АКТИВЕН: <span id="turbo-timer-text">15:00</span>
         </div>
 
+        <!-- 📊 СЧЁТЧИК ЛИМИТА ГЕНЕРАЦИЙ -->
+        <div class="daily-limit-badge" id="daily-limit-bar">
+            <span>🎯 Генераций сегодня:</span>
+            <b id="daily-gens-text" style="color: var(--primary);">0 / 100</b>
+        </div>
+
         <div class="app-container">
             <div class="platform-toggle glass-panel">
                 <button class="platform-btn active" onclick="setPlatform('telegram', this)">Telegram</button>
@@ -489,7 +516,7 @@
                     </div>
                     <div class="accordion-content">
                         <p style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;" id="settings-pro-desc">
-                            Снятие лимитов, 100 слотов радара, Снайпер Подарков, ∞ Энергия:
+                            Снятие лимитов, безлимитный поиск, 100 слотов радара, Снайпер Подарков:
                         </p>
                         <button class="tariff-btn" style="width:100%; padding:12px;" onclick="closeModal('modal-settings'); openModal('modal-pro');">Посмотреть тарифы Stars ⭐</button>
                     </div>
@@ -577,6 +604,7 @@
                     </div>
                 </div>
 
+                <!-- 🛠️ КОНСТРУКТОР -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🛠️ Конструктор и Фильтры</span>
@@ -618,7 +646,7 @@
 
                         <div class="setting-row">
                             <span>Включить умный фильтр</span>
-                            <label class="switch"><input type="checkbox" id="filter-active" onchange="saveCurrentFilterSettings()"><span class="slider"></span></label>
+                            <label class="switch"><input type="checkbox" id="filter-active" onchange="handleFilterToggleChange()"><span class="slider"></span></label>
                         </div>
                         <div class="setting-row">
                             <span>Длина ника</span>
@@ -642,7 +670,7 @@
         </div>
     </div>
 
-    <!-- 🎁 МОДАЛКА СНАЙПЕРА GIFTS СО СМАЙЛИКАМИ И ПРЯМЫМИ ССЫЛКАМИ 🎁 -->
+    <!-- 🎁 МОДАЛКА СНАЙПЕРА GIFTS (1000 ШТ) 🎁 -->
     <div class="modal-overlay" id="modal-gifts-sniper">
         <div class="modal-content glass-panel" style="max-width: 440px;">
             <div class="modal-header">
@@ -678,7 +706,7 @@
                 </div>
 
                 <div style="font-size:0.85rem; font-weight:800; color:#fff; display:flex; justify-content:space-between; align-items:center;">
-                    <span>Каталог подарков Telegram:</span>
+                    <span>Каталог подарков Telegram (1000 шт):</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Нажми для выбора</span>
                 </div>
 
@@ -824,7 +852,7 @@
             </div>
             <div class="modal-body">
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                    PRO даёт Снайпер Fragment Подарков, 100 слотов радара, Конструктор 20 категорий, ∞ Энергию и VIP статус.
+                    PRO даёт Снайпер Fragment Подарков, 100 слотов радара, Конструктор 20 категорий, ∞ Энергию и безлимитные поиски.
                 </div>
 
                 <div class="tariff-card">
@@ -914,6 +942,8 @@
         let userProUntil = 0;
         let turboUntil = 0;
         let maxRadarSlots = 3;
+        let dailyGensCount = 0;
+        let dailyLimitMax = 100;
 
         let autoSessionScanned = 0;
         let autoSessionFound = [];
@@ -991,6 +1021,8 @@
                     turboUntil = data.turbo_until || 0;
                     maxRadarSlots = data.max_radar_slots || 3;
                     planetHpMax = data.planet_hp_max || 100;
+                    dailyGensCount = data.daily_gens_count || 0;
+                    dailyLimitMax = data.daily_limit || 100;
                     
                     if (data.profile.client_history && data.profile.client_history.length > 0) {
                         localStorage.setItem('vpn_parser_history', JSON.stringify(data.profile.client_history));
@@ -1011,6 +1043,7 @@
 
                     saveProfileEverywhere();
                     applyProStateToUI();
+                    updateDailyLimitBadge();
                     renderAchievements();
                 }
             } catch(e){}
@@ -1026,6 +1059,14 @@
             if (cfg.useUnd !== undefined) document.getElementById('filter-und').checked = cfg.useUnd;
         }
 
+        function handleFilterToggleChange() {
+            const isChecked = document.getElementById('filter-active').checked;
+            if (!isChecked) {
+                document.getElementById('custom-kw-input').value = "";
+            }
+            saveCurrentFilterSettings();
+        }
+
         function saveCurrentFilterSettings() {
             userProfile.custom_filter_settings = {
                 keyword: document.getElementById('custom-kw-input').value,
@@ -1036,6 +1077,25 @@
                 useUnd: document.getElementById('filter-und').checked
             };
             saveProfileEverywhere();
+        }
+
+        function updateDailyLimitBadge() {
+            const bar = document.getElementById('daily-limit-bar');
+            const text = document.getElementById('daily-gens-text');
+            if (isProUser) {
+                text.innerText = "∞ / ∞ (Безлимит)";
+                text.style.color = "#eab308";
+                bar.classList.remove('limit-reached');
+            } else {
+                text.innerText = `${dailyGensCount} / ${dailyLimitMax}`;
+                if (dailyGensCount >= dailyLimitMax) {
+                    text.style.color = "#ef4444";
+                    bar.classList.add('limit-reached');
+                } else {
+                    text.style.color = "var(--primary)";
+                    bar.classList.remove('limit-reached');
+                }
+            }
         }
 
         function applyProStateToUI() {
@@ -1068,6 +1128,7 @@
             updateTycoonUI();
             updateTurboTimer();
             updateProHeaderTimer();
+            updateDailyLimitBadge();
         }
 
         async function loadGiftsCatalog() {
@@ -1495,7 +1556,7 @@
         }
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (ПОЛНОСТЬЮ ИСПРАВЛЕН)
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С ПРОВЕРКОЙ ЛИМИТА И СЧЁТЧИКОМ)
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
@@ -1516,8 +1577,15 @@
 
         async function manualGenerate(event) {
             if (isFetching) return;
+
+            // Проверка лимита перед запуском
+            if (!isProUser && dailyGensCount >= dailyLimitMax) {
+                showToast("⚠️ Дневной лимит (100 поисков) исчерпан! Купите PRO для безлимита.");
+                openModal('modal-pro');
+                return;
+            }
+
             isFetching = true;
-            
             const btn = document.getElementById('btn-generate');
             btn.disabled = true; 
             btn.textContent = "Поиск...";
@@ -1537,7 +1605,9 @@
             const lenMode = document.getElementById('filter-len').value;
             const useNum = document.getElementById('filter-num').checked;
             const useUnd = document.getElementById('filter-und').checked;
-            const customKw = isProUser ? document.getElementById('custom-kw-input').value.trim() : "";
+            
+            // Если тумблер выключен — передаём строго пустую строку
+            const customKw = (useFilter && isProUser) ? document.getElementById('custom-kw-input').value.trim() : "";
             const customCat = document.getElementById('custom-cat-select').value;
 
             try {
@@ -1545,11 +1615,25 @@
                 const [res] = await Promise.all([fetch(url), delayPromise]);
                 const data = await res.json();
 
+                if (res.status === 429) {
+                    stopSlotMachine("limit");
+                    showToast("⚠️ Дневной лимит (100 поисков) исчерпан!");
+                    dailyGensCount = dailyLimitMax;
+                    updateDailyLimitBadge();
+                    openModal('modal-pro');
+                    return;
+                }
+
                 if (res.status === 403) {
                     showToast("👑 Конструктор по 20 категориям доступен только в PRO!");
                     openModal('modal-pro');
                     stopSlotMachine("pro_only");
                     return;
+                }
+
+                if (data.daily_gens_count !== undefined) {
+                    dailyGensCount = data.daily_gens_count;
+                    updateDailyLimitBadge();
                 }
 
                 lastGenerated = data.generated_username || "hyper";
