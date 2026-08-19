@@ -608,6 +608,7 @@ async def check_username_telethon(username: str) -> bool:
     except Exception:
         return False
 
+# ВСЕ ТАРИФЫ СО СКИДКАМИ + КЕЙСЫ STARS
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
@@ -936,6 +937,7 @@ async def open_case(request: Request):
     user_id = str(data.get("user_id", "")).strip()
     case_type = str(data.get("case_type", "daily"))
     pay_method = str(data.get("pay_method", "free"))
+    client_coins = int(data.get("client_coins", 0))
 
     if not user_id:
         return JSONResponse(status_code=200, content={"status": "error", "msg": "ID пользователя не найден!"})
@@ -944,6 +946,10 @@ async def open_case(request: Request):
         game_db = load_json_file(GAME_DB_PATH, {})
         user = get_user_profile(game_db, user_id)
         now = int(time.time())
+
+        # Синхронизация монет с клиентом
+        if client_coins > user["coins"]:
+            user["coins"] = client_coins
 
         if case_type == "daily":
             if pay_method == "free":
@@ -1132,11 +1138,15 @@ async def buy_game_item(request: Request):
     data = await request.json()
     user_id = str(data.get("user_id", "default_guest")).strip()
     item_id = str(data.get("item_id", ""))
+    client_coins = int(data.get("client_coins", 0))
     
     async with DB_LOCK:
         db = load_json_file(GAME_DB_PATH, {})
         user = get_user_profile(db, user_id)
         now = int(time.time())
+
+        if client_coins > user["coins"]:
+            user["coins"] = client_coins
 
         if item_id == "turbo_boost_15":
             if user["coins"] >= 65000:
@@ -1190,7 +1200,16 @@ async def buy_game_item(request: Request):
 
         user["last_seen"] = now
         save_json_atomic_sync(GAME_DB_PATH, db)
-        return JSONResponse(status_code=200, content={"status": "ok", "profile": user})
+        is_pro, pro_until = is_user_pro(user_id)
+
+        return JSONResponse(status_code=200, content={
+            "status": "ok", 
+            "profile": user,
+            "is_pro": is_pro,
+            "pro_until": pro_until,
+            "turbo_until": user.get("turbo_until", 0),
+            "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0)))
+        })
 
 @app.post("/api/promo/activate")
 async def activate_promo(request: Request):
