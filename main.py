@@ -186,6 +186,8 @@ def get_user_profile(db: dict, user_id: str) -> dict:
             "referred_by": None,
             "referral_reward_claimed": False,
             "referrals_count": 0,
+            "last_free_case_time": 0,
+            "cases_opened_total": 0,
             "client_history": [],
             "client_achievements": [],
             "custom_theme_style": "",
@@ -209,6 +211,8 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     if "referred_by" not in user: user["referred_by"] = None
     if "referral_reward_claimed" not in user: user["referral_reward_claimed"] = False
     if "referrals_count" not in user: user["referrals_count"] = 0
+    if "last_free_case_time" not in user: user["last_free_case_time"] = 0
+    if "cases_opened_total" not in user: user["cases_opened_total"] = 0
     if "client_history" not in user: user["client_history"] = []
     if "client_achievements" not in user: user["client_achievements"] = []
     if "custom_theme_style" not in user: user["custom_theme_style"] = ""
@@ -462,7 +466,9 @@ TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
     "pro_90": {"seconds": 90 * 86400, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO функции"},
-    "pro_forever": {"seconds": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"}
+    "pro_forever": {"seconds": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"},
+    "case_elite": {"seconds": 0, "stars": 10, "title": "Элитный Кейс CS2", "desc": "10-25k монет, PRO 3-7 дней, слоты радара"},
+    "case_quantum": {"seconds": 0, "stars": 25, "title": "Квантовый Кейс CS2", "desc": "30-50k монет, PRO 7-30 дней, скин Квантум"}
 }
 
 if dp and bot:
@@ -500,8 +506,8 @@ if dp and bot:
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
             "🎯 Мгновенный поиск редких юзернеймов\n"
             "🎁 Снайпер скидок на Telegram Подарки (Fragment)\n"
+            "📦 Кейсы в стиле CS2 с рулеткой наград и гарантией\n"
             "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
-            "👑 Радар на 100 слотов, Конструктор 20 категорий и ∞ Энергия\n"
             "👥 Приглашай друзей и получай **+1 день PRO** за каждого!",
             reply_markup=kb,
             parse_mode="Markdown"
@@ -517,7 +523,7 @@ if dp and bot:
         user_id = str(message.from_user.id)
         tariff = TARRIFS.get(payload)
 
-        if tariff:
+        if tariff and tariff["seconds"] != 0:
             secs = tariff["seconds"]
             now = int(time.time())
             key_code = generate_secure_pro_key()
@@ -728,12 +734,17 @@ async def restore_sync(request: Request):
         user = get_user_profile(db, user_id)
         now = int(time.time())
 
+        # Синхронизация PRO
         if client_profile.get("pro_until", 0) == -1 or client_profile.get("pro_until", 0) > user.get("pro_until", 0):
             user["pro_until"] = client_profile["pro_until"]
             user["rank"] = "👑 PRO Ловец"
 
+        # Синхронизация игрового баланса и кейсов
         if client_profile.get("coins", 0) > user.get("coins", 0):
             user["coins"] = client_profile["coins"]
+
+        if client_profile.get("cases_opened_total", 0) > user.get("cases_opened_total", 0):
+            user["cases_opened_total"] = client_profile["cases_opened_total"]
 
         if client_profile.get("planet_stage", 1) > user.get("planet_stage", 1):
             user["planet_stage"] = client_profile["planet_stage"]
@@ -755,7 +766,6 @@ async def restore_sync(request: Request):
             if th not in user.get("unlocked_themes", []):
                 user["unlocked_themes"].append(th)
 
-        # 👥 Синхронизация постоянных рефералов с клиента в базу
         client_ref_count = int(client_profile.get("referrals_count", 0))
         if client_ref_count > user.get("referrals_count", 0):
             user["referrals_count"] = client_ref_count
@@ -843,6 +853,131 @@ async def get_game_state(user_id: str):
             "unlocked_themes": user.get("unlocked_themes", []),
             "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
             "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
+        }
+
+# =========================================================================
+# 📦 CS2 КЕЙСЫ: РАСЧЁТ ДРОПА С ГАРАНТОМ НА 20 ОТКРЫТИЙ
+# =========================================================================
+@app.post("/api/case/open")
+async def open_case(request: Request):
+    data = await request.json()
+    user_id = str(data.get("user_id", "")).strip()
+    case_type = str(data.get("case_type", "daily")) # daily, elite, quantum
+    pay_method = str(data.get("pay_method", "free")) # free, coins, stars
+
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "no_user_id"})
+
+    async with DB_LOCK:
+        game_db = load_json_file(GAME_DB_PATH, {})
+        user = get_user_profile(game_db, user_id)
+        now = int(time.time())
+
+        # Проверка условий покупки
+        if case_type == "daily":
+            if pay_method == "free":
+                if now - user.get("last_free_case_time", 0) < 86400:
+                    return JSONResponse(status_code=400, content={"error": "cooldown", "msg": "Бесплатный кейс доступен 1 раз в 24 часа!"})
+                user["last_free_case_time"] = now
+            elif pay_method == "coins":
+                if user["coins"] < 15000:
+                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 15 000 монет!"})
+                user["coins"] -= 15000
+
+        elif case_type == "elite":
+            if pay_method == "coins":
+                if user["coins"] < 60000:
+                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 60 000 монет!"})
+                user["coins"] -= 60000
+
+        elif case_type == "quantum":
+            if pay_method == "coins":
+                if user["coins"] < 150000:
+                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 150 000 монет!"})
+                user["coins"] -= 150000
+
+        user["cases_opened_total"] = user.get("cases_opened_total", 0) + 1
+        pity_trigger = (user["cases_opened_total"] % 20 == 0)
+
+        # Генерация дропа CS2
+        drop_item = {}
+        r = random.random()
+
+        if case_type == "daily":
+            if pity_trigger or r < 0.02:
+                drop_item = {"type": "pro_days", "val": 1, "name": "👑 PRO Доступ (1 день)", "rarity": "gold", "icon": "👑"}
+            elif r < 0.08:
+                drop_item = {"type": "turbo", "val": 15, "name": "🚀 X2 Турбо (15 мин)", "rarity": "purple", "icon": "🚀"}
+            elif r < 0.22:
+                drop_item = {"type": "gens", "val": 15, "name": "🎯 +15 Поисков ников", "rarity": "blue", "icon": "🎯"}
+            elif r < 0.45:
+                drop_item = {"type": "energy", "val": 1000, "name": "⚡ 100% Энергии", "rarity": "blue", "icon": "⚡"}
+            else:
+                coins_won = random.randint(5000, 10000)
+                drop_item = {"type": "coins", "val": coins_won, "name": f"🟡 {coins_won:,} Монет", "rarity": "gray", "icon": "🟡"}
+
+        elif case_type == "elite":
+            if pity_trigger or r < 0.03:
+                drop_item = {"type": "pro_days", "val": 7, "name": "👑 PRO Доступ (7 дней)", "rarity": "gold", "icon": "👑"}
+            elif r < 0.09:
+                drop_item = {"type": "pro_days", "val": 3, "name": "👑 PRO Доступ (3 дня)", "rarity": "red", "icon": "👑"}
+            elif r < 0.16:
+                drop_item = {"type": "radar_slot", "val": 1, "name": "🎯 +1 Слот в Радар", "rarity": "red", "icon": "🎯"}
+            elif r < 0.35:
+                drop_item = {"type": "turbo", "val": 20, "name": "🚀 X2 Турбо (20 мин)", "rarity": "purple", "icon": "🚀"}
+            elif r < 0.60:
+                drop_item = {"type": "gens", "val": 30, "name": "🎯 +30 Поисков ников", "rarity": "blue", "icon": "🎯"}
+            else:
+                coins_won = random.randint(15000, 25000)
+                drop_item = {"type": "coins", "val": coins_won, "name": f"🟡 {coins_won:,} Монет", "rarity": "blue", "icon": "🟡"}
+
+        elif case_type == "quantum":
+            if pity_trigger or r < 0.05:
+                drop_item = {"type": "pro_days", "val": 30, "name": "👑 PRO Доступ (30 ДНЕЙ!)", "rarity": "gold", "icon": "👑"}
+            elif r < 0.12:
+                drop_item = {"type": "theme", "val": "theme_quantum", "name": "🌌 Скин «Квантум»", "rarity": "gold", "icon": "🌌"}
+            elif r < 0.25:
+                drop_item = {"type": "pro_days", "val": 7, "name": "👑 PRO Доступ (7 дней)", "rarity": "red", "icon": "👑"}
+            elif r < 0.42:
+                drop_item = {"type": "radar_slot", "val": 2, "name": "🎯 +2 Слота в Радар", "rarity": "red", "icon": "🎯"}
+            elif r < 0.65:
+                drop_item = {"type": "turbo", "val": 35, "name": "🚀 X2 Турбо (35 мин)", "rarity": "purple", "icon": "🚀"}
+            else:
+                coins_won = random.randint(30000, 50000)
+                drop_item = {"type": "coins", "val": coins_won, "name": f"🟡 {coins_won:,} Монет", "rarity": "purple", "icon": "🟡"}
+
+        # Применение выбитой награды
+        if drop_item["type"] == "coins":
+            user["coins"] += drop_item["val"]
+        elif drop_item["type"] == "energy":
+            user["energy"] = user["max_energy"]
+        elif drop_item["type"] == "gens":
+            user["daily_gens_count"] = max(0, user.get("daily_gens_count", 0) - drop_item["val"])
+        elif drop_item["type"] == "turbo":
+            cur_turbo = max(now, user.get("turbo_until", 0))
+            user["turbo_until"] = cur_turbo + (drop_item["val"] * 60)
+        elif drop_item["type"] == "radar_slot":
+            user["radar_extra_slots"] += drop_item["val"]
+        elif drop_item["type"] == "theme":
+            if drop_item["val"] not in user["unlocked_themes"]:
+                user["unlocked_themes"].append(drop_item["val"])
+        elif drop_item["type"] == "pro_days":
+            cur_pro = max(now, user.get("pro_until", 0))
+            user["pro_until"] = cur_pro + (drop_item["val"] * 86400)
+            user["rank"] = "👑 PRO Ловец"
+
+        user["last_seen"] = now
+        save_json_atomic_sync(GAME_DB_PATH, game_db)
+
+        is_pro, pro_until = is_user_pro(user_id)
+        return {
+            "status": "ok",
+            "drop": drop_item,
+            "profile": user,
+            "is_pro": is_pro,
+            "pro_until": pro_until,
+            "cases_opened_total": user["cases_opened_total"],
+            "pity_progress": user["cases_opened_total"] % 20
         }
 
 @app.post("/api/game/collect_offline")
@@ -1137,7 +1272,7 @@ async def generate_username(
 
         user["gens_total_count"] = user.get("gens_total_count", 0) + 1
 
-        # 👥 АНТИФРОД: 3 поиска активируют +1 день PRO пригласившему
+        # Реферальная валидация
         if user.get("referred_by") and not user.get("referral_reward_claimed", False) and user["gens_total_count"] >= 3:
             user["referral_reward_claimed"] = True
             referrer_id = user["referred_by"]
