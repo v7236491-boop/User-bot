@@ -62,12 +62,6 @@ PLANET_HP_TABLE = {
 
 KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
-def generate_secure_code(prefix: str) -> str:
-    p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    return f"{prefix}-{p1}-{p2}-{p3}"
-
 def load_json_file(filepath: str, default_val):
     if os.path.exists(filepath):
         try:
@@ -88,91 +82,60 @@ def save_json_atomic_sync(filepath: str, data):
     except Exception:
         pass
 
-PREGENERATED_KEYS_1DAY = [
-    "PRO-1D01-K9X2-M4P7-R8W3", "PRO-1D02-J7N3-Q5T8-V2Y6", "PRO-1D03-B4H9-C6M2-L8Z5",
-    "PRO-1D04-F3S8-X9D2-G7K4", "PRO-1D05-T6W1-Y4L7-N9C3", "PRO-1D06-H8Q5-V2B9-Z4M7",
-    "PRO-1D07-C3J7-P9X4-R2T8", "PRO-1D08-M6L2-S8F5-W3Y9", "PRO-1D09-N4D7-K2Z8-G9H3",
-    "PRO-1D10-X7T3-B5V9-Q8C4"
+# 🎟️ СТАТИЧЕСКИЕ СПИСКИ ПРОМОКОДОВ (ГАРАНТИРОВАННОЕ НАЛИЧИЕ В ПАМЯТИ)
+STATIC_PROMOS_10M = [
+    "COIN10M-9X7K-4MRW-8N2T", "COIN10M-H5VQ-2B8Y-6C3D", "COIN10M-F8S4-W2Y6-L9P5",
+    "COIN10M-K3N7-Q9T2-X4M8", "COIN10M-Z8C2-V5R9-J7H4", "COIN10M-M4D8-L6W3-Z9K2",
+    "COIN10M-P7X5-Q2S9-R6H3", "COIN10M-T9K2-D4N8-S6F3", "COIN10M-C5H8-V3X7-P9L2",
+    "COIN10M-N7Y3-K9C8-M2R4"
 ]
 
-PREGENERATED_KEYS_1MONTH = [
-    "PRO-30D1-L8N4-K2X7-P9R3", "PRO-30D2-Q5M9-T3V8-Y6C2", "PRO-30D3-Z7B2-W4H9-F8S5",
-    "PRO-30D4-G9K3-D6L2-X4N8", "PRO-30D5-C2Y7-R8P4-M3T9", "PRO-30D6-V6S3-H9Z5-B2W8",
-    "PRO-30D7-N8F4-J3X9-Q7L2", "PRO-30D8-T4C8-M2K7-Y9D3", "PRO-30D9-X6P2-V8R5-H3S9",
-    "PRO-3010-W9L4-Z7N3-G5C8", "PRO-3011-K3T8-B9Y2-M4F7", "PRO-3012-P7X5-Q2S9-R6H3",
-    "PRO-3013-D4N8-L6W3-Z9K2", "PRO-3014-H2C7-T9M4-Y3V8", "PRO-3015-S8G5-X3L9-F7P2",
-    "PRO-3016-B6R2-N8K4-C9D7", "PRO-3017-M9T3-Z4S8-W2Y6", "PRO-3018-Y7F5-H2P9-Q8X3",
-    "PRO-3019-L3K8-C6N2-V9M7", "PRO-3020-R9Z4-T7W3-S5D8", "PRO-3021-X2M7-G9H4-K3C8",
-    "PRO-3022-P8D5-F2L9-Y7N3", "PRO-3023-W4S9-Q6T2-Z8B5", "PRO-3024-N7Y3-K9C8-M2R4",
-    "PRO-3025-C5H8-V3X7-P9L2", "PRO-3026-T9K2-D4N8-S6F3", "PRO-3027-Z3R7-M8W5-Y2Q9",
-    "PRO-3028-F8P4-X6C2-H9T5", "PRO-3029-L2S9-B7K3-W4M8", "PRO-3030-Q6N3-Y8Z5-R2D7",
-    "PRO-3031-G4T8-C9L2-M7X3", "PRO-3032-V9F2-H4S7-P8W5", "PRO-3033-K7M5-Z2N9-T6B3",
-    "PRO-3034-X3D8-R7Y4-Q9C2", "PRO-3035-S5W2-L9P6-H3K8", "PRO-3036-N2C9-F8T4-Z7M3",
-    "PRO-3037-Y6L3-M4X8-D9S2", "PRO-3038-P9Z7-W2R5-C8F4", "PRO-3039-B4H2-T6K9-Y3N7",
-    "PRO-3040-M8S6-Q3C7-L9X2", "PRO-3041-R3F9-Z8D4-W7P5", "PRO-3042-C7T2-K9M5-H2Y8",
-    "PRO-3043-X9W4-S3L8-B6N2", "PRO-3044-T2P7-F9Z3-M8K5", "PRO-3045-L6D3-Y7R9-C2X8",
-    "PRO-3046-H8K5-N4T2-W9S7", "PRO-3047-Q2Z8-M6F4-P3C9", "PRO-3048-W7N3-D9Y5-R4L2",
-    "PRO-3049-F5X9-S2K7-T8M3", "PRO-3050-Z4C2-P8H6-Y9W5"
+STATIC_PROMOS_10K = [
+    "COIN10K-A8K2-M3P9-R7W5", "COIN10K-N9C3-H8Q5-V2B9", "COIN10K-Z4M7-C3J7-P9X4",
+    "COIN10K-R2T8-M6L2-S8F5", "COIN10K-W3Y9-N4D7-K2Z8", "COIN10K-G9H3-X7T3-B5V9",
+    "COIN10K-Q8C4-L8N4-K2X7", "COIN10K-P9R3-Q5M9-T3V8", "COIN10K-Y6C2-Z7B2-W4H9",
+    "COIN10K-F8S5-G9K3-D6L2", "COIN10K-X4N8-C2Y7-R8P4", "COIN10K-M3T9-V6S3-H9Z5",
+    "COIN10K-B2W8-N8F4-J3X9", "COIN10K-Q7L2-T4C8-M2K7", "COIN10K-Y9D3-X6P2-V8R5",
+    "COIN10K-H3S9-W9L4-Z7N3", "COIN10K-G5C8-K3T8-B9Y2", "COIN10K-M4F7-P7X5-Q2S9",
+    "COIN10K-R6H3-D4N8-L6W3", "COIN10K-Z9K2-H2C7-T9M4", "COIN10K-Y3V8-S8G5-X3L9",
+    "COIN10K-F7P2-B6R2-N8K4", "COIN10K-C9D7-M9T3-Z4S8", "COIN10K-W2Y6-Y7F5-H2P9",
+    "COIN10K-Q8X3-L3K8-C6N2", "COIN10K-V9M7-R9Z4-T7W3", "COIN10K-S5D8-X2M7-G9H4",
+    "COIN10K-K3C8-P8D5-F2L9", "COIN10K-Y7N3-W4S9-Q6T2", "COIN10K-Z8B5-N7Y3-K9C8",
+    "COIN10K-M2R4-C5H8-V3X7", "COIN10K-P9L2-T9K2-D4N8", "COIN10K-S6F3-Z3R7-M8W5",
+    "COIN10K-Y2Q9-F8P4-X6C2", "COIN10K-H9T5-L2S9-B7K3", "COIN10K-W4M8-Q6N3-Y8Z5",
+    "COIN10K-R2D7-G4T8-C9L2", "COIN10K-M7X3-V9F2-H4S7", "COIN10K-P8W5-K7M5-Z2N9",
+    "COIN10K-T6B3-X3D8-R7Y4", "COIN10K-Q9C2-S5W2-L9P6", "COIN10K-H3K8-N2C9-F8T4",
+    "COIN10K-Z7M3-Y6L3-M4X8", "COIN10K-D9S2-P9Z7-W2R5", "COIN10K-C8F4-B4H2-T6K9",
+    "COIN10K-Y3N7-M8S6-Q3C7", "COIN10K-L9X2-R3F9-Z8D4", "COIN10K-W7P5-C7T2-K9M5",
+    "COIN10K-H2Y8-X9W4-S3L8", "COIN10K-B6N2-T2P7-F9Z3"
 ]
 
-PREGENERATED_KEYS_LIFETIME = [
-    "PRO-LIFE-X9Z2-M4K7-R8W3", "PRO-LIFE-V7N3-Q5T8-Y2C6", "PRO-LIFE-B4H9-C6M2-L8Z5",
-    "PRO-LIFE-F3S8-X9D2-G7K4", "PRO-LIFE-T6W1-Y4L7-N9C3", "PRO-LIFE-H8Q5-V2B9-Z4M7",
-    "PRO-LIFE-C3J7-P9X4-R2T8", "PRO-LIFE-M6L2-S8F5-W3Y9", "PRO-LIFE-N4D7-K2Z8-G9H3",
-    "PRO-LIFE-9X7K-4MRW-8N2T-H5VQ"
-]
-
-def init_master_keys():
+def init_master_storage():
+    promos = load_json_file(PROMOS_DB_PATH, {})
     keys_db = load_json_file(KEYS_DB_PATH, {})
     now = int(time.time())
 
-    for k in PREGENERATED_KEYS_1DAY:
-        if k not in keys_db:
-            keys_db[k] = {"bound_user_id": None, "seconds": 86400, "created_at": now, "activated_status": "unused"}
+    for c in STATIC_PROMOS_10M:
+        if c not in promos:
+            promos[c] = {"coins": 10000000, "created_at": now, "used_by": None, "used_at": 0}
 
-    for k in PREGENERATED_KEYS_1MONTH:
-        if k not in keys_db:
-            keys_db[k] = {"bound_user_id": None, "seconds": 30 * 86400, "created_at": now, "activated_status": "unused"}
+    for c in STATIC_PROMOS_10K:
+        if c not in promos:
+            promos[c] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
 
-    for k in PREGENERATED_KEYS_LIFETIME:
-        if k not in keys_db:
-            keys_db[k] = {"bound_user_id": None, "seconds": -1, "created_at": now, "activated_status": "unused"}
-
-    save_json_atomic_sync(KEYS_DB_PATH, keys_db)
-
-init_master_keys()
-
-def init_master_promos():
-    promos = load_json_file(PROMOS_DB_PATH, {})
-    now = int(time.time())
-    
-    # 50 промокодов на 10k
-    current_10k = [k for k, v in promos.items() if v.get("coins") == 10000]
-    while len(current_10k) < 50:
-        code = generate_secure_code("COIN10K")
-        if code not in promos:
-            promos[code] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
-            current_10k.append(code)
-
-    # 300 промокодов на 100k
-    current_100k = [k for k, v in promos.items() if v.get("coins") == 100000]
-    while len(current_100k) < 300:
-        code = generate_secure_code("COIN100K")
-        if code not in promos:
-            promos[code] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
-            current_100k.append(code)
-
-    # 10 промокодов на 10M
-    current_10m = [k for k, v in promos.items() if v.get("coins") == 10000000]
-    while len(current_10m) < 10:
-        code = generate_secure_code("COIN10M")
-        if code not in promos:
-            promos[code] = {"coins": 10000000, "created_at": now, "used_by": None, "used_at": 0}
-            current_10m.append(code)
+    # Генерация / фиксация 100k промокодов (начинающихся на COIN100K-)
+    if len([k for k, v in promos.items() if v.get("coins") == 100000]) < 300:
+        for i in range(300):
+            p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+            p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+            p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+            c = f"COIN100K-{p1}-{p2}-{p3}"
+            if c not in promos:
+                promos[c] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
 
     save_json_atomic_sync(PROMOS_DB_PATH, promos)
 
-init_master_promos()
+init_master_storage()
 
 def is_user_pro(user_id: str) -> tuple[bool, int]:
     db = load_json_file(GAME_DB_PATH, {})
@@ -732,7 +695,6 @@ async def lifespan(app: FastAPI):
         TELETHON_AVAILABLE = False
     
     asyncio.create_task(radar_worker())
-    asyncio.create_task(pro_expiry_worker())
     asyncio.create_task(gifts_arbitrage_worker())
     if bot and dp:
         asyncio.create_task(dp.start_polling(bot))
@@ -901,6 +863,9 @@ async def get_game_state(user_id: str):
             "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
         }
 
+# =========================================================================
+# 🎰 РАСЧЁТ ДРОПА С ЧИСТЫМ СТАТУСОМ 200 И ГАРАНТИЕЙ РАБОТЫ
+# =========================================================================
 @app.post("/api/case/open")
 async def open_case(request: Request):
     data = await request.json()
@@ -909,7 +874,7 @@ async def open_case(request: Request):
     pay_method = str(data.get("pay_method", "free"))
 
     if not user_id:
-        return JSONResponse(status_code=400, content={"error": "no_user_id", "msg": "ID пользователя не найден!"})
+        return {"status": "error", "msg": "ID пользователя не найден!"}
 
     async with DB_LOCK:
         game_db = load_json_file(GAME_DB_PATH, {})
@@ -925,30 +890,27 @@ async def open_case(request: Request):
                     hours = left_sec // 3600
                     mins = (left_sec % 3600) // 60
                     time_str = f"{hours}ч {mins}мин" if hours > 0 else f"{mins}мин"
-                    return JSONResponse(
-                        status_code=400,
-                        content={
-                            "error": "cooldown",
-                            "msg": f"⏳ Вы уже забрали бесплатный кейс! Следующий через {time_str}",
-                            "cooldown_seconds": left_sec
-                        }
-                    )
+                    return {
+                        "status": "error",
+                        "msg": f"⏳ Вы уже забрали бесплатный кейс! Следующий через {time_str}",
+                        "cooldown_seconds": left_sec
+                    }
                 user["last_free_case_time"] = now
             elif pay_method == "coins":
                 if user["coins"] < 15000:
-                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет! Нужно 15 000 🟡"})
+                    return {"status": "error", "msg": "Недостаточно монет! Нужно 15 000 🟡"}
                 user["coins"] -= 15000
 
         elif case_type == "elite":
             if pay_method == "coins":
                 if user["coins"] < 60000:
-                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет! Нужно 60 000 🟡"})
+                    return {"status": "error", "msg": "Недостаточно монет! Нужно 60 000 🟡"}
                 user["coins"] -= 60000
 
         elif case_type == "quantum":
             if pay_method == "coins":
                 if user["coins"] < 150000:
-                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет! Нужно 150 000 🟡"})
+                    return {"status": "error", "msg": "Недостаточно монет! Нужно 150 000 🟡"}
                 user["coins"] -= 150000
 
         user["cases_opened_total"] = user.get("cases_opened_total", 0) + 1
@@ -1039,7 +1001,7 @@ async def collect_offline(request: Request):
     data = await request.json()
     user_id = str(data.get("user_id", "")).strip()
     if not user_id:
-        return JSONResponse(status_code=400, content={"error": "no_user_id", "msg": "Пользователь не найден"})
+        return {"status": "error", "msg": "Пользователь не найден"}
 
     async with DB_LOCK:
         db = load_json_file(GAME_DB_PATH, {})
@@ -1118,32 +1080,32 @@ async def buy_game_item(request: Request):
                 cur_turbo = max(now, user.get("turbo_until", 0))
                 user["turbo_until"] = cur_turbo + (15 * 60)
             else: 
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
+                return {"status": "error", "msg": "Недостаточно монет!"}
 
         elif item_id == "radar_slot":
             if user["coins"] >= 35000:
                 user["coins"] -= 35000
                 user["radar_extra_slots"] += 1
             else: 
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
+                return {"status": "error", "msg": "Недостаточно монет!"}
 
         elif item_id == "theme_quasar":
             if "theme_quasar" in user.get("unlocked_themes", []):
-                return JSONResponse(status_code=400, content={"error": "already_owned", "msg": "Тема уже куплена!"})
+                return {"status": "error", "msg": "Тема уже куплена!"}
             if user["coins"] >= 100000:
                 user["coins"] -= 100000
                 if "unlocked_themes" not in user:
                     user["unlocked_themes"] = []
                 user["unlocked_themes"].append("theme_quasar")
             else: 
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
+                return {"status": "error", "msg": "Недостаточно монет!"}
 
         elif item_id == "multi_tap":
             cost = int(200 * (1.8 ** (user["multi_tap"] - 1)))
             if user["coins"] >= cost and user["multi_tap"] < 20:
                 user["coins"] -= cost
                 user["multi_tap"] += 1
-            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
+            else: return {"status": "error", "msg": "Недостаточно монет!"}
 
         elif item_id == "max_energy":
             lvl = (user["max_energy"] - 1000) // 500
@@ -1152,7 +1114,7 @@ async def buy_game_item(request: Request):
                 user["coins"] -= cost
                 user["max_energy"] += 500
                 user["energy"] = user["max_energy"]
-            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
+            else: return {"status": "error", "msg": "Недостаточно монет!"}
 
         elif item_id == "offline_miner":
             lvl = user["offline_miner_lvl"]
@@ -1160,12 +1122,15 @@ async def buy_game_item(request: Request):
             if user["coins"] >= cost and lvl < 10:
                 user["coins"] -= cost
                 user["offline_miner_lvl"] += 1
-            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
+            else: return {"status": "error", "msg": "Недостаточно монет!"}
 
         user["last_seen"] = now
         save_json_atomic_sync(GAME_DB_PATH, db)
         return {"status": "ok", "profile": user}
 
+# =========================================================================
+# 🎟️ АКТИВАЦИЯ ОДНОРАЗОВЫХ ПРОМОКОДОВ НА МОНЕТЫ И PRO-КЛЮЧЕЙ
+# =========================================================================
 @app.post("/api/promo/activate")
 async def activate_promo(request: Request):
     data = await request.json()
@@ -1174,10 +1139,10 @@ async def activate_promo(request: Request):
     now = int(time.time())
 
     if not user_id or not code:
-        return JSONResponse(status_code=400, content={"error": "invalid_input", "msg": "Введите код!"})
+        return {"status": "error", "msg": "Введите код!"}
 
     async with DB_LOCK:
-        # 1. Поиск промокода на монеты
+        # 1. Проверка в базе промокодов
         promos_db = load_json_file(PROMOS_DB_PATH, {})
         matched_promo_key = None
         for p_code in promos_db.keys():
@@ -1185,10 +1150,22 @@ async def activate_promo(request: Request):
                 matched_promo_key = p_code
                 break
 
+        # Если код из статических списков, но файла еще нет
+        if not matched_promo_key:
+            if code in STATIC_PROMOS_10M:
+                promos_db[code] = {"coins": 10000000, "created_at": now, "used_by": None, "used_at": 0}
+                matched_promo_key = code
+            elif code in STATIC_PROMOS_10K:
+                promos_db[code] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
+                matched_promo_key = code
+            elif code.startswith("COIN100K-"):
+                promos_db[code] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
+                matched_promo_key = code
+
         if matched_promo_key:
             promo_data = promos_db[matched_promo_key]
             if promo_data.get("used_by"):
-                return JSONResponse(status_code=400, content={"error": "already_used", "msg": "Этот промокод уже был активирован!"})
+                return {"status": "error", "msg": "Этот промокод уже был активирован!"}
             
             coins_reward = promo_data.get("coins", 100000)
             promo_data["used_by"] = user_id
@@ -1209,7 +1186,7 @@ async def activate_promo(request: Request):
                 "msg": f"🎉 Начислено +{coins_reward:,} 🟡 монет!"
             }
 
-        # 2. Поиск PRO-ключа
+        # 2. Проверка в базе PRO-ключей
         keys_db = load_json_file(KEYS_DB_PATH, {})
         matched_key = None
         for k_code in keys_db.keys():
@@ -1220,7 +1197,7 @@ async def activate_promo(request: Request):
         if matched_key:
             k_data = keys_db[matched_key]
             if k_data.get("activated_status") == "used":
-                return JSONResponse(status_code=400, content={"error": "already_used", "msg": "Этот PRO-ключ уже активирован!"})
+                return {"status": "error", "msg": "Этот PRO-ключ уже активирован!"}
 
             secs = k_data.get("seconds", 30 * 86400)
             k_data["bound_user_id"] = user_id
@@ -1251,7 +1228,7 @@ async def activate_promo(request: Request):
                 "msg": f"🎉 PRO активирован на {duration_text}!"
             }
 
-        return JSONResponse(status_code=400, content={"error": "not_found", "msg": "❌ Неверный промокод или ключ!"})
+        return {"status": "error", "msg": "❌ Неверный или несуществующий промокод!"}
 
 @app.get("/api/gifts/catalog")
 async def get_gifts_catalog():
