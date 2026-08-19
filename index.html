@@ -770,6 +770,11 @@
                     </div>
                 </div>
 
+                <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
+                    <span>🎁 Снайпер Fragment Подарков (1000 шт)</span>
+                    <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
+                </div>
+
                 <div class="accordion-section" style="margin-top:10px;">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span style="color: var(--primary);">🎯 Радар (Слежка за никами)</span>
@@ -1820,9 +1825,11 @@
                     updateTycoonUI();
                     showToast('✅ Успешно куплено!');
                 } else {
-                    showToast('❌ Недостаточно монет!');
+                    showToast(`❌ ${data.msg || "Недостаточно монет!"}`);
                 }
-            } catch(e){}
+            } catch(e){
+                showToast("Ошибка соединения при покупке");
+            }
         }
 
         async function collectOfflineReward() {
@@ -1833,13 +1840,20 @@
                 });
                 const data = await res.json();
                 if (data.status === 'ok') {
-                    userProfile.coins = data.coins;
+                    userProfile = data.profile;
+                    isProUser = data.is_pro;
+                    userProUntil = data.pro_until;
                     saveProfileEverywhere();
                     updateTycoonUI();
+                    applyProStateToUI();
                     closeModal('modal-offline-reward');
-                    showToast(`🟡 Получено +${data.collected} монет!`);
+                    showToast(`🟡 Зачислено +${data.collected} монет!`);
+                } else {
+                    showToast("Ошибка при получении наград");
                 }
-            } catch(e){}
+            } catch(e){
+                showToast("Ошибка сети при сборе монет");
+            }
         }
 
         // =========================================================================
@@ -2084,13 +2098,13 @@
                 const data = await res.json();
                 if (data.status === 'ok') {
                     if (data.type === 'coins') {
-                        userProfile.coins = data.coins;
+                        userProfile = data.profile;
                         saveProfileEverywhere();
                         updateTycoonUI();
                         showToast(data.msg);
                     } else if (data.type === 'pro') {
-                        isProUser = true;
-                        userProfile.pro_until = data.pro_until;
+                        userProfile = data.profile;
+                        isProUser = data.is_pro;
                         userProUntil = data.pro_until;
                         saveProfileEverywhere();
                         applyProStateToUI();
