@@ -46,15 +46,12 @@
             background: linear-gradient(45deg, #ff0055, #ff9900, #ffee00, #00ff66, #00eeff, #9900ff) !important;
             background-size: 400% 400% !important; animation: rainbowBG 6s ease infinite !important;
         }
-        body.theme-blackhole { background: #000000 !important; color: #d8b4fe !important; }
+        body.theme-blackhole { background: radial-gradient(circle at center, #2e1065 0%, #000000 80%) !important; color: #d8b4fe !important; }
         body.theme-quasar { background: radial-gradient(circle at center, #1e1b4b 0%, #09090b 70%, #000000 100%) !important; color: #38bdf8 !important; }
         body.theme-quantum { background: radial-gradient(circle at center, #172554 0%, #030712 100%) !important; color: #60a5fa !important; }
         @keyframes rainbowBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
         #fog-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; }
-        #blackhole-bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -9; pointer-events: none; display: none; }
-        body.theme-blackhole #blackhole-bg-canvas { display: block; }
-        body.theme-blackhole #fog-canvas { display: none; }
 
         .glass-panel {
             background: var(--glass-bg); 
@@ -96,16 +93,8 @@
             white-space: nowrap;
         }
         .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
-        .nav-btn.ref-btn {
-            border-color: rgba(56, 189, 248, 0.35);
-            background: rgba(56, 189, 248, 0.12);
-            color: #7dd3fc;
-        }
-        .nav-btn.roulette-btn {
-            border-color: rgba(234, 179, 8, 0.35);
-            background: rgba(234, 179, 8, 0.12);
-            color: #facc15;
-        }
+        .nav-btn.ref-btn { border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #7dd3fc; }
+        .nav-btn.roulette-btn { border-color: rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.12); color: #facc15; }
 
         .btn-buy-pro-header {
             background: linear-gradient(135deg, #eab308, #ca8a04);
@@ -544,7 +533,6 @@
 <body>
 
     <canvas id="fog-canvas"></canvas>
-    <canvas id="blackhole-bg-canvas"></canvas>
 
     <header>
         <div class="header-col-group">
@@ -821,7 +809,7 @@
                     </div>
                     <div class="accordion-content">
                         <div style="font-size: 0.8rem; color: var(--text-muted); margin: 8px 0;">
-                            Слоты: <b id="settings-radar-slot-count" style="color: var(--primary);">0/100</b>
+                            Слоты: <b id="settings-radar-slot-count" style="color: var(--primary);">0/3</b>
                         </div>
                         <input type="text" id="radar-input-settings" class="form-input" placeholder="@username">
                         <button class="form-btn" onclick="addRadarTargetFromSettings()">Поставить на мушку</button>
