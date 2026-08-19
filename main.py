@@ -24,6 +24,7 @@ RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
 LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
 KEYS_DB_PATH = os.path.join(BASE_DIR, "pro_keys.json")
+PROMOS_DB_PATH = os.path.join(BASE_DIR, "promocodes_db.json")
 GIFTS_DB_PATH = os.path.join(BASE_DIR, "gifts_settings.json")
 REFERRALS_DB_PATH = os.path.join(BASE_DIR, "referrals_db.json")
 
@@ -61,12 +62,11 @@ PLANET_HP_TABLE = {
 
 KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
-def generate_secure_pro_key() -> str:
+def generate_secure_code(prefix: str) -> str:
     p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
     p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
     p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    p4 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    return f"PRO-{p1}-{p2}-{p3}-{p4}"
+    return f"{prefix}-{p1}-{p2}-{p3}"
 
 def load_json_file(filepath: str, default_val):
     if os.path.exists(filepath):
@@ -141,6 +141,35 @@ def init_master_keys():
     save_json_atomic_sync(KEYS_DB_PATH, keys_db)
 
 init_master_keys()
+
+def init_master_promos():
+    promos = load_json_file(PROMOS_DB_PATH, {})
+    now = int(time.time())
+    
+    current_10k = [k for k, v in promos.items() if v.get("coins") == 10000]
+    while len(current_10k) < 50:
+        code = generate_secure_code("COIN10K")
+        if code not in promos:
+            promos[code] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
+            current_10k.append(code)
+
+    current_100k = [k for k, v in promos.items() if v.get("coins") == 100000]
+    while len(current_100k) < 300:
+        code = generate_secure_code("COIN100K")
+        if code not in promos:
+            promos[code] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
+            current_100k.append(code)
+
+    current_10m = [k for k, v in promos.items() if v.get("coins") == 10000000]
+    while len(current_10m) < 10:
+        code = generate_secure_code("COIN10M")
+        if code not in promos:
+            promos[code] = {"coins": 10000000, "created_at": now, "used_by": None, "used_at": 0}
+            current_10m.append(code)
+
+    save_json_atomic_sync(PROMOS_DB_PATH, promos)
+
+init_master_promos()
 
 def is_user_pro(user_id: str) -> tuple[bool, int]:
     db = load_json_file(GAME_DB_PATH, {})
@@ -611,7 +640,7 @@ if dp and bot:
         if tariff and tariff["seconds"] != 0:
             secs = tariff["seconds"]
             now = int(time.time())
-            key_code = generate_secure_pro_key()
+            key_code = generate_secure_code("PRO")
             
             async with DB_LOCK:
                 keys_db = load_json_file(KEYS_DB_PATH, {})
@@ -626,11 +655,15 @@ if dp and bot:
 
                 game_db = load_json_file(GAME_DB_PATH, {})
                 user = get_user_profile(game_db, user_id)
-                if secs == -1:
-                    user["pro_until"] = -1
-                else:
-                    cur_pro = max(now, user.get("pro_until", 0))
-                    user["pro_until"] = cur_pro + secs
+                
+                # 🛡️ Сохранение Lifetime и суммирование сроков
+                if user.get("pro_until") != -1:
+                    if secs == -1:
+                        user["pro_until"] = -1
+                    else:
+                        cur_pro = max(now, user.get("pro_until", 0))
+                        user["pro_until"] = cur_pro + secs
+                
                 user["rank"] = "👑 PRO Ловец"
                 user["pro_warned"] = False
                 user["pro_expired_notified"] = False
@@ -648,9 +681,9 @@ if dp and bot:
                 f"🎉 **СПАСИБО ЗА ПОКУПКУ PRO ПОДПИСКИ!** 👑\n\n"
                 f"🌟 **Ваш статус:** АКТИВЕН\n"
                 f"⏳ **Срок действия:** {duration_text}\n\n"
-                f"🔑 **Ваш персональный одноразовый ключ:**\n"
+                f"🔑 **Ваш персональный ключ:**\n"
                 f"`{key_code}`\n\n"
-                f"_(Нажмите на ключ выше, чтобы скопировать его в 1 клик)_\n\n"
+                f"_(Нажмите на ключ, чтобы скопировать его в 1 клик)_\n\n"
                 f"✨ **Что вам теперь доступно:**\n"
                 f"• 🎁 Снайпер скидок на Telegram Подарки\n"
                 f"• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
@@ -697,7 +730,6 @@ async def lifespan(app: FastAPI):
         TELETHON_AVAILABLE = False
     
     asyncio.create_task(radar_worker())
-    asyncio.create_task(pro_expiry_worker())
     asyncio.create_task(gifts_arbitrage_worker())
     if bot and dp:
         asyncio.create_task(dp.start_polling(bot))
@@ -735,7 +767,7 @@ async def restore_sync(request: Request):
         user = get_user_profile(db, user_id)
         now = int(time.time())
 
-        # Расчет оффлайн-фарма при восстановлении
+        # Расчет оффлайн-фарма
         time_diff = now - user["last_seen"]
         offline_earned = 0
         offline_seconds = 0
@@ -967,12 +999,13 @@ async def open_case(request: Request):
             if drop_item["val"] not in user["unlocked_themes"]:
                 user["unlocked_themes"].append(drop_item["val"])
         elif drop_item["type"] == "pro_days":
-            cur_pro = max(now, user.get("pro_until", 0))
-            user["pro_until"] = cur_pro + (drop_item["val"] * 86400)
+            if user.get("pro_until") != -1:
+                cur_pro = max(now, user.get("pro_until", 0))
+                user["pro_until"] = cur_pro + (drop_item["val"] * 86400)
             user["rank"] = "👑 PRO Ловец"
 
         user["last_seen"] = now
-        save_json_atomic_sync(GAME_DB_PATH, game_db)
+        save_json_atomic_sync(GAME_DB_PATH, db)
 
         is_pro, pro_until = is_user_pro(user_id)
         return {
@@ -1104,6 +1137,65 @@ async def buy_game_item(request: Request):
         save_json_atomic_sync(GAME_DB_PATH, db)
         return {"status": "ok", "profile": user}
 
+@app.post("/api/promo/activate")
+async def activate_promo(request: Request):
+    data = await request.json()
+    user_id = str(data.get("user_id", "")).strip()
+    code = str(data.get("code", "")).strip().upper()
+    now = int(time.time())
+
+    if not user_id or not code:
+        return JSONResponse(status_code=400, content={"error": "invalid_input", "msg": "Введите код!"})
+
+    async with DB_LOCK:
+        promos_db = load_json_file(PROMOS_DB_PATH, {})
+        if code in promos_db:
+            promo_data = promos_db[code]
+            if promo_data.get("used_by"):
+                return JSONResponse(status_code=400, content={"error": "already_used", "msg": "Этот промокод уже был активирован!"})
+            
+            coins_reward = promo_data.get("coins", 100000)
+            promo_data["used_by"] = user_id
+            promo_data["used_at"] = now
+            save_json_atomic_sync(PROMOS_DB_PATH, promos_db)
+
+            game_db = load_json_file(GAME_DB_PATH, {})
+            user = get_user_profile(game_db, user_id)
+            user["coins"] += coins_reward
+            save_json_atomic_sync(GAME_DB_PATH, game_db)
+
+            return {"status": "ok", "type": "coins", "coins": user["coins"], "reward": coins_reward, "msg": f"🎉 Начислено +{coins_reward:,} 🟡 монет!"}
+
+        keys_db = load_json_file(KEYS_DB_PATH, {})
+        if code in keys_db:
+            k_data = keys_db[code]
+            if k_data.get("activated_status") == "used":
+                return JSONResponse(status_code=400, content={"error": "already_used", "msg": "Этот PRO-ключ уже активирован!"})
+
+            secs = k_data.get("seconds", 30 * 86400)
+            k_data["bound_user_id"] = user_id
+            k_data["activated_status"] = "used"
+            k_data["activated_at"] = now
+            save_json_atomic_sync(KEYS_DB_PATH, keys_db)
+
+            game_db = load_json_file(GAME_DB_PATH, {})
+            user = get_user_profile(game_db, user_id)
+            
+            if user.get("pro_until") != -1:
+                if secs == -1:
+                    user["pro_until"] = -1
+                else:
+                    cur_pro = max(now, user.get("pro_until", 0))
+                    user["pro_until"] = cur_pro + secs
+            
+            user["rank"] = "👑 PRO Ловец"
+            save_json_atomic_sync(GAME_DB_PATH, game_db)
+
+            duration_text = "Навсегда (Lifetime) 🌌" if secs == -1 else f"{secs // 86400} дней 📅"
+            return {"status": "ok", "type": "pro", "is_pro": True, "pro_until": user["pro_until"], "msg": f"🎉 PRO активирован на {duration_text}!"}
+
+        return JSONResponse(status_code=400, content={"error": "not_found", "msg": "❌ Неверный или несуществующий промокод!"})
+
 @app.get("/api/gifts/catalog")
 async def get_gifts_catalog():
     return {"status": "ok", "catalog": GIFTS_CATALOG}
@@ -1158,91 +1250,6 @@ async def create_pro_invoice(request: Request):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-@app.post("/api/pro/activate_key")
-async def activate_pro_key(request: Request):
-    data = await request.json()
-    user_id = str(data.get("user_id", "")).strip()
-    key_code = str(data.get("key", "")).strip().upper()
-    now = int(time.time())
-
-    if user_id in FAILED_ATTEMPTS:
-        fails, lock_time = FAILED_ATTEMPTS[user_id]
-        if fails >= 5:
-            if now - lock_time < 300:
-                wait_sec = 300 - (now - lock_time)
-                return JSONResponse(status_code=429, content={"error": f"Слишком много попыток. Подождите {wait_sec} сек."})
-            else:
-                FAILED_ATTEMPTS[user_id] = [0, 0]
-
-    async with DB_LOCK:
-        keys_db = load_json_file(KEYS_DB_PATH, {})
-        if key_code not in keys_db or keys_db[key_code].get("activated_status") == "used":
-            cur_fails = FAILED_ATTEMPTS.get(user_id, [0, 0])[0] + 1
-            FAILED_ATTEMPTS[user_id] = [cur_fails, now]
-            return JSONResponse(status_code=400, content={"error": "Ключ не существует или уже активирован!"})
-        
-        k_data = keys_db[key_code]
-        if k_data.get("bound_user_id") and k_data["bound_user_id"] != user_id:
-            return JSONResponse(status_code=403, content={"error": "Этот ключ привязан к другому Telegram ID!"})
-
-        secs = k_data.get("seconds", 30 * 86400)
-        k_data["bound_user_id"] = user_id
-        k_data["activated_status"] = "used"
-        k_data["activated_at"] = now
-        save_json_atomic_sync(KEYS_DB_PATH, keys_db)
-
-        game_db = load_json_file(GAME_DB_PATH, {})
-        user = get_user_profile(game_db, user_id)
-        if secs == -1:
-            user["pro_until"] = -1
-        else:
-            cur_pro = max(now, user.get("pro_until", 0))
-            user["pro_until"] = cur_pro + secs
-        user["rank"] = "👑 PRO Ловец"
-        user["pro_warned"] = False
-        user["pro_expired_notified"] = False
-        save_json_atomic_sync(GAME_DB_PATH, game_db)
-
-        if user_id in FAILED_ATTEMPTS:
-            del FAILED_ATTEMPTS[user_id]
-
-        duration_text = "Навсегда (Lifetime) 🌌" if secs == -1 else f"{secs // 86400} дней 📅"
-
-        if bot and user_id.isdigit():
-            try:
-                web_app_url = "https://user-bot-production-8a5d.up.railway.app"
-                kb = InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [InlineKeyboardButton(text="🚀 Запустить PRO Функции", web_app=WebAppInfo(url=web_app_url))]
-                    ]
-                )
-                await bot.send_message(
-                    chat_id=int(user_id),
-                    text=(
-                        f"🎉 **ВАША PRO-ПОДПИСКА УСПЕШНО АКТИВИРОВАНА!** 👑\n\n"
-                        f"🔑 **Ключ:** `{key_code}`\n"
-                        f"⏳ **Срок действия:** {duration_text}\n\n"
-                        f"✨ **Вам разблокированы все возможности:**\n"
-                        f"• 🎁 Снайпер подарков Fragment (Auto-Buy)\n"
-                        f"• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
-                        f"• 🎯 Радар на 100 слотов\n"
-                        f"• 🛠️ Конструктор ников по 20 категориям\n"
-                        f"• ⚡ Безлимитные генерации без дневных лимитов\n\n"
-                        f"🌟 _Желаем приятного использования и удачной ловли!_"
-                    ),
-                    parse_mode="Markdown",
-                    reply_markup=kb
-                )
-            except Exception:
-                pass
-
-        return {
-            "status": "ok", 
-            "is_pro": True, 
-            "pro_until": user["pro_until"], 
-            "rank": user["rank"]
-        }
-
 @app.get("/api/generate")
 async def generate_username(
     request: Request, 
@@ -1283,8 +1290,9 @@ async def generate_username(
             if referrer_id in game_db:
                 ref_user = get_user_profile(game_db, referrer_id)
                 now_ts = int(time.time())
-                cur_pro = max(now_ts, ref_user.get("pro_until", 0))
-                ref_user["pro_until"] = cur_pro + 86400
+                if ref_user.get("pro_until") != -1:
+                    cur_pro = max(now_ts, ref_user.get("pro_until", 0))
+                    ref_user["pro_until"] = cur_pro + 86400
                 ref_user["rank"] = "👑 PRO Ловец"
                 ref_user["referrals_count"] = ref_user.get("referrals_count", 0) + 1
                 reward_referrer_id = referrer_id
