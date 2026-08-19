@@ -11,6 +11,7 @@ from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.types import LabeledPrice, PreCheckoutQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram.filters import CommandStart, CommandObject
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl.functions.account import CheckUsernameRequest
@@ -24,6 +25,7 @@ LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
 GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
 KEYS_DB_PATH = os.path.join(BASE_DIR, "pro_keys.json")
 GIFTS_DB_PATH = os.path.join(BASE_DIR, "gifts_settings.json")
+REFERRALS_DB_PATH = os.path.join(BASE_DIR, "referrals_db.json")
 
 DB_LOCK = asyncio.Lock()
 CHECK_CACHE = {}
@@ -180,6 +182,10 @@ def get_user_profile(db: dict, user_id: str) -> dict:
             "pro_expired_notified": True,
             "daily_gens_count": 0,
             "daily_gens_date": today_str,
+            "gens_total_count": 0,
+            "referred_by": None,
+            "referral_reward_claimed": False,
+            "referrals_count": 0,
             "client_history": [],
             "client_achievements": [],
             "custom_theme_style": "",
@@ -199,6 +205,10 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     if "pro_expired_notified" not in user: user["pro_expired_notified"] = True
     if "daily_gens_count" not in user: user["daily_gens_count"] = 0
     if "daily_gens_date" not in user: user["daily_gens_date"] = today_str
+    if "gens_total_count" not in user: user["gens_total_count"] = 0
+    if "referred_by" not in user: user["referred_by"] = None
+    if "referral_reward_claimed" not in user: user["referral_reward_claimed"] = False
+    if "referrals_count" not in user: user["referrals_count"] = 0
     if "client_history" not in user: user["client_history"] = []
     if "client_achievements" not in user: user["client_achievements"] = []
     if "custom_theme_style" not in user: user["custom_theme_style"] = ""
@@ -456,8 +466,30 @@ TARRIFS = {
 }
 
 if dp and bot:
-    @dp.message(F.text == "/start")
-    async def cmd_start(message: types.Message):
+    @dp.message(CommandStart())
+    async def cmd_start(message: types.Message, command: CommandObject):
+        user_id = str(message.from_user.id)
+        ref_referrer = None
+
+        if command.args and command.args.startswith("ref_"):
+            potential_referrer = command.args.replace("ref_", "").strip()
+            if potential_referrer.isdigit() and potential_referrer != user_id:
+                ref_referrer = potential_referrer
+
+        async with DB_LOCK:
+            game_db = load_json_file(GAME_DB_PATH, {})
+            user = get_user_profile(game_db, user_id)
+            
+            if ref_referrer and not user.get("referred_by") and user.get("gens_total_count", 0) == 0:
+                user["referred_by"] = ref_referrer
+                ref_db = load_json_file(REFERRALS_DB_PATH, {})
+                if ref_referrer not in ref_db:
+                    ref_db[ref_referrer] = []
+                if user_id not in ref_db[ref_referrer]:
+                    ref_db[ref_referrer].append(user_id)
+                save_json_atomic_sync(REFERRALS_DB_PATH, ref_db)
+                save_json_atomic_sync(GAME_DB_PATH, game_db)
+
         web_app_url = "https://user-bot-production-8a5d.up.railway.app"
         kb = InlineKeyboardMarkup(
             inline_keyboard=[
@@ -469,7 +501,8 @@ if dp and bot:
             "🎯 Мгновенный поиск редких юзернеймов\n"
             "🎁 Снайпер скидок на Telegram Подарки (Fragment)\n"
             "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
-            "👑 Радар на 100 слотов, Конструктор 20 категорий и ∞ Энергия",
+            "👑 Радар на 100 слотов, Конструктор 20 категорий и ∞ Энергия\n"
+            "👥 Приглашай друзей и получай **+1 день PRO** за каждого!",
             reply_markup=kb,
             parse_mode="Markdown"
         )
@@ -722,6 +755,11 @@ async def restore_sync(request: Request):
             if th not in user.get("unlocked_themes", []):
                 user["unlocked_themes"].append(th)
 
+        # 👥 Синхронизация постоянных рефералов с клиента в базу
+        client_ref_count = int(client_profile.get("referrals_count", 0))
+        if client_ref_count > user.get("referrals_count", 0):
+            user["referrals_count"] = client_ref_count
+
         if len(client_profile.get("client_history", [])) > len(user.get("client_history", [])):
             user["client_history"] = client_profile["client_history"]
 
@@ -749,12 +787,18 @@ async def restore_sync(request: Request):
                     rdb[user_id].append(target)
             save_json_atomic_sync(RADAR_DB_PATH, rdb)
 
+        ref_db = load_json_file(REFERRALS_DB_PATH, {})
+        my_refs = ref_db.get(user_id, [])
+        final_refs_count = max(len(my_refs), user.get("referrals_count", 0))
+        user["referrals_count"] = final_refs_count
+
         is_pro, pro_until = is_user_pro(user_id)
         return {
             "status": "ok",
             "profile": user,
             "is_pro": is_pro,
             "pro_until": pro_until,
+            "referrals_count": final_refs_count,
             "daily_gens_count": user.get("daily_gens_count", 0),
             "daily_limit": FREE_DAILY_LIMIT,
             "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
@@ -780,6 +824,11 @@ async def get_game_state(user_id: str):
         user["last_seen"] = now
         save_json_atomic_sync(GAME_DB_PATH, db)
         is_pro, pro_until = is_user_pro(user_id)
+
+        ref_db = load_json_file(REFERRALS_DB_PATH, {})
+        my_refs = ref_db.get(str(user_id).strip(), [])
+        final_refs_count = max(len(my_refs), user.get("referrals_count", 0))
+
         return {
             "status": "ok", 
             "profile": user, 
@@ -787,6 +836,7 @@ async def get_game_state(user_id: str):
             "offline_seconds": offline_seconds,
             "is_pro": is_pro, 
             "pro_until": pro_until,
+            "referrals_count": final_refs_count,
             "daily_gens_count": user.get("daily_gens_count", 0),
             "daily_limit": FREE_DAILY_LIMIT,
             "turbo_until": user.get("turbo_until", 0),
@@ -1066,6 +1116,7 @@ async def generate_username(
     finder_name: str = Query("Аноним"), 
     finder_id: str = Query("0") 
 ):
+    reward_referrer_id = None
     async with DB_LOCK:
         game_db = load_json_file(GAME_DB_PATH, {})
         user = get_user_profile(game_db, finder_id)
@@ -1083,7 +1134,37 @@ async def generate_username(
                     }
                 )
             user["daily_gens_count"] = user.get("daily_gens_count", 0) + 1
-            save_json_atomic_sync(GAME_DB_PATH, game_db)
+
+        user["gens_total_count"] = user.get("gens_total_count", 0) + 1
+
+        # 👥 АНТИФРОД: 3 поиска активируют +1 день PRO пригласившему
+        if user.get("referred_by") and not user.get("referral_reward_claimed", False) and user["gens_total_count"] >= 3:
+            user["referral_reward_claimed"] = True
+            referrer_id = user["referred_by"]
+            if referrer_id in game_db:
+                ref_user = get_user_profile(game_db, referrer_id)
+                now_ts = int(time.time())
+                cur_pro = max(now_ts, ref_user.get("pro_until", 0))
+                ref_user["pro_until"] = cur_pro + 86400
+                ref_user["rank"] = "👑 PRO Ловец"
+                ref_user["referrals_count"] = ref_user.get("referrals_count", 0) + 1
+                reward_referrer_id = referrer_id
+
+        save_json_atomic_sync(GAME_DB_PATH, game_db)
+
+    if reward_referrer_id and bot:
+        try:
+            await bot.send_message(
+                chat_id=int(reward_referrer_id),
+                text=(
+                    "🎉 **ВАШ ДРУГ АКТИВИРОВАЛ ПРИЛОЖЕНИЕ!** 👥\n\n"
+                    f"Ловец **{finder_name}** сделал 3 поиска и подтвердил активность!\n"
+                    "👑 Вам начислен **+1 ДЕНЬ PRO ПОДПИСКИ** (24 часа) бесплатно!"
+                ),
+                parse_mode="Markdown"
+            )
+        except Exception:
+            pass
 
     generated = ""
     is_free = False
