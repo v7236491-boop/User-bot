@@ -62,6 +62,12 @@ PLANET_HP_TABLE = {
 
 KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
+def generate_secure_code(prefix: str) -> str:
+    p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+    p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+    p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
+    return f"{prefix}-{p1}-{p2}-{p3}"
+
 def load_json_file(filepath: str, default_val):
     if os.path.exists(filepath):
         try:
@@ -82,7 +88,40 @@ def save_json_atomic_sync(filepath: str, data):
     except Exception:
         pass
 
-# 🎟️ СТАТИЧЕСКИЕ СПИСКИ ПРОМОКОДОВ (ГАРАНТИРОВАННОЕ НАЛИЧИЕ В ПАМЯТИ)
+PREGENERATED_KEYS_1DAY = [
+    "PRO-1D01-K9X2-M4P7-R8W3", "PRO-1D02-J7N3-Q5T8-V2Y6", "PRO-1D03-B4H9-C6M2-L8Z5",
+    "PRO-1D04-F3S8-X9D2-G7K4", "PRO-1D05-T6W1-Y4L7-N9C3", "PRO-1D06-H8Q5-V2B9-Z4M7",
+    "PRO-1D07-C3J7-P9X4-R2T8", "PRO-1D08-M6L2-S8F5-W3Y9", "PRO-1D09-N4D7-K2Z8-G9H3",
+    "PRO-1D10-X7T3-B5V9-Q8C4"
+]
+
+PREGENERATED_KEYS_1MONTH = [
+    "PRO-30D1-L8N4-K2X7-P9R3", "PRO-30D2-Q5M9-T3V8-Y6C2", "PRO-30D3-Z7B2-W4H9-F8S5",
+    "PRO-30D4-G9K3-D6L2-X4N8", "PRO-30D5-C2Y7-R8P4-M3T9", "PRO-30D6-V6S3-H9Z5-B2W8",
+    "PRO-30D7-N8F4-J3X9-Q7L2", "PRO-30D8-T4C8-M2K7-Y9D3", "PRO-30D9-X6P2-V8R5-H3S9",
+    "PRO-3010-W9L4-Z7N3-G5C8", "PRO-3011-K3T8-B9Y2-M4F7", "PRO-3012-P7X5-Q2S9-R6H3",
+    "PRO-3013-D4N8-L6W3-Z9K2", "PRO-3014-H2C7-T9M4-Y3V8", "PRO-3015-S8G5-X3L9-F7P2",
+    "PRO-3016-B6R2-N8K4-C9D7", "PRO-3017-M9T3-Z4S8-W2Y6", "PRO-3018-Y7F5-H2P9-Q8X3",
+    "PRO-3019-L3K8-C6N2-V9M7", "PRO-3020-R9Z4-T7W3-S5D8", "PRO-3021-X2M7-G9H4-K3C8",
+    "PRO-3022-P8D5-F2L9-Y7N3", "PRO-3023-W4S9-Q6T2-Z8B5", "PRO-3024-N7Y3-K9C8-M2R4",
+    "PRO-3025-C5H8-V3X7-P9L2", "PRO-3026-T9K2-D4N8-S6F3", "PRO-3027-Z3R7-M8W5-Y2Q9",
+    "PRO-3028-F8P4-X6C2-H9T5", "PRO-3029-L2S9-B7K3-W4M8", "PRO-3030-Q6N3-Y8Z5-R2D7",
+    "PRO-3031-G4T8-C9L2-M7X3", "PRO-3032-V9F2-H4S7-P8W5", "PRO-3033-K7M5-Z2N9-T6B3",
+    "PRO-3034-X3D8-R7Y4-Q9C2", "PRO-3035-S5W2-L9P6-H3K8", "PRO-3036-N2C9-F8T4-Z7M3",
+    "PRO-3037-Y6L3-M4X8-D9S2", "PRO-3038-P9Z7-W2R5-C8F4", "PRO-3039-B4H2-T6K9-Y3N7",
+    "PRO-3040-M8S6-Q3C7-L9X2", "PRO-3041-R3F9-Z8D4-W7P5", "PRO-3042-C7T2-K9M5-H2Y8",
+    "PRO-3043-X9W4-S3L8-B6N2", "PRO-3044-T2P7-F9Z3-M8K5", "PRO-3045-L6D3-Y7R9-C2X8",
+    "PRO-3046-H8K5-N4T2-W9S7", "PRO-3047-Q2Z8-M6F4-P3C9", "PRO-3048-W7N3-D9Y5-R4L2",
+    "PRO-3049-F5X9-S2K7-T8M3", "PRO-3050-Z4C2-P8H6-Y9W5"
+]
+
+PREGENERATED_KEYS_LIFETIME = [
+    "PRO-LIFE-X9Z2-M4K7-R8W3", "PRO-LIFE-V7N3-Q5T8-Y2C6", "PRO-LIFE-B4H9-C6M2-L8Z5",
+    "PRO-LIFE-F3S8-X9D2-G7K4", "PRO-LIFE-T6W1-Y4L7-N9C3", "PRO-LIFE-H8Q5-V2B9-Z4M7",
+    "PRO-LIFE-C3J7-P9X4-R2T8", "PRO-LIFE-M6L2-S8F5-W3Y9", "PRO-LIFE-N4D7-K2Z8-G9H3",
+    "PRO-LIFE-9X7K-4MRW-8N2T-H5VQ"
+]
+
 STATIC_PROMOS_10M = [
     "COIN10M-9X7K-4MRW-8N2T", "COIN10M-H5VQ-2B8Y-6C3D", "COIN10M-F8S4-W2Y6-L9P5",
     "COIN10M-K3N7-Q9T2-X4M8", "COIN10M-Z8C2-V5R9-J7H4", "COIN10M-M4D8-L6W3-Z9K2",
@@ -110,30 +149,77 @@ STATIC_PROMOS_10K = [
     "COIN10K-H2Y8-X9W4-S3L8", "COIN10K-B6N2-T2P7-F9Z3"
 ]
 
+STATIC_PROMOS_100K = [
+    "COIN100K-A2B3-C4D5-E6F7", "COIN100K-G8H9-J2K3-L4M5", "COIN100K-N6P7-Q8R9-S2T3",
+    "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-B3C4-D5E6-F7G8", "COIN100K-H9J2-K3L4-M5N6",
+    "COIN100K-P7Q8-R9S2-T3U4", "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-C4D5-E6F7-G8H9",
+    "COIN100K-J2K3-L4M5-N6P7", "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4",
+    "COIN100K-D5E6-F7G8-H9J2", "COIN100K-K3L4-M5N6-P7Q8", "COIN100K-R9S2-T3U4-V5W6",
+    "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-E6F7-G8H9-J2K3", "COIN100K-L4M5-N6P7-Q8R9",
+    "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-F7G8-H9J2-K3L4",
+    "COIN100K-M5N6-P7Q8-R9S2", "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7",
+    "COIN100K-G8H9-J2K3-L4M5", "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2",
+    "COIN100K-A3B4-C5D6-E7F8", "COIN100K-H9J2-K3L4-M5N6", "COIN100K-P7Q8-R9S2-T3U4",
+    "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-J2K3-L4M5-N6P7",
+    "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2",
+    "COIN100K-K3L4-M5N6-P7Q8", "COIN100K-R9S2-T3U4-V5W6", "COIN100K-X7Y8-Z2A3-B4C5",
+    "COIN100K-D6E7-F8G9-H2J3", "COIN100K-L4M5-N6P7-Q8R9", "COIN100K-S2T3-U4V5-W6X7",
+    "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4", "COIN100K-M5N6-P7Q8-R9S2",
+    "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5",
+    "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-A3B4-C5D6-E7F8",
+    "COIN100K-G9H2-J3K4-L5M6", "COIN100K-P7Q8-R9S2-T3U4", "COIN100K-V5W6-X7Y8-Z2A3",
+    "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7", "COIN100K-Q8R9-S2T3-U4V5",
+    "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8",
+    "COIN100K-R9S2-T3U4-V5W6", "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-D6E7-F8G9-H2J3",
+    "COIN100K-K4L5-M6N7-P8Q9", "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6",
+    "COIN100K-E7F8-G9H2-J3K4", "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-T3U4-V5W6-X7Y8",
+    "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3",
+    "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-A3B4-C5D6-E7F8", "COIN100K-G9H2-J3K4-L5M6",
+    "COIN100K-N7P8-Q9R2-S3T4", "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9",
+    "COIN100K-H2J3-K4L5-M6N7", "COIN100K-P8Q9-R2S3-T4U5", "COIN100K-W6X7-Y8Z2-A3B4",
+    "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8", "COIN100K-Q9R2-S3T4-U5V6",
+    "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-D6E7-F8G9-H2J3", "COIN100K-K4L5-M6N7-P8Q9",
+    "COIN100K-R2S3-T4U5-V6W7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4",
+    "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-S3T4-U5V6-W7X8", "COIN100K-Z2A3-B4C5-D6E7",
+    "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3", "COIN100K-T4U5-V6W7-X8Y9",
+    "COIN100K-A3B4-C5D6-E7F8", "COIN100K-G9H2-J3K4-L5M6", "COIN100K-N7P8-Q9R2-S3T4",
+    "COIN100K-U5V6-W7X8-Y9Z2", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7",
+    "COIN100K-P8Q9-R2S3-T4U5", "COIN100K-V6W7-X8Y9-Z2A3", "COIN100K-C5D6-E7F8-G9H2",
+    "COIN100K-J3K4-L5M6-N7P8", "COIN100K-Q9R2-S3T4-U5V6", "COIN100K-W7X8-Y9Z2-A3B4"
+]
+
 def init_master_storage():
-    promos = load_json_file(PROMOS_DB_PATH, {})
     keys_db = load_json_file(KEYS_DB_PATH, {})
+    promos_db = load_json_file(PROMOS_DB_PATH, {})
     now = int(time.time())
 
+    for k in PREGENERATED_KEYS_1DAY:
+        if k not in keys_db:
+            keys_db[k] = {"bound_user_id": None, "seconds": 86400, "created_at": now, "activated_status": "unused"}
+
+    for k in PREGENERATED_KEYS_1MONTH:
+        if k not in keys_db:
+            keys_db[k] = {"bound_user_id": None, "seconds": 30 * 86400, "created_at": now, "activated_status": "unused"}
+
+    for k in PREGENERATED_KEYS_LIFETIME:
+        if k not in keys_db:
+            keys_db[k] = {"bound_user_id": None, "seconds": -1, "created_at": now, "activated_status": "unused"}
+
+    save_json_atomic_sync(KEYS_DB_PATH, keys_db)
+
     for c in STATIC_PROMOS_10M:
-        if c not in promos:
-            promos[c] = {"coins": 10000000, "created_at": now, "used_by": None, "used_at": 0}
+        if c not in promos_db:
+            promos_db[c] = {"coins": 10000000, "created_at": now, "used_by": None, "used_at": 0}
 
     for c in STATIC_PROMOS_10K:
-        if c not in promos:
-            promos[c] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
+        if c not in promos_db:
+            promos_db[c] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
 
-    # Генерация / фиксация 100k промокодов (начинающихся на COIN100K-)
-    if len([k for k, v in promos.items() if v.get("coins") == 100000]) < 300:
-        for i in range(300):
-            p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-            p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-            p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-            c = f"COIN100K-{p1}-{p2}-{p3}"
-            if c not in promos:
-                promos[c] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
+    for c in STATIC_PROMOS_100K:
+        if c not in promos_db:
+            promos_db[c] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
 
-    save_json_atomic_sync(PROMOS_DB_PATH, promos)
+    save_json_atomic_sync(PROMOS_DB_PATH, promos_db)
 
 init_master_storage()
 
@@ -541,7 +627,6 @@ async def check_username_telethon(username: str) -> bool:
     except Exception:
         return False
 
-# ВСЕ ТАРИФЫ СО СКИДКАМИ + КЕЙСЫ STARS
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
@@ -695,6 +780,7 @@ async def lifespan(app: FastAPI):
         TELETHON_AVAILABLE = False
     
     asyncio.create_task(radar_worker())
+    asyncio.create_task(pro_expiry_worker())
     asyncio.create_task(gifts_arbitrage_worker())
     if bot and dp:
         asyncio.create_task(dp.start_polling(bot))
@@ -863,9 +949,6 @@ async def get_game_state(user_id: str):
             "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
         }
 
-# =========================================================================
-# 🎰 РАСЧЁТ ДРОПА С ЧИСТЫМ СТАТУСОМ 200 И ГАРАНТИЕЙ РАБОТЫ
-# =========================================================================
 @app.post("/api/case/open")
 async def open_case(request: Request):
     data = await request.json()
@@ -1129,7 +1212,7 @@ async def buy_game_item(request: Request):
         return {"status": "ok", "profile": user}
 
 # =========================================================================
-# 🎟️ АКТИВАЦИЯ ОДНОРАЗОВЫХ ПРОМОКОДОВ НА МОНЕТЫ И PRO-КЛЮЧЕЙ
+# 🎟️ АКТИВАЦИЯ ОДНОРАЗОВЫХ ПРОМОКОДОВ И PRO-КЛЮЧЕЙ (БЕЗ УЯЗВИМОСТЕЙ)
 # =========================================================================
 @app.post("/api/promo/activate")
 async def activate_promo(request: Request):
@@ -1142,25 +1225,13 @@ async def activate_promo(request: Request):
         return {"status": "error", "msg": "Введите код!"}
 
     async with DB_LOCK:
-        # 1. Проверка в базе промокодов
+        # 1. Проверка в строгой базе промокодов
         promos_db = load_json_file(PROMOS_DB_PATH, {})
         matched_promo_key = None
         for p_code in promos_db.keys():
             if p_code.strip().upper() == code:
                 matched_promo_key = p_code
                 break
-
-        # Если код из статических списков, но файла еще нет
-        if not matched_promo_key:
-            if code in STATIC_PROMOS_10M:
-                promos_db[code] = {"coins": 10000000, "created_at": now, "used_by": None, "used_at": 0}
-                matched_promo_key = code
-            elif code in STATIC_PROMOS_10K:
-                promos_db[code] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
-                matched_promo_key = code
-            elif code.startswith("COIN100K-"):
-                promos_db[code] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
-                matched_promo_key = code
 
         if matched_promo_key:
             promo_data = promos_db[matched_promo_key]
@@ -1228,7 +1299,7 @@ async def activate_promo(request: Request):
                 "msg": f"🎉 PRO активирован на {duration_text}!"
             }
 
-        return {"status": "error", "msg": "❌ Неверный или несуществующий промокод!"}
+        return {"status": "error", "msg": "❌ Неверный промокод или ключ!"}
 
 @app.get("/api/gifts/catalog")
 async def get_gifts_catalog():
