@@ -770,11 +770,6 @@
                     </div>
                 </div>
 
-                <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
-                    <span>🎁 Снайпер Fragment Подарков (1000 шт)</span>
-                    <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
-                </div>
-
                 <div class="accordion-section" style="margin-top:10px;">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span style="color: var(--primary);">🎯 Радар (Слежка за никами)</span>
@@ -1393,7 +1388,7 @@
                 });
                 const data = await res.json();
 
-                if (res.status !== 200) {
+                if (data.status !== 'ok') {
                     showToast(data.msg || "Ошибка открытия кейса");
                     if (data.cooldown_seconds) {
                         updatePityUI(userProfile.cases_opened_total || 0);
@@ -2112,7 +2107,7 @@
                     }
                     closeModal('modal-settings');
                 } else {
-                    showToast(`❌ ${data.msg || "Ошибка промокода"}`);
+                    showToast(data.msg || "❌ Ошибка промокода");
                 }
             } catch(e) {
                 showToast("Ошибка сети при активации");
