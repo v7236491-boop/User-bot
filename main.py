@@ -60,14 +60,6 @@ PLANET_HP_TABLE = {
     6: 12000, 7: 28000, 8: 65000, 9: 150000, 10: 500000
 }
 
-KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
-
-def generate_secure_code(prefix: str) -> str:
-    p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    return f"{prefix}-{p1}-{p2}-{p3}"
-
 def load_json_file(filepath: str, default_val):
     if os.path.exists(filepath):
         try:
@@ -158,7 +150,6 @@ STATIC_PROMOS_100K = [
     "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-E6F7-G8H9-J2K3", "COIN100K-L4M5-N6P7-Q8R9",
     "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-F7G8-H9J2-K3L4",
     "COIN100K-M5N6-P7Q8-R9S2", "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7",
-    "COIN100K-G8H9-J2K3-L4M5", "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2",
     "COIN100K-A3B4-C5D6-E7F8", "COIN100K-H9J2-K3L4-M5N6", "COIN100K-P7Q8-R9S2-T3U4",
     "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-J2K3-L4M5-N6P7",
     "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2",
@@ -166,26 +157,26 @@ STATIC_PROMOS_100K = [
     "COIN100K-D6E7-F8G9-H2J3", "COIN100K-L4M5-N6P7-Q8R9", "COIN100K-S2T3-U4V5-W6X7",
     "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4", "COIN100K-M5N6-P7Q8-R9S2",
     "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5",
-    "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-A3B4-C5D6-E7F8",
-    "COIN100K-G9H2-J3K4-L5M6", "COIN100K-P7Q8-R9S2-T3U4", "COIN100K-V5W6-X7Y8-Z2A3",
-    "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7", "COIN100K-Q8R9-S2T3-U4V5",
-    "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8",
-    "COIN100K-R9S2-T3U4-V5W6", "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-D6E7-F8G9-H2J3",
-    "COIN100K-K4L5-M6N7-P8Q9", "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6",
-    "COIN100K-E7F8-G9H2-J3K4", "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-T3U4-V5W6-X7Y8",
-    "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3",
-    "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-A3B4-C5D6-E7F8", "COIN100K-G9H2-J3K4-L5M6",
-    "COIN100K-N7P8-Q9R2-S3T4", "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9",
-    "COIN100K-H2J3-K4L5-M6N7", "COIN100K-P8Q9-R2S3-T4U5", "COIN100K-W6X7-Y8Z2-A3B4",
-    "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8", "COIN100K-Q9R2-S3T4-U5V6",
+    "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-G9H2-J3K4-L5M6",
+    "COIN100K-P7Q8-R9S2-T3U4", "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9",
+    "COIN100K-H2J3-K4L5-M6N7", "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4",
+    "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8", "COIN100K-R9S2-T3U4-V5W6",
     "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-D6E7-F8G9-H2J3", "COIN100K-K4L5-M6N7-P8Q9",
-    "COIN100K-R2S3-T4U5-V6W7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4",
-    "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-S3T4-U5V6-W7X8", "COIN100K-Z2A3-B4C5-D6E7",
-    "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3", "COIN100K-T4U5-V6W7-X8Y9",
+    "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4",
+    "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7",
+    "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3", "COIN100K-U4V5-W6X7-Y8Z2",
     "COIN100K-A3B4-C5D6-E7F8", "COIN100K-G9H2-J3K4-L5M6", "COIN100K-N7P8-Q9R2-S3T4",
-    "COIN100K-U5V6-W7X8-Y9Z2", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7",
-    "COIN100K-P8Q9-R2S3-T4U5", "COIN100K-V6W7-X8Y9-Z2A3", "COIN100K-C5D6-E7F8-G9H2",
-    "COIN100K-J3K4-L5M6-N7P8", "COIN100K-Q9R2-S3T4-U5V6", "COIN100K-W7X8-Y9Z2-A3B4"
+    "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7",
+    "COIN100K-P8Q9-R2S3-T4U5", "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2",
+    "COIN100K-J3K4-L5M6-N7P8", "COIN100K-Q9R2-S3T4-U5V6", "COIN100K-X7Y8-Z2A3-B4C5",
+    "COIN100K-D6E7-F8G9-H2J3", "COIN100K-K4L5-M6N7-P8Q9", "COIN100K-R2S3-T4U5-V6W7",
+    "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4", "COIN100K-L5M6-N7P8-Q9R2",
+    "COIN100K-S3T4-U5V6-W7X8", "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5",
+    "COIN100K-M6N7-P8Q9-R2S3", "COIN100K-T4U5-V6W7-X8Y9", "COIN100K-A3B4-C5D6-E7F8",
+    "COIN100K-G9H2-J3K4-L5M6", "COIN100K-N7P8-Q9R2-S3T4", "COIN100K-U5V6-W7X8-Y9Z2",
+    "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7", "COIN100K-P8Q9-R2S3-T4U5",
+    "COIN100K-V6W7-X8Y9-Z2A3", "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8",
+    "COIN100K-Q9R2-S3T4-U5V6", "COIN100K-W7X8-Y9Z2-A3B4"
 ]
 
 def init_master_storage():
@@ -570,6 +561,7 @@ def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, h
     
     return {"rank": "A", "status": "Свободен (~1-3 TON)", "color": "#29c75f", "score": 30}
 
+# 🎯 ТОЧНЫЙ АЛГОРИТМ ПРОВЕРКИ ЮЗЕРНЕЙМА (ФИКС "ВСЕ НИКИ ЗАНЯТЫ")
 async def check_username_telethon(username: str) -> bool:
     global TELETHON_AVAILABLE
     username = username.replace("@", "").strip().lower()
@@ -596,19 +588,29 @@ async def check_username_telethon(username: str) -> bool:
 
     try:
         url = f"https://t.me/{username}"
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9"
+        }
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=2.0)) as resp:
+            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=2.5)) as resp:
                 text = await resp.text()
-                if '<div class="tgme_page_title' not in text and '<a class="tgme_action_button_new' not in text:
+                
+                # Признаки свободного юзернейма:
+                # 1. Отсутствует кнопка "Send Message" / "View in Telegram"
+                # 2. Мета-тег og:title равен "Telegram: Contact @username" (для свободных) или содержит "Telegram"
+                has_join_btn = ('tgme_action_button_new' in text or 'View in Telegram' in text or 'Send Message' in text)
+                has_channel_banner = ('tgme_page_extra' in text)
+                
+                if not has_join_btn and not has_channel_banner:
                     CHECK_CACHE[username] = (True, now)
                     return True
+                
                 CHECK_CACHE[username] = (False, now)
                 return False
     except Exception:
         return False
 
-# ВСЕ ТАРИФЫ СО СКИДКАМИ + КЕЙСЫ STARS
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
@@ -1154,14 +1156,14 @@ async def buy_game_item(request: Request):
                 cur_turbo = max(now, user.get("turbo_until", 0))
                 user["turbo_until"] = cur_turbo + (15 * 60)
             else: 
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет!"})
+                return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет! Нужно 65 000 🟡"})
 
         elif item_id == "radar_slot":
             if user["coins"] >= 35000:
                 user["coins"] -= 35000
-                user["radar_extra_slots"] += 1
+                user["radar_extra_slots"] = user.get("radar_extra_slots", 0) + 1
             else: 
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет!"})
+                return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет! Нужно 35 000 🟡"})
 
         elif item_id == "theme_quasar":
             if "theme_quasar" in user.get("unlocked_themes", []):
