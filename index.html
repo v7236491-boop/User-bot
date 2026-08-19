@@ -230,19 +230,43 @@
         .btn-take { background: var(--primary-glow); color: var(--primary); border-color: var(--primary); }
         .btn-story { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
 
+        .generator-buttons-grid { display: flex; gap: 8px; width: 100%; }
+
         .btn-generate { 
             background: var(--primary); 
             color: #000; 
             border: none; 
             border-radius: 18px; 
             padding: 18px; 
-            font-size: 1.1rem; 
-            font-weight: 700; 
+            font-size: 1.05rem; 
+            font-weight: 800; 
             cursor: pointer; 
-            width: 100%; 
+            flex: 1.4;
             box-shadow: 0 8px 25px var(--primary-glow); 
         }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
+
+        .btn-autoparse {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid #38bdf8;
+            color: #7dd3fc;
+            border-radius: 18px;
+            padding: 18px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            cursor: pointer;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-autoparse.running {
+            background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+            border-color: #f87171 !important;
+            color: #fff !important;
+            animation: urgentPulse 1s infinite alternate;
+        }
 
         .legal-notice-footer {
             font-size: 0.68rem;
@@ -560,7 +584,10 @@
                 <button class="action-btn btn-story" onclick="shareToFriends()">📲 Поделиться</button>
             </div>
 
-            <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
+            <div class="generator-buttons-grid">
+                <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
+                <button class="btn-autoparse" id="btn-autoparse" onclick="toggleAutoParser()">⚡ Автопоиск</button>
+            </div>
 
             <div class="legal-notice-footer">
                 Используя сервис, вы принимаете условия 
@@ -768,6 +795,11 @@
                         </p>
                         <button class="tariff-btn" style="width:100%; padding:12px;" onclick="closeModal('modal-settings'); openModal('modal-pro');">Посмотреть тарифы Stars ⭐</button>
                     </div>
+                </div>
+
+                <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
+                    <span>🎁 Снайпер Fragment Подарков (1000 шт)</span>
+                    <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
                 </div>
 
                 <div class="accordion-section" style="margin-top:10px;">
@@ -1124,6 +1156,8 @@
     <script>
         let currentPlatform = 'telegram';
         let isFetching = false;
+        let isAutoParsing = false;
+        let autoParseTimer = null;
         let lastGenerated = "";
         let slotInterval = null;
         let isSpinningCase = false;
@@ -1489,7 +1523,7 @@
         }
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР
+        // 🎯 СЛОТ-МАШИНА, ГЕНЕРАТОР И АВТОПАРСЕР
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
@@ -1566,6 +1600,10 @@
                 if (data.is_free) {
                     document.getElementById('quick-actions').style.display = 'flex';
                     saveToHistory({ user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color });
+                    if (isAutoParsing) {
+                        toggleAutoParser();
+                        showToast(`🔥 АВТОПАРСЕР НАШЕЛ НИК: @${lastGenerated}!`);
+                    }
                 } else {
                     document.getElementById('quick-actions').style.display = 'none';
                 }
@@ -1577,6 +1615,32 @@
                 isFetching = false;
                 btn.disabled = false; 
                 btn.textContent = "Сгенерировать";
+            }
+        }
+
+        function toggleAutoParser() {
+            const btn = document.getElementById('btn-autoparse');
+            if (isAutoParsing) {
+                isAutoParsing = false;
+                clearInterval(autoParseTimer);
+                autoParseTimer = null;
+                btn.classList.remove('running');
+                btn.innerText = "⚡ Автопоиск";
+                showToast("⏸️ Автопарсер остановлен");
+            } else {
+                if (!isProUser && dailyGensCount >= dailyLimitMax) {
+                    showToast("👑 Для автопарсера оформите PRO безлимит!");
+                    openModal('modal-pro');
+                    return;
+                }
+                isAutoParsing = true;
+                btn.classList.add('running');
+                btn.innerText = "⏹️ Стоп";
+                showToast("🚀 Автопарсер запущен!");
+                manualGenerate();
+                autoParseTimer = setInterval(() => {
+                    if (!isFetching) manualGenerate();
+                }, turboUntil > Math.floor(Date.now() / 1000) ? 1100 : 2200);
             }
         }
 
