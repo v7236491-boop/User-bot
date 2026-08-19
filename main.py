@@ -146,6 +146,7 @@ def init_master_promos():
     promos = load_json_file(PROMOS_DB_PATH, {})
     now = int(time.time())
     
+    # 50 промокодов на 10k
     current_10k = [k for k, v in promos.items() if v.get("coins") == 10000]
     while len(current_10k) < 50:
         code = generate_secure_code("COIN10K")
@@ -153,6 +154,7 @@ def init_master_promos():
             promos[code] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
             current_10k.append(code)
 
+    # 300 промокодов на 100k
     current_100k = [k for k, v in promos.items() if v.get("coins") == 100000]
     while len(current_100k) < 300:
         code = generate_secure_code("COIN100K")
@@ -160,6 +162,7 @@ def init_master_promos():
             promos[code] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
             current_100k.append(code)
 
+    # 10 промокодов на 10M
     current_10m = [k for k, v in promos.items() if v.get("coins") == 10000000]
     while len(current_10m) < 10:
         code = generate_secure_code("COIN10M")
@@ -575,6 +578,7 @@ async def check_username_telethon(username: str) -> bool:
     except Exception:
         return False
 
+# ВСЕ ТАРИФЫ СО СКИДКАМИ + КЕЙСЫ STARS
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
@@ -728,6 +732,7 @@ async def lifespan(app: FastAPI):
         TELETHON_AVAILABLE = False
     
     asyncio.create_task(radar_worker())
+    asyncio.create_task(pro_expiry_worker())
     asyncio.create_task(gifts_arbitrage_worker())
     if bot and dp:
         asyncio.create_task(dp.start_polling(bot))
@@ -896,9 +901,6 @@ async def get_game_state(user_id: str):
             "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
         }
 
-# =========================================================================
-# 🎰 РАСЧЁТ ДРОПА С ТОЧНЫМ ТАЙМЕРОМ БЕСПЛАТНОГО КЕЙСА
-# =========================================================================
 @app.post("/api/case/open")
 async def open_case(request: Request):
     data = await request.json()
@@ -1036,14 +1038,27 @@ async def open_case(request: Request):
 async def collect_offline(request: Request):
     data = await request.json()
     user_id = str(data.get("user_id", "")).strip()
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "no_user_id", "msg": "Пользователь не найден"})
+
     async with DB_LOCK:
         db = load_json_file(GAME_DB_PATH, {})
         user = get_user_profile(db, user_id)
         earned = user.get("offline_pending", 0)
         user["coins"] += earned
         user["offline_pending"] = 0
+        user["last_seen"] = int(time.time())
         save_json_atomic_sync(GAME_DB_PATH, db)
-        return {"status": "ok", "coins": user["coins"], "collected": earned}
+        is_pro, pro_until = is_user_pro(user_id)
+
+        return {
+            "status": "ok", 
+            "coins": user["coins"], 
+            "collected": earned,
+            "profile": user,
+            "is_pro": is_pro,
+            "pro_until": pro_until
+        }
 
 @app.post("/api/game/sync_tap")
 async def sync_tap(request: Request):
@@ -1103,32 +1118,32 @@ async def buy_game_item(request: Request):
                 cur_turbo = max(now, user.get("turbo_until", 0))
                 user["turbo_until"] = cur_turbo + (15 * 60)
             else: 
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
 
         elif item_id == "radar_slot":
             if user["coins"] >= 35000:
                 user["coins"] -= 35000
                 user["radar_extra_slots"] += 1
             else: 
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
 
         elif item_id == "theme_quasar":
             if "theme_quasar" in user.get("unlocked_themes", []):
-                return JSONResponse(status_code=400, content={"error": "already_owned"})
+                return JSONResponse(status_code=400, content={"error": "already_owned", "msg": "Тема уже куплена!"})
             if user["coins"] >= 100000:
                 user["coins"] -= 100000
                 if "unlocked_themes" not in user:
                     user["unlocked_themes"] = []
                 user["unlocked_themes"].append("theme_quasar")
             else: 
-                return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+                return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
 
         elif item_id == "multi_tap":
             cost = int(200 * (1.8 ** (user["multi_tap"] - 1)))
             if user["coins"] >= cost and user["multi_tap"] < 20:
                 user["coins"] -= cost
                 user["multi_tap"] += 1
-            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
 
         elif item_id == "max_energy":
             lvl = (user["max_energy"] - 1000) // 500
@@ -1137,7 +1152,7 @@ async def buy_game_item(request: Request):
                 user["coins"] -= cost
                 user["max_energy"] += 500
                 user["energy"] = user["max_energy"]
-            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
 
         elif item_id == "offline_miner":
             lvl = user["offline_miner_lvl"]
@@ -1145,7 +1160,7 @@ async def buy_game_item(request: Request):
             if user["coins"] >= cost and lvl < 10:
                 user["coins"] -= cost
                 user["offline_miner_lvl"] += 1
-            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет!"})
 
         user["last_seen"] = now
         save_json_atomic_sync(GAME_DB_PATH, db)
@@ -1162,9 +1177,16 @@ async def activate_promo(request: Request):
         return JSONResponse(status_code=400, content={"error": "invalid_input", "msg": "Введите код!"})
 
     async with DB_LOCK:
+        # 1. Поиск промокода на монеты
         promos_db = load_json_file(PROMOS_DB_PATH, {})
-        if code in promos_db:
-            promo_data = promos_db[code]
+        matched_promo_key = None
+        for p_code in promos_db.keys():
+            if p_code.strip().upper() == code:
+                matched_promo_key = p_code
+                break
+
+        if matched_promo_key:
+            promo_data = promos_db[matched_promo_key]
             if promo_data.get("used_by"):
                 return JSONResponse(status_code=400, content={"error": "already_used", "msg": "Этот промокод уже был активирован!"})
             
@@ -1178,11 +1200,25 @@ async def activate_promo(request: Request):
             user["coins"] += coins_reward
             save_json_atomic_sync(GAME_DB_PATH, game_db)
 
-            return {"status": "ok", "type": "coins", "coins": user["coins"], "reward": coins_reward, "msg": f"🎉 Начислено +{coins_reward:,} 🟡 монет!"}
+            return {
+                "status": "ok", 
+                "type": "coins", 
+                "coins": user["coins"], 
+                "reward": coins_reward, 
+                "profile": user,
+                "msg": f"🎉 Начислено +{coins_reward:,} 🟡 монет!"
+            }
 
+        # 2. Поиск PRO-ключа
         keys_db = load_json_file(KEYS_DB_PATH, {})
-        if code in keys_db:
-            k_data = keys_db[code]
+        matched_key = None
+        for k_code in keys_db.keys():
+            if k_code.strip().upper() == code:
+                matched_key = k_code
+                break
+
+        if matched_key:
+            k_data = keys_db[matched_key]
             if k_data.get("activated_status") == "used":
                 return JSONResponse(status_code=400, content={"error": "already_used", "msg": "Этот PRO-ключ уже активирован!"})
 
@@ -1206,9 +1242,16 @@ async def activate_promo(request: Request):
             save_json_atomic_sync(GAME_DB_PATH, game_db)
 
             duration_text = "Навсегда (Lifetime) 🌌" if secs == -1 else f"{secs // 86400} дней 📅"
-            return {"status": "ok", "type": "pro", "is_pro": True, "pro_until": user["pro_until"], "msg": f"🎉 PRO активирован на {duration_text}!"}
+            return {
+                "status": "ok", 
+                "type": "pro", 
+                "is_pro": True, 
+                "pro_until": user["pro_until"], 
+                "profile": user,
+                "msg": f"🎉 PRO активирован на {duration_text}!"
+            }
 
-        return JSONResponse(status_code=400, content={"error": "not_found", "msg": "❌ Неверный или несуществующий промокод!"})
+        return JSONResponse(status_code=400, content={"error": "not_found", "msg": "❌ Неверный промокод или ключ!"})
 
 @app.get("/api/gifts/catalog")
 async def get_gifts_catalog():
