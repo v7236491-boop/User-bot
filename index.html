@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO</title>
+    <title>Username Scanner PRO & Quantum Roulette</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js?v=7.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -76,7 +76,7 @@
             gap: 10px;
         }
 
-        .header-left-col { display: flex; flex-direction: column; gap: 6px; }
+        .header-col-group { display: flex; flex-direction: column; gap: 6px; }
 
         .nav-btn { 
             background: rgba(255, 255, 255, 0.08); 
@@ -94,13 +94,17 @@
             backdrop-filter: blur(10px);
             transition: transform 0.15s ease, background 0.2s ease;
             white-space: nowrap;
-            flex-shrink: 0;
         }
         .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
         .nav-btn.ref-btn {
             border-color: rgba(56, 189, 248, 0.35);
             background: rgba(56, 189, 248, 0.12);
             color: #7dd3fc;
+        }
+        .nav-btn.roulette-btn {
+            border-color: rgba(234, 179, 8, 0.35);
+            background: rgba(234, 179, 8, 0.12);
+            color: #facc15;
         }
 
         .btn-buy-pro-header {
@@ -114,7 +118,6 @@
             cursor: pointer;
             box-shadow: 0 0 16px var(--gold-glow);
             white-space: nowrap;
-            flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -167,7 +170,7 @@
             max-width: 360px; 
             display: flex; 
             flex-direction: column; 
-            gap: 10px; 
+            gap: 12px; 
         }
 
         .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
@@ -241,19 +244,6 @@
         }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        .case-entry-banner {
-            background: linear-gradient(135deg, rgba(234, 179, 8, 0.18), rgba(168, 85, 247, 0.15));
-            border: 1px solid #eab308;
-            border-radius: 18px;
-            padding: 14px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 0 16px rgba(234, 179, 8, 0.2);
-            transition: transform 0.15s ease;
-        }
-
         .legal-notice-footer {
             font-size: 0.68rem;
             color: rgba(130, 146, 136, 0.65);
@@ -286,6 +276,26 @@
             background: linear-gradient(135deg, rgba(41, 199, 95, 0.4), rgba(56, 189, 248, 0.4));
             border-color: var(--primary); font-size: 0.88rem; font-weight: 800; flex: 1.2;
         }
+
+        /* 🎁 СНАЙПЕР GIFTS */
+        .gift-settings-banner-btn {
+            width: 100%; background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(244, 63, 94, 0.05));
+            border: 1px solid #f43f5e; color: #fda4af; padding: 14px; border-radius: 16px;
+            font-weight: 800; font-size: 0.9rem; display: flex; justify-content: space-between;
+            align-items: center; cursor: pointer; margin-top: 10px;
+        }
+        .emoji-gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
+        .emoji-gift-card {
+            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.2s ease;
+        }
+        .emoji-gift-card:active { transform: scale(0.96); }
+        .emoji-gift-card.selected { border-color: #29c75f; background: rgba(41, 199, 95, 0.12); box-shadow: 0 0 14px rgba(41, 199, 95, 0.35); }
+        .emoji-gift-icon { font-size: 2.3rem; margin-bottom: 4px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+        .emoji-gift-title { font-size: 0.82rem; font-weight: 800; color: #ffffff; }
+        .emoji-gift-price { font-size: 0.74rem; color: #38bdf8; font-weight: 700; margin-top: 2px; }
 
         /* 🎰 КВАНТОВАЯ РУЛЕТКА */
         .cs-roulette-wrapper {
@@ -329,7 +339,7 @@
             position: absolute;
             left: 0;
             top: 15px;
-            transition: transform 8s cubic-bezier(0.08, 0.82, 0.12, 1);
+            transition: transform 9.5s cubic-bezier(0.06, 0.85, 0.1, 1);
             will-change: transform;
         }
 
@@ -474,7 +484,7 @@
         .tariff-card.featured { border-color: #eab308; background: rgba(234, 179, 8, 0.08); }
         .tariff-btn { background: #eab308; color: #000; font-weight: 800; border: none; padding: 10px 16px; border-radius: 14px; cursor: pointer; }
 
-        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 14px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
+        .form-input { width: 100%; background: rgba(255,255,255,0.08); color: #fff !important; border: 1px solid rgba(255,255,255,0.15); padding: 12px 14px; border-radius: 14px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 16px; cursor: pointer; }
 
         .case-card-box {
@@ -500,12 +510,8 @@
 
         .history-card { background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; touch-action: pan-y; }
         .lb-card { background: rgba(18, 25, 21, 0.8); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .lb-card.vip-pro-card { border: 1px solid #eab308; background: linear-gradient(90deg, rgba(234,179,8,0.15), rgba(18,25,21,0.85)); box-shadow: 0 0 15px rgba(234,179,8,0.3); }
-
-        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; opacity: 0.6; filter: grayscale(0.8); }
-        .achieve-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
-        .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-top: 8px;}
-        .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.3s ease; }
+        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; opacity: 0.6; }
+        .achieve-card.unlocked { opacity: 1; border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
 
         .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 12px 20px; text-align: center; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.3s ease; z-index: 4000; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -517,12 +523,15 @@
     <canvas id="blackhole-bg-canvas"></canvas>
 
     <header>
-        <div class="header-left-col">
+        <div class="header-col-group">
             <button class="nav-btn" onclick="openModal('modal-history')">📁 История</button>
             <button class="nav-btn ref-btn" onclick="openModal('modal-referrals')">👥 Рефералы</button>
         </div>
         <button class="btn-buy-pro-header" id="pro-header-btn" onclick="openModal('modal-pro')">👑 PRO Доступ</button>
-        <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
+        <div class="header-col-group">
+            <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
+            <button class="nav-btn roulette-btn" onclick="openModal('modal-cases')">🎰 Рулетка</button>
+        </div>
     </header>
 
     <main>
@@ -553,18 +562,6 @@
 
             <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
 
-            <!-- 🎰 БАННЕР КВАНТОВОЙ РУЛЕТКИ -->
-            <div class="case-entry-banner" onclick="openModal('modal-cases')">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="font-size:1.8rem;">🎰</div>
-                    <div>
-                        <div style="font-size:0.9rem; font-weight:900; color:#fff;">КВАНТОВАЯ РУЛЕТКА</div>
-                        <div style="font-size:0.72rem; color:#facc15;" id="case-free-status-badge">🎁 Бесплатный кейс ГОТОВ!</div>
-                    </div>
-                </div>
-                <div style="font-size:0.8rem; font-weight:bold; color:var(--primary);">Крутить ➔</div>
-            </div>
-
             <div class="legal-notice-footer">
                 Используя сервис, вы принимаете условия 
                 <span class="legal-notice-link" onclick="openModal('modal-terms')">Оферты</span> и 
@@ -588,7 +585,7 @@
 
     <div class="toast" id="global-toast">✨ Готово!</div>
 
-    <!-- 🎁 ПРИВЕТСТВЕННОЕ ОКНО ОФФЛАЙН-ДОХОДА -->
+    <!-- 🎁 МОДАЛКА ОФФЛАЙН-ФАРМА -->
     <div class="modal-overlay" id="modal-offline-reward">
         <div class="modal-content glass-panel" style="max-width: 360px; text-align: center;">
             <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
@@ -628,11 +625,9 @@
 
                 <!-- 1. DAILY CASE -->
                 <div class="case-card-box">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div style="font-weight:900; color:#fff; font-size:0.95rem;">📦 Daily Case (Ежедневный)</div>
-                            <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 5 000 – 10 000 🟡, Энергия, PRO 1 день</div>
-                        </div>
+                    <div>
+                        <div style="font-weight:900; color:#fff; font-size:0.95rem;">📦 Daily Case (Ежедневный)</div>
+                        <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 5 000 – 10 000 🟡, Энергия, PRO 1 день</div>
                     </div>
                     <div style="display:flex; gap:8px; margin-top:4px;">
                         <button class="form-btn" id="btn-open-free-case" style="flex:1.2; padding:10px; background:var(--primary); color:#000;" onclick="spinCase('daily', 'free')">🎁 Бесплатно (24ч)</button>
@@ -642,11 +637,9 @@
 
                 <!-- 2. ЭЛИТНЫЙ КЕЙС -->
                 <div class="case-card-box" style="border-color: rgba(168,85,247,0.3);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div style="font-weight:900; color:#c084fc; font-size:0.95rem;">🧰 Элитный Кейс</div>
-                            <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 15 000 – 25 000 🟡, Радар, PRO 3–7 дней</div>
-                        </div>
+                    <div>
+                        <div style="font-weight:900; color:#c084fc; font-size:0.95rem;">🧰 Элитный Кейс</div>
+                        <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 15 000 – 25 000 🟡, Радар, PRO 3–7 дней</div>
                     </div>
                     <div style="display:flex; gap:8px; margin-top:4px;">
                         <button class="form-btn" style="flex:1.2; padding:10px; background:#a855f7; color:#fff;" onclick="spinCase('elite', 'coins')">60 000 🟡</button>
@@ -656,11 +649,9 @@
 
                 <!-- 3. КВАНТОВЫЙ КЕЙС -->
                 <div class="case-card-box" style="border-color: rgba(234,179,8,0.4); background: linear-gradient(135deg, rgba(234,179,8,0.1), rgba(18,25,21,0.8));">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div style="font-weight:900; color:#facc15; font-size:0.95rem;">🌌 Квантовый Кейс ✨</div>
-                            <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 30 000 – 50 000 🟡, Скин Квантум, PRO 7–30 дней</div>
-                        </div>
+                    <div>
+                        <div style="font-weight:900; color:#facc15; font-size:0.95rem;">🌌 Квантовый Кейс ✨</div>
+                        <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 30 000 – 50 000 🟡, Скин Квантум, PRO 7–30 дней</div>
                     </div>
                     <div style="display:flex; gap:8px; margin-top:4px;">
                         <button class="form-btn" style="flex:1.2; padding:10px; background:#eab308; color:#000;" onclick="spinCase('quantum', 'coins')">150 000 🟡</button>
@@ -668,6 +659,54 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- 🎁 СНАЙПЕР GIFTS МОДАЛКА -->
+    <div class="modal-overlay" id="modal-gifts-sniper">
+        <div class="modal-content glass-panel" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2 style="font-size: 1.15rem; color: #fda4af; font-weight: 900;">🎁 СНАЙПЕР ПОДАРКОВ (1000 шт)</h2>
+                <button class="btn-close" onclick="closeModal('modal-gifts-sniper')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px; margin-bottom: 12px;">
+                    <div class="setting-row" style="padding:0 0 8px 0;">
+                        <div>
+                            <div style="font-weight: 800; color: #fff;">🎯 Снайпер Скидок (Auto-Buy)</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">Мгновенные пуши в бота при сливе</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="gift-radar-active" onchange="handleGiftControlChange(event, 'toggle')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 6px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-muted);">
+                            <span>Ловить скидки от:</span>
+                            <b id="gift-margin-val" style="color:#29c75f;">30%</b>
+                        </div>
+                        <input type="range" id="gift-margin-slider" min="20" max="60" step="5" value="30" style="width:100%; margin: 6px 0;" oninput="handleGiftControlChange(event, 'slider')">
+                    </div>
+
+                    <div style="margin-top: 6px;">
+                        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:4px;">Максимальный бюджет (TON):</div>
+                        <input type="number" id="gift-budget-input" class="form-input" placeholder="Напр. 50 TON" value="50" style="margin-bottom:0;" onchange="handleGiftControlChange(event, 'budget')">
+                    </div>
+                </div>
+
+                <div style="font-size:0.85rem; font-weight:800; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+                    <span>Каталог подарков Fragment:</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Выбери нужные</span>
+                </div>
+
+                <div class="emoji-gifts-grid" id="emoji-gifts-grid"></div>
+
+                <button class="form-btn" style="background:#f43f5e; color:#fff; font-weight:900; margin-top:16px;" onclick="handleGiftControlChange(event, 'save')">
+                    💾 Сохранить фильтры снайпера
+                </button>
             </div>
         </div>
     </div>
@@ -700,7 +739,7 @@
                 </div>
 
                 <div style="font-size:0.8rem; font-weight:700; color:#fff; margin-bottom: 6px;">Ваша персональная ссылка:</div>
-                <input type="text" id="ref-link-input" class="form-input" readonly onclick="copyRefLink()" style="cursor: pointer; background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.3); color: #7dd3fc; font-weight: bold;">
+                <input type="text" id="ref-link-input" class="form-input" readonly onclick="copyRefLink()" style="cursor: pointer; background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.4); color: #ffffff !important; font-weight: bold;">
 
                 <div style="display:flex; gap:8px; margin-top: 4px;">
                     <button class="form-btn" style="flex:1; background:#38bdf8; color:#000;" onclick="copyRefLink()">📋 Скопировать</button>
@@ -731,7 +770,12 @@
                     </div>
                 </div>
 
-                <div class="accordion-section">
+                <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
+                    <span>🎁 Снайпер Fragment Подарков (1000 шт)</span>
+                    <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
+                </div>
+
+                <div class="accordion-section" style="margin-top:10px;">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span style="color: var(--primary);">🎯 Радар (Слежка за никами)</span>
                         <span class="acc-corner-arrow"></span>
@@ -877,11 +921,11 @@
             </div>
             <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; display:flex; flex-direction:column; gap:10px;">
                 <h3 style="color:#fff; font-size:0.85rem;">1. Предмет соглашения</h3>
-                <p>Настоящее соглашение регулирует использование функционала сервиса NameHunter PRO. Сервис предоставляет доступ к аналитическим инструментам подбора юзернеймов и мониторинга открытых NFT-листингов Fragment.</p>
+                <p>Настоящее соглашение регулирует порядок использования функционала сервиса «NameHunter PRO». Сервис предоставляет доступ к аналитическим алгоритмам анализа доступности идентификаторов Telegram и открытых NFT-листингов Fragment.</p>
                 <h3 style="color:#fff; font-size:0.85rem;">2. Характер услуг и отказ от гарантий</h3>
-                <p>Услуги предоставляются по принципу «AS IS» («КАК ЕСТЬ»). Сервис не гарантирует отсутствие ручной занятости юзернеймов третьими лицами и не отвечает за сторонние площадки.</p>
+                <p>Услуги предоставляются по принципу «AS IS» («КАК ЕСТЬ»). Сервис не гарантирует ручную занятость юзернеймов третьими лицами и не отвечает за работу сторонних платформ.</p>
                 <h3 style="color:#fff; font-size:0.85rem;">3. Платные подписки и Stars</h3>
-                <p>Покупка PRO-доступа через Telegram Stars (XTR) является приобретением неисключительных цифровых прав. Цифровая услуга считается оказанной в полном объёме в момент зачисления. Возврат средств не предусмотрен (ст. 450.1 ГК РФ).</p>
+                <p>Покупка PRO-доступа через Telegram Stars (XTR) является приобретением неисключительных цифровых прав. Цифровая услуга считается оказанной в полном объёме в момент активации. Возврат средств не предусмотрен (ст. 450.1 ГК РФ).</p>
             </div>
         </div>
     </div>
@@ -895,9 +939,9 @@
             </div>
             <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; display:flex; flex-direction:column; gap:10px;">
                 <h3 style="color:#fff; font-size:0.85rem;">1. Принципы минимизации данных</h3>
-                <p>Сервис обрабатывает только открытый числовой Telegram ID и имя пользователя Telegram для сохранения игрового баланса, подписки и реферальной связи.</p>
+                <p>Сервис обрабатывает только открытый числовой Telegram ID и имя пользователя Telegram для сохранения игрового прогресса, статуса подписки и реферальной связи.</p>
                 <h3 style="color:#fff; font-size:0.85rem;">2. Запрет сбора чувствительной информации</h3>
-                <p>Мы НЕ собираем и НЕ храним паспортные данные, номера мобильных телефонов, геолокацию, адреса электронной почты и данные банковских карт.</p>
+                <p>Мы НЕ собираем и НЕ храним паспортные данные, номера телефонов, геолокацию, адреса почты и данные банковских карт.</p>
             </div>
         </div>
     </div>
@@ -1096,6 +1140,7 @@
         let dailyGensCount = 0;
         let dailyLimitMax = 100;
         let totalReferralsCount = 0;
+        let selectedGiftsList = [];
 
         let tgChatId = null;
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -1154,17 +1199,47 @@
                     
                     if (data.profile.custom_theme_style) document.body.className = data.profile.custom_theme_style;
                     if (data.profile.custom_fog_rgb) document.documentElement.style.setProperty('--fog-rgb', data.profile.custom_fog_rgb);
-                    
+                    if (data.profile.custom_filter_settings) restoreFilterInputs(data.profile.custom_filter_settings);
+
                     saveProfileEverywhere();
                     applyProStateToUI();
                     updateDailyLimitBadge();
                     updatePityUI(data.profile.cases_opened_total || 0);
+                    updateReferralsUI();
                     renderAchievements();
                     renderHistory();
+
+                    if (data.offline_earned && data.offline_earned > 0) {
+                        let mins = Math.floor((data.offline_seconds || 60) / 60);
+                        document.getElementById('offline-time-text').innerText = `${mins} мин`;
+                        document.getElementById('offline-earned-amount').innerText = data.offline_earned;
+                        openModal('modal-offline-reward');
+                    }
                 }
             } catch(e){}
         }
         loadProfileFromCloudAndServer();
+
+        function restoreFilterInputs(cfg) {
+            if (cfg.keyword) document.getElementById('custom-kw-input').value = cfg.keyword;
+            if (cfg.category) document.getElementById('custom-cat-select').value = cfg.category;
+            if (cfg.filterActive !== undefined) document.getElementById('filter-active').checked = cfg.filterActive;
+            if (cfg.lenMode) document.getElementById('filter-len').value = cfg.lenMode;
+            if (cfg.useNum !== undefined) document.getElementById('filter-num').checked = cfg.useNum;
+            if (cfg.useUnd !== undefined) document.getElementById('filter-und').checked = cfg.useUnd;
+        }
+
+        function saveCurrentFilterSettings() {
+            userProfile.custom_filter_settings = {
+                keyword: document.getElementById('custom-kw-input').value,
+                category: document.getElementById('custom-cat-select').value,
+                filterActive: document.getElementById('filter-active').checked,
+                lenMode: document.getElementById('filter-len').value,
+                useNum: document.getElementById('filter-num').checked,
+                useUnd: document.getElementById('filter-und').checked
+            };
+            saveProfileEverywhere();
+        }
 
         function updateDailyLimitBadge() {
             const bar = document.getElementById('daily-limit-bar');
@@ -1189,15 +1264,18 @@
             const pityCount = totalOpened % 20;
             const el = document.getElementById('pity-counter-text');
             if (el) el.innerText = pityCount;
-            const freeBadge = document.getElementById('case-free-status-badge');
-            const now = Math.floor(Date.now() / 1000);
-            if (now - (userProfile.last_free_case_time || 0) >= 86400) {
-                if (freeBadge) { freeBadge.innerText = "🎁 Бесплатный кейс ГОТОВ!"; freeBadge.style.color = "#facc15"; }
-            } else {
-                let leftSec = 86400 - (now - userProfile.last_free_case_time);
-                let hours = Math.floor(leftSec / 3600);
-                if (freeBadge) { freeBadge.innerText = `⏱️ Бесплатный через ${hours}ч`; freeBadge.style.color = "#829288"; }
-            }
+        }
+
+        function updateReferralsUI() {
+            const botUsername = "selectionusername_bot";
+            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
+            const refInput = document.getElementById('ref-link-input');
+            if (refInput) refInput.value = refLink;
+            
+            const countEl = document.getElementById('ref-friends-count');
+            const earnedEl = document.getElementById('ref-earned-days');
+            if (countEl) countEl.innerText = totalReferralsCount;
+            if (earnedEl) earnedEl.innerText = `${totalReferralsCount} дн.`;
         }
 
         // =========================================================================
@@ -1215,6 +1293,19 @@
             { name: "👑 PRO 30 ДНЕЙ", rarity: "gold", icon: "👑" },
             { name: "🌌 Скин Квантум", rarity: "gold", icon: "🌌" }
         ];
+
+        function initRoulettePreview() {
+            const track = document.getElementById('cs-roulette-track');
+            if (!track) return;
+            track.innerHTML = '';
+            for (let i = 0; i < 15; i++) {
+                let item = CS_MOCK_ITEMS[i % CS_MOCK_ITEMS.length];
+                const card = document.createElement('div');
+                card.className = `cs-item-card rarity-${item.rarity}`;
+                card.innerHTML = `<div class="cs-item-icon">${item.icon}</div><div class="cs-item-name">${item.name}</div>`;
+                track.appendChild(card);
+            }
+        }
 
         function buildRouletteTrack(winningItem) {
             const track = document.getElementById('cs-roulette-track');
@@ -1273,19 +1364,42 @@
                     const randomShift = (Math.random() - 0.5) * 45;
                     const finalTranslate = -(winningIndex * cardWidth) + (containerWidth / 2) - (cardWidth / 2) + randomShift;
 
-                    track.style.transition = 'transform 8s cubic-bezier(0.08, 0.82, 0.12, 1)';
+                    track.style.transition = 'transform 9.5s cubic-bezier(0.06, 0.85, 0.1, 1)';
                     track.style.transform = `translateX(${finalTranslate}px)`;
                 }, 50);
 
                 setTimeout(() => {
                     showToast(`🎉 ВЫБИТО: ${drop.name}!`);
                     isSpinningCase = false;
-                }, 8200);
+                }, 9700);
 
             } catch (e) {
                 showToast("Ошибка соединения");
                 isSpinningCase = false;
             }
+        }
+
+        async function buyStarsCase(tariffId) {
+            try {
+                showToast("⏳ Формирование счета Stars...");
+                const res = await fetch('/api/pro/buy_invoice', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, tariff_id: tariffId })
+                });
+                const data = await res.json();
+                if (data.status === 'ok' && data.invoice_link) {
+                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
+                        window.Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
+                            if (status === 'paid') {
+                                const caseType = tariffId === 'case_elite' ? 'elite' : 'quantum';
+                                spinCase(caseType, 'stars');
+                            }
+                        });
+                    } else {
+                        window.open(data.invoice_link, '_blank');
+                    }
+                }
+            } catch (e) { showToast("Сбой соединения"); }
         }
 
         function applyProStateToUI() {
@@ -1324,7 +1438,7 @@
         }
 
         // =========================================================================
-        // 🎯 ГЕНЕРАТОР
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
@@ -1699,6 +1813,12 @@
         }
         createFogParticles();
 
+        function updateFogSettings() {
+            fogDensityCount = parseInt(document.getElementById('fog-density-slider').value);
+            fogSpeedMultiplier = parseInt(document.getElementById('fog-speed-slider').value) / 10.0;
+            createFogParticles();
+        }
+
         function drawFog() {
             ctx.clearRect(0, 0, width, height);
             const fogRGB = getComputedStyle(document.documentElement).getPropertyValue('--fog-rgb').trim() || "41, 199, 95";
@@ -1835,6 +1955,17 @@
             renderHistory();
         }
 
+        function setThemeColor(colorHex, rgbStr, el) {
+            document.documentElement.style.setProperty('--primary', colorHex);
+            document.documentElement.style.setProperty('--primary-glow', colorHex + '35');
+            document.documentElement.style.setProperty('--fog-rgb', rgbStr);
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            if (el) el.classList.add('active');
+            userProfile.custom_fog_rgb = rgbStr;
+            saveProfileEverywhere();
+            showToast("Тема обновлена");
+        }
+
         function setSecretTheme(themeClass, rgbStr) {
             document.body.className = themeClass;
             document.documentElement.style.setProperty('--fog-rgb', rgbStr || '41, 199, 95');
@@ -1844,11 +1975,175 @@
             showToast("Стиль активирован!");
         }
 
+        // =========================================================================
+        // 🎯 РАДАР И ПРОМОКОДЫ
+        // =========================================================================
+        async function fetchRadarListSettings() {
+            const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
+            const data = await res.json();
+            const list = data.targets || [];
+            localStorage.setItem('vh_local_radar_targets', JSON.stringify(list));
+            document.getElementById('settings-radar-slot-count').innerText = `${list.length}/${maxRadarSlots}`;
+            document.getElementById('radar-list-settings').innerHTML = list.map(t => `
+                <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:12px; font-size:0.85rem;">
+                    <span>@${t}</span>
+                    <button style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-weight:bold;" onclick="removeRadarTargetSettings('${t}')">Удалить</button>
+                </div>
+            `).join('');
+        }
+
+        async function addRadarTargetFromSettings() {
+            const inp = document.getElementById('radar-input-settings');
+            const val = inp.value.trim();
+            if (!val) return;
+
+            const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
+            if (res.status === 403) {
+                closeModal('modal-settings');
+                openModal('modal-pro');
+                showToast("⚠️ Лимит слотов исчерпан! Оформите PRO");
+                return;
+            }
+            inp.value = "";
+            showToast("Взято на мушку!");
+            fetchRadarListSettings();
+        }
+
+        async function removeRadarTargetSettings(username) {
+            await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${username}`);
+            fetchRadarListSettings();
+        }
+
+        async function applyPromoOrKey() {
+            const input = document.getElementById('promo-input').value.trim();
+            if (!input) return;
+
+            if (input.toUpperCase().startsWith("PRO-")) {
+                try {
+                    const res = await fetch('/api/pro/activate_key', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ user_id: tgChatId, key: input })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok') {
+                        isProUser = true;
+                        userProfile.pro_until = data.pro_until;
+                        userProfile.rank = data.rank || "👑 PRO Ловец";
+                        userProUntil = data.pro_until;
+                        saveProfileEverywhere();
+                        applyProStateToUI();
+                        showToast("🎉 PRO успешно активирован! Чек отправлен в бота.");
+                        closeModal('modal-settings');
+                    } else {
+                        showToast(`❌ ${data.error || "Неверный ключ"}`);
+                    }
+                } catch(e) {
+                    showToast("Ошибка сети при активации");
+                }
+            } else if (input.toUpperCase() === "BONUS1000") {
+                userProfile.coins += 1000;
+                saveProfileEverywhere();
+                updateTycoonUI();
+                showToast("🎁 +1000 монет начислено!");
+            } else {
+                showToast("❌ Неверный промокод");
+            }
+            document.getElementById('promo-input').value = "";
+        }
+
+        // =========================================================================
+        // 🎁 СНАЙПЕР GIFTS ЛОГИКА
+        // =========================================================================
+        async function loadGiftsCatalog() {
+            const grid = document.getElementById('emoji-gifts-grid');
+            try {
+                const res = await fetch('/api/gifts/catalog');
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    grid.innerHTML = data.catalog.slice(0, 100).map(g => {
+                        const isSelected = selectedGiftsList.includes(g.id);
+                        return `
+                            <div class="emoji-gift-card ${isSelected ? 'selected' : ''}" id="emoji-gift-${g.id}" onclick="toggleEmojiGiftSelection('${g.id}', event)">
+                                <div class="emoji-gift-icon">${g.icon}</div>
+                                <div class="emoji-gift-title">${g.name}</div>
+                                <div class="emoji-gift-price">Флор: ~${g.floor_ton} TON</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch(e){}
+        }
+
+        function toggleEmojiGiftSelection(giftId, event) {
+            if (!isProUser) {
+                handleGiftControlChange(event, 'select');
+                return;
+            }
+            const card = document.getElementById(`emoji-gift-${giftId}`);
+            if (selectedGiftsList.includes(giftId)) {
+                selectedGiftsList = selectedGiftsList.filter(id => id !== giftId);
+                card.classList.remove('selected');
+            } else {
+                selectedGiftsList.push(giftId);
+                card.classList.add('selected');
+            }
+        }
+
+        function handleGiftControlChange(event, action) {
+            if (!isProUser) {
+                if (event) { event.preventDefault(); event.stopPropagation(); }
+                document.getElementById('gift-radar-active').checked = false;
+                showToast("👑 Снайпер доступен только в PRO!");
+                closeModal('modal-gifts-sniper');
+                openModal('modal-pro');
+                return;
+            }
+
+            if (action === 'slider') {
+                const val = document.getElementById('gift-margin-slider').value;
+                document.getElementById('gift-margin-val').innerText = `${val}%`;
+            } else if (action === 'save' || action === 'toggle' || action === 'budget') {
+                saveGiftSniperSettings();
+            }
+        }
+
+        async function saveGiftSniperSettings() {
+            if (!isProUser) return;
+            const active = document.getElementById('gift-radar-active').checked;
+            const margin = parseInt(document.getElementById('gift-margin-slider').value);
+            const budget = parseFloat(document.getElementById('gift-budget-input').value) || 1000;
+
+            try {
+                const res = await fetch('/api/gifts/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: tgChatId,
+                        active: active,
+                        margin: margin,
+                        max_budget: budget,
+                        gifts: selectedGiftsList
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(active ? "🎯 Снайпер подарков активен!" : "⏸️ Снайпер приостановлен");
+                }
+            } catch(e) {
+                showToast("Ошибка сохранения");
+            }
+        }
+
         function openModal(id) { 
             document.getElementById(id).classList.add('active'); 
             if (id === 'modal-history') renderHistory();
             if (id === 'modal-achievements') renderAchievements();
             if (id === 'modal-leaderboard') fetchLeaderboard();
+            if (id === 'modal-cases') initRoulettePreview();
+            if (id === 'modal-referrals') updateReferralsUI();
+            if (id === 'modal-settings') fetchRadarListSettings();
+            if (id === 'modal-gifts-sniper') loadGiftsCatalog();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
