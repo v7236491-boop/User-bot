@@ -96,8 +96,16 @@
             white-space: nowrap;
         }
         .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
-        .nav-btn.ref-btn { border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #7dd3fc; }
-        .nav-btn.roulette-btn { border-color: rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.12); color: #facc15; }
+        .nav-btn.ref-btn {
+            border-color: rgba(56, 189, 248, 0.35);
+            background: rgba(56, 189, 248, 0.12);
+            color: #7dd3fc;
+        }
+        .nav-btn.roulette-btn {
+            border-color: rgba(234, 179, 8, 0.35);
+            background: rgba(234, 179, 8, 0.12);
+            color: #facc15;
+        }
 
         .btn-buy-pro-header {
             background: linear-gradient(135deg, #eab308, #ca8a04);
@@ -603,6 +611,22 @@
 
     <div class="toast" id="global-toast">✨ Готово!</div>
 
+    <!-- 📋 МОДАЛКА РЕЗУЛЬТАТОВ АВТОПОИСКА -->
+    <div class="modal-overlay" id="modal-autoparse-results">
+        <div class="modal-content glass-panel" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2 style="font-size: 1.15rem; color: var(--primary); font-weight: 900;">📋 Результаты автопоиска</h2>
+                <button class="btn-close" onclick="closeModal('modal-autoparse-results')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">
+                    Найдено свободных ников: <b id="autoparse-found-count" style="color:#fff;">0</b>. Нажмите на любой, чтобы скопировать.
+                </div>
+                <div id="autoparse-results-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- 🎁 МОДАЛКА ОФФЛАЙН-ФАРМА -->
     <div class="modal-overlay" id="modal-offline-reward">
         <div class="modal-content glass-panel" style="max-width: 360px; text-align: center;">
@@ -641,7 +665,6 @@
                     <b style="color:var(--primary);"><span id="pity-counter-text">0</span> / 20 открытий</b>
                 </div>
 
-                <!-- 1. DAILY CASE -->
                 <div class="case-card-box">
                     <div>
                         <div style="font-weight:900; color:#fff; font-size:0.95rem;">📦 Daily Case (Ежедневный)</div>
@@ -653,7 +676,6 @@
                     </div>
                 </div>
 
-                <!-- 2. ЭЛИТНЫЙ КЕЙС -->
                 <div class="case-card-box" style="border-color: rgba(168,85,247,0.3);">
                     <div>
                         <div style="font-weight:900; color:#c084fc; font-size:0.95rem;">🧰 Элитный Кейс</div>
@@ -665,7 +687,6 @@
                     </div>
                 </div>
 
-                <!-- 3. КВАНТОВЫЙ КЕЙС -->
                 <div class="case-card-box" style="border-color: rgba(234,179,8,0.4); background: linear-gradient(135deg, rgba(234,179,8,0.1), rgba(18,25,21,0.8));">
                     <div>
                         <div style="font-weight:900; color:#facc15; font-size:0.95rem;">🌌 Квантовый Кейс ✨</div>
@@ -853,7 +874,6 @@
                     </div>
                 </div>
 
-                <!-- 🛠️ ВСЕ 20 КАТЕГОРИЙ КОНСТРУКТОРА -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🛠️ Конструктор и Фильтры</span>
@@ -1149,6 +1169,7 @@
         let isFetching = false;
         let isAutoParsing = false;
         let autoParseTimer = null;
+        let autoParseFoundList = [];
         let lastGenerated = "";
         let slotInterval = null;
         let isSpinningCase = false;
@@ -1412,11 +1433,9 @@
                     body: JSON.stringify({ user_id: tgChatId, case_type: caseType, pay_method: payMethod })
                 });
                 
-                let data;
-                try { data = await res.json(); } 
-                catch(e) { showToast("❌ Ошибка ответа от сервера"); return; }
+                let data = await res.json();
 
-                if (data.status === 'error' || !res.ok) {
+                if (data.status === 'error') {
                     showToast(data.msg || "Ошибка открытия кейса");
                     if (data.cooldown_seconds) updatePityUI(userProfile.cases_opened_total || 0);
                     return;
@@ -1451,7 +1470,7 @@
                 }, 9700);
 
             } catch (e) {
-                showToast("❌ Ошибка сети при обращении к серверу");
+                showToast("❌ Ошибка соединения при открытии кейса");
                 isSpinningCase = false;
             }
         }
@@ -1585,7 +1604,7 @@
 
                 const uEl = document.getElementById('res-username');
                 const sEl = document.getElementById('res-status');
-                const evalData = data.evaluation || { color: "#29c75f", status: "Свободен", rank: "A" };
+                const evalData = data.evaluation || { color: "#29c75f", status: "Свободен", rank: "A", score: 25 };
 
                 uEl.style.color = evalData.color;
                 sEl.textContent = evalData.status;
@@ -1593,9 +1612,13 @@
 
                 if (data.is_free) {
                     document.getElementById('quick-actions').style.display = 'flex';
-                    saveToHistory({ user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color });
+                    const historyItem = { user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color, score: evalData.score || 25 };
+                    saveToHistory(historyItem);
+                    
                     if (isAutoParsing) {
-                        showToast(`🔥 АВТОПАРСЕР НАШЕЛ НИК: @${lastGenerated}!`);
+                        if (!autoParseFoundList.some(item => item.user === lastGenerated)) {
+                            autoParseFoundList.push(historyItem);
+                        }
                     }
                 } else {
                     document.getElementById('quick-actions').style.display = 'none';
@@ -1619,7 +1642,8 @@
                 autoParseTimer = null;
                 btn.classList.remove('running');
                 btn.innerText = "⚡ Автопоиск";
-                showToast("⏸️ Автопарсер остановлен");
+                showToast("⏹️ Автопоиск остановлен");
+                showAutoParseResultsModal();
             } else {
                 if (!isProUser && dailyGensCount >= dailyLimitMax) {
                     showToast("👑 Для автопарсера оформите PRO безлимит!");
@@ -1627,23 +1651,52 @@
                     return;
                 }
                 isAutoParsing = true;
+                autoParseFoundList = [];
                 btn.classList.add('running');
                 btn.innerText = "⏹️ Стоп";
-                showToast("🚀 Автопарсер запущен!");
+                showToast("🚀 Автопарсер непрерывно ищет ники...");
                 
                 manualGenerate();
                 autoParseTimer = setInterval(() => {
                     if (!isFetching && isAutoParsing) {
                         if (!isProUser && dailyGensCount >= dailyLimitMax) {
                             toggleAutoParser();
-                            showToast("⚠️ Дневной лимит исчерпан!");
-                            openModal('modal-pro');
                         } else {
                             manualGenerate();
                         }
                     }
                 }, turboUntil > Math.floor(Date.now() / 1000) ? 1200 : 2500);
             }
+        }
+
+        function showAutoParseResultsModal() {
+            const container = document.getElementById('autoparse-results-list');
+            document.getElementById('autoparse-found-count').innerText = autoParseFoundList.length;
+
+            if (autoParseFoundList.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">За время поиска свободных ников не найдено</div>';
+            } else {
+                // Сортировка от самого крутого (SSS+) до обычного (A)
+                const sorted = [...autoParseFoundList].sort((a, b) => (b.score || 0) - (a.score || 0));
+                container.innerHTML = sorted.map(item => `
+                    <div class="lb-card" style="border-left: 4px solid ${item.color}; cursor:pointer;" onclick="copyUsernameDirect('${item.user}')">
+                        <div>
+                            <div style="font-weight:900; color:#fff; font-size:1.05rem;">@${item.user}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Нажмите, чтобы скопировать 📋</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
+                            <div style="font-size:0.75rem; color:#eab308;">${item.price}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            openModal('modal-autoparse-results');
+        }
+
+        function copyUsernameDirect(username) {
+            navigator.clipboard.writeText(username);
+            showToast(`✨ Ник @${username} скопирован в буфер!`);
         }
 
         // =========================================================================
