@@ -874,6 +874,7 @@
                     </div>
                 </div>
 
+                <!-- 🛠️ ВСЕ 20 КАТЕГОРИЙ КОНСТРУКТОРА -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🛠️ Конструктор и Фильтры</span>
@@ -1182,6 +1183,7 @@
         let dailyLimitMax = 100;
         let totalReferralsCount = 0;
         let selectedGiftsList = [];
+        let turboCountdownInterval = null;
 
         let tgChatId = null;
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -1231,8 +1233,8 @@
                     userProfile = data.profile;
                     isProUser = data.is_pro;
                     userProUntil = data.pro_until;
-                    turboUntil = data.turbo_until || 0;
-                    maxRadarSlots = data.max_radar_slots || 100;
+                    turboUntil = data.profile.turbo_until || data.turbo_until || 0;
+                    maxRadarSlots = data.max_radar_slots || (isProUser ? 100 : 3);
                     planetHpMax = data.planet_hp_max || 100;
                     dailyGensCount = data.daily_gens_count || 0;
                     dailyLimitMax = data.daily_limit || 100;
@@ -1344,6 +1346,30 @@
             if (earnedEl) earnedEl.innerText = `${totalReferralsCount} дн.`;
         }
 
+        function updateTurboBadgeUI() {
+            const badge = document.getElementById('main-turbo-badge');
+            const timerEl = document.getElementById('turbo-timer-text');
+            const now = Math.floor(Date.now() / 1000);
+
+            if (turboUntil > now) {
+                badge.style.display = 'block';
+                let leftSec = turboUntil - now;
+                let m = Math.floor(leftSec / 60);
+                let s = leftSec % 60;
+                timerEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                
+                if (!turboCountdownInterval) {
+                    turboCountdownInterval = setInterval(updateTurboBadgeUI, 1000);
+                }
+            } else {
+                badge.style.display = 'none';
+                if (turboCountdownInterval) {
+                    clearInterval(turboCountdownInterval);
+                    turboCountdownInterval = null;
+                }
+            }
+        }
+
         // =========================================================================
         // 🎰 УНИКАЛЬНЫЕ ПУЛЫ НАГРАД ДЛЯ КАЖДОГО КЕЙСА
         // =========================================================================
@@ -1430,7 +1456,12 @@
                 const res = await fetch('/api/case/open', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: tgChatId, case_type: caseType, pay_method: payMethod })
+                    body: JSON.stringify({ 
+                        user_id: tgChatId, 
+                        case_type: caseType, 
+                        pay_method: payMethod,
+                        client_coins: userProfile.coins 
+                    })
                 });
                 
                 let data = await res.json();
@@ -1446,9 +1477,13 @@
                 userProfile = data.profile;
                 isProUser = data.is_pro;
                 userProUntil = data.pro_until;
+                turboUntil = data.profile.turbo_until || turboUntil;
+                maxRadarSlots = data.profile.radar_extra_slots ? (isProUser ? 100 : (3 + data.profile.radar_extra_slots)) : maxRadarSlots;
+                
                 saveProfileEverywhere();
                 applyProStateToUI();
                 updatePityUI(data.cases_opened_total);
+                updateTurboBadgeUI();
 
                 buildRouletteTrack(caseType, drop);
                 
@@ -1504,6 +1539,8 @@
             const radarSlotsCount = document.getElementById('settings-radar-slot-count');
             const now = Math.floor(Date.now() / 1000);
 
+            maxRadarSlots = isProUser ? 100 : (3 + (userProfile.radar_extra_slots || 0));
+
             if (isProUser) {
                 if (userProUntil === -1) {
                     headerProBtn.innerText = "👑 PRO ∞";
@@ -1518,7 +1555,7 @@
             } else {
                 headerProBtn.innerText = "👑 PRO Доступ";
                 if (kwLock) { kwLock.innerText = "🔒 PRO ONLY"; kwLock.style.background = "#eab308"; }
-                if (radarSlotsCount) radarSlotsCount.innerText = `0 / ${3 + (userProfile.radar_extra_slots || 0)}`;
+                if (radarSlotsCount) radarSlotsCount.innerText = `0 / ${maxRadarSlots}`;
             }
 
             const quasarBtn = document.getElementById('btn-theme-quasar');
@@ -1531,6 +1568,7 @@
             }
 
             updateTycoonUI();
+            updateTurboBadgeUI();
         }
 
         // =========================================================================
@@ -1676,7 +1714,6 @@
             if (autoParseFoundList.length === 0) {
                 container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">За время поиска свободных ников не найдено</div>';
             } else {
-                // Сортировка от самого крутого (SSS+) до обычного (A)
                 const sorted = [...autoParseFoundList].sort((a, b) => (b.score || 0) - (a.score || 0));
                 container.innerHTML = sorted.map(item => `
                     <div class="lb-card" style="border-left: 4px solid ${item.color}; cursor:pointer;" onclick="copyUsernameDirect('${item.user}')">
@@ -1929,14 +1966,26 @@
         async function buyShopItem(itemId) {
             try {
                 const res = await fetch('/api/game/buy', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, item_id: itemId })
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        user_id: tgChatId, 
+                        item_id: itemId,
+                        client_coins: userProfile.coins 
+                    })
                 });
                 const data = await res.json();
                 if (data.status === 'ok') {
                     userProfile = data.profile;
+                    isProUser = data.is_pro;
+                    userProUntil = data.pro_until;
+                    turboUntil = data.turbo_until || turboUntil;
+                    maxRadarSlots = data.max_radar_slots || (isProUser ? 100 : (3 + (userProfile.radar_extra_slots || 0)));
+                    
                     saveProfileEverywhere();
+                    applyProStateToUI();
                     updateTycoonUI();
+                    updateTurboBadgeUI();
                     showToast('✅ Успешно куплено!');
                 } else {
                     showToast(`❌ ${data.msg || "Недостаточно монет!"}`);
@@ -2183,10 +2232,11 @@
             if (!val) return;
 
             const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
-            if (res.status === 403) {
+            const data = await res.json();
+            if (data.status === 'error') {
                 closeModal('modal-settings');
                 openModal('modal-pro');
-                showToast("⚠️ Лимит слотов исчерпан! Оформите PRO");
+                showToast(data.msg || "⚠️ Лимит слотов исчерпан! Оформите PRO");
                 return;
             }
             inp.value = "";
