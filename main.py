@@ -325,6 +325,90 @@ async def gifts_arbitrage_worker():
             pass
         await asyncio.sleep(4)
 
+async def pro_expiry_worker():
+    while True:
+        try:
+            now = int(time.time())
+            db = load_json_file(GAME_DB_PATH, {})
+            changed = False
+
+            if db and bot:
+                for uid, user in list(db.items()):
+                    if not uid.isdigit():
+                        continue
+                    
+                    pro_until = user.get("pro_until", 0)
+                    if pro_until == -1 or pro_until == 0:
+                        continue
+                    
+                    diff = pro_until - now
+                    should_warn = False
+                    if diff > 600 and diff <= 86400 and not user.get("pro_warned", False):
+                        should_warn = True
+                    elif diff <= 180 and diff > 0 and not user.get("pro_warned", False):
+                        should_warn = True
+
+                    if should_warn:
+                        user["pro_warned"] = True
+                        changed = True
+                        time_left_str = f"{int(diff / 3600)} ч" if diff > 3600 else f"{max(1, int(diff / 60))} мин"
+
+                        try:
+                            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
+                            kb = InlineKeyboardMarkup(
+                                inline_keyboard=[
+                                    [InlineKeyboardButton(text="⭐ Продлить PRO Доступ", web_app=WebAppInfo(url=web_app_url))]
+                                ]
+                            )
+                            await bot.send_message(
+                                chat_id=int(uid),
+                                text=(
+                                    "⏳ **Внимание! Ваша PRO-подписка скоро истекает!** ⚠️\n\n"
+                                    f"До окончания осталось: **{time_left_str}** ⏱️\n\n"
+                                    "После завершения отключатся:\n"
+                                    "• 🎁 Снайпер скидок на Telegram Подарки\n"
+                                    "• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
+                                    "• 🛠️ Конструктор ников по 20 категориям\n"
+                                    "• 🎯 Расширенный радар на 100 слотов\n\n"
+                                    "👑 Продлите подписку, чтобы не потерять преимущества! ⭐"
+                                ),
+                                parse_mode="Markdown",
+                                reply_markup=kb
+                            )
+                        except Exception:
+                            pass
+
+                    if diff <= 0 and not user.get("pro_expired_notified", False):
+                        user["pro_expired_notified"] = True
+                        user["rank"] = "Ловец"
+                        changed = True
+                        try:
+                            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
+                            kb = InlineKeyboardMarkup(
+                                inline_keyboard=[
+                                    [InlineKeyboardButton(text="🚀 Восстановить PRO", web_app=WebAppInfo(url=web_app_url))]
+                                ]
+                            )
+                            await bot.send_message(
+                                chat_id=int(uid),
+                                text=(
+                                    "🥺 **Ваша PRO-подписка завершилась!** 🔒\n\n"
+                                    "Аккаунт переведён на базовый тариф (3 слота радара, лимит 100 поисков в день) 🔋\n\n"
+                                    "👑 Оформите подписку заново в любой момент, чтобы вернуть все суперспособности! ⭐"
+                                ),
+                                parse_mode="Markdown",
+                                reply_markup=kb
+                            )
+                        except Exception:
+                            pass
+
+            if changed:
+                save_json_atomic_sync(GAME_DB_PATH, db)
+
+        except Exception:
+            pass
+        await asyncio.sleep(10)
+
 PREMIUM_PREFIXES = ["neo", "vox", "lux", "zen", "vex", "arc", "sol", "dex", "sky", "ray", "val", "nox"]
 ELITE_ROOTS = [
     "nova", "apex", "volt", "onyx", "flux", "aura", "lyra", "zane", "koda", "mira",
@@ -462,7 +546,7 @@ async def check_username_telethon(username: str) -> bool:
     except Exception:
         return False
 
-# 4 ТАРИФА СО СКИДКАМИ + КЕЙСЫ
+# ВСЕ ТАРИФЫ СО СКИДКАМИ + КЕЙСЫ STARS
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
@@ -577,90 +661,6 @@ if dp and bot:
                 reply_markup=kb
             )
 
-async def pro_expiry_worker():
-    while True:
-        try:
-            now = int(time.time())
-            db = load_json_file(GAME_DB_PATH, {})
-            changed = False
-
-            if db and bot:
-                for uid, user in list(db.items()):
-                    if not uid.isdigit():
-                        continue
-                    
-                    pro_until = user.get("pro_until", 0)
-                    if pro_until == -1 or pro_until == 0:
-                        continue
-                    
-                    diff = pro_until - now
-                    should_warn = False
-                    if diff > 600 and diff <= 86400 and not user.get("pro_warned", False):
-                        should_warn = True
-                    elif diff <= 180 and diff > 0 and not user.get("pro_warned", False):
-                        should_warn = True
-
-                    if should_warn:
-                        user["pro_warned"] = True
-                        changed = True
-                        time_left_str = f"{int(diff / 3600)} ч" if diff > 3600 else f"{max(1, int(diff / 60))} мин"
-
-                        try:
-                            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
-                            kb = InlineKeyboardMarkup(
-                                inline_keyboard=[
-                                    [InlineKeyboardButton(text="⭐ Продлить PRO Доступ", web_app=WebAppInfo(url=web_app_url))]
-                                ]
-                            )
-                            await bot.send_message(
-                                chat_id=int(uid),
-                                text=(
-                                    "⏳ **Внимание! Ваша PRO-подписка скоро истекает!** ⚠️\n\n"
-                                    f"До окончания осталось: **{time_left_str}** ⏱️\n\n"
-                                    "После завершения отключатся:\n"
-                                    "• 🎁 Снайпер скидок на Telegram Подарки\n"
-                                    "• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
-                                    "• 🛠️ Конструктор ников по 20 категориям\n"
-                                    "• 🎯 Расширенный радар на 100 слотов\n\n"
-                                    "👑 Продлите подписку, чтобы не потерять преимущества! ⭐"
-                                ),
-                                parse_mode="Markdown",
-                                reply_markup=kb
-                            )
-                        except Exception:
-                            pass
-
-                    if diff <= 0 and not user.get("pro_expired_notified", False):
-                        user["pro_expired_notified"] = True
-                        user["rank"] = "Ловец"
-                        changed = True
-                        try:
-                            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
-                            kb = InlineKeyboardMarkup(
-                                inline_keyboard=[
-                                    [InlineKeyboardButton(text="🚀 Восстановить PRO", web_app=WebAppInfo(url=web_app_url))]
-                                ]
-                            )
-                            await bot.send_message(
-                                chat_id=int(uid),
-                                text=(
-                                    "🥺 **Ваша PRO-подписка завершилась!** 🔒\n\n"
-                                    "Аккаунт переведён на базовый тариф (3 слота радара, лимит 100 поисков в день) 🔋\n\n"
-                                    "👑 Оформите подписку заново в любой момент, чтобы вернуть все суперспособности! ⭐"
-                                ),
-                                parse_mode="Markdown",
-                                reply_markup=kb
-                            )
-                        except Exception:
-                            pass
-
-            if changed:
-                save_json_atomic_sync(GAME_DB_PATH, db)
-
-        except Exception:
-            pass
-        await asyncio.sleep(10)
-
 async def radar_worker():
     while True:
         try:
@@ -735,12 +735,20 @@ async def restore_sync(request: Request):
         user = get_user_profile(db, user_id)
         now = int(time.time())
 
-        # Синхронизация PRO
+        # Расчет оффлайн-фарма при восстановлении
+        time_diff = now - user["last_seen"]
+        offline_earned = 0
+        offline_seconds = 0
+        if time_diff > 60 and user.get("offline_miner_lvl", 0) > 0:
+            offline_seconds = min(time_diff, 10800)
+            rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
+            offline_earned = int(offline_seconds * rate_per_sec)
+            user["offline_pending"] = offline_earned
+
         if client_profile.get("pro_until", 0) == -1 or client_profile.get("pro_until", 0) > user.get("pro_until", 0):
             user["pro_until"] = client_profile["pro_until"]
             user["rank"] = "👑 PRO Ловец"
 
-        # Синхронизация монет и кликера
         if client_profile.get("coins", 0) > user.get("coins", 0):
             user["coins"] = client_profile["coins"]
 
@@ -809,6 +817,8 @@ async def restore_sync(request: Request):
             "profile": user,
             "is_pro": is_pro,
             "pro_until": pro_until,
+            "offline_earned": user.get("offline_pending", 0),
+            "offline_seconds": offline_seconds,
             "referrals_count": final_refs_count,
             "daily_gens_count": user.get("daily_gens_count", 0),
             "daily_limit": FREE_DAILY_LIMIT,
@@ -826,7 +836,7 @@ async def get_game_state(user_id: str):
         
         offline_earned = 0
         offline_seconds = 0
-        if time_diff > 60 and user["offline_miner_lvl"] > 0:
+        if time_diff > 60 and user.get("offline_miner_lvl", 0) > 0:
             offline_seconds = min(time_diff, 10800)
             rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
             offline_earned = int(offline_seconds * rate_per_sec)
@@ -856,9 +866,6 @@ async def get_game_state(user_id: str):
             "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
         }
 
-# =========================================================================
-# 🎰 РУЛЕТКА: РАСЧЁТ ДРОПА С ГАРАНТОМ НА 20 ОТКРЫТИЙ
-# =========================================================================
 @app.post("/api/case/open")
 async def open_case(request: Request):
     data = await request.json()
@@ -965,7 +972,7 @@ async def open_case(request: Request):
             user["rank"] = "👑 PRO Ловец"
 
         user["last_seen"] = now
-        save_json_atomic_sync(GAME_DB_PATH, db)
+        save_json_atomic_sync(GAME_DB_PATH, game_db)
 
         is_pro, pro_until = is_user_pro(user_id)
         return {
@@ -1270,7 +1277,6 @@ async def generate_username(
 
         user["gens_total_count"] = user.get("gens_total_count", 0) + 1
 
-        # 👥 АНТИФРОД: Начисление строго 1 раз после 3-го поиска
         if user.get("referred_by") and not user.get("referral_reward_claimed", False) and user["gens_total_count"] >= 3:
             user["referral_reward_claimed"] = True
             referrer_id = user["referred_by"]
