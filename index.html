@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & Gifts Sniper</title>
+    <title>Username Scanner PRO & Referrals</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js?v=7.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -66,7 +66,7 @@
         header { 
             display: flex; 
             justify-content: space-between; 
-            align-items: center;
+            align-items: flex-start;
             padding: 12px 16px; 
             z-index: 50; 
             width: 100%; 
@@ -74,6 +74,13 @@
             margin: 0 auto; 
             gap: 10px;
         }
+
+        .header-left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
         .nav-btn { 
             background: rgba(255, 255, 255, 0.08); 
             border: 1px solid rgba(255, 255, 255, 0.12); 
@@ -81,17 +88,23 @@
             font-size: 0.82rem; 
             font-weight: 600; 
             cursor: pointer; 
-            padding: 9px 12px; 
+            padding: 8px 12px; 
             display: flex; 
             align-items: center; 
+            justify-content: center;
             gap: 5px; 
-            border-radius: 18px; 
+            border-radius: 16px; 
             backdrop-filter: blur(10px);
             transition: transform 0.15s ease, background 0.2s ease;
             white-space: nowrap;
             flex-shrink: 0;
         }
         .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
+        .nav-btn.ref-btn {
+            border-color: rgba(56, 189, 248, 0.35);
+            background: rgba(56, 189, 248, 0.12);
+            color: #7dd3fc;
+        }
 
         .btn-buy-pro-header {
             background: linear-gradient(135deg, #eab308, #ca8a04);
@@ -257,7 +270,6 @@
         }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* ⚖️ НЕЗАМЕТНАЯ ПРАВОВАЯ СТРОКА ВНИЗУ */
         .legal-notice-footer {
             font-size: 0.68rem;
             color: rgba(130, 146, 136, 0.65);
@@ -439,6 +451,15 @@
         .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 14px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
         .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 16px; cursor: pointer; }
 
+        .ref-box-glass {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(18, 25, 21, 0.8));
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
         .legal-text-block {
             font-size: 0.78rem;
             color: var(--text-muted);
@@ -482,7 +503,10 @@
     <canvas id="blackhole-bg-canvas"></canvas>
 
     <header>
-        <button class="nav-btn" onclick="openModal('modal-history')">📁 История</button>
+        <div class="header-left-col">
+            <button class="nav-btn" onclick="openModal('modal-history')">📁 История</button>
+            <button class="nav-btn ref-btn" onclick="openModal('modal-referrals')">👥 Рефералы</button>
+        </div>
         <button class="btn-buy-pro-header" id="pro-header-btn" onclick="openModal('modal-pro')">👑 PRO Доступ</button>
         <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
     </header>
@@ -492,7 +516,6 @@
             ⚡ ТУРБО-РЕЖИМ X2 АКТИВЕН: <span id="turbo-timer-text">15:00</span>
         </div>
 
-        <!-- 📊 СЧЁТЧИК ЛИМИТА ГЕНЕРАЦИЙ -->
         <div class="daily-limit-badge" id="daily-limit-bar">
             <span>🎯 Генераций сегодня:</span>
             <b id="daily-gens-text" style="color: var(--primary);">0 / 100</b>
@@ -517,7 +540,6 @@
 
             <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
 
-            <!-- ⚖️ НЕЗАМЕТНАЯ ПРАВОВАЯ СТРОКА ПОД КНОПКОЙ -->
             <div class="legal-notice-footer">
                 Используя сервис, вы принимаете условия 
                 <span class="legal-notice-link" onclick="openModal('modal-terms')">Оферты</span> и 
@@ -541,6 +563,49 @@
 
     <div class="toast" id="global-toast">✨ Готово!</div>
 
+    <!-- 👥 МОДАЛКА: РЕФЕРАЛЬНАЯ ПРОГРАММА (+1 ДЕНЬ PRO) 👥 -->
+    <div class="modal-overlay" id="modal-referrals">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.15rem; color: #7dd3fc; font-weight: 900;">👥 Пригласи друга</h2>
+                <button class="btn-close" onclick="closeModal('modal-referrals')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="ref-box-glass">
+                    <div style="font-size: 2.2rem; margin-bottom: 4px;">🎁</div>
+                    <div style="font-size: 1.05rem; font-weight: 900; color: #fff;">+1 ДЕНЬ PRO ЗА ДРУГА!</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+                        Приглашайте друзей и получайте <b>24 часа PRO</b> за каждого активного ловца!
+                    </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 14px; margin-bottom: 12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                        <span style="font-size:0.85rem; color:var(--text-muted);">Приглашено друзей:</span>
+                        <b id="ref-friends-count" style="font-size:1.1rem; color:var(--primary);">0</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.85rem; color:var(--text-muted);">Заработано PRO:</span>
+                        <b id="ref-earned-days" style="font-size:1.1rem; color:#eab308;">0 дней</b>
+                    </div>
+                </div>
+
+                <div style="font-size:0.8rem; font-weight:700; color:#fff; margin-bottom: 6px;">Ваша персональная ссылка:</div>
+                <input type="text" id="ref-link-input" class="form-input" readonly onclick="copyRefLink()" style="cursor: pointer; background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.3); color: #7dd3fc; font-weight: bold;">
+
+                <div style="display:flex; gap:8px; margin-top: 4px;">
+                    <button class="form-btn" style="flex:1; background:#38bdf8; color:#000;" onclick="copyRefLink()">📋 Скопировать</button>
+                    <button class="form-btn" style="flex:1.2; background:var(--primary); color:#000;" onclick="shareRefLink()">📲 Отправить другу</button>
+                </div>
+
+                <div style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin-top: 14px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px;">
+                    🛡️ <b>Как начисляется награда:</b><br>
+                    Друг переходит по ссылке, открывает Mini App и делает <b>3 поиска</b> никнеймов. После этого бот мгновенно начисляет вам +1 день PRO.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ⚙️ НАСТРОЙКИ -->
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
@@ -562,7 +627,6 @@
                     </div>
                 </div>
 
-                <!-- 🎁 КНОПКА СНАЙПЕРА GIFTS ВНУТРИ НАСТРОЕК -->
                 <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
                     <span>🎁 Снайпер Fragment Подарков (1000 шт)</span>
                     <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
@@ -724,7 +788,7 @@
         </div>
     </div>
 
-    <!-- 📄 МОДАЛКА: ПОЛЬЗОВАТЕЛЬСКОЕ СОГЛАШЕНИЕ (ОФЕРТА) 📄 -->
+    <!-- 📄 МОДАЛКА: ОФЕРТА 📄 -->
     <div class="modal-overlay" id="modal-terms">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -733,21 +797,21 @@
             </div>
             <div class="modal-body legal-text-block">
                 <h3>1. Предмет соглашения</h3>
-                <p>Настоящее Пользовательское соглашение (далее — «Оферта») регулирует порядок использования сервиса «NameHunter PRO» (далее — «Сервис»). Сервис предоставляет пользователям доступ к программным алгоритмам автоматического анализа доступности публичных идентификаторов (юзернеймов) и мониторинга открытых NFT-листингов Telegram Gifts.</p>
+                <p>Настоящее Пользовательское соглашение (далее — «Оферта») регулирует порядок использования сервиса «NameHunter PRO». Сервис предоставляет пользователям доступ к программным алгоритмам автоматического анализа доступности публичных идентификаторов (юзернеймов) и мониторинга открытых NFT-листингов Telegram Gifts.</p>
                 
                 <h3>2. Характер услуг и отказ от гарантий</h3>
                 <p>Все функциональные возможности предоставляются на условиях <b>«КАК ЕСТЬ» («AS IS»)</b>. Администрация Сервиса не гарантирует 100% точность сторонних API Telegram/Fragment, абсолютную доступность выбранных юзернеймов на момент их ручной регистрации пользователем, а также гарантированную прибыль от покупки NFT-подарков.</p>
                 
                 <h3>3. Платные услуги (PRO Доступ)</h3>
-                <p>Покупка PRO-доступа через Telegram Stars (XTR) является приобретением доступа к неисключительным цифровым правам и расширенному функционалу программного обеспечения. В соответствии со ст. 450.1 ГК РФ и международными нормами права, цифровая услуга считается оказанной в полном объеме в момент активации PRO-статуса в аккаунте. Возврат средств за активированные ключи и периоды подписки не осуществляется.</p>
+                <p>Покупка PRO-доступа через Telegram Stars (XTR) является приобретением неисключительных цифровых прав. Цифровая услуга считается оказанной в полном объеме в момент активации PRO-статуса. Возврат средств за активированные ключи и периоды подписки не осуществляется.</p>
                 
                 <h3>4. Ограничение ответственности</h3>
-                <p>Администрация не несёт ответственности за действия третьих лиц, блокировки или изменения правил платформы Telegram, а также за любые прямые или косвенные убытки, возникшие в результате использования информации, полученной через Сервис.</p>
+                <p>Администрация не несёт ответственности за действия третьих лиц, блокировки или изменения правил платформы Telegram.</p>
             </div>
         </div>
     </div>
 
-    <!-- 🔒 МОДАЛКА: ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ 🔒 -->
+    <!-- 🔒 МОДАЛКА: КОНФИДЕНЦИАЛЬНОСТЬ 🔒 -->
     <div class="modal-overlay" id="modal-privacy">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -756,21 +820,18 @@
             </div>
             <div class="modal-body legal-text-block">
                 <h3>1. Собираемые данные</h3>
-                <p>Сервис уважает конфиденциальность пользователей и соблюдает принципы минимизации обработки данных (согласно 152-ФЗ РФ и GDPR). Сервис обрабатывает исключительно общедоступные технические идентификаторы:</p>
+                <p>Сервис обрабатывает исключительно общедоступные технические идентификаторы:</p>
                 <ul style="padding-left: 18px;">
                     <li>Уникальный числовой идентификатор Telegram (Telegram ID);</li>
-                    <li>Имя профиля Telegram (First Name / Last Name) для отображения в таблице лидеров;</li>
-                    <li>Игровой прогресс (монеты, этапы планет, слоты радара, статус подписки).</li>
+                    <li>Имя профиля Telegram для таблицы лидеров;</li>
+                    <li>Игровой прогресс, реферальная статистика и статус подписки.</li>
                 </ul>
                 
                 <h3>2. Запрет на сбор чувствительных данных</h3>
-                <p>Сервис <b>НЕ собирает, НЕ обрабатывает и НЕ хранит</b>: паспортные данные, номера телефонов, адреса электронной почты, биометрию, реквизиты банковских карт и данные о платежах (все транзакции проводятся через защищенный нативный шлюз Telegram Stars).</p>
+                <p>Сервис <b>НЕ собирает и НЕ хранит</b>: паспортные данные, номера телефонов, адреса почты, банковские реквизиты.</p>
                 
                 <h3>3. Цели обработки</h3>
-                <p>Идентификатор Telegram ID используется исключительно для сохранения игрового баланса, авторизации PRO-подписки на различных устройствах и отправки уведомлений от бота по запросу пользователя.</p>
-                
-                <h3>4. Передача третьим лицам</h3>
-                <p>Данные пользователей хранятся в защищенной базе и ни при каких обстоятельствах не продаются, не передаются рекламным сетям или третьим лицам.</p>
+                <p>Telegram ID используется исключительно для сохранения игрового баланса и авторизации PRO-подписки на устройствах.</p>
             </div>
         </div>
     </div>
@@ -1052,6 +1113,7 @@
         let maxRadarSlots = 3;
         let dailyGensCount = 0;
         let dailyLimitMax = 100;
+        let totalReferralsCount = 0;
 
         let autoSessionScanned = 0;
         let autoSessionFound = [];
@@ -1071,7 +1133,7 @@
         let userProfile = { 
             coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, 
             offline_miner_lvl: 0, rank: "Ловец", planet_stage: 1, planet_hp: 100,
-            unlocked_themes: [], pro_until: 0, radar_extra_slots: 0,
+            unlocked_themes: [], pro_until: 0, radar_extra_slots: 0, referrals_count: 0,
             client_history: [], client_achievements: [], custom_theme_style: "",
             custom_fog_rgb: "41, 199, 95", custom_filter_settings: {}
         };
@@ -1079,6 +1141,7 @@
         let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
 
         function saveProfileEverywhere() {
+            userProfile.referrals_count = totalReferralsCount;
             localStorage.setItem('vh_saved_profile', JSON.stringify(userProfile));
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
                 try {
@@ -1131,6 +1194,7 @@
                     planetHpMax = data.planet_hp_max || 100;
                     dailyGensCount = data.daily_gens_count || 0;
                     dailyLimitMax = data.daily_limit || 100;
+                    totalReferralsCount = data.referrals_count || 0;
                     
                     if (data.profile.client_history && data.profile.client_history.length > 0) {
                         localStorage.setItem('vpn_parser_history', JSON.stringify(data.profile.client_history));
@@ -1152,6 +1216,7 @@
                     saveProfileEverywhere();
                     applyProStateToUI();
                     updateDailyLimitBadge();
+                    updateReferralsUI();
                     renderAchievements();
                 }
             } catch(e){}
@@ -1204,6 +1269,43 @@
                     bar.classList.remove('limit-reached');
                 }
             }
+        }
+
+        function updateReferralsUI() {
+            const botUsername = "selectionusername_bot";
+            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
+            const refInput = document.getElementById('ref-link-input');
+            if (refInput) refInput.value = refLink;
+            
+            const countEl = document.getElementById('ref-friends-count');
+            const earnedEl = document.getElementById('ref-earned-days');
+            if (countEl) countEl.innerText = totalReferralsCount;
+            if (earnedEl) earnedEl.innerText = `${totalReferralsCount} ${getNoun(totalReferralsCount, 'день', 'дня', 'дней')}`;
+        }
+
+        function getNoun(number, one, two, five) {
+            let n = Math.abs(number);
+            n %= 100;
+            if (n >= 5 && n <= 20) return five;
+            n %= 10;
+            if (n === 1) return one;
+            if (n >= 2 && n <= 4) return two;
+            return five;
+        }
+
+        function copyRefLink() {
+            const botUsername = "selectionusername_bot";
+            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
+            navigator.clipboard.writeText(refLink);
+            showToast("✨ Реферальная ссылка скопирована!");
+        }
+
+        function shareRefLink() {
+            const botUsername = "selectionusername_bot";
+            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
+            const text = "Лови редкие ники в Telegram и скидки на Подарки Fragment в NameHunter PRO! 🚀";
+            const url = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
         }
 
         function applyProStateToUI() {
@@ -1530,7 +1632,7 @@
         setInterval(updateTurboTimer, 1000);
 
         // =========================================================================
-        // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН
+        // 🌫️ ТУМАН
         // =========================================================================
         const canvas = document.getElementById('fog-canvas');
         const ctx = canvas.getContext('2d');
@@ -2327,6 +2429,7 @@
             if (id === 'modal-leaderboard') fetchLeaderboard();
             if (id === 'modal-achievements') renderAchievements();
             if (id === 'modal-gifts-sniper') loadGiftsCatalog();
+            if (id === 'modal-referrals') updateReferralsUI();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
