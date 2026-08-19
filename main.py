@@ -575,7 +575,6 @@ async def check_username_telethon(username: str) -> bool:
     except Exception:
         return False
 
-# ВСЕ ТАРИФЫ СО СКИДКАМИ + КЕЙСЫ STARS
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
@@ -656,7 +655,6 @@ if dp and bot:
                 game_db = load_json_file(GAME_DB_PATH, {})
                 user = get_user_profile(game_db, user_id)
                 
-                # 🛡️ Сохранение Lifetime и суммирование сроков
                 if user.get("pro_until") != -1:
                     if secs == -1:
                         user["pro_until"] = -1
@@ -898,6 +896,9 @@ async def get_game_state(user_id: str):
             "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
         }
 
+# =========================================================================
+# 🎰 РАСЧЁТ ДРОПА С ТОЧНЫМ ТАЙМЕРОМ БЕСПЛАТНОГО КЕЙСА
+# =========================================================================
 @app.post("/api/case/open")
 async def open_case(request: Request):
     data = await request.json()
@@ -906,7 +907,7 @@ async def open_case(request: Request):
     pay_method = str(data.get("pay_method", "free"))
 
     if not user_id:
-        return JSONResponse(status_code=400, content={"error": "no_user_id"})
+        return JSONResponse(status_code=400, content={"error": "no_user_id", "msg": "ID пользователя не найден!"})
 
     async with DB_LOCK:
         game_db = load_json_file(GAME_DB_PATH, {})
@@ -915,24 +916,37 @@ async def open_case(request: Request):
 
         if case_type == "daily":
             if pay_method == "free":
-                if now - user.get("last_free_case_time", 0) < 86400:
-                    return JSONResponse(status_code=400, content={"error": "cooldown", "msg": "Бесплатный кейс доступен 1 раз в 24 часа!"})
+                last_free = user.get("last_free_case_time", 0)
+                time_passed = now - last_free
+                if time_passed < 86400:
+                    left_sec = 86400 - time_passed
+                    hours = left_sec // 3600
+                    mins = (left_sec % 3600) // 60
+                    time_str = f"{hours}ч {mins}мин" if hours > 0 else f"{mins}мин"
+                    return JSONResponse(
+                        status_code=400,
+                        content={
+                            "error": "cooldown",
+                            "msg": f"⏳ Вы уже забрали бесплатный кейс! Следующий через {time_str}",
+                            "cooldown_seconds": left_sec
+                        }
+                    )
                 user["last_free_case_time"] = now
             elif pay_method == "coins":
                 if user["coins"] < 15000:
-                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 15 000 монет!"})
+                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет! Нужно 15 000 🟡"})
                 user["coins"] -= 15000
 
         elif case_type == "elite":
             if pay_method == "coins":
                 if user["coins"] < 60000:
-                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 60 000 монет!"})
+                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет! Нужно 60 000 🟡"})
                 user["coins"] -= 60000
 
         elif case_type == "quantum":
             if pay_method == "coins":
                 if user["coins"] < 150000:
-                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 150 000 монет!"})
+                    return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Недостаточно монет! Нужно 150 000 🟡"})
                 user["coins"] -= 150000
 
         user["cases_opened_total"] = user.get("cases_opened_total", 0) + 1
@@ -1106,7 +1120,7 @@ async def buy_game_item(request: Request):
                 if "unlocked_themes" not in user:
                     user["unlocked_themes"] = []
                 user["unlocked_themes"].append("theme_quasar")
-            else:
+            else: 
                 return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
 
         elif item_id == "multi_tap":
