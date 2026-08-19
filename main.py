@@ -462,6 +462,7 @@ async def check_username_telethon(username: str) -> bool:
     except Exception:
         return False
 
+# 4 ТАРИФА СО СКИДКАМИ + КЕЙСЫ
 TARRIFS = {
     "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
@@ -964,7 +965,7 @@ async def open_case(request: Request):
             user["rank"] = "👑 PRO Ловец"
 
         user["last_seen"] = now
-        save_json_atomic_sync(GAME_DB_PATH, game_db)
+        save_json_atomic_sync(GAME_DB_PATH, db)
 
         is_pro, pro_until = is_user_pro(user_id)
         return {
@@ -1269,6 +1270,7 @@ async def generate_username(
 
         user["gens_total_count"] = user.get("gens_total_count", 0) + 1
 
+        # 👥 АНТИФРОД: Начисление строго 1 раз после 3-го поиска
         if user.get("referred_by") and not user.get("referral_reward_claimed", False) and user["gens_total_count"] >= 3:
             user["referral_reward_claimed"] = True
             referrer_id = user["referred_by"]
