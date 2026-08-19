@@ -96,16 +96,8 @@
             white-space: nowrap;
         }
         .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
-        .nav-btn.ref-btn {
-            border-color: rgba(56, 189, 248, 0.35);
-            background: rgba(56, 189, 248, 0.12);
-            color: #7dd3fc;
-        }
-        .nav-btn.roulette-btn {
-            border-color: rgba(234, 179, 8, 0.35);
-            background: rgba(234, 179, 8, 0.12);
-            color: #facc15;
-        }
+        .nav-btn.ref-btn { border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #7dd3fc; }
+        .nav-btn.roulette-btn { border-color: rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.12); color: #facc15; }
 
         .btn-buy-pro-header {
             background: linear-gradient(135deg, #eab308, #ca8a04);
@@ -597,7 +589,6 @@
         </div>
     </main>
 
-    <!-- 📱 НИЖНЯЯ ПАНЕЛЬ -->
     <div class="bottom-nav-container">
         <button class="nav-pill-btn" onclick="openModal('modal-achievements')">
             🏆 <span id="achieve-counter-badge">0/100</span>
@@ -1420,13 +1411,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: tgChatId, case_type: caseType, pay_method: payMethod })
                 });
-                const data = await res.json();
+                
+                let data;
+                try { data = await res.json(); } 
+                catch(e) { showToast("❌ Ошибка ответа от сервера"); return; }
 
-                if (data.status !== 'ok') {
+                if (data.status === 'error' || !res.ok) {
                     showToast(data.msg || "Ошибка открытия кейса");
-                    if (data.cooldown_seconds) {
-                        updatePityUI(userProfile.cases_opened_total || 0);
-                    }
+                    if (data.cooldown_seconds) updatePityUI(userProfile.cases_opened_total || 0);
                     return;
                 }
 
@@ -1459,7 +1451,7 @@
                 }, 9700);
 
             } catch (e) {
-                showToast("Ошибка сети при обращении к серверу");
+                showToast("❌ Ошибка сети при обращении к серверу");
                 isSpinningCase = false;
             }
         }
@@ -1547,6 +1539,7 @@
             if (!isProUser && dailyGensCount >= dailyLimitMax) {
                 showToast("⚠️ Дневной лимит (100 поисков) исчерпан! Купите PRO для безлимита.");
                 openModal('modal-pro');
+                if (isAutoParsing) toggleAutoParser();
                 return;
             }
 
@@ -1578,6 +1571,7 @@
                     dailyGensCount = dailyLimitMax;
                     updateDailyLimitBadge();
                     openModal('modal-pro');
+                    if (isAutoParsing) toggleAutoParser();
                     return;
                 }
 
@@ -1601,7 +1595,6 @@
                     document.getElementById('quick-actions').style.display = 'flex';
                     saveToHistory({ user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color });
                     if (isAutoParsing) {
-                        toggleAutoParser();
                         showToast(`🔥 АВТОПАРСЕР НАШЕЛ НИК: @${lastGenerated}!`);
                     }
                 } else {
@@ -1637,10 +1630,19 @@
                 btn.classList.add('running');
                 btn.innerText = "⏹️ Стоп";
                 showToast("🚀 Автопарсер запущен!");
+                
                 manualGenerate();
                 autoParseTimer = setInterval(() => {
-                    if (!isFetching) manualGenerate();
-                }, turboUntil > Math.floor(Date.now() / 1000) ? 1100 : 2200);
+                    if (!isFetching && isAutoParsing) {
+                        if (!isProUser && dailyGensCount >= dailyLimitMax) {
+                            toggleAutoParser();
+                            showToast("⚠️ Дневной лимит исчерпан!");
+                            openModal('modal-pro');
+                        } else {
+                            manualGenerate();
+                        }
+                    }
+                }, turboUntil > Math.floor(Date.now() / 1000) ? 1200 : 2500);
             }
         }
 
