@@ -467,8 +467,8 @@ TARRIFS = {
     "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
     "pro_90": {"seconds": 90 * 86400, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO функции"},
     "pro_forever": {"seconds": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"},
-    "case_elite": {"seconds": 0, "stars": 10, "title": "Элитный Кейс CS2", "desc": "10-25k монет, PRO 3-7 дней, слоты радара"},
-    "case_quantum": {"seconds": 0, "stars": 25, "title": "Квантовый Кейс CS2", "desc": "30-50k монет, PRO 7-30 дней, скин Квантум"}
+    "case_elite": {"seconds": 0, "stars": 10, "title": "Элитный Кейс", "desc": "15-25k монет, PRO 3-7 дней, слоты радара"},
+    "case_quantum": {"seconds": 0, "stars": 25, "title": "Квантовый Кейс", "desc": "30-50k монет, PRO 7-30 дней, скин Квантум"}
 }
 
 if dp and bot:
@@ -506,7 +506,7 @@ if dp and bot:
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
             "🎯 Мгновенный поиск редких юзернеймов\n"
             "🎁 Снайпер скидок на Telegram Подарки (Fragment)\n"
-            "📦 Кейсы в стиле CS2 с рулеткой наград и гарантией\n"
+            "🎰 Квантовая рулетка кейсов с гарантией наград\n"
             "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
             "👥 Приглашай друзей и получай **+1 день PRO** за каждого!",
             reply_markup=kb,
@@ -739,7 +739,7 @@ async def restore_sync(request: Request):
             user["pro_until"] = client_profile["pro_until"]
             user["rank"] = "👑 PRO Ловец"
 
-        # Синхронизация игрового баланса и кейсов
+        # Синхронизация монет и кликера
         if client_profile.get("coins", 0) > user.get("coins", 0):
             user["coins"] = client_profile["coins"]
 
@@ -856,14 +856,14 @@ async def get_game_state(user_id: str):
         }
 
 # =========================================================================
-# 📦 CS2 КЕЙСЫ: РАСЧЁТ ДРОПА С ГАРАНТОМ НА 20 ОТКРЫТИЙ
+# 🎰 РУЛЕТКА: РАСЧЁТ ДРОПА С ГАРАНТОМ НА 20 ОТКРЫТИЙ
 # =========================================================================
 @app.post("/api/case/open")
 async def open_case(request: Request):
     data = await request.json()
     user_id = str(data.get("user_id", "")).strip()
-    case_type = str(data.get("case_type", "daily")) # daily, elite, quantum
-    pay_method = str(data.get("pay_method", "free")) # free, coins, stars
+    case_type = str(data.get("case_type", "daily"))
+    pay_method = str(data.get("pay_method", "free"))
 
     if not user_id:
         return JSONResponse(status_code=400, content={"error": "no_user_id"})
@@ -873,7 +873,6 @@ async def open_case(request: Request):
         user = get_user_profile(game_db, user_id)
         now = int(time.time())
 
-        # Проверка условий покупки
         if case_type == "daily":
             if pay_method == "free":
                 if now - user.get("last_free_case_time", 0) < 86400:
@@ -899,7 +898,6 @@ async def open_case(request: Request):
         user["cases_opened_total"] = user.get("cases_opened_total", 0) + 1
         pity_trigger = (user["cases_opened_total"] % 20 == 0)
 
-        # Генерация дропа CS2
         drop_item = {}
         r = random.random()
 
@@ -946,7 +944,6 @@ async def open_case(request: Request):
                 coins_won = random.randint(30000, 50000)
                 drop_item = {"type": "coins", "val": coins_won, "name": f"🟡 {coins_won:,} Монет", "rarity": "purple", "icon": "🟡"}
 
-        # Применение выбитой награды
         if drop_item["type"] == "coins":
             user["coins"] += drop_item["val"]
         elif drop_item["type"] == "energy":
@@ -1272,7 +1269,6 @@ async def generate_username(
 
         user["gens_total_count"] = user.get("gens_total_count", 0) + 1
 
-        # Реферальная валидация
         if user.get("referred_by") and not user.get("referral_reward_claimed", False) and user["gens_total_count"] >= 3:
             user["referral_reward_claimed"] = True
             referrer_id = user["referred_by"]
