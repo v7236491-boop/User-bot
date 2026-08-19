@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & CS2 Cases</title>
+    <title>Username Scanner PRO</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js?v=7.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -76,11 +76,7 @@
             gap: 10px;
         }
 
-        .header-left-col {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+        .header-left-col { display: flex; flex-direction: column; gap: 6px; }
 
         .nav-btn { 
             background: rgba(255, 255, 255, 0.08); 
@@ -271,7 +267,6 @@
         }
         .btn-generate:disabled { background: rgba(20, 30, 25, 0.6); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
-        /* 📦 БАННЕР ВХОДА В КЕЙСЫ */
         .case-entry-banner {
             background: linear-gradient(135deg, rgba(234, 179, 8, 0.18), rgba(168, 85, 247, 0.15));
             border: 1px solid #eab308;
@@ -286,7 +281,6 @@
         }
         .case-entry-banner:active { transform: scale(0.97); }
 
-        /* ⚖️ ПРАВОВАЯ СТРОКА */
         .legal-notice-footer {
             font-size: 0.68rem;
             color: rgba(130, 146, 136, 0.65);
@@ -321,7 +315,7 @@
             border-color: var(--primary); font-size: 0.88rem; font-weight: 800; flex: 1.2;
         }
 
-        /* 🎰 РУЛЕТКА CS2 КЕЙСОВ */
+        /* 🎰 КВАНТОВАЯ РУЛЕТКА */
         .cs-roulette-wrapper {
             position: relative;
             width: 100%;
@@ -363,7 +357,7 @@
             position: absolute;
             left: 0;
             top: 15px;
-            transition: transform 5s cubic-bezier(0.12, 0.8, 0.15, 1);
+            transition: transform 8s cubic-bezier(0.08, 0.82, 0.12, 1);
             will-change: transform;
         }
 
@@ -390,6 +384,56 @@
 
         .cs-item-icon { font-size: 2rem; margin-bottom: 4px; }
         .cs-item-name { font-size: 0.68rem; font-weight: 800; color: #fff; line-height: 1.15; }
+
+        /* 🪐 3D КЛИКЕР COSMIC CORE */
+        #tycoon-overlay { 
+            position: fixed; inset: 0; background: radial-gradient(circle, #0b1510, #010306); z-index: 2000; display: none;
+            flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; overflow: hidden; 
+        }
+        #tycoon-overlay.active { display: flex; }
+        #space-canvas-inside { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        
+        #planet-viewport {
+            position: relative; width: 330px; height: 330px; z-index: 5;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #three-earth-container {
+            width: 330px; height: 330px; touch-action: none; cursor: grab;
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+        
+        .planet-fly-left { transform: translateX(-400px) scale(0.6) !important; opacity: 0 !important; }
+        .planet-enter-right { transform: translateX(400px) scale(0.6) !important; opacity: 0 !important; }
+        
+        .tycoon-header { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .coin-balance-badge { font-size: 1.8rem; font-weight: 900; color: #eab308; display: flex; align-items: center; gap: 8px; }
+        
+        .floating-number { position: absolute; font-size: 1.8rem; font-weight: 900; color: #ffffff; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 0 10px #facc15; z-index: 20; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
+        
+        #click-prompt {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.45); font-size: 0.95rem; font-weight: 700;
+            text-align: center; pointer-events: none; z-index: 6; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .stage-progress-panel {
+            width: 100%; max-width: 320px; z-index: 10;
+            background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 10px 14px;
+        }
+        .stage-header-row { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
+        .stage-progress-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .stage-progress-fill { height: 100%; background: linear-gradient(90deg, #eab308, #ef4444); border-radius: 10px; transition: width 0.25s ease; }
+
+        .energy-bar-container { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+        .energy-text-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; }
+        .energy-progress-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .energy-progress-fill { height: 100%; background: linear-gradient(90deg, #29c75f, #38bdf8); border-radius: 10px; transition: width 0.2s ease; }
+        
+        .tycoon-nav-tabs { display: flex; gap: 10px; width: 100%; max-width: 320px; z-index: 10; }
+        .tab-btn { flex: 1; padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer; }
+        .tab-btn.active { background: var(--primary); color: #000; }
 
         /* МОДАЛЬНЫЕ ОКНА */
         .modal-overlay { 
@@ -541,16 +585,16 @@
 
             <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
 
-            <!-- 📦 БАННЕР КЕЙСОВ CS2 -->
+            <!-- 🎰 БАННЕР КВАНТОВОЙ РУЛЕТКИ -->
             <div class="case-entry-banner" onclick="openModal('modal-cases')">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="font-size:1.8rem;">📦</div>
+                    <div style="font-size:1.8rem;">🎰</div>
                     <div>
-                        <div style="font-size:0.9rem; font-weight:900; color:#fff;">КЕЙСЫ CS2 (РУЛЕТКА)</div>
+                        <div style="font-size:0.9rem; font-weight:900; color:#fff;">КВАНТОВАЯ РУЛЕТКА</div>
                         <div style="font-size:0.72rem; color:#facc15;" id="case-free-status-badge">🎁 Бесплатный кейс ГОТОВ!</div>
                     </div>
                 </div>
-                <div style="font-size:0.8rem; font-weight:bold; color:var(--primary);">Открыть ➔</div>
+                <div style="font-size:0.8rem; font-weight:bold; color:var(--primary);">Крутить ➔</div>
             </div>
 
             <div class="legal-notice-footer">
@@ -576,16 +620,15 @@
 
     <div class="toast" id="global-toast">✨ Готово!</div>
 
-    <!-- 📦 МОДАЛКА: КЕЙСЫ В СТИЛЕ CS2 📦 -->
+    <!-- 🎰 МОДАЛКА РУЛЕТКИ -->
     <div class="modal-overlay" id="modal-cases">
         <div class="modal-content glass-panel" style="max-width: 440px;">
             <div class="modal-header">
-                <h2 style="font-size: 1.15rem; color: #facc15; font-weight: 900;">📦 CS2 КЕЙСЫ</h2>
+                <h2 style="font-size: 1.15rem; color: #facc15; font-weight: 900;">🎰 КВАНТОВАЯ РУЛЕТКА</h2>
                 <button class="btn-close" onclick="closeModal('modal-cases')">✕</button>
             </div>
             <div class="modal-body">
                 
-                <!-- РУЛЕТКА -->
                 <div class="cs-roulette-wrapper" id="cs-roulette-container">
                     <div class="cs-center-pointer"></div>
                     <div class="cs-roulette-track" id="cs-roulette-track"></div>
@@ -642,7 +685,7 @@
         </div>
     </div>
 
-    <!-- 👥 МОДАЛКА: РЕФЕРАЛЫ 👥 -->
+    <!-- 👥 МОДАЛКА: РЕФЕРАЛЫ -->
     <div class="modal-overlay" id="modal-referrals">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -822,7 +865,7 @@
                 <button class="btn-close" onclick="closeModal('modal-terms')">✕</button>
             </div>
             <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
-                <p>Все услуги и цифровые предметы предоставляются «КАК ЕСТЬ» («AS IS»). Цифровые услуги надлежащего качества возврату не подлежат. Внутриигровые кейсы носят исключительно развлекательный характер и не являются азартными играми.</p>
+                <p>Все услуги и цифровые предметы предоставляются «КАК ЕСТЬ» («AS IS»). Цифровые услуги надлежащего качества возврату не подлежат. Внутриигровые рулетки носят исключительно развлекательный характер и не являются азартными играми.</p>
             </div>
         </div>
     </div>
@@ -900,29 +943,106 @@
         </div>
     </div>
 
-    <!-- 🪐 3D МАЙНИНГ -->
-    <div id="tycoon-overlay" style="position:fixed; inset:0; background:#000; z-index:2000; display:none; flex-direction:column; align-items:center; justify-content:space-between; padding:20px;">
-        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-            <button class="nav-btn" onclick="closeTycoonScreen()">◀ Выход</button>
-            <div style="font-size:1.6rem; font-weight:900; color:#eab308;">🟡 <span id="tycoon-coins">0</span></div>
-            <div style="width:60px;"></div>
+    <!-- 🪐 ПОЛНОЦЕННЫЙ 3D МАЙНИНГ -->
+    <div id="tycoon-overlay">
+        <canvas id="space-canvas-inside"></canvas>
+
+        <div class="tycoon-header">
+            <button class="tab-btn" style="width: auto; padding: 8px 16px;" onclick="closeTycoonScreen()">◀ Выход</button>
+            <div class="coin-balance-badge">🟡 <span id="tycoon-coins">0</span></div>
+            <div style="width: 60px;"></div>
         </div>
-        <div id="three-earth-container" style="width:300px; height:300px;"></div>
-        <div style="width:100%; max-width:320px;">
-            <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:bold; margin-bottom:4px;">
+
+        <div class="stage-progress-panel">
+            <div class="stage-header-row">
+                <span>Космический объект: <b id="stage-num-text" style="color:#fff;">1/10</b></span>
+                <span>До следующего: <b id="stage-percent-text" style="color:var(--primary);">100%</b></span>
+            </div>
+            <div class="stage-progress-bg">
+                <div class="stage-progress-fill" id="stage-fill" style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <div id="planet-viewport">
+            <div id="three-earth-container"></div>
+            <div id="click-prompt">Нажимай на объект,<br>чтобы добывать монеты ⚡</div>
+        </div>
+
+        <div class="energy-bar-container">
+            <div class="energy-text-row">
                 <span>⚡ Энергия</span>
                 <span><span id="energy-val">1000</span> / <span id="max-energy-val">1000</span></span>
             </div>
-            <div style="width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:10px; overflow:hidden;">
-                <div id="energy-fill" style="width:100%; height:100%; background:var(--primary);"></div>
+            <div class="energy-progress-bg">
+                <div class="energy-progress-fill" id="energy-fill" style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <div class="tycoon-nav-tabs">
+            <button class="tab-btn active" onclick="openModal('modal-shop')">🛒 Магазин бустеров</button>
+            <button class="tab-btn" onclick="openModal('modal-leaderboard')">👑 <span id="user-rank-text">Ловец</span></button>
+        </div>
+    </div>
+
+    <!-- 🛒 МАГАЗИН БУСТЕРОВ -->
+    <div class="modal-overlay" id="modal-shop">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size:1.1rem; color:#eab308;">🛒 Магазин бустеров</h2>
+                <button class="btn-close" onclick="closeModal('modal-shop')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">⚡ X2 Турбо (15 мин)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускоряет генерацию</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyShopItem('turbo_boost_15')">65 000 🟡</button>
+                </div>
+
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">🎯 +1 Слот в Радаре</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Лимит слежки</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyShopItem('radar_slot')">35 000 🟡</button>
+                </div>
+
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">👆 Мульти-Тап (Lvl. <span id="lvl-multitap">1</span>)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">+1 к клику</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyShopItem('multi_tap')"><span id="cost-multitap">200</span> 🟡</button>
+                </div>
+
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">🔋 Батарея (Lvl. <span id="lvl-energy">1</span>)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">+500 энергии</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyShopItem('max_energy')"><span id="cost-energy">150</span> 🟡</button>
+                </div>
+
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">🚜 Автосборщик (Lvl. <span id="lvl-miner">0</span>)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Оффлайн фарм</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyShopItem('offline_miner')"><span id="cost-miner">3000</span> 🟡</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- =========================================================================
+         JAVASCRIPT ЛОГИКА
+    ========================================================================= -->
     <script>
         let currentPlatform = 'telegram';
         let isFetching = false;
         let lastGenerated = "";
+        let slotInterval = null;
         let isSpinningCase = false;
         let finderName = "Аноним";
         let isProUser = false;
@@ -953,6 +1073,7 @@
             custom_fog_rgb: "41, 199, 95", custom_filter_settings: {}
         };
         let planetHpMax = 100;
+        let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
 
         function saveProfileEverywhere() {
             userProfile.referrals_count = totalReferralsCount;
@@ -994,6 +1115,7 @@
                     applyProStateToUI();
                     updateDailyLimitBadge();
                     updatePityUI(data.profile.cases_opened_total || 0);
+                    renderAchievements();
                 }
             } catch(e){}
         }
@@ -1034,7 +1156,7 @@
         }
 
         // =========================================================================
-        // 🎰 РУЛЕТКА CS2 CASE OPENING
+        // 🎰 ПЛАВНАЯ РУЛЕТКА
         // =========================================================================
         const CS_MOCK_ITEMS = [
             { name: "5 000 🟡", rarity: "gray", icon: "🟡" },
@@ -1056,12 +1178,11 @@
             track.innerHTML = '';
 
             const totalCards = 55;
-            const winningIndex = 42; // Выигрышная карточка на 42-й позиции
+            const winningIndex = 42;
 
             for (let i = 0; i < totalCards; i++) {
                 let item = (i === winningIndex) ? winningItem : CS_MOCK_ITEMS[Math.floor(Math.random() * CS_MOCK_ITEMS.length)];
                 
-                // Эффект Near-Miss: на 41-й и 43-й позиции специально спавним Gold/Red
                 if (i === winningIndex - 1) item = { name: "👑 PRO 30 ДНЕЙ", rarity: "gold", icon: "👑" };
                 if (i === winningIndex + 1) item = { name: "👑 PRO 7 Дней", rarity: "red", icon: "👑" };
 
@@ -1098,54 +1219,30 @@
                 applyProStateToUI();
                 updatePityUI(data.cases_opened_total);
 
-                // Запуск рулетки
                 buildRouletteTrack(drop);
                 
                 setTimeout(() => {
                     const track = document.getElementById('cs-roulette-track');
-                    const cardWidth = 110; // 100px + 10px margin
+                    const cardWidth = 110;
                     const winningIndex = 42;
                     const containerWidth = document.getElementById('cs-roulette-container').offsetWidth;
-                    // Смещение стрелки по центру карточки с легким случайным разбросом
                     const randomShift = (Math.random() - 0.5) * 45;
                     const finalTranslate = -(winningIndex * cardWidth) + (containerWidth / 2) - (cardWidth / 2) + randomShift;
 
-                    track.style.transition = 'transform 5s cubic-bezier(0.12, 0.8, 0.15, 1)';
+                    // Медленная и плавная 8-секундная прокрутка
+                    track.style.transition = 'transform 8s cubic-bezier(0.08, 0.82, 0.12, 1)';
                     track.style.transform = `translateX(${finalTranslate}px)`;
                 }, 50);
 
                 setTimeout(() => {
                     showToast(`🎉 ВЫБИТО: ${drop.name}!`);
                     isSpinningCase = false;
-                }, 5300);
+                }, 8200);
 
             } catch (e) {
                 showToast("Ошибка соединения");
                 isSpinningCase = false;
             }
-        }
-
-        async function buyStarsCase(tariffId) {
-            try {
-                showToast("⏳ Формирование счета Stars...");
-                const res = await fetch('/api/pro/buy_invoice', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, tariff_id: tariffId })
-                });
-                const data = await res.json();
-                if (data.status === 'ok' && data.invoice_link) {
-                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
-                        window.Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
-                            if (status === 'paid') {
-                                const caseType = tariffId === 'case_elite' ? 'elite' : 'quantum';
-                                spinCase(caseType, 'stars');
-                            }
-                        });
-                    } else {
-                        window.open(data.invoice_link, '_blank');
-                    }
-                }
-            } catch (e) { showToast("Сбой соединения"); }
         }
 
         function applyProStateToUI() {
@@ -1164,24 +1261,33 @@
             } else {
                 headerProBtn.innerText = "👑 PRO Доступ";
             }
-
-            const quasarBtn = document.getElementById('btn-theme-quasar');
-            const quantumBtn = document.getElementById('btn-theme-quantum');
-            if (userProfile.unlocked_themes && userProfile.unlocked_themes.includes('theme_quasar')) {
-                if (quasarBtn) quasarBtn.style.display = 'inline-block';
-            }
-            if (userProfile.unlocked_themes && userProfile.unlocked_themes.includes('theme_quantum')) {
-                if (quantumBtn) quantumBtn.style.display = 'inline-block';
-            }
         }
 
         // =========================================================================
-        // 🎯 ГЕНЕРАТОР
+        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С ЗАДЕРЖКОЙ)
         // =========================================================================
+        function startSlotMachine() {
+            const el = document.getElementById('res-username');
+            const chars = "abcdefghijklmnopqrstuvwxyz";
+            document.getElementById('res-market').style.display = 'none';
+            if (slotInterval) clearInterval(slotInterval);
+            slotInterval = setInterval(() => {
+                let rand = "";
+                for (let i = 0; i < 5; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+                el.textContent = "@" + rand;
+            }, 60);
+        }
+
+        function stopSlotMachine(finalName) {
+            if (slotInterval) { clearInterval(slotInterval); slotInterval = null; }
+            document.getElementById('res-username').textContent = "@" + finalName;
+        }
+
         async function manualGenerate(event) {
             if (isFetching) return;
+
             if (!isProUser && dailyGensCount >= dailyLimitMax) {
-                showToast("⚠️ Дневной лимит исчерпан! Откройте кейс или купите PRO");
+                showToast("⚠️ Дневной лимит (100 поисков) исчерпан! Купите PRO для безлимита.");
                 openModal('modal-pro');
                 return;
             }
@@ -1190,6 +1296,13 @@
             const btn = document.getElementById('btn-generate');
             btn.disabled = true; 
             btn.textContent = "Поиск...";
+            startSlotMachine();
+
+            const isTurbo = turboUntil > Math.floor(Date.now() / 1000);
+            const minDelay = isTurbo ? 700 : 1400;
+            const maxDelay = isTurbo ? 950 : 2000;
+            const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+            const delayPromise = new Promise(r => setTimeout(r, randomDelay));
 
             const useFilter = document.getElementById('filter-active').checked;
             const lenMode = document.getElementById('filter-len').value;
@@ -1198,8 +1311,17 @@
 
             try {
                 const url = `/api/generate?platform=${currentPlatform}&finder_id=${tgChatId}&finder_name=${encodeURIComponent(finderName)}&use_filter=${useFilter}&len_mode=${lenMode}&custom_keyword=${encodeURIComponent(customKw)}&custom_category=${encodeURIComponent(customCat)}`;
-                const res = await fetch(url);
+                const [res] = await Promise.all([fetch(url), delayPromise]);
                 const data = await res.json();
+
+                if (res.status === 429) {
+                    stopSlotMachine("limit");
+                    showToast("⚠️ Дневной лимит исчерпан!");
+                    dailyGensCount = dailyLimitMax;
+                    updateDailyLimitBadge();
+                    openModal('modal-pro');
+                    return;
+                }
 
                 if (data.daily_gens_count !== undefined) {
                     dailyGensCount = data.daily_gens_count;
@@ -1207,20 +1329,26 @@
                 }
 
                 lastGenerated = data.generated_username || "hyper";
-                document.getElementById('res-username').textContent = "@" + lastGenerated;
-                
+                stopSlotMachine(lastGenerated);
+
+                const uEl = document.getElementById('res-username');
                 const sEl = document.getElementById('res-status');
-                const evalData = data.evaluation || { color: "#29c75f", status: "Свободен" };
+                const evalData = data.evaluation || { color: "#29c75f", status: "Свободен", rank: "A" };
+
+                uEl.style.color = evalData.color;
                 sEl.textContent = evalData.status;
                 sEl.style.color = evalData.color;
 
                 if (data.is_free) {
                     document.getElementById('quick-actions').style.display = 'flex';
+                    saveToHistory({ user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color });
                 } else {
                     document.getElementById('quick-actions').style.display = 'none';
                 }
             } catch (e) {
-                showToast("Ошибка проверки");
+                stopSlotMachine("error");
+                document.getElementById('res-status').textContent = "Ошибка проверки";
+                document.getElementById('res-status').style.color = "#ef4444";
             } finally {
                 isFetching = false;
                 btn.disabled = false; 
@@ -1228,19 +1356,336 @@
             }
         }
 
-        function copyRefLink() {
-            const botUsername = "selectionusername_bot";
-            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
-            navigator.clipboard.writeText(refLink);
-            showToast("✨ Ссылка скопирована!");
+        // =========================================================================
+        // 🪐 3D ДВИЖОК 10 ПЛАНЕТ
+        // =========================================================================
+        let sceneEarth, cameraEarth, rendererEarth, currentBodyMesh, saturnRingMesh, blackHoleGlowMesh;
+        let isThreeInit = false;
+        let targetScale = 1.0, currentScale = 1.0;
+
+        function createNoiseTexture(type) {
+            const canvasTex = document.createElement('canvas');
+            canvasTex.width = 1024; canvasTex.height = 512;
+            const ctxTex = canvasTex.getContext('2d');
+
+            if (type === "earth") {
+                ctxTex.fillStyle = '#051d40'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#1b4d3e';
+                for (let i = 0; i < 500; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 50 + 10, 0, Math.PI * 2); ctxTex.fill();
+                }
+            } else if (type === "moon") {
+                ctxTex.fillStyle = '#5c636a'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#3c4043';
+                for (let i = 0; i < 600; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 18 + 2, 0, Math.PI * 2); ctxTex.fill();
+                }
+            } else if (type === "mars") {
+                ctxTex.fillStyle = '#a83210'; ctxTex.fillRect(0, 0, 1024, 512);
+                ctxTex.fillStyle = '#6e1e07';
+                for (let i = 0; i < 450; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 40 + 8, 0, Math.PI * 2); ctxTex.fill();
+                }
+            } else {
+                ctxTex.fillStyle = '#d97706'; ctxTex.fillRect(0, 0, 1024, 512);
+                for (let i = 0; i < 40; i++) {
+                    ctxTex.fillStyle = (i % 2 === 0) ? '#b45309' : '#d97706';
+                    ctxTex.fillRect(0, i * 13, 1024, 10);
+                }
+            }
+            return new THREE.CanvasTexture(canvasTex);
         }
 
-        function shareRefLink() {
-            const botUsername = "selectionusername_bot";
-            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
-            const text = "Лови редкие ники в Telegram и крути CS2 Кейсы в NameHunter PRO! 🚀";
-            const url = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
+        const CELESTIAL_BODIES = {
+            1: { type: "earth", size: 1.2, roughness: 0.4 },
+            2: { type: "moon", size: 1.05, roughness: 0.85 },
+            3: { type: "mars", size: 1.15, roughness: 0.6 },
+            4: { type: "venus", size: 1.2, roughness: 0.4 },
+            5: { type: "jupiter", size: 1.4, roughness: 0.3 },
+            6: { type: "saturn", size: 1.25, roughness: 0.4, hasRing: true },
+            7: { type: "uranus", size: 1.25, roughness: 0.3 },
+            8: { type: "neptune", size: 1.25, roughness: 0.3 },
+            9: { type: "sun", size: 1.45, emissive: true },
+            10: { type: "black_hole", size: 1.2, isBlackHole: true }
+        };
+
+        function buildCelestialBody(stage) {
+            if (currentBodyMesh) sceneEarth.remove(currentBodyMesh);
+            if (saturnRingMesh) sceneEarth.remove(saturnRingMesh);
+            if (blackHoleGlowMesh) sceneEarth.remove(blackHoleGlowMesh);
+
+            const spec = CELESTIAL_BODIES[stage] || CELESTIAL_BODIES[1];
+
+            if (spec.isBlackHole) {
+                const sphereGeo = new THREE.SphereGeometry(spec.size, 48, 48);
+                const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                currentBodyMesh = new THREE.Mesh(sphereGeo, blackMat);
+                sceneEarth.add(currentBodyMesh);
+
+                const ringGeo = new THREE.RingGeometry(1.35, 2.4, 64);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0xbf5af2, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+                blackHoleGlowMesh = new THREE.Mesh(ringGeo, ringMat);
+                blackHoleGlowMesh.rotation.x = Math.PI / 2.5;
+                sceneEarth.add(blackHoleGlowMesh);
+            } else {
+                const geo = new THREE.SphereGeometry(spec.size, 48, 48);
+                let mat = new THREE.MeshStandardMaterial({ map: createNoiseTexture(spec.type), roughness: spec.roughness || 0.5 });
+                currentBodyMesh = new THREE.Mesh(geo, mat);
+                sceneEarth.add(currentBodyMesh);
+
+                if (spec.hasRing) {
+                    const ringGeo = new THREE.RingGeometry(1.5, 2.3, 64);
+                    const ringMat = new THREE.MeshStandardMaterial({ color: 0xcbb077, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+                    saturnRingMesh = new THREE.Mesh(ringGeo, ringMat);
+                    saturnRingMesh.rotation.x = Math.PI / 2.8;
+                    sceneEarth.add(saturnRingMesh);
+                }
+            }
+        }
+
+        function init3DEarth() {
+            if (isThreeInit) return;
+            const container = document.getElementById('three-earth-container');
+            container.innerHTML = "";
+
+            sceneEarth = new THREE.Scene();
+            cameraEarth = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            cameraEarth.position.z = 4.3;
+
+            rendererEarth = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+            rendererEarth.setSize(300, 300);
+            rendererEarth.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(rendererEarth.domElement);
+
+            sceneEarth.add(new THREE.AmbientLight(0xffffff, 0.9));
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
+            sunLight.position.set(5, 3, 5);
+            sceneEarth.add(sunLight);
+
+            buildCelestialBody(userProfile.planet_stage || 1);
+            isThreeInit = true;
+            animateEarth();
+        }
+
+        function animateEarth() {
+            if (document.getElementById('tycoon-overlay').classList.contains('active')) {
+                currentScale += (targetScale - currentScale) * 0.25;
+                if (currentBodyMesh) { 
+                    currentBodyMesh.scale.set(currentScale, currentScale, currentScale); 
+                    currentBodyMesh.rotation.y += 0.003; 
+                }
+                rendererEarth.render(sceneEarth, cameraEarth);
+            }
+            requestAnimationFrame(animateEarth);
+        }
+
+        const earthContainer = document.getElementById('three-earth-container');
+        function handleEarthTap(e) {
+            e.preventDefault();
+            const prompt = document.getElementById('click-prompt');
+            if (prompt) prompt.style.display = 'none';
+
+            let touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
+            touches.forEach(touch => {
+                if (!isProUser && userProfile.energy < 1) return;
+                if (!isProUser) userProfile.energy -= 1;
+                
+                let gain = userProfile.multi_tap;
+                userProfile.coins += gain;
+                pendingTaps++;
+                pendingDamage += 1;
+
+                targetScale = 0.94; setTimeout(() => { targetScale = 1.0; }, 70);
+
+                userProfile.planet_hp -= 1;
+                if (userProfile.planet_hp <= 0) {
+                    if (userProfile.planet_stage < 10) {
+                        userProfile.planet_stage += 1;
+                        showToast(`🚀 Переход на объект ${userProfile.planet_stage}/10!`);
+                        buildCelestialBody(userProfile.planet_stage);
+                    }
+                }
+
+                const floatNum = document.createElement('div');
+                floatNum.className = 'floating-number';
+                floatNum.innerText = `+${gain} 🟡`;
+                floatNum.style.left = `${touch.clientX - 20}px`; floatNum.style.top = `${touch.clientY - 20}px`;
+                document.body.appendChild(floatNum);
+                setTimeout(() => floatNum.remove(), 700);
+            });
+            saveProfileEverywhere();
+            updateTycoonUI();
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(syncTapsWithServer, 500);
+        }
+
+        earthContainer.addEventListener('touchstart', handleEarthTap, { passive: false });
+        earthContainer.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') handleEarthTap(e); });
+
+        async function syncTapsWithServer() {
+            if (pendingTaps === 0) return;
+            let tapsToSend = pendingTaps;
+            let dmgToSend = pendingDamage;
+            pendingTaps = 0; pendingDamage = 0;
+
+            try {
+                const res = await fetch('/api/game/sync_tap', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend, damage: dmgToSend })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userProfile.energy = data.server_energy;
+                    userProfile.planet_stage = data.planet_stage;
+                    userProfile.planet_hp = data.planet_hp;
+                    planetHpMax = data.planet_hp_max;
+                    saveProfileEverywhere();
+                    updateTycoonUI();
+                }
+            } catch(e){}
+        }
+
+        function updateTycoonUI() {
+            document.getElementById('tycoon-coins').innerText = userProfile.coins.toLocaleString();
+            document.getElementById('energy-val').innerText = isProUser ? "∞" : userProfile.energy;
+            document.getElementById('max-energy-val').innerText = isProUser ? "∞" : userProfile.max_energy;
+            let fillPercent = isProUser ? 100 : Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
+            document.getElementById('energy-fill').style.width = fillPercent + "%";
+            document.getElementById('user-rank-text').innerText = userProfile.rank;
+            document.getElementById('stage-num-text').innerText = `${userProfile.planet_stage}/10`;
+            let hpPercent = Math.min(100, Math.max(0, Math.floor((userProfile.planet_hp / planetHpMax) * 100)));
+            document.getElementById('stage-percent-text').innerText = `${hpPercent}%`;
+            document.getElementById('stage-fill').style.width = `${hpPercent}%`;
+        }
+
+        function openTycoonScreen() {
+            document.getElementById('tycoon-overlay').classList.add('active');
+            init3DEarth();
+            updateTycoonUI();
+        }
+        function closeTycoonScreen() { document.getElementById('tycoon-overlay').classList.remove('active'); }
+
+        // =========================================================================
+        // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН
+        // =========================================================================
+        const canvas = document.getElementById('fog-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        let fogSpeedMultiplier = 0.8, fogDensityCount = 6;
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        window.addEventListener('pointermove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        function createFogParticles() {
+            particles = [];
+            for (let i = 0; i < fogDensityCount; i++) {
+                particles.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * fogSpeedMultiplier,
+                    vy: (Math.random() - 0.5) * fogSpeedMultiplier,
+                    radius: 260
+                });
+            }
+        }
+        createFogParticles();
+
+        function drawFog() {
+            ctx.clearRect(0, 0, width, height);
+            const fogRGB = getComputedStyle(document.documentElement).getPropertyValue('--fog-rgb').trim() || "41, 199, 95";
+            particles.forEach(p => {
+                let dx = mouseX - p.x, dy = mouseY - p.y;
+                p.x += p.vx + dx * 0.003; p.y += p.vy + dy * 0.003;
+                if (p.x < -150 || p.x > width + 150) p.vx *= -1;
+                if (p.y < -150 || p.y > height + 150) p.vy *= -1;
+                let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+                grad.addColorStop(0, `rgba(${fogRGB}, 0.22)`);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(drawFog);
+        }
+        drawFog();
+
+        // 100 Достижений
+        const ACHIEVEMENTS_DATA = [];
+        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
+        for (let i = 1; i <= 100; i++) {
+            ACHIEVEMENTS_DATA.push({
+                id: `ach_${i}`,
+                title: i === 1 ? "Первый поиск" : `Индекс поиска Lvl.${i}`,
+                desc: `Сделать ${i * 10} генераций`,
+                icon: EMOJI_LIST[i % EMOJI_LIST.length],
+                target: i * 10,
+                statKey: "generations"
+            });
+        }
+        let unlockedAchievements = JSON.parse(localStorage.getItem('vh_unlocked_achievements') || '[]');
+
+        function renderAchievements() {
+            const container = document.getElementById('achievements-list-container');
+            document.getElementById('achieve-counter-badge').innerText = `${unlockedAchievements.length}/100`;
+            document.getElementById('achieve-count-modal').innerText = unlockedAchievements.length;
+            if (!container) return;
+            container.innerHTML = ACHIEVEMENTS_DATA.map(item => {
+                const isUnlocked = unlockedAchievements.includes(item.id);
+                return `
+                    <div class="achieve-card ${isUnlocked ? 'unlocked' : ''}">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="font-size:1.8rem;">${item.icon}</div>
+                            <div style="flex:1;">
+                                <div style="font-weight:700; color:#fff;">${item.title}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">${item.desc}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function saveToHistory(item) {
+            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
+            if (historyData.some(i => i.user === item.user)) return;
+            historyData.unshift(item);
+            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData.slice(0, 50)));
+            userProfile.client_history = historyData.slice(0, 50);
+            saveProfileEverywhere();
+        }
+
+        function renderHistory() {
+            const cont = document.getElementById('history-container');
+            cont.innerHTML = '';
+            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
+            if (historyData.length === 0) {
+                cont.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">История пуста</div>';
+                return;
+            }
+            historyData.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'history-card';
+                card.innerHTML = `
+                    <div>
+                        <div style="color:${item.color}; font-weight:bold;">@${item.user}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
+                        <div style="font-size:0.75rem; opacity:0.8;">${item.price}</div>
+                    </div>
+                `;
+                cont.appendChild(card);
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('vpn_parser_history');
+            userProfile.client_history = [];
+            saveProfileEverywhere();
+            renderHistory();
         }
 
         function setSecretTheme(themeClass, rgbStr) {
@@ -1252,7 +1697,11 @@
             showToast("Стиль активирован!");
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function openModal(id) { 
+            document.getElementById(id).classList.add('active'); 
+            if (id === 'modal-history') renderHistory();
+            if (id === 'modal-achievements') renderAchievements();
+        }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function showToast(msg) {
@@ -1267,21 +1716,26 @@
             btn.classList.add('active');
         }
 
-        function takeUsername() {
-            navigator.clipboard.writeText(lastGenerated);
-            showToast("✨ Никнейм скопирован!");
-        }
-
+        function takeUsername() { navigator.clipboard.writeText(lastGenerated); showToast("✨ Никнейм скопирован!"); }
         function shareToFriends() {
             const url = `https://t.me/share/url?url=https://t.me/selectionusername_bot&text=Поймал ник @${lastGenerated}`;
+            window.open(url, '_blank');
+        }
+        function copyRefLink() {
+            const refLink = `https://t.me/selectionusername_bot?start=ref_${tgChatId}`;
+            navigator.clipboard.writeText(refLink);
+            showToast("✨ Ссылка скопирована!");
+        }
+        function shareRefLink() {
+            const refLink = `https://t.me/selectionusername_bot?start=ref_${tgChatId}`;
+            const text = "Лови редкие ники в Telegram в NameHunter PRO! 🚀";
+            const url = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         }
 
         function toggleAccordion(header) { header.parentElement.classList.toggle('open'); }
         function checkKwProAccess(e) { if (!isProUser) { showToast("👑 Доступно в PRO!"); openModal('modal-pro'); } }
         function handleFilterToggleChange() { if (!document.getElementById('filter-active').checked) document.getElementById('custom-kw-input').value = ""; }
-        function openTycoonScreen() { document.getElementById('tycoon-overlay').style.display = 'flex'; }
-        function closeTycoonScreen() { document.getElementById('tycoon-overlay').style.display = 'none'; }
     </script>
 </body>
 </html>
