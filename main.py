@@ -62,12 +62,6 @@ PLANET_HP_TABLE = {
 
 KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
-def generate_secure_code(prefix: str) -> str:
-    p1 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    p2 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    p3 = "".join(secrets.choice(KEY_CHARSET) for _ in range(4))
-    return f"{prefix}-{p1}-{p2}-{p3}"
-
 def load_json_file(filepath: str, default_val):
     if os.path.exists(filepath):
         try:
@@ -158,7 +152,6 @@ STATIC_PROMOS_100K = [
     "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-E6F7-G8H9-J2K3", "COIN100K-L4M5-N6P7-Q8R9",
     "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-F7G8-H9J2-K3L4",
     "COIN100K-M5N6-P7Q8-R9S2", "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7",
-    "COIN100K-G8H9-J2K3-L4M5", "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2",
     "COIN100K-A3B4-C5D6-E7F8", "COIN100K-H9J2-K3L4-M5N6", "COIN100K-P7Q8-R9S2-T3U4",
     "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-J2K3-L4M5-N6P7",
     "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2",
@@ -166,23 +159,22 @@ STATIC_PROMOS_100K = [
     "COIN100K-D6E7-F8G9-H2J3", "COIN100K-L4M5-N6P7-Q8R9", "COIN100K-S2T3-U4V5-W6X7",
     "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4", "COIN100K-M5N6-P7Q8-R9S2",
     "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5",
-    "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-A3B4-C5D6-E7F8",
-    "COIN100K-G9H2-J3K4-L5M6", "COIN100K-P7Q8-R9S2-T3U4", "COIN100K-V5W6-X7Y8-Z2A3",
-    "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7", "COIN100K-Q8R9-S2T3-U4V5",
-    "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8",
-    "COIN100K-R9S2-T3U4-V5W6", "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-D6E7-F8G9-H2J3",
-    "COIN100K-K4L5-M6N7-P8Q9", "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6",
-    "COIN100K-E7F8-G9H2-J3K4", "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-T3U4-V5W6-X7Y8",
-    "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3",
-    "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-A3B4-C5D6-E7F8", "COIN100K-G9H2-J3K4-L5M6",
-    "COIN100K-N7P8-Q9R2-S3T4", "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9",
-    "COIN100K-H2J3-K4L5-M6N7", "COIN100K-P8Q9-R2S3-T4U5", "COIN100K-W6X7-Y8Z2-A3B4",
-    "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8", "COIN100K-Q9R2-S3T4-U5V6",
+    "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-G9H2-J3K4-L5M6",
+    "COIN100K-P7Q8-R9S2-T3U4", "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9",
+    "COIN100K-H2J3-K4L5-M6N7", "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4",
+    "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8", "COIN100K-R9S2-T3U4-V5W6",
     "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-D6E7-F8G9-H2J3", "COIN100K-K4L5-M6N7-P8Q9",
-    "COIN100K-R2S3-T4U5-V6W7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4",
-    "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-S3T4-U5V6-W7X8", "COIN100K-Z2A3-B4C5-D6E7",
-    "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3", "COIN100K-T4U5-V6W7-X8Y9",
-    "COIN100K-A3B4-C5D6-E7F8", "COIN100K-G9H2-J3K4-L5M6", "COIN100K-N7P8-Q9R2-S3T4",
+    "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4",
+    "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7",
+    "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3", "COIN100K-U4V5-W6X7-Y8Z2",
+    "COIN100K-G9H2-J3K4-L5M6", "COIN100K-N7P8-Q9R2-S3T4", "COIN100K-V5W6-X7Y8-Z2A3",
+    "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7", "COIN100K-P8Q9-R2S3-T4U5",
+    "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8",
+    "COIN100K-Q9R2-S3T4-U5V6", "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-D6E7-F8G9-H2J3",
+    "COIN100K-K4L5-M6N7-P8Q9", "COIN100K-R2S3-T4U5-V6W7", "COIN100K-Y8Z2-A3B4-C5D6",
+    "COIN100K-E7F8-G9H2-J3K4", "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-S3T4-U5V6-W7X8",
+    "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3",
+    "COIN100K-T4U5-V6W7-X8Y9", "COIN100K-G9H2-J3K4-L5M6", "COIN100K-N7P8-Q9R2-S3T4",
     "COIN100K-U5V6-W7X8-Y9Z2", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7",
     "COIN100K-P8Q9-R2S3-T4U5", "COIN100K-V6W7-X8Y9-Z2A3", "COIN100K-C5D6-E7F8-G9H2",
     "COIN100K-J3K4-L5M6-N7P8", "COIN100K-Q9R2-S3T4-U5V6", "COIN100K-W7X8-Y9Z2-A3B4"
@@ -244,36 +236,17 @@ def get_user_profile(db: dict, user_id: str) -> dict:
     
     if user_id not in db:
         db[user_id] = {
-            "coins": 0,
-            "energy": 1000,
-            "max_energy": 1000,
-            "multi_tap": 1,
-            "energy_regen": 1,
-            "offline_miner_lvl": 0,
-            "last_seen": now,
-            "unlocked_themes": [],
-            "radar_extra_slots": 0,
-            "turbo_until": 0,
-            "offline_pending": 0,
-            "planet_stage": 1,
-            "planet_hp": PLANET_HP_TABLE[1],
-            "rank": "Ловец",
-            "pro_until": 0,
-            "pro_warned": False,
-            "pro_expired_notified": True,
-            "daily_gens_count": 0,
-            "daily_gens_date": today_str,
-            "gens_total_count": 0,
-            "referred_by": None,
-            "referral_reward_claimed": False,
-            "referrals_count": 0,
-            "last_free_case_time": 0,
-            "cases_opened_total": 0,
-            "client_history": [],
-            "client_achievements": [],
-            "custom_theme_style": "",
-            "custom_fog_rgb": "41, 199, 95",
-            "custom_filter_settings": {}
+            "coins": 0, "energy": 1000, "max_energy": 1000, "multi_tap": 1,
+            "energy_regen": 1, "offline_miner_lvl": 0, "last_seen": now,
+            "unlocked_themes": [], "radar_extra_slots": 0, "turbo_until": 0,
+            "offline_pending": 0, "planet_stage": 1, "planet_hp": PLANET_HP_TABLE[1],
+            "rank": "Ловец", "pro_until": 0, "pro_warned": False,
+            "pro_expired_notified": True, "daily_gens_count": 0,
+            "daily_gens_date": today_str, "gens_total_count": 0, "referred_by": None,
+            "referral_reward_claimed": False, "referrals_count": 0,
+            "last_free_case_time": 0, "cases_opened_total": 0,
+            "client_history": [], "client_achievements": [], "custom_theme_style": "",
+            "custom_fog_rgb": "41, 199, 95", "custom_filter_settings": {}
         }
     
     user = db[user_id]
@@ -811,7 +784,7 @@ async def restore_sync(request: Request):
     client_radar = data.get("client_radar", [])
 
     if not user_id:
-        return JSONResponse(status_code=400, content={"error": "no_user_id"})
+        return {"status": "error", "msg": "no_user_id"}
 
     async with DB_LOCK:
         db = load_json_file(GAME_DB_PATH, {})
@@ -1211,9 +1184,6 @@ async def buy_game_item(request: Request):
         save_json_atomic_sync(GAME_DB_PATH, db)
         return {"status": "ok", "profile": user}
 
-# =========================================================================
-# 🎟️ АКТИВАЦИЯ ОДНОРАЗОВЫХ ПРОМОКОДОВ И PRO-КЛЮЧЕЙ (БЕЗ УЯЗВИМОСТЕЙ)
-# =========================================================================
 @app.post("/api/promo/activate")
 async def activate_promo(request: Request):
     data = await request.json()
@@ -1225,7 +1195,6 @@ async def activate_promo(request: Request):
         return {"status": "error", "msg": "Введите код!"}
 
     async with DB_LOCK:
-        # 1. Проверка в строгой базе промокодов
         promos_db = load_json_file(PROMOS_DB_PATH, {})
         matched_promo_key = None
         for p_code in promos_db.keys():
@@ -1257,7 +1226,6 @@ async def activate_promo(request: Request):
                 "msg": f"🎉 Начислено +{coins_reward:,} 🟡 монет!"
             }
 
-        # 2. Проверка в базе PRO-ключей
         keys_db = load_json_file(KEYS_DB_PATH, {})
         matched_key = None
         for k_code in keys_db.keys():
