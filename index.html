@@ -120,16 +120,6 @@
             justify-content: center;
             gap: 4px;
         }
-        .btn-buy-pro-header.expiring-soon {
-            background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
-            color: #fff !important;
-            border-color: #f87171 !important;
-            animation: urgentPulse 1s infinite alternate !important;
-        }
-        @keyframes urgentPulse {
-            0% { transform: scale(1); box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
-            100% { transform: scale(1.04); box-shadow: 0 0 20px rgba(239, 68, 68, 0.85); }
-        }
 
         .turbo-badge-container {
             display: none;
@@ -161,11 +151,6 @@
             font-size: 0.8rem;
             font-weight: 700;
             color: var(--text-muted);
-        }
-        .daily-limit-badge.limit-reached {
-            border-color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
-            color: #fca5a5;
         }
 
         main { 
@@ -223,17 +208,6 @@
             font-family: monospace; 
             margin-bottom: 8px;
         }
-        .market-value { 
-            font-size: 0.85rem; 
-            color: #eab308; 
-            font-weight: 600; 
-            display: none; 
-            margin-bottom: 8px; 
-            background: rgba(234, 179, 8, 0.1); 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            border: 1px solid rgba(234, 179, 8, 0.3);
-        }
         .price-text { font-size: 0.85rem; opacity: 0.7; }
 
         .quick-actions { display: none; width: 100%; gap: 10px; margin-top: 5px; }
@@ -279,7 +253,6 @@
             box-shadow: 0 0 16px rgba(234, 179, 8, 0.2);
             transition: transform 0.15s ease;
         }
-        .case-entry-banner:active { transform: scale(0.97); }
 
         .legal-notice-footer {
             font-size: 0.68rem;
@@ -296,7 +269,6 @@
             border-bottom: 1px dotted rgba(41, 199, 95, 0.4);
         }
 
-        /* 📱 НИЖНЯЯ ПАНЕЛЬ */
         .bottom-nav-container {
             position: fixed; bottom: 16px; left: 0; right: 0; z-index: 90;
             display: flex; justify-content: space-between; align-items: center;
@@ -401,9 +373,6 @@
             width: 330px; height: 330px; touch-action: none; cursor: grab;
             transition: transform 0.5s ease-out, opacity 0.5s ease-out;
         }
-        
-        .planet-fly-left { transform: translateX(-400px) scale(0.6) !important; opacity: 0 !important; }
-        .planet-enter-right { transform: translateX(400px) scale(0.6) !important; opacity: 0 !important; }
         
         .tycoon-header { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
         .coin-balance-badge { font-size: 1.8rem; font-weight: 900; color: #eab308; display: flex; align-items: center; gap: 8px; }
@@ -574,7 +543,6 @@
 
             <div class="result-field glass-panel" id="result-box">
                 <div class="username-text" id="res-username">@username</div>
-                <div class="market-value" id="res-market">Fragment: ~150 TON</div>
                 <div class="price-text" id="res-status">Нажмите кнопку для поиска</div>
             </div>
 
@@ -619,6 +587,25 @@
     </div>
 
     <div class="toast" id="global-toast">✨ Готово!</div>
+
+    <!-- 🎁 ПРИВЕТСТВЕННОЕ ОКНО ОФФЛАЙН-ДОХОДА -->
+    <div class="modal-overlay" id="modal-offline-reward">
+        <div class="modal-content glass-panel" style="max-width: 360px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
+                <h2 style="font-size: 1.3rem; color: #eab308;">👋 С возвращением!</h2>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                    Вас не было в игре: <b id="offline-time-text" style="color: #fff;">0 мин</b><br>
+                    <small style="color: #888;">(Максимальный расчет до 3 часов)</small>
+                </p>
+                <div style="font-size: 2.2rem; font-weight: 900; color: var(--primary); margin: 15px 0;">
+                    +<span id="offline-earned-amount">0</span> 🟡
+                </div>
+                <button class="form-btn" onclick="collectOfflineReward()">Забрать монеты</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 🎰 МОДАЛКА РУЛЕТКИ -->
     <div class="modal-overlay" id="modal-cases">
@@ -751,7 +738,7 @@
                     </div>
                     <div class="accordion-content">
                         <div style="font-size: 0.8rem; color: var(--text-muted); margin: 8px 0;">
-                            Слоты: <b id="settings-radar-slot-count" style="color: var(--primary);">0/3</b>
+                            Слоты: <b id="settings-radar-slot-count" style="color: var(--primary);">0/100</b>
                         </div>
                         <input type="text" id="radar-input-settings" class="form-input" placeholder="@username">
                         <button class="form-btn" onclick="addRadarTargetFromSettings()">Поставить на мушку</button>
@@ -804,6 +791,7 @@
                     </div>
                 </div>
 
+                <!-- 🛠️ ВСЕ 20 КАТЕГОРИЙ КОНСТРУКТОРА -->
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span>🛠️ Конструктор и Фильтры</span>
@@ -812,17 +800,32 @@
                     <div class="accordion-content">
                         <div style="font-size:0.8rem; color:#eab308; margin-top:8px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
                             <span>⚡ Поиск по слову (20 категорий):</span>
-                            <span id="kw-pro-lock-badge" style="font-size:0.75rem; background:#eab308; color:#000; padding:2px 6px; border-radius:6px; font-weight:900;">🔒 PRO ONLY</span>
+                            <span id="kw-pro-lock-badge" style="font-size:0.75rem; background:var(--primary); color:#000; padding:2px 6px; border-radius:6px; font-weight:900;">✓ PRO АКТИВЕН</span>
                         </div>
                         
-                        <div id="kw-input-wrapper" onclick="checkKwProAccess(event)">
+                        <div id="kw-input-wrapper">
                             <input type="text" id="custom-kw-input" class="form-input" placeholder="Напр. spiderman, crypto..." style="margin-top:6px;" oninput="saveCurrentFilterSettings()">
                             <select id="custom-cat-select" style="width:100%; background:#111; color:#fff; border:1px solid #333; border-radius:10px; padding:8px; font-size:0.85rem; margin-bottom:12px;" onchange="saveCurrentFilterSettings()">
                                 <option value="superheroes">🦸 Супергерои (lord, origin, verse, squad)</option>
                                 <option value="cinema">🎬 Кино и Сериалы (film, cast, show, reel)</option>
                                 <option value="anime">⛩️ Аниме (kun, chan, senpai, ninja, titan)</option>
                                 <option value="gaming">🎮 Видеоигры (play, gg, clan, craft, arena)</option>
+                                <option value="esports">🏆 Киберспорт (pro, major, apex, frag, ace)</option>
                                 <option value="crypto">💎 Крипта и Web3 (ton, coin, vault, dex, dao)</option>
+                                <option value="music">🎵 Музыка и Рэп (beat, sound, wave, flow, mix)</option>
+                                <option value="business">💼 Бизнес и Бренды (hub, inc, store, trade)</option>
+                                <option value="auto">🏎️ Авто и Тюнинг (drive, speed, turbo, drift)</option>
+                                <option value="sports">⚽ Спорт и Фитнес (fit, gym, flex, champ, lift)</option>
+                                <option value="it">💻 Наука и IT (dev, code, bot, lab, cloud)</option>
+                                <option value="luxury">👑 Роскошь и Luxury (gold, vip, royal, elite)</option>
+                                <option value="blog">📱 Личный бренд и Блог (vibe, daily, official)</option>
+                                <option value="memes">🐸 Мемы и Культура (pepe, sigma, chad, based)</option>
+                                <option value="twitch">🔴 Стриминг и Твич (tv, live, stream, cast)</option>
+                                <option value="art">🎨 Искусство и Дизайн (art, design, gallery)</option>
+                                <option value="food">🍔 Еда и Рестораны (fresh, kitchen, taste, chef)</option>
+                                <option value="cities">🌍 Города и Страны (tokyo, dubai, miami, nyc)</option>
+                                <option value="space">🚀 Космос (star, cosmic, orbit, nova, galaxy)</option>
+                                <option value="mythology">⚡ Мифология (zeus, thor, titan, phoenix)</option>
                             </select>
                         </div>
 
@@ -836,6 +839,14 @@
                                 <option value="5-6">5-6 символов</option>
                                 <option value="7-8">7-8 символов</option>
                             </select>
+                        </div>
+                        <div class="setting-row">
+                            <span>Использовать цифры</span>
+                            <label class="switch"><input type="checkbox" id="filter-num" onchange="saveCurrentFilterSettings()"><span class="slider"></span></label>
+                        </div>
+                        <div class="setting-row">
+                            <span>Использовать '_'</span>
+                            <label class="switch"><input type="checkbox" id="filter-und" onchange="saveCurrentFilterSettings()"><span class="slider"></span></label>
                         </div>
                     </div>
                 </div>
@@ -857,33 +868,41 @@
         </div>
     </div>
 
-    <!-- 📄 МОДАЛКА ОФЕРТЫ -->
+    <!-- 📄 ПОЛНАЯ ПУБЛИЧНАЯ ОФЕРТА -->
     <div class="modal-overlay" id="modal-terms">
         <div class="modal-content glass-panel">
             <div class="modal-header">
                 <h2 style="font-size: 1.1rem; color: #60a5fa;">📄 Публичная оферта</h2>
                 <button class="btn-close" onclick="closeModal('modal-terms')">✕</button>
             </div>
-            <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
-                <p>Все услуги и цифровые предметы предоставляются «КАК ЕСТЬ» («AS IS»). Цифровые услуги надлежащего качества возврату не подлежат. Внутриигровые рулетки носят исключительно развлекательный характер и не являются азартными играми.</p>
+            <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; display:flex; flex-direction:column; gap:10px;">
+                <h3 style="color:#fff; font-size:0.85rem;">1. Предмет соглашения</h3>
+                <p>Настоящее соглашение регулирует использование функционала сервиса NameHunter PRO. Сервис предоставляет доступ к аналитическим инструментам подбора юзернеймов и мониторинга открытых NFT-листингов Fragment.</p>
+                <h3 style="color:#fff; font-size:0.85rem;">2. Характер услуг и отказ от гарантий</h3>
+                <p>Услуги предоставляются по принципу «AS IS» («КАК ЕСТЬ»). Сервис не гарантирует отсутствие ручной занятости юзернеймов третьими лицами и не отвечает за сторонние площадки.</p>
+                <h3 style="color:#fff; font-size:0.85rem;">3. Платные подписки и Stars</h3>
+                <p>Покупка PRO-доступа через Telegram Stars (XTR) является приобретением неисключительных цифровых прав. Цифровая услуга считается оказанной в полном объёме в момент зачисления. Возврат средств не предусмотрен (ст. 450.1 ГК РФ).</p>
             </div>
         </div>
     </div>
 
-    <!-- 🔒 МОДАЛКА КОНФИДЕНЦИАЛЬНОСТИ -->
+    <!-- 🔒 ПОЛНАЯ ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ -->
     <div class="modal-overlay" id="modal-privacy">
         <div class="modal-content glass-panel">
             <div class="modal-header">
                 <h2 style="font-size: 1.1rem; color: var(--primary);">🔒 Конфиденциальность (152-ФЗ)</h2>
                 <button class="btn-close" onclick="closeModal('modal-privacy')">✕</button>
             </div>
-            <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
-                <p>Сервис обрабатывает только публичный Telegram ID и имя профиля для синхронизации аккаунта. Паспорта, номера телефонов и карты не собираются.</p>
+            <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; display:flex; flex-direction:column; gap:10px;">
+                <h3 style="color:#fff; font-size:0.85rem;">1. Принципы минимизации данных</h3>
+                <p>Сервис обрабатывает только открытый числовой Telegram ID и имя пользователя Telegram для сохранения игрового баланса, подписки и реферальной связи.</p>
+                <h3 style="color:#fff; font-size:0.85rem;">2. Запрет сбора чувствительной информации</h3>
+                <p>Мы НЕ собираем и НЕ храним паспортные данные, номера мобильных телефонов, геолокацию, адреса электронной почты и данные банковских карт.</p>
             </div>
         </div>
     </div>
 
-    <!-- 👑 МОДАЛКА PRO ПОДПИСКИ -->
+    <!-- 👑 4 ТАРИФА PRO ПОДПИСКИ -->
     <div class="modal-overlay" id="modal-pro">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -894,14 +913,31 @@
                 <div class="tariff-card">
                     <div>
                         <div style="font-weight:bold;">1 Месяц (30 дней)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Безлимит + 100 слотов</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Базовый PRO доступ</div>
                     </div>
                     <button class="tariff-btn" onclick="buyProTariff('pro_30')">75 ⭐</button>
                 </div>
+
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">2 Месяца (60 дней)</div>
+                        <div style="font-size:0.75rem; color:#29c75f; font-weight:bold;">Скидка 20% 🔥</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyProTariff('pro_60')">120 ⭐</button>
+                </div>
+
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">3 Месяца (90 дней)</div>
+                        <div style="font-size:0.75rem; color:#29c75f; font-weight:bold;">Скидка 30% 🚀</div>
+                    </div>
+                    <button class="tariff-btn" onclick="buyProTariff('pro_90')">160 ⭐</button>
+                </div>
+
                 <div class="tariff-card featured">
                     <div>
                         <div style="font-weight:bold; color:#eab308;">👑 Навсегда (Lifetime)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Вечный PRO доступ</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Вечный доступ ко всем функциям</div>
                     </div>
                     <button class="tariff-btn" style="background:#eab308;" onclick="buyProTariff('pro_forever')">490 ⭐</button>
                 </div>
@@ -909,7 +945,7 @@
         </div>
     </div>
 
-    <!-- 📁 ИСТОРИЯ -->
+    <!-- 📁 ИСТОРИЯ СВАЙПЫ -->
     <div class="modal-overlay" id="modal-history">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -984,7 +1020,7 @@
         </div>
     </div>
 
-    <!-- 🛒 МАГАЗИН БУСТЕРОВ -->
+    <!-- 🛒 МАГАЗИН БУСТЕРОВ С ПРАВИЛЬНЫМИ ЦЕНАМИ -->
     <div class="modal-overlay" id="modal-shop">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -995,7 +1031,7 @@
                 <div class="tariff-card">
                     <div>
                         <div style="font-weight:bold;">⚡ X2 Турбо (15 мин)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускоряет генерацию</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Ускоряет генерацию в 2 раза</div>
                     </div>
                     <button class="tariff-btn" onclick="buyShopItem('turbo_boost_15')">65 000 🟡</button>
                 </div>
@@ -1003,22 +1039,30 @@
                 <div class="tariff-card">
                     <div>
                         <div style="font-weight:bold;">🎯 +1 Слот в Радаре</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Лимит слежки</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Расширяет лимит слежки</div>
                     </div>
                     <button class="tariff-btn" onclick="buyShopItem('radar_slot')">35 000 🟡</button>
+                </div>
+
+                <div class="tariff-card" id="card-theme-quasar">
+                    <div>
+                        <div style="font-weight:bold;">🌌 Тема «Неоновый Квазар»</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Эксклюзивный космо-стиль</div>
+                    </div>
+                    <button class="tariff-btn" id="btn-buy-theme-quasar" onclick="buyShopItem('theme_quasar')">100 000 🟡</button>
                 </div>
 
                 <div class="tariff-card">
                     <div>
                         <div style="font-weight:bold;">👆 Мульти-Тап (Lvl. <span id="lvl-multitap">1</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">+1 к клику</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">+1 монета за клик</div>
                     </div>
                     <button class="tariff-btn" onclick="buyShopItem('multi_tap')"><span id="cost-multitap">200</span> 🟡</button>
                 </div>
 
                 <div class="tariff-card">
                     <div>
-                        <div style="font-weight:bold;">🔋 Батарея (Lvl. <span id="lvl-energy">1</span>)</div>
+                        <div style="font-weight:bold;">🔋 Запас батареи (Lvl. <span id="lvl-energy">1</span>)</div>
                         <div style="font-size:0.75rem; color:var(--text-muted);">+500 энергии</div>
                     </div>
                     <button class="tariff-btn" onclick="buyShopItem('max_energy')"><span id="cost-energy">150</span> 🟡</button>
@@ -1027,7 +1071,7 @@
                 <div class="tariff-card">
                     <div>
                         <div style="font-weight:bold;">🚜 Автосборщик (Lvl. <span id="lvl-miner">0</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Оффлайн фарм</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Пассивный оффлайн фарм</div>
                     </div>
                     <button class="tariff-btn" onclick="buyShopItem('offline_miner')"><span id="cost-miner">3000</span> 🟡</button>
                 </div>
@@ -1102,7 +1146,7 @@
                     isProUser = data.is_pro;
                     userProUntil = data.pro_until;
                     turboUntil = data.turbo_until || 0;
-                    maxRadarSlots = data.max_radar_slots || 3;
+                    maxRadarSlots = data.max_radar_slots || 100;
                     planetHpMax = data.planet_hp_max || 100;
                     dailyGensCount = data.daily_gens_count || 0;
                     dailyLimitMax = data.daily_limit || 100;
@@ -1116,6 +1160,7 @@
                     updateDailyLimitBadge();
                     updatePityUI(data.profile.cases_opened_total || 0);
                     renderAchievements();
+                    renderHistory();
                 }
             } catch(e){}
         }
@@ -1156,7 +1201,7 @@
         }
 
         // =========================================================================
-        // 🎰 ПЛАВНАЯ РУЛЕТКА
+        // 🎰 РУЛЕТКА
         // =========================================================================
         const CS_MOCK_ITEMS = [
             { name: "5 000 🟡", rarity: "gray", icon: "🟡" },
@@ -1182,7 +1227,6 @@
 
             for (let i = 0; i < totalCards; i++) {
                 let item = (i === winningIndex) ? winningItem : CS_MOCK_ITEMS[Math.floor(Math.random() * CS_MOCK_ITEMS.length)];
-                
                 if (i === winningIndex - 1) item = { name: "👑 PRO 30 ДНЕЙ", rarity: "gold", icon: "👑" };
                 if (i === winningIndex + 1) item = { name: "👑 PRO 7 Дней", rarity: "red", icon: "👑" };
 
@@ -1229,7 +1273,6 @@
                     const randomShift = (Math.random() - 0.5) * 45;
                     const finalTranslate = -(winningIndex * cardWidth) + (containerWidth / 2) - (cardWidth / 2) + randomShift;
 
-                    // Медленная и плавная 8-секундная прокрутка
                     track.style.transition = 'transform 8s cubic-bezier(0.08, 0.82, 0.12, 1)';
                     track.style.transform = `translateX(${finalTranslate}px)`;
                 }, 50);
@@ -1247,6 +1290,8 @@
 
         function applyProStateToUI() {
             const headerProBtn = document.getElementById('pro-header-btn');
+            const kwLock = document.getElementById('kw-pro-lock-badge');
+            const radarSlotsCount = document.getElementById('settings-radar-slot-count');
             const now = Math.floor(Date.now() / 1000);
 
             if (isProUser) {
@@ -1258,18 +1303,32 @@
                     let hours = Math.floor((diff % 86400) / 3600);
                     headerProBtn.innerText = `👑 PRO: ${days}д ${hours}ч`;
                 }
+                if (kwLock) { kwLock.innerText = "✓ PRO АКТИВЕН"; kwLock.style.background = "var(--primary)"; }
+                if (radarSlotsCount) radarSlotsCount.innerText = `0 / 100`;
             } else {
                 headerProBtn.innerText = "👑 PRO Доступ";
+                if (kwLock) { kwLock.innerText = "🔒 PRO ONLY"; kwLock.style.background = "#eab308"; }
+                if (radarSlotsCount) radarSlotsCount.innerText = `0 / ${3 + (userProfile.radar_extra_slots || 0)}`;
             }
+
+            const quasarBtn = document.getElementById('btn-theme-quasar');
+            const quantumBtn = document.getElementById('btn-theme-quantum');
+            if (userProfile.unlocked_themes && userProfile.unlocked_themes.includes('theme_quasar')) {
+                if (quasarBtn) quasarBtn.style.display = 'inline-block';
+            }
+            if (userProfile.unlocked_themes && userProfile.unlocked_themes.includes('theme_quantum')) {
+                if (quantumBtn) quantumBtn.style.display = 'inline-block';
+            }
+
+            updateTycoonUI();
         }
 
         // =========================================================================
-        // 🎯 СЛОТ-МАШИНА И ГЕНЕРАТОР (С ЗАДЕРЖКОЙ)
+        // 🎯 ГЕНЕРАТОР
         // =========================================================================
         function startSlotMachine() {
             const el = document.getElementById('res-username');
             const chars = "abcdefghijklmnopqrstuvwxyz";
-            document.getElementById('res-market').style.display = 'none';
             if (slotInterval) clearInterval(slotInterval);
             slotInterval = setInterval(() => {
                 let rand = "";
@@ -1374,6 +1433,10 @@
                 for (let i = 0; i < 500; i++) {
                     ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 50 + 10, 0, Math.PI * 2); ctxTex.fill();
                 }
+                ctxTex.fillStyle = '#2d6a4f';
+                for (let i = 0; i < 300; i++) {
+                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 30 + 5, 0, Math.PI * 2); ctxTex.fill();
+                }
             } else if (type === "moon") {
                 ctxTex.fillStyle = '#5c636a'; ctxTex.fillRect(0, 0, 1024, 512);
                 ctxTex.fillStyle = '#3c4043';
@@ -1453,7 +1516,7 @@
             cameraEarth.position.z = 4.3;
 
             rendererEarth = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-            rendererEarth.setSize(300, 300);
+            rendererEarth.setSize(330, 330);
             rendererEarth.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             container.appendChild(rendererEarth.domElement);
 
@@ -1556,6 +1619,14 @@
             let hpPercent = Math.min(100, Math.max(0, Math.floor((userProfile.planet_hp / planetHpMax) * 100)));
             document.getElementById('stage-percent-text').innerText = `${hpPercent}%`;
             document.getElementById('stage-fill').style.width = `${hpPercent}%`;
+
+            document.getElementById('lvl-multitap').innerText = userProfile.multi_tap;
+            document.getElementById('cost-multitap').innerText = Math.floor(200 * (1.8 ** (userProfile.multi_tap - 1)));
+            let energyLvl = (userProfile.max_energy - 1000) / 500;
+            document.getElementById('lvl-energy').innerText = energyLvl + 1;
+            document.getElementById('cost-energy').innerText = Math.floor(150 * (1.6 ** energyLvl));
+            document.getElementById('lvl-miner').innerText = userProfile.offline_miner_lvl;
+            document.getElementById('cost-miner').innerText = userProfile.offline_miner_lvl === 0 ? 3000 : Math.floor(3000 * (2.2 ** userProfile.offline_miner_lvl));
         }
 
         function openTycoonScreen() {
@@ -1564,6 +1635,41 @@
             updateTycoonUI();
         }
         function closeTycoonScreen() { document.getElementById('tycoon-overlay').classList.remove('active'); }
+
+        async function buyShopItem(itemId) {
+            try {
+                const res = await fetch('/api/game/buy', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, item_id: itemId })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userProfile = data.profile;
+                    saveProfileEverywhere();
+                    updateTycoonUI();
+                    showToast('✅ Успешно куплено!');
+                } else {
+                    showToast('❌ Недостаточно монет!');
+                }
+            } catch(e){}
+        }
+
+        async function collectOfflineReward() {
+            try {
+                const res = await fetch('/api/game/collect_offline', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    userProfile.coins = data.coins;
+                    saveProfileEverywhere();
+                    updateTycoonUI();
+                    closeModal('modal-offline-reward');
+                    showToast(`🟡 Получено +${data.collected} монет!`);
+                }
+            } catch(e){}
+        }
 
         // =========================================================================
         // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН
@@ -1647,6 +1753,9 @@
             }).join('');
         }
 
+        // =========================================================================
+        // 📁 ИСТОРИЯ СО СВАЙПАМИ
+        // =========================================================================
         function saveToHistory(item) {
             let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
             if (historyData.some(i => i.user === item.user)) return;
@@ -1654,6 +1763,7 @@
             localStorage.setItem('vpn_parser_history', JSON.stringify(historyData.slice(0, 50)));
             userProfile.client_history = historyData.slice(0, 50);
             saveProfileEverywhere();
+            renderHistory();
         }
 
         function renderHistory() {
@@ -1664,20 +1774,57 @@
                 cont.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">История пуста</div>';
                 return;
             }
-            historyData.forEach((item) => {
-                const card = document.createElement('div');
-                card.className = 'history-card';
-                card.innerHTML = `
-                    <div>
-                        <div style="color:${item.color}; font-weight:bold;">@${item.user}</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div>
+            historyData.forEach((item, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'history-wrapper';
+                wrapper.id = `hist-wrap-${index}`;
+                wrapper.innerHTML = `
+                    <div class="swipe-action-icon swipe-icon-left">🗑</div>
+                    <div class="history-card" data-index="${index}" data-user="${item.user}">
+                        <div>
+                            <div style="color:${item.color}; font-weight:bold;">@${item.user}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
+                            <div style="font-size:0.75rem; opacity:0.8;">${item.price}</div>
+                        </div>
                     </div>
-                    <div style="text-align:right;">
-                        <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
-                        <div style="font-size:0.75rem; opacity:0.8;">${item.price}</div>
-                    </div>
+                    <div class="swipe-action-icon swipe-icon-right">🔗</div>
                 `;
-                cont.appendChild(card);
+
+                const card = wrapper.querySelector('.history-card');
+                let startX = 0, currentX = 0;
+                card.ontouchstart = (e) => { startX = e.touches[0].clientX; card.style.transition = 'none'; };
+                card.ontouchmove = (e) => {
+                    currentX = e.touches[0].clientX;
+                    let diffX = currentX - startX;
+                    if (diffX > 0) { wrapper.classList.add('swiping-right'); wrapper.classList.remove('swiping-left'); }
+                    else { wrapper.classList.add('swiping-left'); wrapper.classList.remove('swiping-right'); }
+                    card.style.transform = `translate3d(${diffX}px, 0, 0)`;
+                };
+                card.ontouchend = () => {
+                    let diffX = currentX - startX;
+                    if (diffX > 120) {
+                        wrapper.classList.add('deleting');
+                        setTimeout(() => {
+                            historyData.splice(index, 1);
+                            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
+                            userProfile.client_history = historyData;
+                            saveProfileEverywhere();
+                            renderHistory();
+                        }, 300);
+                    } else if (diffX < -120) {
+                        card.style.transform = 'translate3d(0, 0, 0)';
+                        const url = `https://t.me/share/url?url=https://t.me/selectionusername_bot&text=Поймал ник @${item.user}`;
+                        window.open(url, '_blank');
+                    } else {
+                        card.style.transition = 'transform 0.2s ease';
+                        card.style.transform = 'translate3d(0, 0, 0)';
+                        wrapper.classList.remove('swiping-right', 'swiping-left');
+                    }
+                };
+                cont.appendChild(wrapper);
             });
         }
 
@@ -1701,6 +1848,7 @@
             document.getElementById(id).classList.add('active'); 
             if (id === 'modal-history') renderHistory();
             if (id === 'modal-achievements') renderAchievements();
+            if (id === 'modal-leaderboard') fetchLeaderboard();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -1722,20 +1870,68 @@
             window.open(url, '_blank');
         }
         function copyRefLink() {
-            const refLink = `https://t.me/selectionusername_bot?start=ref_${tgChatId}`;
+            const botUsername = "selectionusername_bot";
+            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
             navigator.clipboard.writeText(refLink);
             showToast("✨ Ссылка скопирована!");
         }
         function shareRefLink() {
-            const refLink = `https://t.me/selectionusername_bot?start=ref_${tgChatId}`;
+            const botUsername = "selectionusername_bot";
+            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
             const text = "Лови редкие ники в Telegram в NameHunter PRO! 🚀";
             const url = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         }
 
         function toggleAccordion(header) { header.parentElement.classList.toggle('open'); }
-        function checkKwProAccess(e) { if (!isProUser) { showToast("👑 Доступно в PRO!"); openModal('modal-pro'); } }
         function handleFilterToggleChange() { if (!document.getElementById('filter-active').checked) document.getElementById('custom-kw-input').value = ""; }
+        
+        async function fetchLeaderboard() {
+            const container = document.getElementById('leaderboard-list-container');
+            container.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка...</div>';
+            try {
+                const res = await fetch('/api/leaderboard');
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    container.innerHTML = data.leaderboard.map((item, idx) => `
+                        <div class="lb-card" style="border-left: 4px solid ${item.color};">
+                            <div>
+                                <div style="font-weight:bold; color:#fff;">#${idx+1} @${item.username}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: ${item.finder_name}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
+                                <div style="font-size:0.7rem; color:#eab308;">${item.price}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch(e){}
+        }
+
+        async function buyProTariff(tariffId) {
+            try {
+                showToast("⏳ Формирование счета Stars...");
+                const res = await fetch('/api/pro/buy_invoice', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, tariff_id: tariffId })
+                });
+                const data = await res.json();
+                if (data.status === 'ok' && data.invoice_link) {
+                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
+                        window.Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
+                            if (status === 'paid') {
+                                loadProfileFromCloudAndServer();
+                                closeModal('modal-pro');
+                                showToast("🎉 PRO успешно активирован!");
+                            }
+                        });
+                    } else {
+                        window.open(data.invoice_link, '_blank');
+                    }
+                }
+            } catch (e) { showToast("Сбой соединения"); }
+        }
     </script>
 </body>
 </html>
