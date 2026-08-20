@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Username Scanner PRO & Quantum Roulette</title>
+    <title>Username Scanner PRO & Fragment NFT Gifts</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js?v=7.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -15,9 +15,10 @@
             --primary-hover: #22a94f;
             --text-main: #ffffff;
             --text-muted: #829288;
-            --glass-bg: rgba(18, 25, 21, 0.78);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --primary-glow: rgba(41, 199, 95, 0.25);
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-highlight: rgba(255, 255, 255, 0.35);
+            --primary-glow: rgba(41, 199, 95, 0.35);
             --gold-accent: #eab308;
             --gold-glow: rgba(234, 179, 8, 0.45);
             --fog-rgb: 41, 199, 95;
@@ -46,96 +47,83 @@
             background: linear-gradient(45deg, #ff0055, #ff9900, #ffee00, #00ff66, #00eeff, #9900ff) !important;
             background-size: 400% 400% !important; animation: rainbowBG 6s ease infinite !important;
         }
-        body.theme-blackhole { background: radial-gradient(circle at center, #2e1065 0%, #000000 80%) !important; color: #d8b4fe !important; }
+        body.theme-blackhole { background: #000000 !important; color: #d8b4fe !important; }
         body.theme-quasar { background: radial-gradient(circle at center, #1e1b4b 0%, #09090b 70%, #000000 100%) !important; color: #38bdf8 !important; }
-        body.theme-quantum { background: radial-gradient(circle at center, #172554 0%, #030712 100%) !important; color: #60a5fa !important; }
         @keyframes rainbowBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
         #fog-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; }
 
+        /* 💎 ЖИДКОЕ СТЕКЛО (LIQUID GLASSMORPHISM) */
         .glass-panel {
             background: var(--glass-bg); 
-            backdrop-filter: blur(18px); 
-            -webkit-backdrop-filter: blur(18px);
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border); 
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+            border-top: 1px solid var(--glass-highlight);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+        }
+
+        .glass-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-highlight);
+            border-radius: 18px;
+            color: var(--text-main);
+            font-weight: 700;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .glass-btn:active {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.4);
         }
 
         header { 
             display: flex; 
             justify-content: space-between; 
-            align-items: flex-start;
+            align-items: center;
             padding: 12px 16px; 
             z-index: 50; 
             width: 100%; 
             max-width: 480px; 
             margin: 0 auto; 
-            gap: 10px;
+            gap: 8px;
         }
-
-        .header-col-group { display: flex; flex-direction: column; gap: 6px; }
-
         .nav-btn { 
-            background: rgba(255, 255, 255, 0.08); 
-            border: 1px solid rgba(255, 255, 255, 0.12); 
-            color: var(--text-main); 
+            padding: 9px 13px; 
             font-size: 0.82rem; 
-            font-weight: 600; 
-            cursor: pointer; 
-            padding: 8px 12px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            gap: 5px; 
-            border-radius: 16px; 
-            backdrop-filter: blur(10px);
-            transition: transform 0.15s ease, background 0.2s ease;
             white-space: nowrap;
         }
-        .nav-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
-        .nav-btn.ref-btn { border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #7dd3fc; }
-        .nav-btn.roulette-btn { border-color: rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.12); color: #facc15; }
 
         .btn-buy-pro-header {
-            background: linear-gradient(135deg, #eab308, #ca8a04);
+            background: linear-gradient(135deg, #eab308, #ca8a04) !important;
             color: #000 !important;
             font-weight: 900;
             font-size: 0.84rem;
             padding: 9px 15px;
             border-radius: 20px;
             border: 1px solid #facc15;
-            cursor: pointer;
             box-shadow: 0 0 16px var(--gold-glow);
             white-space: nowrap;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
         }
 
-        .turbo-badge-container {
-            display: none;
-            width: 100%;
-            max-width: 360px;
-            margin: 0 auto 10px auto;
-            background: linear-gradient(90deg, rgba(234, 179, 8, 0.2), rgba(41, 199, 95, 0.2));
-            border: 1px solid #eab308;
-            border-radius: 16px;
-            padding: 8px 14px;
-            font-size: 0.85rem;
-            font-weight: 800;
-            color: #eab308;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
-        }
-
-        .daily-limit-badge {
+        .limit-badge-bar {
             width: 100%;
             max-width: 360px;
             margin: 0 auto 8px auto;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 8px 14px;
             display: flex;
             justify-content: space-between;
@@ -151,7 +139,7 @@
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            padding: 10px 20px 105px 20px; 
+            padding: 6px 20px 80px 20px; 
             z-index: 10; 
         }
         .app-container { 
@@ -162,15 +150,15 @@
             gap: 12px; 
         }
 
-        .platform-toggle { display: flex; border-radius: 16px; padding: 5px; }
+        .platform-toggle { display: flex; border-radius: 18px; padding: 4px; }
         .platform-btn { 
             flex: 1; 
-            padding: 12px; 
+            padding: 10px; 
             background: transparent; 
             border: none; 
             color: var(--text-muted); 
-            border-radius: 12px; 
-            font-size: 0.95rem; 
+            border-radius: 14px; 
+            font-size: 0.9rem; 
             font-weight: 600; 
             cursor: pointer; 
             transition: 0.25s ease;
@@ -182,10 +170,9 @@
         }
 
         .result-field { 
-            border-radius: 24px; 
-            padding: 30px 20px; 
+            padding: 24px 20px; 
             text-align: center; 
-            min-height: 160px; 
+            min-height: 140px; 
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
@@ -198,7 +185,7 @@
             letter-spacing: 0.5px;
             color: var(--text-muted); 
             font-family: monospace; 
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .price-text { font-size: 0.85rem; opacity: 0.7; }
 
@@ -206,27 +193,19 @@
         .action-btn { 
             flex: 1; 
             padding: 12px; 
-            border-radius: 14px; 
             font-size: 0.9rem; 
-            font-weight: 600; 
-            cursor: pointer; 
-            border: 1px solid transparent; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 6px; 
+            border-radius: 16px;
         }
         .btn-take { background: var(--primary-glow); color: var(--primary); border-color: var(--primary); }
         .btn-story { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
 
         .generator-buttons-grid { display: flex; gap: 8px; width: 100%; }
-
         .btn-generate { 
             background: var(--primary); 
             color: #000; 
             border: none; 
-            border-radius: 18px; 
-            padding: 18px; 
+            border-radius: 20px; 
+            padding: 16px; 
             font-size: 1.05rem; 
             font-weight: 800; 
             cursor: pointer; 
@@ -239,8 +218,8 @@
             background: rgba(56, 189, 248, 0.15);
             border: 1px solid #38bdf8;
             color: #7dd3fc;
-            border-radius: 18px;
-            padding: 18px;
+            border-radius: 20px;
+            padding: 16px;
             font-size: 0.95rem;
             font-weight: 800;
             cursor: pointer;
@@ -254,131 +233,60 @@
             background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
             border-color: #f87171 !important;
             color: #fff !important;
-            animation: urgentPulse 1s infinite alternate;
         }
 
-        .legal-notice-footer {
-            font-size: 0.68rem;
-            color: rgba(130, 146, 136, 0.65);
-            text-align: center;
-            line-height: 1.35;
-            margin-top: 2px;
-            padding: 0 10px;
-        }
-        .legal-notice-link {
-            color: rgba(41, 199, 95, 0.85);
-            text-decoration: none;
-            cursor: pointer;
-            border-bottom: 1px dotted rgba(41, 199, 95, 0.4);
-        }
-
+        /* 📱 НИЖНЯЯ ПАНЕЛЬ */
         .bottom-nav-container {
             position: fixed; bottom: 16px; left: 0; right: 0; z-index: 90;
             display: flex; justify-content: space-between; align-items: center;
-            max-width: 440px; margin: 0 auto; padding: 0 16px; gap: 10px;
+            max-width: 440px; margin: 0 auto; padding: 0 16px; gap: 8px;
         }
-
         .nav-pill-btn {
-            background: var(--glass-bg); backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text-main);
-            padding: 12px 16px; border-radius: 22px; font-size: 0.84rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex: 1;
+            padding: 12px 10px; 
+            border-radius: 20px; 
+            font-size: 0.8rem; 
+            font-weight: 700;
+            flex: 1; 
+            text-align: center;
         }
         .nav-pill-btn.mining-btn {
             background: linear-gradient(135deg, rgba(41, 199, 95, 0.4), rgba(56, 189, 248, 0.4));
-            border-color: var(--primary); font-size: 0.88rem; font-weight: 800; flex: 1.2;
+            border-color: var(--primary); font-size: 0.84rem; font-weight: 800; flex: 1.1;
         }
 
-        /* 🎁 СНАЙПЕР GIFTS */
-        .gift-settings-banner-btn {
-            width: 100%; background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(244, 63, 94, 0.05));
-            border: 1px solid #f43f5e; color: #fda4af; padding: 14px; border-radius: 16px;
-            font-weight: 800; font-size: 0.9rem; display: flex; justify-content: space-between;
-            align-items: center; cursor: pointer; margin-top: 10px;
-        }
-        .emoji-gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
-        .emoji-gift-card {
-            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center; cursor: pointer;
-            transition: transform 0.15s ease, border-color 0.2s ease;
-        }
-        .emoji-gift-card:active { transform: scale(0.96); }
-        .emoji-gift-card.selected { border-color: #29c75f; background: rgba(41, 199, 95, 0.12); box-shadow: 0 0 14px rgba(41, 199, 95, 0.35); }
-        .emoji-gift-icon { font-size: 2.3rem; margin-bottom: 4px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
-        .emoji-gift-title { font-size: 0.82rem; font-weight: 800; color: #ffffff; }
-        .emoji-gift-price { font-size: 0.74rem; color: #38bdf8; font-weight: 700; margin-top: 2px; }
-
-        /* 🎰 КВАНТОВАЯ РУЛЕТКА */
+        /* 🎰 КВАНТОВАЯ РУЛЕТКА CS:GO */
         .cs-roulette-wrapper {
             position: relative;
             width: 100%;
-            height: 140px;
+            height: 130px;
             background: rgba(0, 0, 0, 0.65);
-            border-radius: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
             overflow: hidden;
             margin: 15px 0;
             display: flex;
             align-items: center;
         }
-
         .cs-center-pointer {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 50%;
-            width: 4px;
-            transform: translateX(-50%);
-            background: #eab308;
-            box-shadow: 0 0 12px #eab308;
-            z-index: 20;
+            position: absolute; top: 0; bottom: 0; left: 50%; width: 4px;
+            transform: translateX(-50%); background: #eab308; box-shadow: 0 0 12px #eab308; z-index: 20;
         }
-        .cs-center-pointer:before, .cs-center-pointer:after {
-            content: "";
-            position: absolute;
-            left: -6px;
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-        }
-        .cs-center-pointer:before { top: 0; border-top: 10px solid #eab308; }
-        .cs-center-pointer:after { bottom: 0; border-bottom: 10px solid #eab308; }
-
         .cs-roulette-track {
-            display: flex;
-            position: absolute;
-            left: 0;
-            top: 15px;
-            transition: transform 9.5s cubic-bezier(0.06, 0.85, 0.1, 1);
-            will-change: transform;
+            display: flex; position: absolute; left: 0; top: 12px;
+            transition: transform 9.5s cubic-bezier(0.06, 0.85, 0.1, 1); will-change: transform;
         }
-
         .cs-item-card {
-            width: 100px;
-            height: 110px;
-            margin: 0 5px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 2px solid #555;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 6px;
-            flex-shrink: 0;
+            width: 95px; height: 105px; margin: 0 4px; border-radius: 16px;
+            background: rgba(255, 255, 255, 0.04); border: 2px solid #555;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4px; flex-shrink: 0;
         }
-        .cs-item-card.rarity-gray { border-color: #6b7280; background: linear-gradient(180deg, rgba(107,114,128,0.1), rgba(0,0,0,0.5)); }
-        .cs-item-card.rarity-blue { border-color: #3b82f6; background: linear-gradient(180deg, rgba(59,130,246,0.15), rgba(0,0,0,0.5)); }
-        .cs-item-card.rarity-purple { border-color: #a855f7; background: linear-gradient(180deg, rgba(168,85,247,0.18), rgba(0,0,0,0.5)); }
-        .cs-item-card.rarity-red { border-color: #ef4444; background: linear-gradient(180deg, rgba(239,68,68,0.22), rgba(0,0,0,0.5)); }
-        .cs-item-card.rarity-gold { border-color: #eab308; background: linear-gradient(180deg, rgba(234,179,8,0.3), rgba(0,0,0,0.6)); box-shadow: inset 0 0 15px rgba(234,179,8,0.3); }
-
-        .cs-item-icon { font-size: 2rem; margin-bottom: 4px; }
-        .cs-item-name { font-size: 0.68rem; font-weight: 800; color: #fff; line-height: 1.15; }
+        .cs-item-card.rarity-gray { border-color: #6b7280; }
+        .cs-item-card.rarity-blue { border-color: #3b82f6; }
+        .cs-item-card.rarity-purple { border-color: #a855f7; }
+        .cs-item-card.rarity-red { border-color: #ef4444; }
+        .cs-item-card.rarity-gold { border-color: #eab308; box-shadow: inset 0 0 10px rgba(234,179,8,0.3); }
+        .cs-item-icon { font-size: 1.8rem; margin-bottom: 2px; }
+        .cs-item-name { font-size: 0.65rem; font-weight: 800; color: #fff; line-height: 1.1; }
 
         /* 🪐 3D КЛИКЕР COSMIC CORE */
         #tycoon-overlay { 
@@ -386,34 +294,15 @@
             flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; overflow: hidden; 
         }
         #tycoon-overlay.active { display: flex; }
-        #space-canvas-inside { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        
-        #planet-viewport {
-            position: relative; width: 330px; height: 330px; z-index: 5;
-            display: flex; align-items: center; justify-content: center;
-        }
-        #three-earth-container {
-            width: 330px; height: 330px; touch-action: none; cursor: grab;
-            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
-        }
+        #planet-viewport { position: relative; width: 320px; height: 320px; z-index: 5; display: flex; align-items: center; justify-content: center; }
+        #three-earth-container { width: 320px; height: 320px; touch-action: manipulation; cursor: pointer; }
         
         .tycoon-header { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
         .coin-balance-badge { font-size: 1.8rem; font-weight: 900; color: #eab308; display: flex; align-items: center; gap: 8px; }
-        
         .floating-number { position: absolute; font-size: 1.8rem; font-weight: 900; color: #ffffff; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 0 10px #facc15; z-index: 20; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
-        
-        #click-prompt {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: rgba(255,255,255,0.45); font-size: 0.95rem; font-weight: 700;
-            text-align: center; pointer-events: none; z-index: 6; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-        }
 
-        .stage-progress-panel {
-            width: 100%; max-width: 320px; z-index: 10;
-            background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 10px 14px;
-        }
+        .stage-progress-panel { width: 100%; max-width: 320px; z-index: 10; padding: 10px 14px; }
         .stage-header-row { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
         .stage-progress-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
         .stage-progress-fill { height: 100%; background: linear-gradient(90deg, #eab308, #ef4444); border-radius: 10px; transition: width 0.25s ease; }
@@ -422,10 +311,7 @@
         .energy-text-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; }
         .energy-progress-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
         .energy-progress-fill { height: 100%; background: linear-gradient(90deg, #29c75f, #38bdf8); border-radius: 10px; transition: width 0.2s ease; }
-        
         .tycoon-nav-tabs { display: flex; gap: 10px; width: 100%; max-width: 320px; z-index: 10; }
-        .tab-btn { flex: 1; padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer; }
-        .tab-btn.active { background: var(--primary); color: #000; }
 
         /* МОДАЛЬНЫЕ ОКНА */
         .modal-overlay { 
@@ -434,54 +320,19 @@
             opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        
-        .modal-content { 
-            width: 100%; max-width: 440px; max-height: 86vh; display: flex; flex-direction: column; 
-            border-radius: 24px; overflow: hidden; background: var(--glass-bg); border: 1px solid rgba(255,255,255,0.08);
-        }
-        .modal-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
+        .modal-content { width: 100%; max-width: 420px; max-height: 84vh; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .modal-header { padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
         .btn-close { background: rgba(255,255,255,0.06); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .modal-body { padding: 16px 0 0 0; overflow-y: auto; flex: 1; }
 
-        .accordion-section {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 16px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-        .accordion-header {
-            padding: 14px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-        .acc-corner-arrow {
-            width: 8px;
-            height: 8px;
-            border-right: 2px solid rgba(255, 255, 255, 0.4);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.4);
-            transform: rotate(45deg);
-            transition: transform 0.3s ease, border-color 0.3s ease;
-            margin-right: 4px;
-        }
-        .accordion-section.open .acc-corner-arrow {
-            transform: rotate(-135deg);
-            border-color: var(--primary);
-        }
-        .accordion-content {
-            display: none;
-            padding: 0 16px 16px 16px;
-            border-top: 1px solid rgba(255,255,255,0.04);
-        }
+        .accordion-section { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; margin-bottom: 10px; overflow: hidden; }
+        .accordion-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 700; font-size: 0.9rem; }
+        .acc-corner-arrow { width: 8px; height: 8px; border-right: 2px solid rgba(255, 255, 255, 0.4); border-bottom: 2px solid rgba(255, 255, 255, 0.4); transform: rotate(45deg); transition: transform 0.3s ease; }
+        .accordion-section.open .acc-corner-arrow { transform: rotate(-135deg); border-color: var(--primary); }
+        .accordion-content { display: none; padding: 0 16px 16px 16px; border-top: 1px solid rgba(255,255,255,0.04); }
         .accordion-section.open .accordion-content { display: block; }
 
         .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .setting-row:last-child { border-bottom: none; }
-
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
@@ -489,29 +340,29 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; }
-        .color-dot { width: 34px; height: 34px; border-radius: 12px; cursor: pointer; border: 2px solid transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
-        .color-dot.active { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-
-        .tariff-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .tariff-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .tariff-card.featured { border-color: #eab308; background: rgba(234, 179, 8, 0.08); }
-        .tariff-btn { background: #eab308; color: #000; font-weight: 800; border: none; padding: 10px 16px; border-radius: 14px; cursor: pointer; }
+        .form-input { width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; border-radius: 16px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
 
-        .form-input { width: 100%; background: rgba(255,255,255,0.08); color: #ffffff !important; border: 1px solid rgba(255,255,255,0.15); padding: 12px 14px; border-radius: 14px; outline: none; font-size: 0.85rem; margin-bottom: 10px; }
-        .form-btn { width: 100%; background: var(--primary); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 16px; cursor: pointer; }
+        .lb-card { background: rgba(18, 25, 21, 0.8); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; opacity: 0.6; }
+        .achieve-card.unlocked { opacity: 1; border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 12px 20px; text-align: center; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.3s ease; z-index: 4000; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .case-card-box {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 18px;
-            padding: 16px;
-            margin-bottom: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .fragment-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+        .fragment-card {
+            border-radius: 22px; padding: 12px; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; height: 200px;
+            position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.12);
+            cursor: pointer; transition: transform 0.15s ease;
         }
+        .fragment-card:active { transform: scale(0.96); }
+        .fragment-card.selected { border: 2px solid #29c75f; box-shadow: 0 0 18px rgba(41, 199, 95, 0.55); }
+        .fragment-card-art { width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
+        .fragment-card-art svg { width: 100%; height: 100%; }
 
-        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 16px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 85px; }
+        .history-wrapper { position: relative; margin-bottom: 12px; border-radius: 18px; overflow: hidden; background: transparent; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 85px; }
         .history-wrapper.swiping-right { background: rgba(239, 68, 68, 0.45); }
         .history-wrapper.swiping-left { background: rgba(56, 189, 248, 0.45); }
         .swipe-action-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.3rem; opacity: 0; z-index: 1; transition: opacity 0.2s ease; }
@@ -520,38 +371,40 @@
         .history-wrapper.swiping-right .swipe-icon-left { opacity: 1; }
         .history-wrapper.swiping-left .swipe-icon-right { opacity: 1; }
         .history-wrapper.deleting { max-height: 0; margin-bottom: 0; opacity: 0; }
-
-        .history-card { background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; touch-action: pan-y; }
-        .lb-card { background: rgba(18, 25, 21, 0.8); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .achieve-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; opacity: 0.6; }
-        .achieve-card.unlocked { opacity: 1; border-color: var(--primary); background: rgba(41, 199, 95, 0.06); }
-
-        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 25, 18, 0.95); color: #fff; border: 1px solid var(--primary); border-radius: 20px; padding: 12px 20px; text-align: center; font-weight: 600; opacity: 0; pointer-events: none; transition: 0.3s ease; z-index: 4000; }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .history-card { background: rgba(18, 25, 21, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; touch-action: pan-y; }
     </style>
 </head>
 <body>
 
+    <!-- 🛡️ ЗАЩИТА ОТ КОНСОЛИ РАЗРАБОТЧИКА (DEVTOOLS) -->
+    <script>
+        (function () {
+            const noop = function () {};
+            const methods = ['log', 'debug', 'info', 'warn', 'error', 'table', 'trace', 'dir', 'dirxml'];
+            methods.forEach(function (m) { window.console[m] = noop; });
+            setInterval(function () { window.console.clear(); }, 1000);
+            setInterval(function () {
+                const startTime = performance.now();
+                debugger;
+                const endTime = performance.now();
+                if (endTime - startTime > 100) {
+                    document.body.innerHTML = '<div style="color:white;text-align:center;margin-top:30%;font-weight:bold;">⚠️ Инструменты разработчика заблокированы.</div>';
+                }
+            }, 1000);
+        })();
+    </script>
+
     <canvas id="fog-canvas"></canvas>
 
     <header>
-        <div class="header-col-group">
-            <button class="nav-btn" onclick="openModal('modal-history')">📁 История</button>
-            <button class="nav-btn ref-btn" onclick="openModal('modal-referrals')">👥 Рефералы</button>
-        </div>
-        <button class="btn-buy-pro-header" id="pro-header-btn" onclick="openModal('modal-pro')">👑 PRO Доступ</button>
-        <div class="header-col-group">
-            <button class="nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
-            <button class="nav-btn roulette-btn" onclick="openModal('modal-cases')">🎰 Рулетка</button>
-        </div>
+        <button class="glass-btn nav-btn" onclick="openModal('modal-history')">📁 История</button>
+        <button class="glass-btn btn-buy-pro-header" id="pro-header-btn" onclick="openModal('modal-pro')">👑 PRO Доступ</button>
+        <button class="glass-btn nav-btn" onclick="openModal('modal-settings')">⚙️ Настройки</button>
+        <button class="glass-btn nav-btn" style="color:#facc15;" onclick="openModal('modal-roulette')">🎡 Рулетка</button>
     </header>
 
     <main>
-        <div class="turbo-badge-container" id="main-turbo-badge">
-            ⚡ ТУРБО-РЕЖИМ X2 АКТИВЕН: <span id="turbo-timer-text">15:00</span>
-        </div>
-
-        <div class="daily-limit-badge" id="daily-limit-bar">
+        <div class="glass-panel limit-badge-bar" id="daily-limit-bar">
             <span>🎯 Генераций сегодня:</span>
             <b id="daily-gens-text" style="color: var(--primary);">0 / 100</b>
         </div>
@@ -568,210 +421,88 @@
             </div>
 
             <div class="quick-actions" id="quick-actions">
-                <button class="action-btn btn-take" onclick="takeUsername()">🚀 Занять</button>
-                <button class="action-btn btn-story" onclick="shareToFriends()">📲 Поделиться</button>
+                <button class="glass-btn action-btn btn-take" onclick="takeUsername()">🚀 Занять</button>
+                <button class="glass-btn action-btn btn-story" onclick="shareToFriends()">📲 Поделиться</button>
             </div>
 
             <div class="generator-buttons-grid">
-                <button class="btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
-                <button class="btn-autoparse" id="btn-autoparse" onclick="toggleAutoParser()">⚡ Автопоиск</button>
-            </div>
-
-            <div class="legal-notice-footer">
-                Используя сервис, вы принимаете условия 
-                <span class="legal-notice-link" onclick="openModal('modal-terms')">Оферты</span> и 
-                <span class="legal-notice-link" onclick="openModal('modal-privacy')">Конфиденциальности</span>
+                <button class="glass-btn btn-generate" id="btn-generate" onclick="manualGenerate(event)">Сгенерировать</button>
+                <button class="glass-btn btn-autoparse" id="btn-autoparse" onclick="toggleAutoParser()">⚡ Автопоиск</button>
             </div>
         </div>
     </main>
 
+    <!-- 📱 НИЖНЯЯ ПАНЕЛЬ -->
     <div class="bottom-nav-container">
-        <button class="nav-pill-btn" onclick="openModal('modal-achievements')">
-            🏆 <span id="achieve-counter-badge">0/100</span>
-        </button>
-        <button class="nav-pill-btn mining-btn" onclick="openTycoonScreen()">
-            ⚡ 3D Майнинг
-        </button>
-        <button class="nav-pill-btn" onclick="openModal('modal-leaderboard')">
-            📊 Топ
-        </button>
+        <button class="glass-btn nav-pill-btn" onclick="openModal('modal-referrals')">👥 Рефералы</button>
+        <button class="glass-btn nav-pill-btn mining-btn" onclick="openTycoonScreen()">⚡ 3D Майнинг</button>
+        <button class="glass-btn nav-pill-btn" onclick="openModal('modal-shop')">🛒 Магазин</button>
     </div>
 
     <div class="toast" id="global-toast">✨ Готово!</div>
 
-    <!-- 📋 МОДАЛКА РЕЗУЛЬТАТОВ АВТОПОИСКА -->
-    <div class="modal-overlay" id="modal-autoparse-results">
+    <!-- 🎡 МОДАЛКА КВАНТОВОЙ РУЛЕТКИ -->
+    <div class="modal-overlay" id="modal-roulette">
         <div class="modal-content glass-panel" style="max-width: 440px;">
             <div class="modal-header">
-                <h2 style="font-size: 1.15rem; color: var(--primary); font-weight: 900;">📋 Результаты автопоиска</h2>
-                <button class="btn-close" onclick="closeModal('modal-autoparse-results')">✕</button>
+                <h2 style="font-size: 1.15rem; color: #facc15; font-weight: 900;">🎡 КОЛЕСО ФОРТУНЫ</h2>
+                <button class="btn-close" onclick="closeModal('modal-roulette')">✕</button>
             </div>
             <div class="modal-body">
-                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">
-                    Найдено свободных ников: <b id="autoparse-found-count" style="color:#fff;">0</b>. Нажмите на любой, чтобы скопировать.
-                </div>
-                <div id="autoparse-results-list" style="display:flex; flex-direction:column; gap:8px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🎁 МОДАЛКА ОФФЛАЙН-ФАРМА -->
-    <div class="modal-overlay" id="modal-offline-reward">
-        <div class="modal-content glass-panel" style="max-width: 360px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
-                <h2 style="font-size: 1.3rem; color: #eab308;">👋 С возвращением!</h2>
-            </div>
-            <div class="modal-body" style="padding-top: 10px;">
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-                    Вас не было в игре: <b id="offline-time-text" style="color: #fff;">0 мин</b><br>
-                    <small style="color: #888;">(Максимальный расчет до 3 часов)</small>
-                </p>
-                <div style="font-size: 2.2rem; font-weight: 900; color: var(--primary); margin: 15px 0;">
-                    +<span id="offline-earned-amount">0</span> 🟡
-                </div>
-                <button class="form-btn" onclick="collectOfflineReward()">Забрать монеты</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🎰 МОДАЛКА РУЛЕТКИ -->
-    <div class="modal-overlay" id="modal-cases">
-        <div class="modal-content glass-panel" style="max-width: 440px;">
-            <div class="modal-header">
-                <h2 style="font-size: 1.15rem; color: #facc15; font-weight: 900;">🎰 КВАНТОВАЯ РУЛЕТКА</h2>
-                <button class="btn-close" onclick="closeModal('modal-cases')">✕</button>
-            </div>
-            <div class="modal-body">
-                
                 <div class="cs-roulette-wrapper" id="cs-roulette-container">
                     <div class="cs-center-pointer"></div>
                     <div class="cs-roulette-track" id="cs-roulette-track"></div>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">
-                    <span>Гарант на редкий джекпот:</span>
-                    <b style="color:var(--primary);"><span id="pity-counter-text">0</span> / 20 открытий</b>
+                <div style="font-size:0.8rem; color:var(--text-muted); text-align:center; margin-bottom:12px;">
+                    Бесплатных спинов (за друзей): <b id="spins-badge" style="color:var(--primary);">0</b>
                 </div>
 
-                <div class="case-card-box">
-                    <div>
-                        <div style="font-weight:900; color:#fff; font-size:0.95rem;">📦 Daily Case (Ежедневный)</div>
-                        <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 5 000 – 10 000 🟡, Энергия, PRO 1 день</div>
-                    </div>
-                    <div style="display:flex; gap:8px; margin-top:4px;">
-                        <button class="form-btn" id="btn-open-free-case" style="flex:1.2; padding:10px; background:var(--primary); color:#000;" onclick="spinCase('daily', 'free')">🎁 Бесплатно (24ч)</button>
-                        <button class="form-btn" style="flex:1; padding:10px; background:rgba(255,255,255,0.08); color:#fff;" onclick="spinCase('daily', 'coins')">15 000 🟡</button>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="glass-btn form-btn" style="background:var(--primary); color:#000;" id="btn-free-spin" onclick="spinRoulette('free')">🎁 Крутить за спин</button>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+                        <button class="glass-btn form-btn" style="background:#a855f7; color:#fff; font-size:0.75rem; padding:10px 4px;" onclick="spinRoulette('coins_15')">15k 🟡</button>
+                        <button class="glass-btn form-btn" style="background:#3b82f6; color:#fff; font-size:0.75rem; padding:10px 4px;" onclick="spinRoulette('coins_60')">60k 🟡</button>
+                        <button class="glass-btn form-btn" style="background:#eab308; color:#000; font-size:0.75rem; padding:10px 4px;" onclick="spinRoulette('coins_150')">150k 🟡</button>
                     </div>
                 </div>
-
-                <div class="case-card-box" style="border-color: rgba(168,85,247,0.3);">
-                    <div>
-                        <div style="font-weight:900; color:#c084fc; font-size:0.95rem;">🧰 Элитный Кейс</div>
-                        <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 15 000 – 25 000 🟡, Радар, PRO 3–7 дней</div>
-                    </div>
-                    <div style="display:flex; gap:8px; margin-top:4px;">
-                        <button class="form-btn" style="flex:1.2; padding:10px; background:#a855f7; color:#fff;" onclick="spinCase('elite', 'coins')">60 000 🟡</button>
-                        <button class="form-btn" style="flex:1; padding:10px; background:#eab308; color:#000;" onclick="buyStarsCase('case_elite')">10 ⭐</button>
-                    </div>
-                </div>
-
-                <div class="case-card-box" style="border-color: rgba(234,179,8,0.4); background: linear-gradient(135deg, rgba(234,179,8,0.1), rgba(18,25,21,0.8));">
-                    <div>
-                        <div style="font-weight:900; color:#facc15; font-size:0.95rem;">🌌 Квантовый Кейс ✨</div>
-                        <div style="font-size:0.72rem; color:var(--text-muted);">Дроп: 30 000 – 50 000 🟡, Скин Квантум, PRO 7–30 дней</div>
-                    </div>
-                    <div style="display:flex; gap:8px; margin-top:4px;">
-                        <button class="form-btn" style="flex:1.2; padding:10px; background:#eab308; color:#000;" onclick="spinCase('quantum', 'coins')">150 000 🟡</button>
-                        <button class="form-btn" style="flex:1; padding:10px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#000; font-weight:900;" onclick="buyStarsCase('case_quantum')">25 ⭐</button>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
 
-    <!-- 🎁 СНАЙПЕР GIFTS -->
-    <div class="modal-overlay" id="modal-gifts-sniper">
-        <div class="modal-content glass-panel" style="max-width: 440px;">
-            <div class="modal-header">
-                <h2 style="font-size: 1.15rem; color: #fda4af; font-weight: 900;">🎁 СНАЙПЕР ПОДАРКОВ (1000 шт)</h2>
-                <button class="btn-close" onclick="closeModal('modal-gifts-sniper')">✕</button>
-            </div>
-            <div class="modal-body">
-                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px; margin-bottom: 12px;">
-                    <div class="setting-row" style="padding:0 0 8px 0;">
-                        <div>
-                            <div style="font-weight: 800; color: #fff;">🎯 Снайпер Скидок (Auto-Buy)</div>
-                            <div style="font-size: 0.72rem; color: var(--text-muted);">Мгновенные пуши в бота при сливе</div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="gift-radar-active" onchange="handleGiftControlChange(event, 'toggle')">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div style="margin-top: 6px;">
-                        <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-muted);">
-                            <span>Ловить скидки от:</span>
-                            <b id="gift-margin-val" style="color:#29c75f;">30%</b>
-                        </div>
-                        <input type="range" id="gift-margin-slider" min="20" max="60" step="5" value="30" style="width:100%; margin: 6px 0;" oninput="handleGiftControlChange(event, 'slider')">
-                    </div>
-
-                    <div style="margin-top: 6px;">
-                        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:4px;">Максимальный бюджет (TON):</div>
-                        <input type="number" id="gift-budget-input" class="form-input" placeholder="Напр. 50 TON" value="50" style="margin-bottom:0;" onchange="handleGiftControlChange(event, 'budget')">
-                    </div>
-                </div>
-
-                <div style="font-size:0.85rem; font-weight:800; color:#fff; display:flex; justify-content:space-between; align-items:center;">
-                    <span>Каталог подарков Fragment:</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Выбери нужные</span>
-                </div>
-
-                <div class="emoji-gifts-grid" id="emoji-gifts-grid"></div>
-
-                <button class="form-btn" style="background:#f43f5e; color:#fff; font-weight:900; margin-top:16px;" onclick="handleGiftControlChange(event, 'save')">
-                    💾 Сохранить фильтры снайпера
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 👥 МОДАЛКА: РЕФЕРАЛЫ -->
+    <!-- 👥 МОДАЛКА РЕФЕРАЛОВ -->
     <div class="modal-overlay" id="modal-referrals">
-        <div class="modal-content glass-panel">
+        <div class="modal-content glass-panel" style="text-align:center;">
             <div class="modal-header">
-                <h2 style="font-size: 1.15rem; color: #7dd3fc; font-weight: 900;">👥 Пригласи друга</h2>
+                <h2 style="font-size: 1.15rem; color: #38bdf8; font-weight: 900;">👥 Пригласи друга</h2>
                 <button class="btn-close" onclick="closeModal('modal-referrals')">✕</button>
             </div>
             <div class="modal-body">
-                <div style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(18, 25, 21, 0.8)); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 20px; padding: 16px; margin-bottom: 14px; text-align: center;">
-                    <div style="font-size: 2.2rem; margin-bottom: 4px;">🎁</div>
-                    <div style="font-size: 1.05rem; font-weight: 900; color: #fff;">+1 ДЕНЬ PRO ЗА ДРУГА!</div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
-                        Приглашайте друзей и получайте <b>24 часа PRO</b> за каждого активного ловца!
-                    </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                    Приглашайте друзей! Вы получите <b>+1 спин</b> в Рулетку, как только друг запустит бота и сделает <b>первую генерацию ника</b>!
+                </p>
+                <div class="glass-panel" style="padding:12px; margin-bottom:12px;">
+                    <span style="font-size:0.8rem; color:var(--text-muted);">Приглашено активных друзей:</span>
+                    <div style="font-size:1.6rem; font-weight:900; color:#38bdf8;" id="ref-count-val">0</div>
                 </div>
+                <input type="text" id="ref-link-input" class="form-input" readonly onclick="copyReferralLink()">
+                <button class="glass-btn form-btn" style="background:#38bdf8; color:#000;" onclick="copyReferralLink()">📋 Скопировать ссылку</button>
+            </div>
+        </div>
+    </div>
 
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 14px; margin-bottom: 12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-                        <span style="font-size:0.85rem; color:var(--text-muted);">Приглашено друзей:</span>
-                        <b id="ref-friends-count" style="font-size:1.1rem; color:var(--primary);">0</b>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.85rem; color:var(--text-muted);">Заработано PRO:</span>
-                        <b id="ref-earned-days" style="font-size:1.1rem; color:#eab308;">0 дней</b>
-                    </div>
+    <!-- 📋 МОДАЛКА РЕЗУЛЬТАТОВ АВТОПОИСКА -->
+    <div class="modal-overlay" id="modal-autoparse-report">
+        <div class="modal-content glass-panel" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem; color: var(--primary);">📋 Отчёт автопарсера</h2>
+                <button class="btn-close" onclick="closeModal('modal-autoparse-report')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">
+                    Найдено свободных ников: <b id="autoparse-found-count" style="color:#fff;">0</b>. Нажмите, чтобы скопировать.
                 </div>
-
-                <div style="font-size:0.8rem; font-weight:700; color:#fff; margin-bottom: 6px;">Ваша персональная ссылка:</div>
-                <input type="text" id="ref-link-input" class="form-input" readonly onclick="copyRefLink()" style="cursor: pointer; background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #ffffff !important; font-weight: bold;">
-
-                <div style="display:flex; gap:8px; margin-top: 4px;">
-                    <button class="form-btn" style="flex:1; background:#38bdf8; color:#000;" onclick="copyRefLink()">📋 Скопировать</button>
-                    <button class="form-btn" style="flex:1.2; background:var(--primary); color:#000;" onclick="shareRefLink()">📲 Отправить другу</button>
-                </div>
+                <div id="autoparse-results-list" style="display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto;"></div>
             </div>
         </div>
     </div>
@@ -780,31 +511,25 @@
     <div class="modal-overlay" id="modal-settings">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2 style="font-size: 1.1rem;">⚙️ Настройки</h2>
+                <h2 style="font-size: 1.1rem;">⚙️ Меню и настройки</h2>
                 <button class="btn-close" onclick="closeModal('modal-settings')">✕</button>
             </div>
             <div class="modal-body">
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <span style="color: #eab308;" id="settings-pro-title">👑 Купить PRO подписку</span>
+                        <span>🎟️ Активация промокода / ключа</span>
                         <span class="acc-corner-arrow"></span>
                     </div>
                     <div class="accordion-content">
-                        <p style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;" id="settings-pro-desc">
-                            Снятие лимитов, безлимитный поиск, 100 слотов радара, Снайпер Подарков:
-                        </p>
-                        <button class="tariff-btn" style="width:100%; padding:12px;" onclick="closeModal('modal-settings'); openModal('modal-pro');">Посмотреть тарифы Stars ⭐</button>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;">Введите промокод на 10k, 100k, 10M монет или PRO-ключ:</div>
+                        <input type="text" id="promo-input" class="form-input" placeholder="COIN100K-XXXX-XXXX или PRO-XXXX...">
+                        <button class="glass-btn form-btn" style="background:var(--primary); color:#000;" onclick="applyPromoOrKey()">Активировать</button>
                     </div>
                 </div>
 
-                <div class="gift-settings-banner-btn" onclick="closeModal('modal-settings'); openModal('modal-gifts-sniper');">
-                    <span>🎁 Снайпер Fragment Подарков (1000 шт)</span>
-                    <span style="font-size:0.75rem; background:#f43f5e; color:#fff; padding:3px 8px; border-radius:10px;">Каталог ➔</span>
-                </div>
-
-                <div class="accordion-section" style="margin-top:10px;">
+                <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <span style="color: var(--primary);">🎯 Радар (Слежка за никами)</span>
+                        <span>🎯 Радар (Слежка за никами)</span>
                         <span class="acc-corner-arrow"></span>
                     </div>
                     <div class="accordion-content">
@@ -812,267 +537,79 @@
                             Слоты: <b id="settings-radar-slot-count" style="color: var(--primary);">0/3</b>
                         </div>
                         <input type="text" id="radar-input-settings" class="form-input" placeholder="@username">
-                        <button class="form-btn" onclick="addRadarTargetFromSettings()">Поставить на мушку</button>
+                        <button class="glass-btn form-btn" style="background:var(--primary); color:#000;" onclick="addRadarTarget()">Поставить на мушку</button>
                         <div id="radar-list-settings" style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;"></div>
                     </div>
                 </div>
 
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <span>🎟️ Промокоды на монеты и PRO-ключи</span>
+                        <span>🛠️ Конструктор по 20 категориям</span>
                         <span class="acc-corner-arrow"></span>
                     </div>
                     <div class="accordion-content">
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin: 8px 0;">Введите промокод на 10k, 100k, 10M монет или PRO-ключ:</div>
-                        <input type="text" id="promo-input" class="form-input" placeholder="COIN100K-XXXX-XXXX-XXXX или PRO-XXXX...">
-                        <button class="form-btn" onclick="applyPromoOrKey()">Активировать</button>
+                        <input type="text" id="custom-kw-input" class="form-input" placeholder="Напр. spiderman, crypto..." style="margin-top:6px;">
+                        <select id="custom-cat-select" style="width:100%; background:#111; color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:10px; font-size:0.85rem; margin-bottom:12px;">
+                            <option value="superheroes">🦸 Супергерои (lord, origin, verse, squad)</option>
+                            <option value="cinema">🎬 Кино и Сериалы (film, cast, show, reel)</option>
+                            <option value="anime">⛩️ Аниме (kun, chan, senpai, ninja, titan)</option>
+                            <option value="gaming">🎮 Видеоигры (play, gg, clan, craft, arena)</option>
+                            <option value="esports">🏆 Киберспорт (pro, major, apex, frag, ace)</option>
+                            <option value="crypto">💎 Крипта и Web3 (ton, coin, vault, dex, dao)</option>
+                            <option value="music">🎵 Музыка и Рэп (beat, sound, wave, flow, mix)</option>
+                            <option value="business">💼 Бизнес и Бренды (hub, inc, store, trade)</option>
+                            <option value="auto">🏎️ Авто и Тюнинг (drive, speed, turbo, drift)</option>
+                            <option value="sports">⚽ Спорт и Фитнес (fit, gym, flex, champ, lift)</option>
+                            <option value="it">💻 Наука и IT (dev, code, bot, lab, cloud)</option>
+                            <option value="luxury">👑 Роскошь и Luxury (gold, vip, royal, elite)</option>
+                            <option value="blog">📱 Личный бренд и Блог (vibe, daily, official)</option>
+                            <option value="memes">🐸 Мемы и Культура (pepe, sigma, chad, based)</option>
+                            <option value="twitch">🔴 Стриминг и Твич (tv, live, stream, cast)</option>
+                            <option value="art">🎨 Искусство и Дизайн (art, design, gallery)</option>
+                            <option value="food">🍔 Еда и Рестораны (fresh, kitchen, taste, chef)</option>
+                            <option value="cities">🌍 Города и Страны (tokyo, dubai, miami, nyc)</option>
+                            <option value="space">🚀 Космос (star, cosmic, orbit, nova, galaxy)</option>
+                            <option value="mythology">⚡ Мифология (zeus, thor, titan, phoenix)</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="accordion-section">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <span>🎨 Кастомизация и эффекты</span>
+                        <span>🎨 Кастомизация и темы</span>
                         <span class="acc-corner-arrow"></span>
                     </div>
                     <div class="accordion-content">
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">Плотность тумана:</div>
-                        <input type="range" id="fog-density-slider" min="1" max="15" value="6" style="width:100%; margin: 6px 0;" oninput="updateFogSettings()">
-                        
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">Скорость движения тумана:</div>
-                        <input type="range" id="fog-speed-slider" min="1" max="25" value="8" style="width:100%; margin: 6px 0;" oninput="updateFogSettings()">
-
-                        <div class="color-picker-grid">
-                            <div class="color-dot active" style="background:#29c75f;" onclick="setThemeColor('#29c75f', '41, 199, 95', this)"></div>
-                            <div class="color-dot" style="background:#38bdf8;" onclick="setThemeColor('#38bdf8', '56, 189, 248', this)"></div>
-                            <div class="color-dot" style="background:#a855f7;" onclick="setThemeColor('#a855f7', '168, 85, 247', this)"></div>
-                            <div class="color-dot" style="background:#ec4899;" onclick="setThemeColor('#ec4899', '236, 72, 153', this)"></div>
-                            <div class="color-dot" style="background:#eab308;" onclick="setThemeColor('#eab308', '234, 179, 8', this)"></div>
-                        </div>
-
-                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;">
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="setSecretTheme('theme-matrix', '0, 255, 102')">Matrix</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#00f0ff;" onclick="setSecretTheme('theme-cyber', '0, 240, 255')">Cyberpunk</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#ff499e;" onclick="setSecretTheme('theme-vapor', '255, 73, 158')">Vaporwave</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#eab308;" onclick="setSecretTheme('theme-rainbow', '234, 179, 8')">Rainbow</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#bf5af2;" onclick="setSecretTheme('theme-blackhole', '191, 90, 242')">🌌 Чёрная Дыра</button>
-                            <button class="form-btn" id="btn-theme-quasar" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#38bdf8; display:none;" onclick="setSecretTheme('theme-quasar', '56, 189, 248')">✨ Квазар</button>
-                            <button class="form-btn" id="btn-theme-quantum" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#3b82f6; display:none;" onclick="setSecretTheme('theme-quantum', '59, 130, 246')">🌌 Квантум</button>
-                            <button class="form-btn" style="width:auto; padding:6px 12px; font-size:0.75rem; background:#222; color:#fff;" onclick="setSecretTheme('', '41, 199, 95')">Сброс</button>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+                            <button class="glass-btn" style="padding:6px 12px; font-size:0.75rem; background:#bf5af2;" onclick="setTheme('theme-blackhole')">🌌 Чёрная Дыра</button>
+                            <button class="glass-btn" style="padding:6px 12px; font-size:0.75rem; background:#38bdf8;" onclick="setTheme('theme-quasar')">✨ Квазар</button>
+                            <button class="glass-btn" style="padding:6px 12px; font-size:0.75rem; background:#00f0ff;" onclick="setTheme('theme-cyber')">Cyberpunk</button>
+                            <button class="glass-btn" style="padding:6px 12px; font-size:0.75rem; background:#222; color:#fff;" onclick="setTheme('')">Сброс</button>
                         </div>
                     </div>
-                </div>
-
-                <!-- 🛠️ ВСЕ 20 КАТЕГОРИЙ КОНСТРУКТОРА -->
-                <div class="accordion-section">
-                    <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <span>🛠️ Конструктор и Фильтры</span>
-                        <span class="acc-corner-arrow"></span>
-                    </div>
-                    <div class="accordion-content">
-                        <div style="font-size:0.8rem; color:#eab308; margin-top:8px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
-                            <span>⚡ Поиск по слову (20 категорий):</span>
-                            <span id="kw-pro-lock-badge" style="font-size:0.75rem; background:var(--primary); color:#000; padding:2px 6px; border-radius:6px; font-weight:900;">✓ PRO АКТИВЕН</span>
-                        </div>
-                        
-                        <div id="kw-input-wrapper">
-                            <input type="text" id="custom-kw-input" class="form-input" placeholder="Напр. spiderman, crypto..." style="margin-top:6px;" oninput="saveCurrentFilterSettings()">
-                            <select id="custom-cat-select" style="width:100%; background:#111; color:#fff; border:1px solid #333; border-radius:10px; padding:8px; font-size:0.85rem; margin-bottom:12px;" onchange="saveCurrentFilterSettings()">
-                                <option value="superheroes">🦸 Супергерои (lord, origin, verse, squad)</option>
-                                <option value="cinema">🎬 Кино и Сериалы (film, cast, show, reel)</option>
-                                <option value="anime">⛩️ Аниме (kun, chan, senpai, ninja, titan)</option>
-                                <option value="gaming">🎮 Видеоигры (play, gg, clan, craft, arena)</option>
-                                <option value="esports">🏆 Киберспорт (pro, major, apex, frag, ace)</option>
-                                <option value="crypto">💎 Крипта и Web3 (ton, coin, vault, dex, dao)</option>
-                                <option value="music">🎵 Музыка и Рэп (beat, sound, wave, flow, mix)</option>
-                                <option value="business">💼 Бизнес и Бренды (hub, inc, store, trade)</option>
-                                <option value="auto">🏎️ Авто и Тюнинг (drive, speed, turbo, drift)</option>
-                                <option value="sports">⚽ Спорт и Фитнес (fit, gym, flex, champ, lift)</option>
-                                <option value="it">💻 Наука и IT (dev, code, bot, lab, cloud)</option>
-                                <option value="luxury">👑 Роскошь и Luxury (gold, vip, royal, elite)</option>
-                                <option value="blog">📱 Личный бренд и Блог (vibe, daily, official)</option>
-                                <option value="memes">🐸 Мемы и Культура (pepe, sigma, chad, based)</option>
-                                <option value="twitch">🔴 Стриминг и Твич (tv, live, stream, cast)</option>
-                                <option value="art">🎨 Искусство и Дизайн (art, design, gallery)</option>
-                                <option value="food">🍔 Еда и Рестораны (fresh, kitchen, taste, chef)</option>
-                                <option value="cities">🌍 Города и Страны (tokyo, dubai, miami, nyc)</option>
-                                <option value="space">🚀 Космос (star, cosmic, orbit, nova, galaxy)</option>
-                                <option value="mythology">⚡ Мифология (zeus, thor, titan, phoenix)</option>
-                            </select>
-                        </div>
-
-                        <div class="setting-row">
-                            <span>Включить умный фильтр</span>
-                            <label class="switch"><input type="checkbox" id="filter-active" onchange="handleFilterToggleChange()"><span class="slider"></span></label>
-                        </div>
-                        <div class="setting-row">
-                            <span>Длина ника</span>
-                            <select id="filter-len" style="background:#111; color:#fff; border:1px solid #333; border-radius:8px; padding:4px 8px;" onchange="saveCurrentFilterSettings()">
-                                <option value="5-6">5-6 символов</option>
-                                <option value="7-8">7-8 символов</option>
-                            </select>
-                        </div>
-                        <div class="setting-row">
-                            <span>Использовать цифры</span>
-                            <label class="switch"><input type="checkbox" id="filter-num" onchange="saveCurrentFilterSettings()"><span class="slider"></span></label>
-                        </div>
-                        <div class="setting-row">
-                            <span>Использовать '_'</span>
-                            <label class="switch"><input type="checkbox" id="filter-und" onchange="saveCurrentFilterSettings()"><span class="slider"></span></label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="accordion-section">
-                    <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <span style="color: #60a5fa;">⚖️ Правовая информация</span>
-                        <span class="acc-corner-arrow"></span>
-                    </div>
-                    <div class="accordion-content">
-                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-                            <button class="form-btn" style="background:rgba(255,255,255,0.06); color:#fff; font-size:0.8rem; padding:10px;" onclick="openModal('modal-terms')">📄 Публичная оферта</button>
-                            <button class="form-btn" style="background:rgba(255,255,255,0.06); color:#fff; font-size:0.8rem; padding:10px;" onclick="openModal('modal-privacy')">🔒 Политика конфиденциальности</button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- 📄 ПОЛНАЯ ПУБЛИЧНАЯ ОФЕРТА -->
-    <div class="modal-overlay" id="modal-terms">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #60a5fa;">📄 Публичная оферта</h2>
-                <button class="btn-close" onclick="closeModal('modal-terms')">✕</button>
-            </div>
-            <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; display:flex; flex-direction:column; gap:10px;">
-                <h3 style="color:#fff; font-size:0.85rem;">1. Предмет соглашения</h3>
-                <p>Настоящее Пользовательское соглашение регулирует порядок использования функционала сервиса «NameHunter PRO». Сервис предоставляет аналитические программные алгоритмы мониторинга доступности идентификаторов и NFT-листингов Fragment.</p>
-                <h3 style="color:#fff; font-size:0.85rem;">2. Характер услуг и отказ от гарантий</h3>
-                <p>Все функции предоставляются по принципу «AS IS» («КАК ЕСТЬ»). Сервис не гарантирует отсутствие ручной регистрации третьими лицами и не отвечает за сторонние площадки.</p>
-                <h3 style="color:#fff; font-size:0.85rem;">3. Платные услуги и Stars</h3>
-                <p>Покупка PRO-доступа через Telegram Stars (XTR) является приобретением неисключительных цифровых прав. Цифровая услуга считается оказанной в полном объёме в момент зачисления. Возврат средств не предусмотрен (ст. 450.1 ГК РФ).</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🔒 ПОЛНАЯ ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ -->
-    <div class="modal-overlay" id="modal-privacy">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: var(--primary);">🔒 Конфиденциальность (152-ФЗ)</h2>
-                <button class="btn-close" onclick="closeModal('modal-privacy')">✕</button>
-            </div>
-            <div class="modal-body" style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; display:flex; flex-direction:column; gap:10px;">
-                <h3 style="color:#fff; font-size:0.85rem;">1. Обрабатываемые данные</h3>
-                <p>Сервис обрабатывает только открытый числовой Telegram ID и имя пользователя Telegram для сохранения игрового баланса, подписки и реферальной связи.</p>
-                <h3 style="color:#fff; font-size:0.85rem;">2. Запрет сбора чувствительной информации</h3>
-                <p>Мы НЕ собираем и НЕ храним паспортные данные, номера телефонов, геолокацию, адреса почты и данные банковских карт.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 👑 4 ТАРИФА PRO ПОДПИСКИ -->
-    <div class="modal-overlay" id="modal-pro">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #eab308;">👑 Оформление PRO</h2>
-                <button class="btn-close" onclick="closeModal('modal-pro')">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="tariff-card">
-                    <div>
-                        <div style="font-weight:bold;">1 Месяц (30 дней)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Базовый PRO доступ</div>
-                    </div>
-                    <button class="tariff-btn" onclick="buyProTariff('pro_30')">75 ⭐</button>
-                </div>
-
-                <div class="tariff-card">
-                    <div>
-                        <div style="font-weight:bold;">2 Месяца (60 дней)</div>
-                        <div style="font-size:0.75rem; color:#29c75f; font-weight:bold;">Скидка 20% 🔥</div>
-                    </div>
-                    <button class="tariff-btn" onclick="buyProTariff('pro_60')">120 ⭐</button>
-                </div>
-
-                <div class="tariff-card">
-                    <div>
-                        <div style="font-weight:bold;">3 Месяца (90 дней)</div>
-                        <div style="font-size:0.75rem; color:#29c75f; font-weight:bold;">Скидка 30% 🚀</div>
-                    </div>
-                    <button class="tariff-btn" onclick="buyProTariff('pro_90')">160 ⭐</button>
-                </div>
-
-                <div class="tariff-card featured">
-                    <div>
-                        <div style="font-weight:bold; color:#eab308;">👑 Навсегда (Lifetime)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Вечный доступ ко всем функциям</div>
-                    </div>
-                    <button class="tariff-btn" style="background:#eab308;" onclick="buyProTariff('pro_forever')">490 ⭐</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 📁 ИСТОРИЯ СВАЙПЫ -->
-    <div class="modal-overlay" id="modal-history">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem;">📁 История улова</h2>
-                <button style="background:transparent; border:none; color:#ef4444; font-size:0.8rem; cursor:pointer;" onclick="clearHistory()">🗑 Очистить</button>
-                <button class="btn-close" onclick="closeModal('modal-history')">✕</button>
-            </div>
-            <div class="modal-body"><div id="history-container"></div></div>
-        </div>
-    </div>
-
-    <!-- 📊 ЛИДЕРБОРД -->
-    <div class="modal-overlay" id="modal-leaderboard">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem; color: #eab308;">👑 ТОП Улова</h2>
-                <button class="btn-close" onclick="closeModal('modal-leaderboard')">✕</button>
-            </div>
-            <div class="modal-body"><div id="leaderboard-list-container"></div></div>
-        </div>
-    </div>
-
-    <!-- 🏆 100 ДОСТИЖЕНИЙ -->
-    <div class="modal-overlay" id="modal-achievements">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2 style="font-size: 1.1rem;">🏆 Награды (<span id="achieve-count-modal">0</span>/100)</h2>
-                <button class="btn-close" onclick="closeModal('modal-achievements')">✕</button>
-            </div>
-            <div class="modal-body" id="achievements-list-container"></div>
-        </div>
-    </div>
-
-    <!-- 🪐 ПОЛНОЦЕННЫЙ 3D МАЙНИНГ -->
+    <!-- 🪐 3D МАЙНИНГ КЛИКЕР -->
     <div id="tycoon-overlay">
-        <canvas id="space-canvas-inside"></canvas>
-
         <div class="tycoon-header">
-            <button class="tab-btn" style="width: auto; padding: 8px 16px;" onclick="closeTycoonScreen()">◀ Выход</button>
+            <button class="glass-btn" style="padding:8px 16px;" onclick="closeTycoonScreen()">◀ Назад</button>
             <div class="coin-balance-badge">🟡 <span id="tycoon-coins">0</span></div>
-            <div style="width: 60px;"></div>
+            <div style="width:50px;"></div>
         </div>
 
-        <div class="stage-progress-panel">
+        <div class="glass-panel stage-progress-panel">
             <div class="stage-header-row">
                 <span>Космический объект: <b id="stage-num-text" style="color:#fff;">1/10</b></span>
-                <span>До следующего: <b id="stage-percent-text" style="color:var(--primary);">100%</b></span>
+                <span>Здоровье: <b id="stage-percent-text" style="color:var(--primary);">100%</b></span>
             </div>
-            <div class="stage-progress-bg">
-                <div class="stage-progress-fill" id="stage-fill" style="width: 100%;"></div>
-            </div>
+            <div class="stage-progress-bg"><div class="stage-progress-fill" id="stage-fill" style="width: 100%;"></div></div>
         </div>
 
         <div id="planet-viewport">
-            <div id="three-earth-container"></div>
-            <div id="click-prompt">Нажимай на объект,<br>чтобы добывать монеты ⚡</div>
+            <div id="three-earth-container" onclick="handleClickerTap(event)"></div>
         </div>
 
         <div class="energy-bar-container">
@@ -1080,18 +617,16 @@
                 <span>⚡ Энергия</span>
                 <span><span id="energy-val">1000</span> / <span id="max-energy-val">1000</span></span>
             </div>
-            <div class="energy-progress-bg">
-                <div class="energy-progress-fill" id="energy-fill" style="width: 100%;"></div>
-            </div>
+            <div class="energy-progress-bg"><div class="energy-progress-fill" id="energy-fill" style="width: 100%;"></div></div>
         </div>
 
         <div class="tycoon-nav-tabs">
-            <button class="tab-btn active" onclick="openModal('modal-shop')">🛒 Магазин бустеров</button>
-            <button class="tab-btn" onclick="openModal('modal-leaderboard')">👑 <span id="user-rank-text">Ловец</span></button>
+            <button class="glass-btn tab-btn active" onclick="openModal('modal-shop')">🛒 Магазин</button>
+            <button class="glass-btn tab-btn" onclick="openModal('modal-leaderboard')">👑 Топ</button>
         </div>
     </div>
 
-    <!-- 🛒 МАГАЗИН БУСТЕРОВ С ПРАВИЛЬНЫМИ ЦЕНАМИ -->
+    <!-- 🛒 МАГАЗИН БУСТЕРОВ -->
     <div class="modal-overlay" id="modal-shop">
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -1104,55 +639,74 @@
                         <div style="font-weight:bold;">⚡ X2 Турбо (15 мин)</div>
                         <div style="font-size:0.75rem; color:var(--text-muted);">Ускоряет генерацию в 2 раза</div>
                     </div>
-                    <button class="tariff-btn" onclick="buyShopItem('turbo_boost_15')">65 000 🟡</button>
+                    <button class="glass-btn" style="background:#eab308; color:#000; padding:8px 14px;" onclick="buyShopItem('turbo_boost_15')">65 000 🟡</button>
                 </div>
-
                 <div class="tariff-card">
                     <div>
                         <div style="font-weight:bold;">🎯 +1 Слот в Радаре</div>
                         <div style="font-size:0.75rem; color:var(--text-muted);">Расширяет лимит слежки</div>
                     </div>
-                    <button class="tariff-btn" onclick="buyShopItem('radar_slot')">35 000 🟡</button>
+                    <button class="glass-btn" style="background:#eab308; color:#000; padding:8px 14px;" onclick="buyShopItem('radar_slot')">35 000 🟡</button>
                 </div>
-
-                <div class="tariff-card" id="card-theme-quasar">
-                    <div>
-                        <div style="font-weight:bold;">🌌 Тема «Неоновый Квазар»</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Эксклюзивный космо-стиль</div>
-                    </div>
-                    <button class="tariff-btn" id="btn-buy-theme-quasar" onclick="buyShopItem('theme_quasar')">100 000 🟡</button>
-                </div>
-
                 <div class="tariff-card">
                     <div>
-                        <div style="font-weight:bold;">👆 Мульти-Тап (Lvl. <span id="lvl-multitap">1</span>)</div>
+                        <div style="font-weight:bold;">👆 Мульти-Тап</div>
                         <div style="font-size:0.75rem; color:var(--text-muted);">+1 монета за клик</div>
                     </div>
-                    <button class="tariff-btn" onclick="buyShopItem('multi_tap')"><span id="cost-multitap">200</span> 🟡</button>
-                </div>
-
-                <div class="tariff-card">
-                    <div>
-                        <div style="font-weight:bold;">🔋 Запас батареи (Lvl. <span id="lvl-energy">1</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">+500 энергии</div>
-                    </div>
-                    <button class="tariff-btn" onclick="buyShopItem('max_energy')"><span id="cost-energy">150</span> 🟡</button>
-                </div>
-
-                <div class="tariff-card">
-                    <div>
-                        <div style="font-weight:bold;">🚜 Автосборщик (Lvl. <span id="lvl-miner">0</span>)</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Пассивный оффлайн фарм</div>
-                    </div>
-                    <button class="tariff-btn" onclick="buyShopItem('offline_miner')"><span id="cost-miner">3000</span> 🟡</button>
+                    <button class="glass-btn" style="background:#29c75f; color:#000; padding:8px 14px;" onclick="buyShopItem('multi_tap')">Прокачать</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- =========================================================================
-         JAVASCRIPT ЛОГИКА
-    ========================================================================= -->
+    <!-- 👑 PRO ТАРИФЫ -->
+    <div class="modal-overlay" id="modal-pro">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem; color: #eab308;">👑 Оформление PRO</h2>
+                <button class="btn-close" onclick="closeModal('modal-pro')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="tariff-card">
+                    <div>
+                        <div style="font-weight:bold;">1 Месяц (30 дней)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Базовый PRO доступ</div>
+                    </div>
+                    <button class="glass-btn" style="background:#eab308; color:#000; padding:8px 14px;" onclick="buyProTariff('pro_30')">75 ⭐</button>
+                </div>
+                <div class="tariff-card featured">
+                    <div>
+                        <div style="font-weight:bold; color:#eab308;">👑 Навсегда (Lifetime)</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Вечный доступ без продлений</div>
+                    </div>
+                    <button class="glass-btn" style="background:#eab308; color:#000; padding:8px 14px;" onclick="buyProTariff('pro_forever')">490 ⭐</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📁 ИСТОРИЯ СВАЙПЫ -->
+    <div class="modal-overlay" id="modal-history">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem;">📁 История улова</h2>
+                <button class="btn-close" onclick="closeModal('modal-history')">✕</button>
+            </div>
+            <div class="modal-body"><div id="history-container"></div></div>
+        </div>
+    </div>
+
+    <!-- 📊 ЛИДЕРБОРД -->
+    <div class="modal-overlay" id="modal-leaderboard">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 style="font-size: 1.1rem; color: #eab308;">👑 Топ игроков</h2>
+                <button class="btn-close" onclick="closeModal('modal-leaderboard')">✕</button>
+            </div>
+            <div class="modal-body" id="leaderboard-list-container"></div>
+        </div>
+    </div>
+
     <script>
         let currentPlatform = 'telegram';
         let isFetching = false;
@@ -1160,832 +714,24 @@
         let autoParseTimer = null;
         let autoParseFoundList = [];
         let lastGenerated = "";
-        let slotInterval = null;
-        let isSpinningCase = false;
-        let finderName = "Аноним";
+        let isSpinning = false;
         let isProUser = false;
         let userProUntil = 0;
-        let turboUntil = 0;
-        let maxRadarSlots = 3;
         let dailyGensCount = 0;
-        let dailyLimitMax = 100;
-        let totalReferralsCount = 0;
-        let selectedGiftsList = [];
-        let turboCountdownInterval = null;
+        let tgChatId = "1001";
+        let finderName = "Ловец";
 
-        let tgChatId = null;
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
             const user = window.Telegram.WebApp.initDataUnsafe.user;
             tgChatId = user.id.toString();
-            finderName = user.first_name + (user.last_name ? " " + user.last_name : "");
-            localStorage.setItem('vh_permanent_tg_id', tgChatId);
-        } else {
-            tgChatId = localStorage.getItem('vh_permanent_tg_id') || localStorage.getItem('vh_uid') || "guest_1001";
-            localStorage.setItem('vh_permanent_tg_id', tgChatId);
+            finderName = user.first_name || "Ловец";
         }
 
-        let userProfile = { 
-            coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, energy_regen: 1, 
-            offline_miner_lvl: 0, rank: "Ловец", planet_stage: 1, planet_hp: 100,
-            unlocked_themes: [], pro_until: 0, radar_extra_slots: 0, referrals_count: 0,
-            cases_opened_total: 0, last_free_case_time: 0,
-            client_history: [], client_achievements: [], custom_theme_style: "",
-            custom_fog_rgb: "41, 199, 95", custom_filter_settings: {}
-        };
-        let planetHpMax = 100;
-        let pendingTaps = 0, pendingDamage = 0, syncTimer = null;
+        let userProfile = { coins: 0, energy: 1000, max_energy: 1000, multi_tap: 1, planet_stage: 1, planet_hp: 100, spins: 0, referrals_count: 0 };
 
-        function saveProfileEverywhere() {
-            userProfile.referrals_count = totalReferralsCount;
-            localStorage.setItem('vh_saved_profile', JSON.stringify(userProfile));
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
-                try {
-                    window.Telegram.WebApp.CloudStorage.setItem('vh_cloud_profile', JSON.stringify(userProfile), (err, res) => {});
-                } catch(e){}
-            }
-        }
-
-        async function loadProfileFromCloudAndServer() {
-            let loadedProfile = JSON.parse(localStorage.getItem('vh_saved_profile') || 'null');
-            if (loadedProfile) userProfile = loadedProfile;
-
+        async function restoreSync() {
             try {
-                const localRadar = JSON.parse(localStorage.getItem('vh_local_radar_targets') || '[]');
                 const res = await fetch('/api/game/restore_sync', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, client_profile: userProfile, client_radar: localRadar })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile = data.profile;
-                    isProUser = data.is_pro;
-                    userProUntil = data.pro_until;
-                    turboUntil = data.profile.turbo_until || data.turbo_until || 0;
-                    maxRadarSlots = data.max_radar_slots || (isProUser ? 100 : 3);
-                    planetHpMax = data.planet_hp_max || 100;
-                    dailyGensCount = data.daily_gens_count || 0;
-                    dailyLimitMax = data.daily_limit || 100;
-                    totalReferralsCount = data.referrals_count || 0;
-                    
-                    if (data.profile.custom_theme_style) document.body.className = data.profile.custom_theme_style;
-                    if (data.profile.custom_fog_rgb) document.documentElement.style.setProperty('--fog-rgb', data.profile.custom_fog_rgb);
-                    if (data.profile.custom_filter_settings) restoreFilterInputs(data.profile.custom_filter_settings);
-
-                    saveProfileEverywhere();
-                    applyProStateToUI();
-                    updateDailyLimitBadge();
-                    updatePityUI(data.profile.cases_opened_total || 0);
-                    updateReferralsUI();
-                    renderAchievements();
-                    renderHistory();
-
-                    if (data.offline_earned && data.offline_earned > 0) {
-                        let mins = Math.floor((data.offline_seconds || 60) / 60);
-                        document.getElementById('offline-time-text').innerText = `${mins} мин`;
-                        document.getElementById('offline-earned-amount').innerText = data.offline_earned;
-                        openModal('modal-offline-reward');
-                    }
-                }
-            } catch(e){}
-        }
-        loadProfileFromCloudAndServer();
-
-        function restoreFilterInputs(cfg) {
-            if (cfg.keyword) document.getElementById('custom-kw-input').value = cfg.keyword;
-            if (cfg.category) document.getElementById('custom-cat-select').value = cfg.category;
-            if (cfg.filterActive !== undefined) document.getElementById('filter-active').checked = cfg.filterActive;
-            if (cfg.lenMode) document.getElementById('filter-len').value = cfg.lenMode;
-            if (cfg.useNum !== undefined) document.getElementById('filter-num').checked = cfg.useNum;
-            if (cfg.useUnd !== undefined) document.getElementById('filter-und').checked = cfg.useUnd;
-        }
-
-        function saveCurrentFilterSettings() {
-            userProfile.custom_filter_settings = {
-                keyword: document.getElementById('custom-kw-input').value,
-                category: document.getElementById('custom-cat-select').value,
-                filterActive: document.getElementById('filter-active').checked,
-                lenMode: document.getElementById('filter-len').value,
-                useNum: document.getElementById('filter-num').checked,
-                useUnd: document.getElementById('filter-und').checked
-            };
-            saveProfileEverywhere();
-        }
-
-        function updateDailyLimitBadge() {
-            const bar = document.getElementById('daily-limit-bar');
-            const text = document.getElementById('daily-gens-text');
-            if (isProUser) {
-                text.innerText = "∞ / ∞ (Безлимит)";
-                text.style.color = "#eab308";
-                bar.classList.remove('limit-reached');
-            } else {
-                text.innerText = `${dailyGensCount} / ${dailyLimitMax}`;
-                if (dailyGensCount >= dailyLimitMax) {
-                    text.style.color = "#ef4444";
-                    bar.classList.add('limit-reached');
-                } else {
-                    text.style.color = "var(--primary)";
-                    bar.classList.remove('limit-reached');
-                }
-            }
-        }
-
-        function updatePityUI(totalOpened) {
-            const pityCount = totalOpened % 20;
-            const el = document.getElementById('pity-counter-text');
-            if (el) el.innerText = pityCount;
-
-            const btn = document.getElementById('btn-open-free-case');
-            const now = Math.floor(Date.now() / 1000);
-            const lastFree = userProfile.last_free_case_time || 0;
-            const diff = now - lastFree;
-
-            if (diff >= 86400) {
-                if (btn) {
-                    btn.innerText = "🎁 Бесплатно (24ч)";
-                    btn.style.background = "var(--primary)";
-                    btn.style.color = "#000";
-                    btn.disabled = false;
-                }
-            } else {
-                let left = 86400 - diff;
-                let h = Math.floor(left / 3600);
-                let m = Math.floor((left % 3600) / 60);
-                let timeStr = h > 0 ? `${h}ч ${m}мин` : `${m}мин`;
-                if (btn) {
-                    btn.innerText = `⏱️ Через ${timeStr}`;
-                    btn.style.background = "rgba(255,255,255,0.06)";
-                    btn.style.color = "var(--text-muted)";
-                    btn.disabled = false;
-                }
-            }
-        }
-
-        function updateReferralsUI() {
-            const botUsername = "selectionusername_bot";
-            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
-            const refInput = document.getElementById('ref-link-input');
-            if (refInput) refInput.value = refLink;
-            
-            const countEl = document.getElementById('ref-friends-count');
-            const earnedEl = document.getElementById('ref-earned-days');
-            if (countEl) countEl.innerText = totalReferralsCount;
-            if (earnedEl) earnedEl.innerText = `${totalReferralsCount} дн.`;
-        }
-
-        function updateTurboBadgeUI() {
-            const badge = document.getElementById('main-turbo-badge');
-            const timerEl = document.getElementById('turbo-timer-text');
-            const now = Math.floor(Date.now() / 1000);
-
-            if (turboUntil > now) {
-                badge.style.display = 'block';
-                let leftSec = turboUntil - now;
-                let m = Math.floor(leftSec / 60);
-                let s = leftSec % 60;
-                timerEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                
-                if (!turboCountdownInterval) {
-                    turboCountdownInterval = setInterval(updateTurboBadgeUI, 1000);
-                }
-            } else {
-                badge.style.display = 'none';
-                if (turboCountdownInterval) {
-                    clearInterval(turboCountdownInterval);
-                    turboCountdownInterval = null;
-                }
-            }
-        }
-
-        // =========================================================================
-        // 🎰 УНИКАЛЬНЫЕ ПУЛЫ НАГРАД ДЛЯ КАЖДОГО КЕЙСА
-        // =========================================================================
-        const CASE_CONFIGS = {
-            daily: {
-                pool: [
-                    { name: "5 000 🟡", rarity: "gray", icon: "🟡" },
-                    { name: "7 500 🟡", rarity: "gray", icon: "🟡" },
-                    { name: "10 000 🟡", rarity: "gray", icon: "🟡" },
-                    { name: "⚡ Энергия Max", rarity: "blue", icon: "⚡" },
-                    { name: "🎯 +15 Поисков", rarity: "blue", icon: "🎯" },
-                    { name: "🚀 X2 Турбо 15м", rarity: "purple", icon: "🚀" },
-                    { name: "👑 PRO 1 День", rarity: "gold", icon: "👑" }
-                ],
-                nearMiss: { name: "👑 PRO 1 День", rarity: "gold", icon: "👑" }
-            },
-            elite: {
-                pool: [
-                    { name: "15 000 🟡", rarity: "blue", icon: "🟡" },
-                    { name: "20 000 🟡", rarity: "blue", icon: "🟡" },
-                    { name: "25 000 🟡", rarity: "blue", icon: "🟡" },
-                    { name: "🎯 +30 Поисков", rarity: "blue", icon: "🎯" },
-                    { name: "🚀 X2 Турбо 20м", rarity: "purple", icon: "🚀" },
-                    { name: "🎯 +1 Радар", rarity: "red", icon: "🎯" },
-                    { name: "👑 PRO 3 Дня", rarity: "red", icon: "👑" },
-                    { name: "👑 PRO 7 Дней", rarity: "gold", icon: "👑" }
-                ],
-                nearMiss: { name: "👑 PRO 7 Дней", rarity: "gold", icon: "👑" }
-            },
-            quantum: {
-                pool: [
-                    { name: "30 000 🟡", rarity: "purple", icon: "🟡" },
-                    { name: "40 000 🟡", rarity: "purple", icon: "🟡" },
-                    { name: "50 000 🟡", rarity: "purple", icon: "🟡" },
-                    { name: "🚀 X2 Турбо 35м", rarity: "purple", icon: "🚀" },
-                    { name: "🎯 +2 Радара", rarity: "red", icon: "🎯" },
-                    { name: "👑 PRO 7 Дней", rarity: "red", icon: "👑" },
-                    { name: "🌌 Скин Квантум", rarity: "gold", icon: "🌌" },
-                    { name: "👑 PRO 30 ДНЕЙ", rarity: "gold", icon: "👑" }
-                ],
-                nearMiss: { name: "👑 PRO 30 ДНЕЙ", rarity: "gold", icon: "👑" }
-            }
-        };
-
-        function initRoulettePreview(caseType = 'daily') {
-            const track = document.getElementById('cs-roulette-track');
-            if (!track) return;
-            track.innerHTML = '';
-            const cfg = CASE_CONFIGS[caseType] || CASE_CONFIGS['daily'];
-            for (let i = 0; i < 15; i++) {
-                let item = cfg.pool[i % cfg.pool.length];
-                const card = document.createElement('div');
-                card.className = `cs-item-card rarity-${item.rarity}`;
-                card.innerHTML = `<div class="cs-item-icon">${item.icon}</div><div class="cs-item-name">${item.name}</div>`;
-                track.appendChild(card);
-            }
-        }
-
-        function buildRouletteTrack(caseType, winningItem) {
-            const track = document.getElementById('cs-roulette-track');
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0px)';
-            track.innerHTML = '';
-
-            const cfg = CASE_CONFIGS[caseType] || CASE_CONFIGS['daily'];
-            const totalCards = 55;
-            const winningIndex = 42;
-
-            for (let i = 0; i < totalCards; i++) {
-                let item = (i === winningIndex) ? winningItem : cfg.pool[Math.floor(Math.random() * cfg.pool.length)];
-                if (i === winningIndex - 1 || i === winningIndex + 1) item = cfg.nearMiss;
-
-                const card = document.createElement('div');
-                card.className = `cs-item-card rarity-${item.rarity}`;
-                card.innerHTML = `<div class="cs-item-icon">${item.icon}</div><div class="cs-item-name">${item.name}</div>`;
-                track.appendChild(card);
-            }
-        }
-
-        async function spinCase(caseType, payMethod) {
-            if (isSpinningCase) return;
-
-            try {
-                const res = await fetch('/api/case/open', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        user_id: tgChatId, 
-                        case_type: caseType, 
-                        pay_method: payMethod,
-                        client_coins: userProfile.coins 
-                    })
-                });
-                
-                let data = await res.json();
-
-                if (data.status === 'error') {
-                    showToast(data.msg || "Ошибка открытия кейса");
-                    if (data.cooldown_seconds) updatePityUI(userProfile.cases_opened_total || 0);
-                    return;
-                }
-
-                isSpinningCase = true;
-                const drop = data.drop;
-                userProfile = data.profile;
-                isProUser = data.is_pro;
-                userProUntil = data.pro_until;
-                turboUntil = data.profile.turbo_until || turboUntil;
-                maxRadarSlots = data.profile.radar_extra_slots ? (isProUser ? 100 : (3 + data.profile.radar_extra_slots)) : maxRadarSlots;
-                
-                saveProfileEverywhere();
-                applyProStateToUI();
-                updatePityUI(data.cases_opened_total);
-                updateTurboBadgeUI();
-
-                buildRouletteTrack(caseType, drop);
-                
-                setTimeout(() => {
-                    const track = document.getElementById('cs-roulette-track');
-                    const cardWidth = 110;
-                    const winningIndex = 42;
-                    const containerWidth = document.getElementById('cs-roulette-container').offsetWidth;
-                    const randomShift = (Math.random() - 0.5) * 45;
-                    const finalTranslate = -(winningIndex * cardWidth) + (containerWidth / 2) - (cardWidth / 2) + randomShift;
-
-                    track.style.transition = 'transform 9.5s cubic-bezier(0.06, 0.85, 0.1, 1)';
-                    track.style.transform = `translateX(${finalTranslate}px)`;
-                }, 50);
-
-                setTimeout(() => {
-                    showToast(`🎉 ВЫБИТО: ${drop.name}!`);
-                    isSpinningCase = false;
-                }, 9700);
-
-            } catch (e) {
-                showToast("❌ Ошибка соединения при открытии кейса");
-                isSpinningCase = false;
-            }
-        }
-
-        async function buyStarsCase(tariffId) {
-            try {
-                showToast("⏳ Формирование счета Stars...");
-                const res = await fetch('/api/pro/buy_invoice', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, tariff_id: tariffId })
-                });
-                const data = await res.json();
-                if (data.status === 'ok' && data.invoice_link) {
-                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
-                        window.Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
-                            if (status === 'paid') {
-                                const caseType = tariffId === 'case_elite' ? 'elite' : 'quantum';
-                                spinCase(caseType, 'stars');
-                            }
-                        });
-                    } else {
-                        window.open(data.invoice_link, '_blank');
-                    }
-                }
-            } catch (e) { showToast("Сбой соединения"); }
-        }
-
-        function applyProStateToUI() {
-            const headerProBtn = document.getElementById('pro-header-btn');
-            const kwLock = document.getElementById('kw-pro-lock-badge');
-            const radarSlotsCount = document.getElementById('settings-radar-slot-count');
-            const now = Math.floor(Date.now() / 1000);
-
-            maxRadarSlots = isProUser ? 100 : (3 + (userProfile.radar_extra_slots || 0));
-
-            if (isProUser) {
-                if (userProUntil === -1) {
-                    headerProBtn.innerText = "👑 PRO ∞";
-                } else if (userProUntil > now) {
-                    let diff = userProUntil - now;
-                    let days = Math.floor(diff / 86400);
-                    let hours = Math.floor((diff % 86400) / 3600);
-                    headerProBtn.innerText = `👑 PRO: ${days}д ${hours}ч`;
-                }
-                if (kwLock) { kwLock.innerText = "✓ PRO АКТИВЕН"; kwLock.style.background = "var(--primary)"; }
-                if (radarSlotsCount) radarSlotsCount.innerText = `0 / 100`;
-            } else {
-                headerProBtn.innerText = "👑 PRO Доступ";
-                if (kwLock) { kwLock.innerText = "🔒 PRO ONLY"; kwLock.style.background = "#eab308"; }
-                if (radarSlotsCount) radarSlotsCount.innerText = `0 / ${maxRadarSlots}`;
-            }
-
-            const quasarBtn = document.getElementById('btn-theme-quasar');
-            const quantumBtn = document.getElementById('btn-theme-quantum');
-            if (userProfile.unlocked_themes && userProfile.unlocked_themes.includes('theme_quasar')) {
-                if (quasarBtn) quasarBtn.style.display = 'inline-block';
-            }
-            if (userProfile.unlocked_themes && userProfile.unlocked_themes.includes('theme_quantum')) {
-                if (quantumBtn) quantumBtn.style.display = 'inline-block';
-            }
-
-            updateTycoonUI();
-            updateTurboBadgeUI();
-        }
-
-        // =========================================================================
-        // 🎯 СЛОТ-МАШИНА, ГЕНЕРАТОР И АВТОПАРСЕР
-        // =========================================================================
-        function startSlotMachine() {
-            const el = document.getElementById('res-username');
-            const chars = "abcdefghijklmnopqrstuvwxyz";
-            if (slotInterval) clearInterval(slotInterval);
-            slotInterval = setInterval(() => {
-                let rand = "";
-                for (let i = 0; i < 5; i++) rand += chars[Math.floor(Math.random() * chars.length)];
-                el.textContent = "@" + rand;
-            }, 60);
-        }
-
-        function stopSlotMachine(finalName) {
-            if (slotInterval) { clearInterval(slotInterval); slotInterval = null; }
-            document.getElementById('res-username').textContent = "@" + finalName;
-        }
-
-        async function manualGenerate(event) {
-            if (isFetching) return;
-
-            if (!isProUser && dailyGensCount >= dailyLimitMax) {
-                showToast("⚠️ Дневной лимит (100 поисков) исчерпан! Купите PRO для безлимита.");
-                openModal('modal-pro');
-                if (isAutoParsing) toggleAutoParser();
-                return;
-            }
-
-            isFetching = true;
-            const btn = document.getElementById('btn-generate');
-            btn.disabled = true; 
-            btn.textContent = "Поиск...";
-            startSlotMachine();
-
-            const isTurbo = turboUntil > Math.floor(Date.now() / 1000);
-            const minDelay = isTurbo ? 700 : 1400;
-            const maxDelay = isTurbo ? 950 : 2000;
-            const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-            const delayPromise = new Promise(r => setTimeout(r, randomDelay));
-
-            const useFilter = document.getElementById('filter-active').checked;
-            const lenMode = document.getElementById('filter-len').value;
-            const customKw = (useFilter && isProUser) ? document.getElementById('custom-kw-input').value.trim() : "";
-            const customCat = document.getElementById('custom-cat-select').value;
-
-            try {
-                const url = `/api/generate?platform=${currentPlatform}&finder_id=${tgChatId}&finder_name=${encodeURIComponent(finderName)}&use_filter=${useFilter}&len_mode=${lenMode}&custom_keyword=${encodeURIComponent(customKw)}&custom_category=${encodeURIComponent(customCat)}`;
-                const [res] = await Promise.all([fetch(url), delayPromise]);
-                const data = await res.json();
-
-                if (res.status === 429) {
-                    stopSlotMachine("limit");
-                    showToast("⚠️ Дневной лимит исчерпан!");
-                    dailyGensCount = dailyLimitMax;
-                    updateDailyLimitBadge();
-                    openModal('modal-pro');
-                    if (isAutoParsing) toggleAutoParser();
-                    return;
-                }
-
-                if (data.daily_gens_count !== undefined) {
-                    dailyGensCount = data.daily_gens_count;
-                    updateDailyLimitBadge();
-                }
-
-                lastGenerated = data.generated_username || "hyper";
-                stopSlotMachine(lastGenerated);
-
-                const uEl = document.getElementById('res-username');
-                const sEl = document.getElementById('res-status');
-                const evalData = data.evaluation || { color: "#29c75f", status: "Свободен", rank: "A", score: 25 };
-
-                uEl.style.color = evalData.color;
-                sEl.textContent = evalData.status;
-                sEl.style.color = evalData.color;
-
-                if (data.is_free) {
-                    document.getElementById('quick-actions').style.display = 'flex';
-                    const historyItem = { user: lastGenerated, plat: currentPlatform, rank: evalData.rank, price: evalData.status, color: evalData.color, score: evalData.score || 25 };
-                    saveToHistory(historyItem);
-                    
-                    if (isAutoParsing) {
-                        if (!autoParseFoundList.some(item => item.user === lastGenerated)) {
-                            autoParseFoundList.push(historyItem);
-                        }
-                    }
-                } else {
-                    document.getElementById('quick-actions').style.display = 'none';
-                }
-            } catch (e) {
-                stopSlotMachine("error");
-                document.getElementById('res-status').textContent = "Ошибка проверки";
-                document.getElementById('res-status').style.color = "#ef4444";
-            } finally {
-                isFetching = false;
-                btn.disabled = false; 
-                btn.textContent = "Сгенерировать";
-            }
-        }
-
-        function toggleAutoParser() {
-            const btn = document.getElementById('btn-autoparse');
-            if (isAutoParsing) {
-                isAutoParsing = false;
-                clearInterval(autoParseTimer);
-                autoParseTimer = null;
-                btn.classList.remove('running');
-                btn.innerText = "⚡ Автопоиск";
-                showToast("⏹️ Автопоиск остановлен");
-                showAutoParseResultsModal();
-            } else {
-                if (!isProUser && dailyGensCount >= dailyLimitMax) {
-                    showToast("👑 Для автопарсера оформите PRO безлимит!");
-                    openModal('modal-pro');
-                    return;
-                }
-                isAutoParsing = true;
-                autoParseFoundList = [];
-                btn.classList.add('running');
-                btn.innerText = "⏹️ Стоп";
-                showToast("🚀 Автопарсер непрерывно ищет ники...");
-                
-                manualGenerate();
-                autoParseTimer = setInterval(() => {
-                    if (!isFetching && isAutoParsing) {
-                        if (!isProUser && dailyGensCount >= dailyLimitMax) {
-                            toggleAutoParser();
-                        } else {
-                            manualGenerate();
-                        }
-                    }
-                }, turboUntil > Math.floor(Date.now() / 1000) ? 1200 : 2500);
-            }
-        }
-
-        function showAutoParseResultsModal() {
-            const container = document.getElementById('autoparse-results-list');
-            document.getElementById('autoparse-found-count').innerText = autoParseFoundList.length;
-
-            if (autoParseFoundList.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">За время поиска свободных ников не найдено</div>';
-            } else {
-                const sorted = [...autoParseFoundList].sort((a, b) => (b.score || 0) - (a.score || 0));
-                container.innerHTML = sorted.map(item => `
-                    <div class="lb-card" style="border-left: 4px solid ${item.color}; cursor:pointer;" onclick="copyUsernameDirect('${item.user}')">
-                        <div>
-                            <div style="font-weight:900; color:#fff; font-size:1.05rem;">@${item.user}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">Нажмите, чтобы скопировать 📋</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
-                            <div style="font-size:0.75rem; color:#eab308;">${item.price}</div>
-                        </div>
-                    </div>
-                `).join('');
-            }
-            openModal('modal-autoparse-results');
-        }
-
-        function copyUsernameDirect(username) {
-            navigator.clipboard.writeText(username);
-            showToast(`✨ Ник @${username} скопирован в буфер!`);
-        }
-
-        // =========================================================================
-        // 🪐 3D ДВИЖОК 10 ПЛАНЕТ
-        // =========================================================================
-        let sceneEarth, cameraEarth, rendererEarth, currentBodyMesh, saturnRingMesh, blackHoleGlowMesh;
-        let isThreeInit = false;
-        let targetScale = 1.0, currentScale = 1.0;
-
-        function createNoiseTexture(type) {
-            const canvasTex = document.createElement('canvas');
-            canvasTex.width = 1024; canvasTex.height = 512;
-            const ctxTex = canvasTex.getContext('2d');
-
-            if (type === "earth") {
-                ctxTex.fillStyle = '#051d40'; ctxTex.fillRect(0, 0, 1024, 512);
-                ctxTex.fillStyle = '#1b4d3e';
-                for (let i = 0; i < 500; i++) {
-                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 50 + 10, 0, Math.PI * 2); ctxTex.fill();
-                }
-                ctxTex.fillStyle = '#2d6a4f';
-                for (let i = 0; i < 300; i++) {
-                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 30 + 5, 0, Math.PI * 2); ctxTex.fill();
-                }
-                ctxTex.fillStyle = '#e0f2fe';
-                ctxTex.fillRect(0, 0, 1024, 45); ctxTex.fillRect(0, 467, 1024, 45);
-                ctxTex.fillStyle = 'rgba(255, 255, 255, 0.35)';
-                for (let i = 0; i < 200; i++) {
-                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 40 + 10, 0, Math.PI * 2); ctxTex.fill();
-                }
-            } else if (type === "moon") {
-                ctxTex.fillStyle = '#5c636a'; ctxTex.fillRect(0, 0, 1024, 512);
-                ctxTex.fillStyle = '#3c4043';
-                for (let i = 0; i < 600; i++) {
-                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 18 + 2, 0, Math.PI * 2); ctxTex.fill();
-                }
-            } else if (type === "mars") {
-                ctxTex.fillStyle = '#a83210'; ctxTex.fillRect(0, 0, 1024, 512);
-                ctxTex.fillStyle = '#6e1e07';
-                for (let i = 0; i < 450; i++) {
-                    ctxTex.beginPath(); ctxTex.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 40 + 8, 0, Math.PI * 2); ctxTex.fill();
-                }
-            } else {
-                ctxTex.fillStyle = '#d97706'; ctxTex.fillRect(0, 0, 1024, 512);
-                for (let i = 0; i < 40; i++) {
-                    ctxTex.fillStyle = (i % 2 === 0) ? '#b45309' : '#d97706';
-                    ctxTex.fillRect(0, i * 13, 1024, 10);
-                }
-            }
-            return new THREE.CanvasTexture(canvasTex);
-        }
-
-        const CELESTIAL_BODIES = {
-            1: { type: "earth", size: 1.2, roughness: 0.4 },
-            2: { type: "moon", size: 1.05, roughness: 0.85 },
-            3: { type: "mars", size: 1.15, roughness: 0.6 },
-            4: { type: "venus", size: 1.2, roughness: 0.4 },
-            5: { type: "jupiter", size: 1.4, roughness: 0.3 },
-            6: { type: "saturn", size: 1.25, roughness: 0.4, hasRing: true },
-            7: { type: "uranus", size: 1.25, roughness: 0.3 },
-            8: { type: "neptune", size: 1.25, roughness: 0.3 },
-            9: { type: "sun", size: 1.45, emissive: true },
-            10: { type: "black_hole", size: 1.2, isBlackHole: true }
-        };
-
-        function buildCelestialBody(stage) {
-            if (currentBodyMesh) sceneEarth.remove(currentBodyMesh);
-            if (saturnRingMesh) sceneEarth.remove(saturnRingMesh);
-            if (blackHoleGlowMesh) sceneEarth.remove(blackHoleGlowMesh);
-
-            const spec = CELESTIAL_BODIES[stage] || CELESTIAL_BODIES[1];
-
-            if (spec.isBlackHole) {
-                const sphereGeo = new THREE.SphereGeometry(spec.size, 48, 48);
-                const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-                currentBodyMesh = new THREE.Mesh(sphereGeo, blackMat);
-                sceneEarth.add(currentBodyMesh);
-
-                const ringGeo = new THREE.RingGeometry(1.35, 2.4, 64);
-                const ringMat = new THREE.MeshBasicMaterial({ color: 0xbf5af2, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
-                blackHoleGlowMesh = new THREE.Mesh(ringGeo, ringMat);
-                blackHoleGlowMesh.rotation.x = Math.PI / 2.5;
-                sceneEarth.add(blackHoleGlowMesh);
-            } else {
-                const geo = new THREE.SphereGeometry(spec.size, 48, 48);
-                let mat = new THREE.MeshStandardMaterial({ map: createNoiseTexture(spec.type), roughness: spec.roughness || 0.5 });
-                currentBodyMesh = new THREE.Mesh(geo, mat);
-                sceneEarth.add(currentBodyMesh);
-
-                if (spec.hasRing) {
-                    const ringGeo = new THREE.RingGeometry(1.5, 2.3, 64);
-                    const ringMat = new THREE.MeshStandardMaterial({ color: 0xcbb077, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
-                    saturnRingMesh = new THREE.Mesh(ringGeo, ringMat);
-                    saturnRingMesh.rotation.x = Math.PI / 2.8;
-                    sceneEarth.add(saturnRingMesh);
-                }
-            }
-        }
-
-        function init3DEarth() {
-            if (isThreeInit) return;
-            const container = document.getElementById('three-earth-container');
-            container.innerHTML = "";
-
-            sceneEarth = new THREE.Scene();
-            cameraEarth = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-            cameraEarth.position.z = 4.3;
-
-            rendererEarth = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-            rendererEarth.setSize(330, 330);
-            rendererEarth.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-            container.appendChild(rendererEarth.domElement);
-
-            sceneEarth.add(new THREE.AmbientLight(0xffffff, 0.9));
-            const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
-            sunLight.position.set(5, 3, 5);
-            sceneEarth.add(sunLight);
-
-            buildCelestialBody(userProfile.planet_stage || 1);
-            isThreeInit = true;
-            animateEarth();
-        }
-
-        function animateEarth() {
-            if (document.getElementById('tycoon-overlay').classList.contains('active')) {
-                currentScale += (targetScale - currentScale) * 0.25;
-                if (currentBodyMesh) { 
-                    currentBodyMesh.scale.set(currentScale, currentScale, currentScale); 
-                    currentBodyMesh.rotation.y += 0.003; 
-                }
-                rendererEarth.render(sceneEarth, cameraEarth);
-            }
-            requestAnimationFrame(animateEarth);
-        }
-
-        const earthContainer = document.getElementById('three-earth-container');
-        function handleEarthTap(e) {
-            e.preventDefault();
-            const prompt = document.getElementById('click-prompt');
-            if (prompt) prompt.style.display = 'none';
-
-            let touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
-            touches.forEach(touch => {
-                if (!isProUser && userProfile.energy < 1) return;
-                if (!isProUser) userProfile.energy -= 1;
-                
-                let gain = userProfile.multi_tap;
-                userProfile.coins += gain;
-                pendingTaps++;
-                pendingDamage += 1;
-
-                targetScale = 0.94; setTimeout(() => { targetScale = 1.0; }, 70);
-
-                userProfile.planet_hp -= 1;
-                if (userProfile.planet_hp <= 0) {
-                    if (userProfile.planet_stage < 10) {
-                        userProfile.planet_stage += 1;
-                        showToast(`🚀 Переход на объект ${userProfile.planet_stage}/10!`);
-                        buildCelestialBody(userProfile.planet_stage);
-                    }
-                }
-
-                const floatNum = document.createElement('div');
-                floatNum.className = 'floating-number';
-                floatNum.innerText = `+${gain} 🟡`;
-                floatNum.style.left = `${touch.clientX - 20}px`; floatNum.style.top = `${touch.clientY - 20}px`;
-                document.body.appendChild(floatNum);
-                setTimeout(() => floatNum.remove(), 700);
-            });
-            saveProfileEverywhere();
-            updateTycoonUI();
-            clearTimeout(syncTimer);
-            syncTimer = setTimeout(syncTapsWithServer, 500);
-        }
-
-        earthContainer.addEventListener('touchstart', handleEarthTap, { passive: false });
-        earthContainer.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') handleEarthTap(e); });
-
-        async function syncTapsWithServer() {
-            if (pendingTaps === 0) return;
-            let tapsToSend = pendingTaps;
-            let dmgToSend = pendingDamage;
-            pendingTaps = 0; pendingDamage = 0;
-
-            try {
-                const res = await fetch('/api/game/sync_tap', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, taps: tapsToSend, damage: dmgToSend })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile.energy = data.server_energy;
-                    userProfile.planet_stage = data.planet_stage;
-                    userProfile.planet_hp = data.planet_hp;
-                    planetHpMax = data.planet_hp_max;
-                    saveProfileEverywhere();
-                    updateTycoonUI();
-                }
-            } catch(e){}
-        }
-
-        function updateTycoonUI() {
-            document.getElementById('tycoon-coins').innerText = userProfile.coins.toLocaleString();
-            document.getElementById('energy-val').innerText = isProUser ? "∞" : userProfile.energy;
-            document.getElementById('max-energy-val').innerText = isProUser ? "∞" : userProfile.max_energy;
-            let fillPercent = isProUser ? 100 : Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
-            document.getElementById('energy-fill').style.width = fillPercent + "%";
-            document.getElementById('user-rank-text').innerText = userProfile.rank;
-            document.getElementById('stage-num-text').innerText = `${userProfile.planet_stage}/10`;
-            let hpPercent = Math.min(100, Math.max(0, Math.floor((userProfile.planet_hp / planetHpMax) * 100)));
-            document.getElementById('stage-percent-text').innerText = `${hpPercent}%`;
-            document.getElementById('stage-fill').style.width = `${hpPercent}%`;
-
-            document.getElementById('lvl-multitap').innerText = userProfile.multi_tap;
-            document.getElementById('cost-multitap').innerText = Math.floor(200 * (1.8 ** (userProfile.multi_tap - 1)));
-            let energyLvl = (userProfile.max_energy - 1000) / 500;
-            document.getElementById('lvl-energy').innerText = energyLvl + 1;
-            document.getElementById('cost-energy').innerText = Math.floor(150 * (1.6 ** energyLvl));
-            document.getElementById('lvl-miner').innerText = userProfile.offline_miner_lvl;
-            document.getElementById('cost-miner').innerText = userProfile.offline_miner_lvl === 0 ? 3000 : Math.floor(3000 * (2.2 ** userProfile.offline_miner_lvl));
-        }
-
-        function openTycoonScreen() {
-            document.getElementById('tycoon-overlay').classList.add('active');
-            init3DEarth();
-            updateTycoonUI();
-        }
-        function closeTycoonScreen() { document.getElementById('tycoon-overlay').classList.remove('active'); }
-
-        async function buyShopItem(itemId) {
-            try {
-                const res = await fetch('/api/game/buy', {
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        user_id: tgChatId, 
-                        item_id: itemId,
-                        client_coins: userProfile.coins 
-                    })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    userProfile = data.profile;
-                    isProUser = data.is_pro;
-                    userProUntil = data.pro_until;
-                    turboUntil = data.turbo_until || turboUntil;
-                    maxRadarSlots = data.max_radar_slots || (isProUser ? 100 : (3 + (userProfile.radar_extra_slots || 0)));
-                    
-                    saveProfileEverywhere();
-                    applyProStateToUI();
-                    updateTycoonUI();
-                    updateTurboBadgeUI();
-                    showToast('✅ Успешно куплено!');
-                } else {
-                    showToast(`❌ ${data.msg || "Недостаточно монет!"}`);
-                }
-            } catch(e){
-                showToast("Ошибка соединения при покупке");
-            }
-        }
-
-        async function collectOfflineReward() {
-            try {
-                const res = await fetch('/api/game/collect_offline', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ user_id: tgChatId })
                 });
@@ -1994,427 +740,262 @@
                     userProfile = data.profile;
                     isProUser = data.is_pro;
                     userProUntil = data.pro_until;
-                    saveProfileEverywhere();
-                    updateTycoonUI();
-                    applyProStateToUI();
-                    closeModal('modal-offline-reward');
-                    showToast(`🟡 Зачислено +${data.collected} монет!`);
-                } else {
-                    showToast("Ошибка при получении наград");
-                }
-            } catch(e){
-                showToast("Ошибка сети при сборе монет");
-            }
-        }
-
-        // =========================================================================
-        // 🌫️ ИНТЕРАКТИВНЫЙ ТУМАН
-        // =========================================================================
-        const canvas = document.getElementById('fog-canvas');
-        const ctx = canvas.getContext('2d');
-        let width, height, particles = [];
-        let fogSpeedMultiplier = 0.8, fogDensityCount = 6;
-        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
-
-        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize);
-        resize();
-
-        window.addEventListener('pointermove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
-
-        function createFogParticles() {
-            particles = [];
-            for (let i = 0; i < fogDensityCount; i++) {
-                particles.push({
-                    x: Math.random() * width, y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * fogSpeedMultiplier,
-                    vy: (Math.random() - 0.5) * fogSpeedMultiplier,
-                    radius: 260
-                });
-            }
-        }
-        createFogParticles();
-
-        function updateFogSettings() {
-            fogDensityCount = parseInt(document.getElementById('fog-density-slider').value);
-            fogSpeedMultiplier = parseInt(document.getElementById('fog-speed-slider').value) / 10.0;
-            createFogParticles();
-        }
-
-        function drawFog() {
-            ctx.clearRect(0, 0, width, height);
-            const fogRGB = getComputedStyle(document.documentElement).getPropertyValue('--fog-rgb').trim() || "41, 199, 95";
-            particles.forEach(p => {
-                let dx = mouseX - p.x, dy = mouseY - p.y;
-                p.x += p.vx + dx * 0.003; p.y += p.vy + dy * 0.003;
-                if (p.x < -150 || p.x > width + 150) p.vx *= -1;
-                if (p.y < -150 || p.y > height + 150) p.vy *= -1;
-                let grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-                grad.addColorStop(0, `rgba(${fogRGB}, 0.22)`);
-                grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad;
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
-            });
-            requestAnimationFrame(drawFog);
-        }
-        drawFog();
-
-        // 100 Достижений
-        const ACHIEVEMENTS_DATA = [];
-        const EMOJI_LIST = ["🎲", "🎯", "🎨", "🚀", "💎", "⚡", "🕵️", "👑", "🔥", "✨", "🏆", "🌟", "🛡️", "🔮", "🪐"];
-        for (let i = 1; i <= 100; i++) {
-            ACHIEVEMENTS_DATA.push({
-                id: `ach_${i}`,
-                title: i === 1 ? "Первый поиск" : `Индекс поиска Lvl.${i}`,
-                desc: `Сделать ${i * 10} генераций`,
-                icon: EMOJI_LIST[i % EMOJI_LIST.length],
-                target: i * 10,
-                statKey: "generations"
-            });
-        }
-        let unlockedAchievements = JSON.parse(localStorage.getItem('vh_unlocked_achievements') || '[]');
-
-        function renderAchievements() {
-            const container = document.getElementById('achievements-list-container');
-            document.getElementById('achieve-counter-badge').innerText = `${unlockedAchievements.length}/100`;
-            document.getElementById('achieve-count-modal').innerText = unlockedAchievements.length;
-            if (!container) return;
-            container.innerHTML = ACHIEVEMENTS_DATA.map(item => {
-                const isUnlocked = unlockedAchievements.includes(item.id);
-                return `
-                    <div class="achieve-card ${isUnlocked ? 'unlocked' : ''}">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="font-size:1.8rem;">${item.icon}</div>
-                            <div style="flex:1;">
-                                <div style="font-weight:700; color:#fff;">${item.title}</div>
-                                <div style="font-size:0.75rem; color:var(--text-muted);">${item.desc}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // =========================================================================
-        // 📁 ИСТОРИЯ СО СВАЙПАМИ
-        // =========================================================================
-        function saveToHistory(item) {
-            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
-            if (historyData.some(i => i.user === item.user)) return;
-            historyData.unshift(item);
-            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData.slice(0, 50)));
-            userProfile.client_history = historyData.slice(0, 50);
-            saveProfileEverywhere();
-            renderHistory();
-        }
-
-        function renderHistory() {
-            const cont = document.getElementById('history-container');
-            cont.innerHTML = '';
-            let historyData = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
-            if (historyData.length === 0) {
-                cont.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">История пуста</div>';
-                return;
-            }
-            historyData.forEach((item, index) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'history-wrapper';
-                wrapper.id = `hist-wrap-${index}`;
-                wrapper.innerHTML = `
-                    <div class="swipe-action-icon swipe-icon-left">🗑</div>
-                    <div class="history-card" data-index="${index}" data-user="${item.user}">
-                        <div>
-                            <div style="color:${item.color}; font-weight:bold;">@${item.user}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
-                            <div style="font-size:0.75rem; opacity:0.8;">${item.price}</div>
-                        </div>
-                    </div>
-                    <div class="swipe-action-icon swipe-icon-right">🔗</div>
-                `;
-
-                const card = wrapper.querySelector('.history-card');
-                let startX = 0, currentX = 0;
-                card.ontouchstart = (e) => { startX = e.touches[0].clientX; card.style.transition = 'none'; };
-                card.ontouchmove = (e) => {
-                    currentX = e.touches[0].clientX;
-                    let diffX = currentX - startX;
-                    if (diffX > 0) { wrapper.classList.add('swiping-right'); wrapper.classList.remove('swiping-left'); }
-                    else { wrapper.classList.add('swiping-left'); wrapper.classList.remove('swiping-right'); }
-                    card.style.transform = `translate3d(${diffX}px, 0, 0)`;
-                };
-                card.ontouchend = () => {
-                    let diffX = currentX - startX;
-                    if (diffX > 120) {
-                        wrapper.classList.add('deleting');
-                        setTimeout(() => {
-                            historyData.splice(index, 1);
-                            localStorage.setItem('vpn_parser_history', JSON.stringify(historyData));
-                            userProfile.client_history = historyData;
-                            saveProfileEverywhere();
-                            renderHistory();
-                        }, 300);
-                    } else if (diffX < -120) {
-                        card.style.transform = 'translate3d(0, 0, 0)';
-                        const url = `https://t.me/share/url?url=https://t.me/selectionusername_bot&text=Поймал ник @${item.user}`;
-                        window.open(url, '_blank');
-                    } else {
-                        card.style.transition = 'transform 0.2s ease';
-                        card.style.transform = 'translate3d(0, 0, 0)';
-                        wrapper.classList.remove('swiping-right', 'swiping-left');
-                    }
-                };
-                cont.appendChild(wrapper);
-            });
-        }
-
-        function clearHistory() {
-            localStorage.removeItem('vpn_parser_history');
-            userProfile.client_history = [];
-            saveProfileEverywhere();
-            renderHistory();
-        }
-
-        function setThemeColor(colorHex, rgbStr, el) {
-            document.documentElement.style.setProperty('--primary', colorHex);
-            document.documentElement.style.setProperty('--primary-glow', colorHex + '35');
-            document.documentElement.style.setProperty('--fog-rgb', rgbStr);
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-            if (el) el.classList.add('active');
-            userProfile.custom_fog_rgb = rgbStr;
-            saveProfileEverywhere();
-            showToast("Тема обновлена");
-        }
-
-        function setSecretTheme(themeClass, rgbStr) {
-            document.body.className = themeClass;
-            document.documentElement.style.setProperty('--fog-rgb', rgbStr || '41, 199, 95');
-            userProfile.custom_theme_style = themeClass;
-            userProfile.custom_fog_rgb = rgbStr || '41, 199, 95';
-            saveProfileEverywhere();
-            showToast("Стиль активирован!");
-        }
-
-        // =========================================================================
-        // 🎯 РАДАР И ПРОМОКОДЫ
-        // =========================================================================
-        async function fetchRadarListSettings() {
-            const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
-            const data = await res.json();
-            const list = data.targets || [];
-            localStorage.setItem('vh_local_radar_targets', JSON.stringify(list));
-            document.getElementById('settings-radar-slot-count').innerText = `${list.length}/${maxRadarSlots}`;
-            document.getElementById('radar-list-settings').innerHTML = list.map(t => `
-                <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:12px; font-size:0.85rem;">
-                    <span>@${t}</span>
-                    <button style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-weight:bold;" onclick="removeRadarTargetSettings('${t}')">Удалить</button>
-                </div>
-            `).join('');
-        }
-
-        async function addRadarTargetFromSettings() {
-            const inp = document.getElementById('radar-input-settings');
-            const val = inp.value.trim();
-            if (!val) return;
-
-            const res = await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
-            const data = await res.json();
-            if (data.status === 'error') {
-                closeModal('modal-settings');
-                openModal('modal-pro');
-                showToast(data.msg || "⚠️ Лимит слотов исчерпан! Оформите PRO");
-                return;
-            }
-            inp.value = "";
-            showToast("Взято на мушку!");
-            fetchRadarListSettings();
-        }
-
-        async function removeRadarTargetSettings(username) {
-            await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${username}`);
-            fetchRadarListSettings();
-        }
-
-        async function applyPromoOrKey() {
-            const input = document.getElementById('promo-input').value.trim();
-            if (!input) return;
-
-            try {
-                const res = await fetch('/api/promo/activate', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, code: input })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    if (data.type === 'coins') {
-                        userProfile = data.profile;
-                        saveProfileEverywhere();
-                        updateTycoonUI();
-                        showToast(data.msg);
-                    } else if (data.type === 'pro') {
-                        userProfile = data.profile;
-                        isProUser = data.is_pro;
-                        userProUntil = data.pro_until;
-                        saveProfileEverywhere();
-                        applyProStateToUI();
-                        showToast(data.msg);
-                    }
-                    closeModal('modal-settings');
-                } else {
-                    showToast(data.msg || "❌ Ошибка промокода");
-                }
-            } catch(e) {
-                showToast("Ошибка сети при активации");
-            }
-            document.getElementById('promo-input').value = "";
-        }
-
-        // =========================================================================
-        // 🎁 СНАЙПЕР GIFTS ЛОГИКА
-        // =========================================================================
-        async function loadGiftsCatalog() {
-            const grid = document.getElementById('emoji-gifts-grid');
-            try {
-                const res = await fetch('/api/gifts/catalog');
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    grid.innerHTML = data.catalog.slice(0, 100).map(g => {
-                        const isSelected = selectedGiftsList.includes(g.id);
-                        return `
-                            <div class="emoji-gift-card ${isSelected ? 'selected' : ''}" id="emoji-gift-${g.id}" onclick="toggleEmojiGiftSelection('${g.id}', event)">
-                                <div class="emoji-gift-icon">${g.icon}</div>
-                                <div class="emoji-gift-title">${g.name}</div>
-                                <div class="emoji-gift-price">Флор: ~${g.floor_ton} TON</div>
-                            </div>
-                        `;
-                    }).join('');
+                    dailyGensCount = data.gens_today;
+                    updateUI();
                 }
             } catch(e){}
         }
+        restoreSync();
 
-        function toggleEmojiGiftSelection(giftId, event) {
-            if (!isProUser) {
-                handleGiftControlChange(event, 'select');
-                return;
-            }
-            const card = document.getElementById(`emoji-gift-${giftId}`);
-            if (selectedGiftsList.includes(giftId)) {
-                selectedGiftsList = selectedGiftsList.filter(id => id !== giftId);
-                card.classList.remove('selected');
+        function updateUI() {
+            document.getElementById('pro-header-btn').innerText = isProUser ? "👑 PRO ∞" : "👑 PRO Доступ";
+            document.getElementById('spins-badge').innerText = userProfile.spins || 0;
+            document.getElementById('ref-count-val').innerText = userProfile.referrals_count || 0;
+            document.getElementById('ref-link-input').value = `https://t.me/selectionusername_bot?start=ref_${tgChatId}`;
+            document.getElementById('tycoon-coins').innerText = (userProfile.coins || 0).toLocaleString();
+            
+            const limitText = document.getElementById('daily-gens-text');
+            if (isProUser) {
+                limitText.innerText = "∞ / ∞ (Безлимит)";
+                limitText.style.color = "#eab308";
             } else {
-                selectedGiftsList.push(giftId);
-                card.classList.add('selected');
+                limitText.innerText = `${dailyGensCount} / 100`;
+                limitText.style.color = dailyGensCount >= 100 ? "#ef4444" : "var(--primary)";
             }
+            
+            document.getElementById('energy-val').innerText = isProUser ? "∞" : userProfile.energy;
+            document.getElementById('max-energy-val').innerText = isProUser ? "∞" : userProfile.max_energy;
+            let fillPercent = isProUser ? 100 : Math.min(100, Math.floor((userProfile.energy / userProfile.max_energy) * 100));
+            document.getElementById('energy-fill').style.width = fillPercent + "%";
+            document.getElementById('stage-num-text').innerText = `${userProfile.planet_stage}/10`;
+            let hpPercent = Math.min(100, Math.max(0, Math.floor((userProfile.planet_hp / 100) * 100)));
+            document.getElementById('stage-percent-text').innerText = `${hpPercent}%`;
+            document.getElementById('stage-fill').style.width = `${hpPercent}%`;
         }
 
-        function handleGiftControlChange(event, action) {
-            if (!isProUser) {
-                if (event) { event.preventDefault(); event.stopPropagation(); }
-                document.getElementById('gift-radar-active').checked = false;
-                showToast("👑 Снайпер доступен только в PRO!");
-                closeModal('modal-gifts-sniper');
-                openModal('modal-pro');
-                return;
-            }
-
-            if (action === 'slider') {
-                const val = document.getElementById('gift-margin-slider').value;
-                document.getElementById('gift-margin-val').innerText = `${val}%`;
-            } else if (action === 'save' || action === 'toggle' || action === 'budget') {
-                saveGiftSniperSettings();
-            }
-        }
-
-        async function saveGiftSniperSettings() {
-            if (!isProUser) return;
-            const active = document.getElementById('gift-radar-active').checked;
-            const margin = parseInt(document.getElementById('gift-margin-slider').value);
-            const budget = parseFloat(document.getElementById('gift-budget-input').value) || 1000;
-
-            try {
-                const res = await fetch('/api/gifts/settings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        user_id: tgChatId,
-                        active: active,
-                        margin: margin,
-                        max_budget: budget,
-                        gifts: selectedGiftsList
-                    })
-                });
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    showToast(active ? "🎯 Снайпер подарков активен!" : "⏸️ Снайпер приостановлен");
-                }
-            } catch(e) {
-                showToast("Ошибка сохранения");
-            }
+        function showToast(msg) {
+            const t = document.getElementById('global-toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
         }
 
         function openModal(id) { 
             document.getElementById(id).classList.add('active'); 
-            if (id === 'modal-history') renderHistory();
-            if (id === 'modal-achievements') renderAchievements();
+            if (id === 'modal-settings') fetchRadarList();
             if (id === 'modal-leaderboard') fetchLeaderboard();
-            if (id === 'modal-cases') {
-                initRoulettePreview('daily');
-                updatePityUI(userProfile.cases_opened_total || 0);
-            }
-            if (id === 'modal-referrals') updateReferralsUI();
-            if (id === 'modal-settings') fetchRadarListSettings();
-            if (id === 'modal-gifts-sniper') loadGiftsCatalog();
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        function showToast(msg) {
-            const toast = document.getElementById('global-toast');
-            toast.innerText = msg; toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+        async function manualGenerate(event) {
+            if (isFetching) return;
+            isFetching = true;
+            const btn = document.getElementById('btn-generate');
+            btn.disabled = true; btn.textContent = "Поиск...";
+
+            const customKw = document.getElementById('custom-kw-input').value.trim();
+            const customCat = document.getElementById('custom-cat-select').value;
+
+            try {
+                const res = await fetch(`/api/generate?finder_id=${tgChatId}&finder_name=${encodeURIComponent(finderName)}&custom_keyword=${encodeURIComponent(customKw)}&custom_category=${encodeURIComponent(customCat)}`);
+                const data = await res.json();
+                
+                if (res.status === 429) {
+                    showToast(data.msg);
+                    openModal('modal-pro');
+                    if (isAutoParsing) toggleAutoParser();
+                    return;
+                }
+
+                lastGenerated = data.generated_username;
+                document.getElementById('res-username').innerText = "@" + lastGenerated;
+                document.getElementById('res-status').innerText = data.evaluation.status;
+                document.getElementById('res-username').style.color = data.evaluation.color;
+
+                if (!isProUser && data.gens_left_today !== undefined) {
+                    dailyGensCount = 100 - data.gens_left_today;
+                    updateUI();
+                }
+
+                if (data.is_free) {
+                    document.getElementById('quick-actions').style.display = 'flex';
+                    if (isAutoParsing) autoParseFoundList.push(lastGenerated);
+                    saveToHistory({ user: lastGenerated, plat: currentPlatform, rank: data.evaluation.rank, price: data.evaluation.status, color: data.evaluation.color });
+                } else {
+                    document.getElementById('quick-actions').style.display = 'none';
+                }
+            } catch(e) {
+            } finally {
+                isFetching = false;
+                btn.disabled = false; btn.textContent = "Сгенерировать";
+            }
         }
 
-        function setPlatform(plat, btn) {
-            currentPlatform = plat;
-            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        function toggleAutoParser() {
+            const btn = document.getElementById('btn-autoparse');
+            if (isAutoParsing) {
+                isAutoParsing = false;
+                clearInterval(autoParseTimer);
+                btn.classList.remove('running');
+                btn.innerText = "⚡ Автопоиск";
+                showAutoParseReport();
+            } else {
+                isAutoParsing = true;
+                autoParseFoundList = [];
+                btn.classList.add('running');
+                btn.innerText = "⏹️ Стоп";
+                manualGenerate();
+                autoParseTimer = setInterval(manualGenerate, 1500);
+            }
         }
 
-        function takeUsername() { navigator.clipboard.writeText(lastGenerated); showToast("✨ Никнейм скопирован!"); }
-        function shareToFriends() {
-            const url = `https://t.me/share/url?url=https://t.me/selectionusername_bot&text=Поймал ник @${lastGenerated}`;
-            window.open(url, '_blank');
+        function showAutoParseReport() {
+            const list = document.getElementById('autoparse-results-list');
+            document.getElementById('autoparse-found-count').innerText = autoParseFoundList.length;
+            list.innerHTML = autoParseFoundList.length === 0 ? "Свободных ников не найдено" : autoParseFoundList.map(u => `
+                <div class="glass-panel" style="padding:10px; display:flex; justify-content:space-between; cursor:pointer;" onclick="navigator.clipboard.writeText('${u}'); showToast('Скопировано!');">
+                    <b>@${u}</b> <span style="color:#29c75f;">Свободен</span>
+                </div>
+            `).join('');
+            openModal('modal-autoparse-report');
         }
-        function copyRefLink() {
-            const botUsername = "selectionusername_bot";
-            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
-            navigator.clipboard.writeText(refLink);
-            showToast("✨ Ссылка скопирована!");
+
+        async function spinRoulette(method) {
+            if (isSpinning) return;
+            try {
+                const res = await fetch('/api/roulette/spin', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, pay_method: method })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(`🎉 Выигрыш: ${data.drop.name}!`);
+                    restoreSync();
+                } else {
+                    showToast(data.msg || "Ошибка спина");
+                }
+            } catch(e){ showToast("Сбой сети"); }
         }
-        function shareRefLink() {
-            const botUsername = "selectionusername_bot";
-            const refLink = `https://t.me/${botUsername}?start=ref_${tgChatId}`;
-            const text = "Лови редкие ники в Telegram в NameHunter PRO! 🚀";
-            const url = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
+
+        async function applyPromoOrKey() {
+            const code = document.getElementById('promo-input').value.trim();
+            if (!code) return;
+            try {
+                const res = await fetch('/api/promo/activate', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: tgChatId, code: code })
+                });
+                const data = await res.json();
+                showToast(data.msg || data.error);
+                if (data.status === 'ok') restoreSync();
+            } catch(e){ showToast("Сбой сети"); }
+            document.getElementById('promo-input').value = "";
+        }
+
+        async function fetchRadarList() {
+            try {
+                const res = await fetch(`/api/radar/list?chat_id=${tgChatId}`);
+                const data = await res.json();
+                const list = data.targets || [];
+                document.getElementById('settings-radar-slot-count').innerText = `${list.length}/3`;
+                document.getElementById('radar-list-settings').innerHTML = list.map(t => `
+                    <div class="glass-panel" style="display:flex; justify-content:space-between; padding:8px 12px;">
+                        <span>@${t}</span>
+                        <button style="background:transparent; border:none; color:#ef4444; cursor:pointer;" onclick="removeRadar('${t}')">Удалить</button>
+                    </div>
+                `).join('');
+            } catch(e){}
+        }
+
+        async function addRadarTarget() {
+            const inp = document.getElementById('radar-input-settings');
+            const val = inp.value.trim();
+            if (!val) return;
+            await fetch(`/api/radar/add?chat_id=${tgChatId}&username=${val}`);
+            inp.value = "";
+            fetchRadarList();
+        }
+
+        async function removeRadar(u) {
+            await fetch(`/api/radar/remove?chat_id=${tgChatId}&username=${u}`);
+            fetchRadarList();
+        }
+
+        function copyReferralLink() {
+            navigator.clipboard.writeText(document.getElementById('ref-link-input').value);
+            showToast("📋 Ссылка скопирована!");
+        }
+
+        function setTheme(cls) {
+            document.body.className = cls;
+            showToast("Тема обновлена");
         }
 
         function toggleAccordion(header) { header.parentElement.classList.toggle('open'); }
-        function handleFilterToggleChange() { if (!document.getElementById('filter-active').checked) document.getElementById('custom-kw-input').value = ""; }
-        
+        function openTycoonScreen() { document.getElementById('tycoon-overlay').classList.add('active'); init3D(); }
+        function closeTycoonScreen() { document.getElementById('tycoon-overlay').classList.remove('active'); }
+
+        // 🪐 КЛИКЕР (БЕЗ ОГРАНИЧЕНИЙ И ЗАДЕРЖЕК)
+        function handleClickerTap(e) {
+            userProfile.coins += userProfile.multi_tap;
+            if (!isProUser && userProfile.energy > 0) userProfile.energy -= 1;
+            document.getElementById('tycoon-coins').innerText = userProfile.coins.toLocaleString();
+            
+            const floatNum = document.createElement('div');
+            floatNum.className = 'floating-number';
+            floatNum.innerText = `+${userProfile.multi_tap} 🟡`;
+            floatNum.style.left = `${e.clientX || 150}px`; floatNum.style.top = `${e.clientY || 200}px`;
+            document.body.appendChild(floatNum);
+            setTimeout(() => floatNum.remove(), 700);
+
+            fetch('/api/game/sync_tap', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: tgChatId, taps: 1 })
+            });
+            updateUI();
+        }
+
+        // 🪐 THREE.JS 3D ДВИЖОК 10 ПЛАНЕТ
+        let scene, camera, renderer, currentBodyMesh, is3DInit = false;
+        function init3D() {
+            if (is3DInit) return;
+            const container = document.getElementById('three-earth-container');
+            container.innerHTML = "";
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            camera.position.z = 3.5;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(320, 320);
+            container.appendChild(renderer.domElement);
+
+            const light = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(light);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
+            dirLight.position.set(5, 3, 5);
+            scene.add(dirLight);
+
+            const geo = new THREE.SphereGeometry(1.2, 32, 32);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x29c75f, roughness: 0.5 });
+            currentBodyMesh = new THREE.Mesh(geo, mat);
+            scene.add(currentBodyMesh);
+
+            is3DInit = true;
+            function animate() {
+                requestAnimationFrame(animate);
+                if (currentBodyMesh) currentBodyMesh.rotation.y += 0.005;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
         async function fetchLeaderboard() {
-            const container = document.getElementById('leaderboard-list-container');
-            container.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка...</div>';
             try {
                 const res = await fetch('/api/leaderboard');
                 const data = await res.json();
                 if (data.status === 'ok') {
-                    container.innerHTML = data.leaderboard.map((item, idx) => `
+                    document.getElementById('leaderboard-list-container').innerHTML = data.leaderboard.map((item, idx) => `
                         <div class="lb-card" style="border-left: 4px solid ${item.color};">
                             <div>
-                                <div style="font-weight:bold; color:#fff;">#${idx+1} @${item.username}</div>
+                                <b>#${idx+1} @${item.username}</b>
                                 <div style="font-size:0.75rem; color:var(--text-muted);">Ловец: ${item.finder_name}</div>
                             </div>
                             <div style="text-align:right;">
@@ -2427,29 +1008,35 @@
             } catch(e){}
         }
 
-        async function buyProTariff(tariffId) {
-            try {
-                showToast("⏳ Формирование счета Stars...");
-                const res = await fetch('/api/pro/buy_invoice', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tgChatId, tariff_id: tariffId })
-                });
-                const data = await res.json();
-                if (data.status === 'ok' && data.invoice_link) {
-                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
-                        window.Telegram.WebApp.openInvoice(data.invoice_link, (status) => {
-                            if (status === 'paid') {
-                                loadProfileFromCloudAndServer();
-                                closeModal('modal-pro');
-                                showToast("🎉 PRO успешно активирован!");
-                            }
-                        });
-                    } else {
-                        window.open(data.invoice_link, '_blank');
-                    }
-                }
-            } catch (e) { showToast("Сбой соединения"); }
+        function saveToHistory(item) {
+            let hist = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
+            hist.unshift(item);
+            localStorage.setItem('vpn_parser_history', JSON.stringify(hist.slice(0, 50)));
+            renderHistory();
         }
+
+        function renderHistory() {
+            const cont = document.getElementById('history-container');
+            let hist = JSON.parse(localStorage.getItem('vpn_parser_history') || '[]');
+            cont.innerHTML = hist.map((item, idx) => `
+                <div class="history-card">
+                    <div>
+                        <b>@${item.user}</b>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${item.plat}</div>
+                    </div>
+                    <div style="color:${item.color}; font-weight:bold;">${item.rank}</div>
+                </div>
+            `).join('');
+        }
+
+        function setPlatform(plat, btn) {
+            currentPlatform = plat;
+            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function takeUsername() { navigator.clipboard.writeText(lastGenerated); showToast("Скопировано!"); }
+        function shareToFriends() { window.open(`https://t.me/share/url?url=https://t.me/selectionusername_bot&text=Ник @${lastGenerated}`, '_blank'); }
     </script>
 </body>
 </html>
