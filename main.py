@@ -5,42 +5,99 @@ import time
 import json
 import secrets
 import aiohttp
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.types import LabeledPrice, PreCheckoutQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.filters import CommandStart, CommandObject
+from aiogram.types import LabeledPrice, PreCheckoutQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl.functions.account import CheckUsernameRequest
-from telethon.errors import FloodWaitError
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy import BigInteger, Integer, String, Date, Text, Boolean, select, update
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 import uvicorn
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
-RADAR_DB_PATH = os.path.join(BASE_DIR, "radar_db.json")
-LEADERBOARD_PATH = os.path.join(BASE_DIR, "leaderboard_db.json")
-GAME_DB_PATH = os.path.join(BASE_DIR, "game_data.json")
-KEYS_DB_PATH = os.path.join(BASE_DIR, "pro_keys.json")
-PROMOS_DB_PATH = os.path.join(BASE_DIR, "promocodes_db.json")
-GIFTS_DB_PATH = os.path.join(BASE_DIR, "gifts_settings.json")
-REFERRALS_DB_PATH = os.path.join(BASE_DIR, "referrals_db.json")
-
-DB_LOCK = asyncio.Lock()
-CHECK_CACHE = {}
-CACHE_TTL = 1800
-TELETHON_AVAILABLE = False
-FAILED_ATTEMPTS = {}
-
-FREE_DAILY_LIMIT = 100
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-API_ID = int(os.getenv("API_ID", "38162572"))
-API_HASH = os.getenv("API_HASH", "71b8ecb44bddc1ae0a802f4a0f6628ba")
+API_ID = int(os.getenv("API_ID", "0"))
+API_HASH = os.getenv("API_HASH", "")
 SESSION_STRING = os.getenv("TELEGRAM_SESSION")
-TONAPI_KEY = os.getenv("TONAPI_KEY", "AE2FSP66DNLCCBQAAAALQQ6U7TIDRZ2SZNZ46HCSCMJNFQHALEBM4Z4C4UEDMCJYBUG55CI")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/namehunter")
+
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+engine = create_async_engine(DATABASE_URL, pool_pre_ping=True, pool_size=10, max_overflow=20)
+async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+    telegram_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    username: Mapped[str] = mapped_column(String(64), default="Ловец")
+    coins: Mapped[int] = mapped_column(BigInteger, default=0)
+    energy: Mapped[int] = mapped_column(Integer, default=1000)
+    max_energy: Mapped[int] = mapped_column(Integer, default=1000)
+    multi_tap: Mapped[int] = mapped_column(Integer, default=1)
+    energy_regen: Mapped[int] = mapped_column(Integer, default=1)
+    offline_miner_lvl: Mapped[int] = mapped_column(Integer, default=0)
+    last_seen: Mapped[int] = mapped_column(BigInteger, default=0)
+    planet_stage: Mapped[int] = mapped_column(Integer, default=1)
+    planet_hp: Mapped[int] = mapped_column(Integer, default=100)
+    rank: Mapped[str] = mapped_column(String(64), default="Ловец")
+    pro_until: Mapped[int] = mapped_column(BigInteger, default=0)
+    pro_warned: Mapped[bool] = mapped_column(Boolean, default=False)
+    pro_expired_notified: Mapped[bool] = mapped_column(Boolean, default=True)
+    radar_extra_slots: Mapped[int] = mapped_column(Integer, default=0)
+    turbo_until: Mapped[int] = mapped_column(BigInteger, default=0)
+    spins: Mapped[int] = mapped_column(Integer, default=1)
+    referred_by: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    referrals_count: Mapped[int] = mapped_column(Integer, default=0)
+    ref_status: Mapped[str] = mapped_column(String(16), default="none")
+    gen_limit_date: Mapped[date] = mapped_column(Date, default=date.today)
+    gen_count_today: Mapped[int] = mapped_column(Integer, default=0)
+    unlocked_themes: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    radar_targets: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    gift_radar_active: Mapped[bool] = mapped_column(Boolean, default=False)
+    gift_margin: Mapped[int] = mapped_column(Integer, default=30)
+    gift_max_budget: Mapped[int] = mapped_column(Integer, default=10000)
+    selected_gifts: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    history: Mapped[list] = mapped_column(JSONB, default=list)
+
+class PromoCode(Base):
+    __tablename__ = "promo_codes"
+    code: Mapped[str] = mapped_column(String(64), primary_key=True)
+    type: Mapped[str] = mapped_column(String(16))
+    value: Mapped[int] = mapped_column(BigInteger)
+    is_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    used_by: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    created_at: Mapped[int] = mapped_column(BigInteger, default=0)
+
+class Leaderboard(Base):
+    __tablename__ = "leaderboard"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(64), unique=True)
+    rank: Mapped[str] = mapped_column(String(16))
+    price: Mapped[str] = mapped_column(String(64))
+    score: Mapped[int] = mapped_column(Integer)
+    color: Mapped[str] = mapped_column(String(16))
+    finder_name: Mapped[str] = mapped_column(String(64))
+    finder_id: Mapped[str] = mapped_column(String(32))
+    created_at: Mapped[int] = mapped_column(BigInteger)
+
+CHECK_CACHE = {}
+CACHE_TTL = 86400
+TELETHON_AVAILABLE = False
+FAILED_ATTEMPTS = {}
+FREE_DAILY_LIMIT = 100
 
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
@@ -48,425 +105,76 @@ dp = Dispatcher() if BOT_TOKEN else None
 if SESSION_STRING:
     telethon_client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 else:
-    telethon_client = TelegramClient('checker_session', API_ID, API_HASH)
+    telethon_client = TelegramClient(os.path.join(BASE_DIR, 'checker_session'), API_ID, API_HASH)
 
-OFFLINE_RATES = {
-    0: 0, 1: 500, 2: 1200, 3: 2500, 4: 4500,
-    5: 8000, 6: 14000, 7: 22000, 8: 32000, 9: 45000, 10: 60000
-}
+OFFLINE_RATES = {0: 0, 1: 500, 2: 1200, 3: 2500, 4: 4500, 5: 8000, 6: 14000, 7: 22000, 8: 32000, 9: 45000, 10: 60000}
+PLANET_HP_TABLE = {1: 100, 2: 300, 3: 800, 4: 2000, 5: 5000, 6: 12000, 7: 28000, 8: 65000, 9: 150000, 10: 500000}
+KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
-PLANET_HP_TABLE = {
-    1: 100, 2: 300, 3: 800, 4: 2000, 5: 5000,
-    6: 12000, 7: 28000, 8: 65000, 9: 150000, 10: 500000
-}
+def generate_secure_code(prefix: str) -> str:
+    parts = ["".join(secrets.choice(KEY_CHARSET) for _ in range(4)) for _ in range(3)]
+    return f"{prefix}-{parts[0]}-{parts[1]}-{parts[2]}"
 
-def load_json_file(filepath: str, default_val):
-    if os.path.exists(filepath):
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return default_val
-    return default_val
+def generate_secure_pro_key() -> str:
+    parts = ["".join(secrets.choice(KEY_CHARSET) for _ in range(4)) for _ in range(4)]
+    return f"PRO-{parts[0]}-{parts[1]}-{parts[2]}-{parts[3]}"
 
-def save_json_atomic_sync(filepath: str, data):
-    tmp_path = f"{filepath}.tmp"
-    try:
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp_path, filepath)
-    except Exception:
-        pass
-
-PREGENERATED_KEYS_1DAY = [
-    "PRO-1D01-K9X2-M4P7-R8W3", "PRO-1D02-J7N3-Q5T8-V2Y6", "PRO-1D03-B4H9-C6M2-L8Z5",
-    "PRO-1D04-F3S8-X9D2-G7K4", "PRO-1D05-T6W1-Y4L7-N9C3", "PRO-1D06-H8Q5-V2B9-Z4M7",
-    "PRO-1D07-C3J7-P9X4-R2T8", "PRO-1D08-M6L2-S8F5-W3Y9", "PRO-1D09-N4D7-K2Z8-G9H3",
-    "PRO-1D10-X7T3-B5V9-Q8C4"
-]
-
-PREGENERATED_KEYS_1MONTH = [
-    "PRO-30D1-L8N4-K2X7-P9R3", "PRO-30D2-Q5M9-T3V8-Y6C2", "PRO-30D3-Z7B2-W4H9-F8S5",
-    "PRO-30D4-G9K3-D6L2-X4N8", "PRO-30D5-C2Y7-R8P4-M3T9", "PRO-30D6-V6S3-H9Z5-B2W8",
-    "PRO-30D7-N8F4-J3X9-Q7L2", "PRO-30D8-T4C8-M2K7-Y9D3", "PRO-30D9-X6P2-V8R5-H3S9",
-    "PRO-3010-W9L4-Z7N3-G5C8", "PRO-3011-K3T8-B9Y2-M4F7", "PRO-3012-P7X5-Q2S9-R6H3",
-    "PRO-3013-D4N8-L6W3-Z9K2", "PRO-3014-H2C7-T9M4-Y3V8", "PRO-3015-S8G5-X3L9-F7P2",
-    "PRO-3016-B6R2-N8K4-C9D7", "PRO-3017-M9T3-Z4S8-W2Y6", "PRO-3018-Y7F5-H2P9-Q8X3",
-    "PRO-3019-L3K8-C6N2-V9M7", "PRO-3020-R9Z4-T7W3-S5D8", "PRO-3021-X2M7-G9H4-K3C8",
-    "PRO-3022-P8D5-F2L9-Y7N3", "PRO-3023-W4S9-Q6T2-Z8B5", "PRO-3024-N7Y3-K9C8-M2R4",
-    "PRO-3025-C5H8-V3X7-P9L2", "PRO-3026-T9K2-D4N8-S6F3", "PRO-3027-Z3R7-M8W5-Y2Q9",
-    "PRO-3028-F8P4-X6C2-H9T5", "PRO-3029-L2S9-B7K3-W4M8", "PRO-3030-Q6N3-Y8Z5-R2D7",
-    "PRO-3031-G4T8-C9L2-M7X3", "PRO-3032-V9F2-H4S7-P8W5", "PRO-3033-K7M5-Z2N9-T6B3",
-    "PRO-3034-X3D8-R7Y4-Q9C2", "PRO-3035-S5W2-L9P6-H3K8", "PRO-3036-N2C9-F8T4-Z7M3",
-    "PRO-3037-Y6L3-M4X8-D9S2", "PRO-3038-P9Z7-W2R5-C8F4", "PRO-3039-B4H2-T6K9-Y3N7",
-    "PRO-3040-M8S6-Q3C7-L9X2", "PRO-3041-R3F9-Z8D4-W7P5", "PRO-3042-C7T2-K9M5-H2Y8",
-    "PRO-3043-X9W4-S3L8-B6N2", "PRO-3044-T2P7-F9Z3-M8K5", "PRO-3045-L6D3-Y7R9-C2X8",
-    "PRO-3046-H8K5-N4T2-W9S7", "PRO-3047-Q2Z8-M6F4-P3C9", "PRO-3048-W7N3-D9Y5-R4L2",
-    "PRO-3049-F5X9-S2K7-T8M3", "PRO-3050-Z4C2-P8H6-Y9W5"
-]
-
-PREGENERATED_KEYS_LIFETIME = [
-    "PRO-LIFE-X9Z2-M4K7-R8W3", "PRO-LIFE-V7N3-Q5T8-Y2C6", "PRO-LIFE-B4H9-C6M2-L8Z5",
-    "PRO-LIFE-F3S8-X9D2-G7K4", "PRO-LIFE-T6W1-Y4L7-N9C3", "PRO-LIFE-H8Q5-V2B9-Z4M7",
-    "PRO-LIFE-C3J7-P9X4-R2T8", "PRO-LIFE-M6L2-S8F5-W3Y9", "PRO-LIFE-N4D7-K2Z8-G9H3",
-    "PRO-LIFE-9X7K-4MRW-8N2T-H5VQ"
-]
-
-STATIC_PROMOS_10M = [
-    "COIN10M-9X7K-4MRW-8N2T", "COIN10M-H5VQ-2B8Y-6C3D", "COIN10M-F8S4-W2Y6-L9P5",
-    "COIN10M-K3N7-Q9T2-X4M8", "COIN10M-Z8C2-V5R9-J7H4", "COIN10M-M4D8-L6W3-Z9K2",
-    "COIN10M-P7X5-Q2S9-R6H3", "COIN10M-T9K2-D4N8-S6F3", "COIN10M-C5H8-V3X7-P9L2",
-    "COIN10M-N7Y3-K9C8-M2R4"
-]
-
-STATIC_PROMOS_10K = [
-    "COIN10K-A8K2-M3P9-R7W5", "COIN10K-N9C3-H8Q5-V2B9", "COIN10K-Z4M7-C3J7-P9X4",
-    "COIN10K-R2T8-M6L2-S8F5", "COIN10K-W3Y9-N4D7-K2Z8", "COIN10K-G9H3-X7T3-B5V9",
-    "COIN10K-Q8C4-L8N4-K2X7", "COIN10K-P9R3-Q5M9-T3V8", "COIN10K-Y6C2-Z7B2-W4H9",
-    "COIN10K-F8S5-G9K3-D6L2", "COIN10K-X4N8-C2Y7-R8P4", "COIN10K-M3T9-V6S3-H9Z5",
-    "COIN10K-B2W8-N8F4-J3X9", "COIN10K-Q7L2-T4C8-M2K7", "COIN10K-Y9D3-X6P2-V8R5",
-    "COIN10K-H3S9-W9L4-Z7N3", "COIN10K-G5C8-K3T8-B9Y2", "COIN10K-M4F7-P7X5-Q2S9",
-    "COIN10K-R6H3-D4N8-L6W3", "COIN10K-Z9K2-H2C7-T9M4", "COIN10K-Y3V8-S8G5-X3L9",
-    "COIN10K-F7P2-B6R2-N8K4", "COIN10K-C9D7-M9T3-Z4S8", "COIN10K-W2Y6-Y7F5-H2P9",
-    "COIN10K-Q8X3-L3K8-C6N2", "COIN10K-V9M7-R9Z4-T7W3", "COIN10K-S5D8-X2M7-G9H4",
-    "COIN10K-K3C8-P8D5-F2L9", "COIN10K-Y7N3-W4S9-Q6T2", "COIN10K-Z8B5-N7Y3-K9C8",
-    "COIN10K-M2R4-C5H8-V3X7", "COIN10K-P9L2-T9K2-D4N8", "COIN10K-S6F3-Z3R7-M8W5",
-    "COIN10K-Y2Q9-F8P4-X6C2", "COIN10K-H9T5-L2S9-B7K3", "COIN10K-W4M8-Q6N3-Y8Z5",
-    "COIN10K-R2D7-G4T8-C9L2", "COIN10K-M7X3-V9F2-H4S7", "COIN10K-P8W5-K7M5-Z2N9",
-    "COIN10K-T6B3-X3D8-R7Y4", "COIN10K-Q9C2-S5W2-L9P6", "COIN10K-H3K8-N2C9-F8T4",
-    "COIN10K-Z7M3-Y6L3-M4X8", "COIN10K-D9S2-P9Z7-W2R5", "COIN10K-C8F4-B4H2-T6K9",
-    "COIN10K-Y3N7-M8S6-Q3C7", "COIN10K-L9X2-R3F9-Z8D4", "COIN10K-W7P5-C7T2-K9M5",
-    "COIN10K-H2Y8-X9W4-S3L8", "COIN10K-B6N2-T2P7-F9Z3"
-]
-
-STATIC_PROMOS_100K = [
-    "COIN100K-A2B3-C4D5-E6F7", "COIN100K-G8H9-J2K3-L4M5", "COIN100K-N6P7-Q8R9-S2T3",
-    "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-B3C4-D5E6-F7G8", "COIN100K-H9J2-K3L4-M5N6",
-    "COIN100K-P7Q8-R9S2-T3U4", "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-C4D5-E6F7-G8H9",
-    "COIN100K-J2K3-L4M5-N6P7", "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4",
-    "COIN100K-D5E6-F7G8-H9J2", "COIN100K-K3L4-M5N6-P7Q8", "COIN100K-R9S2-T3U4-V5W6",
-    "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-E6F7-G8H9-J2K3", "COIN100K-L4M5-N6P7-Q8R9",
-    "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-F7G8-H9J2-K3L4",
-    "COIN100K-M5N6-P7Q8-R9S2", "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7",
-    "COIN100K-A3B4-C5D6-E7F8", "COIN100K-H9J2-K3L4-M5N6", "COIN100K-P7Q8-R9S2-T3U4",
-    "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-J2K3-L4M5-N6P7",
-    "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2",
-    "COIN100K-K3L4-M5N6-P7Q8", "COIN100K-R9S2-T3U4-V5W6", "COIN100K-X7Y8-Z2A3-B4C5",
-    "COIN100K-D6E7-F8G9-H2J3", "COIN100K-L4M5-N6P7-Q8R9", "COIN100K-S2T3-U4V5-W6X7",
-    "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4", "COIN100K-M5N6-P7Q8-R9S2",
-    "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5",
-    "COIN100K-N6P7-Q8R9-S2T3", "COIN100K-U4V5-W6X7-Y8Z2", "COIN100K-G9H2-J3K4-L5M6",
-    "COIN100K-P7Q8-R9S2-T3U4", "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9",
-    "COIN100K-H2J3-K4L5-M6N7", "COIN100K-Q8R9-S2T3-U4V5", "COIN100K-W6X7-Y8Z2-A3B4",
-    "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8", "COIN100K-R9S2-T3U4-V5W6",
-    "COIN100K-X7Y8-Z2A3-B4C5", "COIN100K-D6E7-F8G9-H2J3", "COIN100K-K4L5-M6N7-P8Q9",
-    "COIN100K-S2T3-U4V5-W6X7", "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4",
-    "COIN100K-L5M6-N7P8-Q9R2", "COIN100K-T3U4-V5W6-X7Y8", "COIN100K-Z2A3-B4C5-D6E7",
-    "COIN100K-F8G9-H2J3-K4L5", "COIN100K-M6N7-P8Q9-R2S3", "COIN100K-U4V5-W6X7-Y8Z2",
-    "COIN100K-A3B4-C5D6-E7F8", "COIN100K-G9H2-J3K4-L5M6", "COIN100K-N7P8-Q9R2-S3T4",
-    "COIN100K-V5W6-X7Y8-Z2A3", "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7",
-    "COIN100K-P8Q9-R2S3-T4U5", "COIN100K-W6X7-Y8Z2-A3B4", "COIN100K-C5D6-E7F8-G9H2",
-    "COIN100K-J3K4-L5M6-N7P8", "COIN100K-Q9R2-S3T4-U5V6", "COIN100K-X7Y8-Z2A3-B4C5",
-    "COIN100K-D6E7-F8G9-H2J3", "COIN100K-K4L5-M6N7-P8Q9", "COIN100K-R2S3-T4U5-V6W7",
-    "COIN100K-Y8Z2-A3B4-C5D6", "COIN100K-E7F8-G9H2-J3K4", "COIN100K-L5M6-N7P8-Q9R2",
-    "COIN100K-S3T4-U5V6-W7X8", "COIN100K-Z2A3-B4C5-D6E7", "COIN100K-F8G9-H2J3-K4L5",
-    "COIN100K-M6N7-P8Q9-R2S3", "COIN100K-T4U5-V6W7-X8Y9", "COIN100K-A3B4-C5D6-E7F8",
-    "COIN100K-G9H2-J3K4-L5M6", "COIN100K-N7P8-Q9R2-S3T4", "COIN100K-U5V6-W7X8-Y9Z2",
-    "COIN100K-B4C5-D6E7-F8G9", "COIN100K-H2J3-K4L5-M6N7", "COIN100K-P8Q9-R2S3-T4U5",
-    "COIN100K-V6W7-X8Y9-Z2A3", "COIN100K-C5D6-E7F8-G9H2", "COIN100K-J3K4-L5M6-N7P8",
-    "COIN100K-Q9R2-S3T4-U5V6", "COIN100K-W7X8-Y9Z2-A3B4"
-]
-
-def init_master_storage():
-    keys_db = load_json_file(KEYS_DB_PATH, {})
-    promos_db = load_json_file(PROMOS_DB_PATH, {})
-    now = int(time.time())
-
-    for k in PREGENERATED_KEYS_1DAY:
-        if k not in keys_db:
-            keys_db[k] = {"bound_user_id": None, "seconds": 86400, "created_at": now, "activated_status": "unused"}
-
-    for k in PREGENERATED_KEYS_1MONTH:
-        if k not in keys_db:
-            keys_db[k] = {"bound_user_id": None, "seconds": 30 * 86400, "created_at": now, "activated_status": "unused"}
-
-    for k in PREGENERATED_KEYS_LIFETIME:
-        if k not in keys_db:
-            keys_db[k] = {"bound_user_id": None, "seconds": -1, "created_at": now, "activated_status": "unused"}
-
-    save_json_atomic_sync(KEYS_DB_PATH, keys_db)
-
-    for c in STATIC_PROMOS_10M:
-        if c not in promos_db:
-            promos_db[c] = {"coins": 10000000, "created_at": now, "used_by": None, "used_at": 0}
-
-    for c in STATIC_PROMOS_10K:
-        if c not in promos_db:
-            promos_db[c] = {"coins": 10000, "created_at": now, "used_by": None, "used_at": 0}
-
-    for c in STATIC_PROMOS_100K:
-        if c not in promos_db:
-            promos_db[c] = {"coins": 100000, "created_at": now, "used_by": None, "used_at": 0}
-
-    save_json_atomic_sync(PROMOS_DB_PATH, promos_db)
-
-init_master_storage()
-
-def is_user_pro(user_id: str) -> tuple[bool, int]:
-    db = load_json_file(GAME_DB_PATH, {})
-    user = db.get(str(user_id).strip(), {})
-    pro_until = user.get("pro_until", 0)
-    now = int(time.time())
-    if pro_until == -1:
-        return True, -1
-    if pro_until > now:
-        return True, pro_until
-    return False, 0
-
-def get_current_date_str() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-def get_user_profile(db: dict, user_id: str) -> dict:
-    now = int(time.time())
-    user_id = str(user_id).strip()
-    today_str = get_current_date_str()
+async def init_db_and_promos():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     
-    if user_id not in db:
-        db[user_id] = {
-            "coins": 0, "energy": 1000, "max_energy": 1000, "multi_tap": 1,
-            "energy_regen": 1, "offline_miner_lvl": 0, "last_seen": now,
-            "unlocked_themes": [], "radar_extra_slots": 0, "turbo_until": 0,
-            "offline_pending": 0, "planet_stage": 1, "planet_hp": PLANET_HP_TABLE[1],
-            "rank": "Ловец", "pro_until": 0, "pro_warned": False,
-            "pro_expired_notified": True, "daily_gens_count": 0,
-            "daily_gens_date": today_str, "gens_total_count": 0, "referred_by": None,
-            "referral_reward_claimed": False, "referrals_count": 0,
-            "last_free_case_time": 0, "cases_opened_total": 0,
-            "client_history": [], "client_achievements": [], "custom_theme_style": "",
-            "custom_fog_rgb": "41, 199, 95", "custom_filter_settings": {}
-        }
-    
-    user = db[user_id]
-    if "pro_until" not in user: user["pro_until"] = 0
-    if "unlocked_themes" not in user: user["unlocked_themes"] = []
-    if "radar_extra_slots" not in user: user["radar_extra_slots"] = 0
-    if "turbo_until" not in user: user["turbo_until"] = 0
-    if "offline_pending" not in user: user["offline_pending"] = 0
-    if "planet_stage" not in user: user["planet_stage"] = 1
-    if "planet_hp" not in user: user["planet_hp"] = PLANET_HP_TABLE.get(user["planet_stage"], 100)
-    if "pro_warned" not in user: user["pro_warned"] = False
-    if "pro_expired_notified" not in user: user["pro_expired_notified"] = True
-    if "daily_gens_count" not in user: user["daily_gens_count"] = 0
-    if "daily_gens_date" not in user: user["daily_gens_date"] = today_str
-    if "gens_total_count" not in user: user["gens_total_count"] = 0
-    if "referred_by" not in user: user["referred_by"] = None
-    if "referral_reward_claimed" not in user: user["referral_reward_claimed"] = False
-    if "referrals_count" not in user: user["referrals_count"] = 0
-    if "last_free_case_time" not in user: user["last_free_case_time"] = 0
-    if "cases_opened_total" not in user: user["cases_opened_total"] = 0
-    if "client_history" not in user: user["client_history"] = []
-    if "client_achievements" not in user: user["client_achievements"] = []
-    if "custom_theme_style" not in user: user["custom_theme_style"] = ""
-    if "custom_fog_rgb" not in user: user["custom_fog_rgb"] = "41, 199, 95"
-    if "custom_filter_settings" not in user: user["custom_filter_settings"] = {}
+    async with async_session() as session:
+        now = int(time.time())
+        tiers = [(50, 10_000, "COIN10K"), (100, 100_000, "COIN100K"), (20, 10_000_000, "COIN10M")]
+        for count, val, prefix in tiers:
+            res = await session.execute(select(PromoCode).where(PromoCode.type == 'coins', PromoCode.value == val))
+            existing = len(res.scalars().all())
+            for _ in range(count - existing):
+                session.add(PromoCode(code=generate_secure_code(prefix), type='coins', value=val, created_at=now))
+        
+        pregen_pro = [
+            ("PRO-LIFE-X9Z2-M4K7-R8W3", -1), ("PRO-LIFE-V7N3-Q5T8-Y2C6", -1),
+            ("PRO-30D1-L8N4-K2X7-P9R3", 30 * 86400), ("PRO-30D2-Q5M9-T3V8-Y6C2", 30 * 86400),
+            ("PRO-1D01-K9X2-M4P7-R8W3", 86400), ("PRO-1D02-J7N3-Q5T8-V2Y6", 86400)
+        ]
+        for p_code, secs in pregen_pro:
+            exists = await session.get(PromoCode, p_code)
+            if not exists:
+                session.add(PromoCode(code=p_code, type='pro', value=secs, created_at=now))
+        await session.commit()
 
-    if user.get("daily_gens_date") != today_str:
-        user["daily_gens_count"] = 0
-        user["daily_gens_date"] = today_str
-
-    time_passed = now - user.get("last_seen", now)
-    if time_passed > 0 and user["energy"] < user["max_energy"]:
-        regen_amount = time_passed * user.get("energy_regen", 1)
-        user["energy"] = min(user["max_energy"], user["energy"] + regen_amount)
-
+async def get_or_create_user(session: AsyncSession, user_id: int, username: str = "Ловец") -> User:
+    user = await session.get(User, user_id)
+    now = int(time.time())
+    today = datetime.now(timezone.utc).date()
+    if not user:
+        user = User(
+            telegram_id=user_id, username=username, last_seen=now,
+            gen_limit_date=today, gen_count_today=0, unlocked_themes=["default"],
+            radar_targets=[], selected_gifts=[], history=[]
+        )
+        session.add(user)
+        await session.flush()
+    else:
+        if user.gen_limit_date != today:
+            user.gen_limit_date = today
+            user.gen_count_today = 0
+        if username and username != "Ловец":
+            user.username = username
+        time_passed = now - user.last_seen
+        if time_passed > 0 and user.energy < user.max_energy:
+            user.energy = min(user.max_energy, user.energy + time_passed * user.energy_regen)
+        user.last_seen = now
     return user
 
-BASE_GIFT_TYPES = [
-    {"base_id": "pepe", "name": "Plush Pepe", "icon": "🐸", "base_price": 14.5, "slug": "plush-pepe"},
-    {"base_id": "cap", "name": "Durov's Cap", "icon": "🧢", "base_price": 24.0, "slug": "durovs-cap"},
-    {"base_id": "potion", "name": "Magic Potion", "icon": "🧪", "base_price": 8.2, "slug": "magic-potion"},
-    {"base_id": "star", "name": "Golden Star", "icon": "⭐", "base_price": 4.5, "slug": "golden-star"},
-    {"base_id": "ring", "name": "Diamond Ring", "icon": "💍", "base_price": 35.0, "slug": "diamond-ring"},
-    {"base_id": "rocket", "name": "Cosmic Rocket", "icon": "🚀", "base_price": 18.0, "slug": "cosmic-rocket"},
-    {"base_id": "cake", "name": "Party Cake", "icon": "🎂", "base_price": 3.2, "slug": "party-cake"},
-    {"base_id": "heart", "name": "Cyber Heart", "icon": "💖", "base_price": 6.8, "slug": "cyber-heart"},
-    {"base_id": "snoop", "name": "Snoop Lowrider", "icon": "🏎️", "base_price": 65.0, "slug": "snoop-lowrider"},
-    {"base_id": "flower", "name": "Sun Flower", "icon": "🌻", "base_price": 12.0, "slug": "sun-flower"},
-    {"base_id": "duck", "name": "Lucky Duck", "icon": "🦆", "base_price": 7.5, "slug": "lucky-duck"},
-    {"base_id": "crown", "name": "Royal Crown", "icon": "👑", "base_price": 42.0, "slug": "royal-crown"},
-    {"base_id": "rose", "name": "Eternal Rose", "icon": "🌹", "base_price": 5.0, "slug": "eternal-rose"},
-    {"base_id": "gem", "name": "Crystal Gem", "icon": "💎", "base_price": 28.0, "slug": "crystal-gem"},
-    {"base_id": "helmet", "name": "Astro Helmet", "icon": "👨‍🚀", "base_price": 21.0, "slug": "astro-helmet"},
-    {"base_id": "wine", "name": "Vintage Wine", "icon": "🍾", "base_price": 9.5, "slug": "vintage-wine"},
-    {"base_id": "carpet", "name": "Magic Carpet", "icon": "🧞", "base_price": 33.0, "slug": "magic-carpet"},
-    {"base_id": "trophy", "name": "Cup of Fame", "icon": "🏆", "base_price": 50.0, "slug": "cup-of-fame"},
-    {"base_id": "skull", "name": "Cyber Skull", "icon": "💀", "base_price": 15.0, "slug": "cyber-skull"},
-    {"base_id": "ghost", "name": "Friendly Ghost", "icon": "👻", "base_price": 11.5, "slug": "friendly-ghost"}
-]
-
-GIFTS_CATALOG = []
-for i in range(1, 1001):
-    base = BASE_GIFT_TYPES[(i - 1) % len(BASE_GIFT_TYPES)]
-    edition_num = 1000 + i * 7
-    multiplier = 0.85 + ((i * 17) % 70) / 100.0
-    price = round(base["base_price"] * multiplier, 1)
-    GIFTS_CATALOG.append({
-        "id": f"{base['base_id']}_{i}",
-        "name": f"{base['name']} #{edition_num}",
-        "icon": base["icon"],
-        "floor_ton": price,
-        "slug": base["slug"],
-        "num": edition_num
-    })
-
-SEEN_NFT_LISTINGS = set()
-
-async def gifts_arbitrage_worker():
-    while True:
-        try:
-            gifts_settings = load_json_file(GIFTS_DB_PATH, {})
-            if gifts_settings and bot:
-                for _ in range(3):
-                    gift = random.choice(GIFTS_CATALOG)
-                    discount = random.choice([25, 30, 35, 40, 50])
-                    floor = gift["floor_ton"]
-                    deal_price = round(floor * (1 - discount / 100.0), 1)
-                    lot_id = f"{gift['id']}_{deal_price}_{int(time.time() // 120)}"
-
-                    if lot_id not in SEEN_NFT_LISTINGS:
-                        SEEN_NFT_LISTINGS.add(lot_id)
-                        direct_buy_url = f"https://fragment.com/gifts?query={gift['slug']}"
-
-                        for user_id, u_cfg in list(gifts_settings.items()):
-                            if not u_cfg.get("active", False):
-                                continue
-                            
-                            is_pro, _ = is_user_pro(user_id)
-                            if not is_pro:
-                                continue
-
-                            min_margin = u_cfg.get("margin", 30)
-                            max_budget = u_cfg.get("max_budget", 1000)
-                            selected_gifts = u_cfg.get("gifts", [])
-
-                            if discount >= min_margin and deal_price <= max_budget:
-                                if not selected_gifts or gift["id"] in selected_gifts:
-                                    try:
-                                        kb = InlineKeyboardMarkup(
-                                            inline_keyboard=[
-                                                [InlineKeyboardButton(text=f"💎 Купить за {deal_price} TON на Fragment", url=direct_buy_url)]
-                                            ]
-                                        )
-                                        await bot.send_message(
-                                            chat_id=int(user_id),
-                                            text=(
-                                                f"🚨 **FRAGMENT СНАЙПЕР: СКИДКА {discount}%!** 🎁\n\n"
-                                                f"{gift['icon']} **Подарок:** {gift['name']}\n"
-                                                f"💰 **Цена со скидкой:** `{deal_price} TON` *(Флор: {floor} TON)*\n"
-                                                f"📈 **Чистая выгода:** `+{round(floor - deal_price, 1)} TON`\n\n"
-                                                f"⚡ _Прямая ссылка для моментального выкупа:_"
-                                            ),
-                                            parse_mode="Markdown",
-                                            reply_markup=kb
-                                        )
-                                    except Exception:
-                                        pass
-                await asyncio.sleep(3)
-        except Exception:
-            pass
-        await asyncio.sleep(4)
-
-async def pro_expiry_worker():
-    while True:
-        try:
-            now = int(time.time())
-            db = load_json_file(GAME_DB_PATH, {})
-            changed = False
-
-            if db and bot:
-                for uid, user in list(db.items()):
-                    if not uid.isdigit():
-                        continue
-                    
-                    pro_until = user.get("pro_until", 0)
-                    if pro_until == -1 or pro_until == 0:
-                        continue
-                    
-                    diff = pro_until - now
-                    should_warn = False
-                    if diff > 600 and diff <= 86400 and not user.get("pro_warned", False):
-                        should_warn = True
-                    elif diff <= 180 and diff > 0 and not user.get("pro_warned", False):
-                        should_warn = True
-
-                    if should_warn:
-                        user["pro_warned"] = True
-                        changed = True
-                        time_left_str = f"{int(diff / 3600)} ч" if diff > 3600 else f"{max(1, int(diff / 60))} мин"
-
-                        try:
-                            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
-                            kb = InlineKeyboardMarkup(
-                                inline_keyboard=[
-                                    [InlineKeyboardButton(text="⭐ Продлить PRO Доступ", web_app=WebAppInfo(url=web_app_url))]
-                                ]
-                            )
-                            await bot.send_message(
-                                chat_id=int(uid),
-                                text=(
-                                    "⏳ **Внимание! Ваша PRO-подписка скоро истекает!** ⚠️\n\n"
-                                    f"До окончания осталось: **{time_left_str}** ⏱️\n\n"
-                                    "После завершения отключатся:\n"
-                                    "• 🎁 Снайпер скидок на Telegram Подарки\n"
-                                    "• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
-                                    "• 🛠️ Конструктор ников по 20 категориям\n"
-                                    "• 🎯 Расширенный радар на 100 слотов\n\n"
-                                    "👑 Продлите подписку, чтобы не потерять преимущества! ⭐"
-                                ),
-                                parse_mode="Markdown",
-                                reply_markup=kb
-                            )
-                        except Exception:
-                            pass
-
-                    if diff <= 0 and not user.get("pro_expired_notified", False):
-                        user["pro_expired_notified"] = True
-                        user["rank"] = "Ловец"
-                        changed = True
-                        try:
-                            web_app_url = "https://user-bot-production-8a5d.up.railway.app"
-                            kb = InlineKeyboardMarkup(
-                                inline_keyboard=[
-                                    [InlineKeyboardButton(text="🚀 Восстановить PRO", web_app=WebAppInfo(url=web_app_url))]
-                                ]
-                            )
-                            await bot.send_message(
-                                chat_id=int(uid),
-                                text=(
-                                    "🥺 **Ваша PRO-подписка завершилась!** 🔒\n\n"
-                                    "Аккаунт переведён на базовый тариф (3 слота радара, лимит 100 поисков в день) 🔋\n\n"
-                                    "👑 Оформите подписку заново в любой момент, чтобы вернуть все суперспособности! ⭐"
-                                ),
-                                parse_mode="Markdown",
-                                reply_markup=kb
-                            )
-                        except Exception:
-                            pass
-
-            if changed:
-                save_json_atomic_sync(GAME_DB_PATH, db)
-
-        except Exception:
-            pass
-        await asyncio.sleep(10)
-
-PREMIUM_PREFIXES = ["neo", "vox", "lux", "zen", "vex", "arc", "sol", "dex", "sky", "ray", "val", "nox"]
-ELITE_ROOTS = [
-    "nova", "apex", "volt", "onyx", "flux", "aura", "lyra", "zane", "koda", "mira",
-    "dusk", "dawn", "vibe", "luna", "zeta", "echo", "myth", "pulse", "rift", "warp",
-    "neon", "zeal", "draco", "titus", "orion", "hydra", "frost", "blaze", "cyber", "prism"
+ROULETTE_PRIZES = [
+    {"type": "coins", "amount": 10000, "name": "10 000 🟡", "rarity": "gray", "icon": "🟡", "weight": 40},
+    {"type": "coins", "amount": 35000, "name": "35 000 🟡", "rarity": "blue", "icon": "🟡", "weight": 25},
+    {"type": "turbo", "amount": 15, "name": "⚡ X2 Турбо (15 мин)", "rarity": "purple", "icon": "⚡", "weight": 15},
+    {"type": "radar_slot", "amount": 1, "name": "🎯 +1 Слот Радара", "rarity": "red", "icon": "🎯", "weight": 10},
+    {"type": "pro_days", "amount": 3, "name": "👑 PRO (3 дня)", "rarity": "red", "icon": "👑", "weight": 7},
+    {"type": "pro_days", "amount": 7, "name": "👑 PRO (7 дней)", "rarity": "gold", "icon": "👑", "weight": 2.5},
+    {"type": "pro_days", "amount": -1, "name": "👑 PRO Навсегда", "rarity": "gold", "icon": "👑", "weight": 0.5}
 ]
 
 AFFIX_DATABASE_20 = {
@@ -492,6 +200,71 @@ AFFIX_DATABASE_20 = {
     "mythology": ["zeus", "thor", "odin", "ares", "hades", "titan", "hydra", "phoenix", "dragon", "valkyrie", "anubis", "chronos"]
 }
 
+GIFTS_CATALOG = [
+    {"id": "crystal_pepe", "name": "Crystal Pepe", "type": "pepe_blue", "bg": "#1e3a5f", "number": "#2629", "floor_ton": 7000.0},
+    {"id": "bronze_pepe", "name": "Bronze Pepe", "type": "pepe_bronze", "bg": "#45220c", "number": "#990", "floor_ton": 7000.0},
+    {"id": "orange_pepe", "name": "Orange Pepe", "type": "pepe_orange", "bg": "#5a2d0c", "number": "#402", "floor_ton": 6999.0},
+    {"id": "neon_pepe", "name": "Neon Pink Pepe", "type": "pepe_pink", "bg": "#1f4e38", "number": "#833", "floor_ton": 6900.0},
+    {"id": "chrome_pepe", "name": "Chrome Pepe", "type": "pepe_chrome", "bg": "#432b4a", "number": "#984", "floor_ton": 6850.0},
+    {"id": "red_pepe", "name": "Ruby Pepe", "type": "pepe_red", "bg": "#521c24", "number": "#2705", "floor_ton": 6833.0},
+    {"id": "golden_flower", "name": "Golden Flower", "type": "flower_gold", "bg": "#1e241c", "number": "#49643", "floor_ton": 6753.0},
+    {"id": "snoop_lowrider", "name": "Snoop Lowrider", "type": "snoop_car", "bg": "#3d2b1f", "number": "#16593", "floor_ton": 6666.0},
+    {"id": "durov_cap", "name": "Telegram Cap", "type": "tg_cap", "bg": "#1e222a", "number": "#1142", "floor_ton": 6555.0},
+    {"id": "magic_potion", "name": "Magic Potion", "type": "potion", "bg": "#2a1b40", "number": "#524", "floor_ton": 14.5},
+    {"id": "diamond_ring", "name": "Diamond Ring", "type": "ring", "bg": "#1b3340", "number": "#891", "floor_ton": 35.0},
+    {"id": "cosmic_rocket", "name": "Cosmic Rocket", "type": "rocket", "bg": "#171a36", "number": "#3420", "floor_ton": 18.0}
+]
+
+SEEN_NFT_LISTINGS = set()
+
+async def gifts_arbitrage_worker():
+    while True:
+        try:
+            async with async_session() as session:
+                res = await session.execute(select(User).where(User.gift_radar_active == True))
+                active_users = res.scalars().all()
+                now_ts = int(time.time())
+                
+                if active_users and bot:
+                    for gift in GIFTS_CATALOG:
+                        if random.random() < 0.18:
+                            discount = random.choice([25, 30, 35, 40, 50])
+                            floor = gift["floor_ton"]
+                            deal_price = round(floor * (1 - discount / 100.0), 1)
+                            lot_id = f"{gift['id']}_{now_ts // 60}_{deal_price}"
+
+                            if lot_id not in SEEN_NFT_LISTINGS:
+                                SEEN_NFT_LISTINGS.add(lot_id)
+                                item_num = gift["number"]
+                                market_url = "https://fragment.com/gifts"
+
+                                for u in active_users:
+                                    is_pro = u.pro_until == -1 or u.pro_until > now_ts
+                                    if not is_pro: continue
+                                    if discount >= u.gift_margin and deal_price <= u.gift_max_budget:
+                                        if not u.selected_gifts or gift["id"] in u.selected_gifts:
+                                            try:
+                                                kb = InlineKeyboardMarkup(
+                                                    inline_keyboard=[[InlineKeyboardButton(text=f"💎 Купить за {deal_price} TON", url=market_url)]]
+                                                )
+                                                await bot.send_message(
+                                                    chat_id=u.telegram_id,
+                                                    text=(
+                                                        f"🚨 **FRAGMENT СНАЙПЕР: СКИДКА {discount}%!** 🎁\n\n"
+                                                        f"🖼️ **Подарок:** {gift['name']} {item_num}\n"
+                                                        f"💰 **Цена лота:** `{deal_price} TON` *(Флор: {floor} TON)*\n"
+                                                        f"📈 **Чистая выгода:** `+{round(floor - deal_price, 1)} TON`\n\n"
+                                                        f"⚡ _Успей забрать лот на Fragment раньше других!_"
+                                                    ),
+                                                    parse_mode="Markdown", reply_markup=kb
+                                                )
+                                            except Exception: pass
+        except Exception:
+            pass
+        await asyncio.sleep(4)
+
+PREMIUM_PREFIXES = ["neo", "vox", "lux", "zen", "vex", "arc", "sol", "dex", "sky", "ray"]
+ELITE_ROOTS = ["nova", "apex", "volt", "onyx", "flux", "aura", "lyra", "zane", "koda", "mira", "dusk", "dawn", "vibe"]
 CONSONANTS_EASY = "bcdfgklmnprstvwz"
 VOWELS_EASY = "aeiouy"
 
@@ -499,28 +272,18 @@ def generate_keyword_custom_username(keyword: str, category: str, use_und: bool 
     keyword = keyword.strip().lower().replace("@", "")
     affixes = AFFIX_DATABASE_20.get(category, AFFIX_DATABASE_20["superheroes"])
     affix = random.choice(affixes)
-    prefixes = ["iam", "the", "real", "get", "mr", "dr", "lord", "pro"]
-    pattern = random.choice(["kw_affix", "affix_kw", "prefix_kw", "kw_prefix"])
-    
+    pattern = random.choice(["kw_affix", "affix_kw"])
     if pattern == "kw_affix":
         return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
-    elif pattern == "affix_kw":
-        return f"{affix}_{keyword}" if use_und else f"{affix}{keyword}"
-    elif pattern == "prefix_kw":
-        pref = random.choice(prefixes)
-        return f"{pref}_{keyword}" if use_und else f"{pref}{keyword}"
     else:
-        return f"{keyword}_{affix}" if use_und else f"{keyword}{affix}"
+        return f"{affix}_{keyword}" if use_und else f"{affix}{keyword}"
 
 def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_und: bool = False, strict_filter: bool = False) -> tuple[str, bool, bool]:
     r_val = random.random()
     if r_val < 0.45 and not strict_filter:
         root = random.choice(ELITE_ROOTS)
-        if random.random() < 0.5:
-            res = root + random.choice(["x", "z", "r", "s", "o", "a"])
-        else:
-            pref = random.choice(PREMIUM_PREFIXES)
-            res = pref + root[:3]
+        pref = random.choice(PREMIUM_PREFIXES)
+        res = root + random.choice(["x", "z", "r", "s", "o", "a"]) if random.random() < 0.5 else pref + root[:3]
     else:
         target_len = random.choice([5, 6]) if len_mode == "5-6" else random.choice([7, 8])
         res = ""
@@ -530,136 +293,87 @@ def generate_smart_username(len_mode: str = "5-6", use_num: bool = False, use_un
                 res += random.choice(CONSONANTS_EASY)
             else:
                 res += random.choice(VOWELS_EASY)
-
     if use_und and len(res) >= 5 and random.random() < 0.3:
         pos = random.randint(2, len(res) - 2)
         res = res[:pos] + "_" + res[pos+1:]
-
     if use_num and len(res) >= 5 and random.random() < 0.3:
         num = str(random.randint(1, 99))
         res = res[:-len(num)] + num
-
     return res.lower(), True, ("_" in res)
 
 def calculate_catch_score(username: str, is_free: bool, is_pure: bool = False, has_und: bool = False):
     if not is_free:
         return {"rank": "F", "status": "Занят в Telegram", "color": "#ef4444", "score": 0}
-    
-    username = username.lower().replace("@", "").strip()
-    length = len(username)
-    has_num = any(char.isdigit() for char in username)
-    
-    if has_und or has_num or length > 8:
-        return {"rank": "A", "status": "Свободен (~1-2 TON)", "color": "#3b82f6", "score": 25}
-
-    if length == 5:
+    length = len(username.replace("@", "").strip())
+    if length <= 5:
         return {"rank": "SSS+", "status": "🔥 Fragment (~30-90+ TON)", "color": "#29c75f", "score": 95}
     elif length == 6:
         return {"rank": "SS", "status": "💎 Редкий бренд (~10-35 TON)", "color": "#eab308", "score": 75}
-    elif length == 7:
-        return {"rank": "S", "status": "✨ Красивый актив (~4-10 TON)", "color": "#a855f7", "score": 55}
-    
-    return {"rank": "A", "status": "Свободен (~1-3 TON)", "color": "#29c75f", "score": 30}
+    return {"rank": "A", "status": "Свободен (~1-3 TON)", "color": "#3b82f6", "score": 30}
 
-# 🎯 ТОЧНЫЙ АЛГОРИТМ ПРОВЕРКИ ЮЗЕРНЕЙМА (ФИКС "ВСЕ НИКИ ЗАНЯТЫ")
 async def check_username_telethon(username: str) -> bool:
     global TELETHON_AVAILABLE
     username = username.replace("@", "").strip().lower()
-    if len(username) < 5: 
-        return False
+    if len(username) < 5: return False
     now = time.time()
-
-    if username in CHECK_CACHE:
-        cached_result, cached_time = CHECK_CACHE[username]
-        if now - cached_time < CACHE_TTL:
-            return cached_result
+    if username in CHECK_CACHE and now - CHECK_CACHE[username][1] < CACHE_TTL:
+        return CHECK_CACHE[username][0]
 
     if TELETHON_AVAILABLE:
         try:
             coro = telethon_client(CheckUsernameRequest(username=username))
-            result = await asyncio.wait_for(coro, timeout=1.5)
-            is_free = bool(result is True)
-            CHECK_CACHE[username] = (is_free, now)
-            return is_free
-        except FloodWaitError:
-            pass
+            res = await asyncio.wait_for(coro, timeout=1.5)
+            CHECK_CACHE[username] = (bool(res is True), now)
+            return bool(res is True)
         except Exception:
             pass
 
     try:
         url = f"https://t.me/{username}"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9"
-        }
+        headers = {"User-Agent": "Mozilla/5.0"}
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=2.5)) as resp:
+            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=2.0)) as resp:
                 text = await resp.text()
-                
-                # Признаки свободного юзернейма:
-                # 1. Отсутствует кнопка "Send Message" / "View in Telegram"
-                # 2. Мета-тег og:title равен "Telegram: Contact @username" (для свободных) или содержит "Telegram"
-                has_join_btn = ('tgme_action_button_new' in text or 'View in Telegram' in text or 'Send Message' in text)
-                has_channel_banner = ('tgme_page_extra' in text)
-                
-                if not has_join_btn and not has_channel_banner:
-                    CHECK_CACHE[username] = (True, now)
-                    return True
-                
-                CHECK_CACHE[username] = (False, now)
-                return False
+                is_free = ("tgme_action_button_new" not in text and "View in Telegram" not in text and "Send Message" not in text)
+                CHECK_CACHE[username] = (is_free, now)
+                return is_free
     except Exception:
         return False
 
 TARRIFS = {
-    "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)", "desc": "100 слотов радара + Снайпер Подарков + ∞ Энергия"},
-    "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)", "desc": "Скидка 20% + Все PRO функции"},
-    "pro_90": {"seconds": 90 * 86400, "stars": 160, "title": "PRO Доступ (90 дней)", "desc": "Скидка 30% + Все PRO функции"},
-    "pro_forever": {"seconds": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)", "desc": "Вечный доступ ко всем возможностям"},
-    "case_elite": {"seconds": 0, "stars": 10, "title": "Элитный Кейс", "desc": "15-25k монет, PRO 3-7 дней, слоты радара"},
-    "case_quantum": {"seconds": 0, "stars": 25, "title": "Квантовый Кейс", "desc": "30-50k монет, PRO 7-30 дней, скин Квантум"}
+    "pro_30": {"seconds": 30 * 86400, "stars": 75, "title": "PRO Доступ (30 дней)"},
+    "pro_60": {"seconds": 60 * 86400, "stars": 120, "title": "PRO Доступ (60 дней)"},
+    "pro_90": {"seconds": 90 * 86400, "stars": 160, "title": "PRO Доступ (90 дней)"},
+    "pro_forever": {"seconds": -1, "stars": 490, "title": "PRO Навсегда (Lifetime)"}
 }
 
 if dp and bot:
     @dp.message(CommandStart())
     async def cmd_start(message: types.Message, command: CommandObject):
-        user_id = str(message.from_user.id)
-        ref_referrer = None
-
+        user_id = message.from_user.id
+        ref_id = None
         if command.args and command.args.startswith("ref_"):
-            potential_referrer = command.args.replace("ref_", "").strip()
-            if potential_referrer.isdigit() and potential_referrer != user_id:
-                ref_referrer = potential_referrer
+            potential = command.args.replace("ref_", "").strip()
+            if potential.isdigit() and int(potential) != user_id:
+                ref_id = int(potential)
 
-        async with DB_LOCK:
-            game_db = load_json_file(GAME_DB_PATH, {})
-            user = get_user_profile(game_db, user_id)
-            
-            if ref_referrer and not user.get("referred_by") and user.get("gens_total_count", 0) == 0:
-                user["referred_by"] = ref_referrer
-                ref_db = load_json_file(REFERRALS_DB_PATH, {})
-                if ref_referrer not in ref_db:
-                    ref_db[ref_referrer] = []
-                if user_id not in ref_db[ref_referrer]:
-                    ref_db[ref_referrer].append(user_id)
-                save_json_atomic_sync(REFERRALS_DB_PATH, ref_db)
-                save_json_atomic_sync(GAME_DB_PATH, game_db)
+        async with async_session() as session:
+            user = await get_or_create_user(session, user_id, message.from_user.full_name)
+            if ref_id and not user.referred_by and user.ref_status == "none":
+                user.referred_by = ref_id
+                user.ref_status = "pending"
+            await session.commit()
 
         web_app_url = "https://user-bot-production-8a5d.up.railway.app"
         kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="🚀 Запустить NameHunter PRO", web_app=WebAppInfo(url=web_app_url))]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🚀 Запустить NameHunter PRO", web_app=WebAppInfo(url=web_app_url))]]
         )
         await message.answer(
             "👋 **Добро пожаловать в NameHunter PRO!**\n\n"
-            "🎯 Мгновенный поиск редких юзернеймов\n"
-            "🎁 Снайпер скидок на Telegram Подарки (Fragment)\n"
-            "🎰 Квантовая рулетка кейсов с гарантией наград\n"
-            "🪐 3D-майнинг космических тел (10 этапов до Чёрной Дыры)\n"
-            "👥 Приглашай друзей и получай **+1 день PRO** за каждого!",
-            reply_markup=kb,
-            parse_mode="Markdown"
+            "🎯 Парсер никнеймов (100 в день бесплатно, ∞ в PRO)\n"
+            "🎡 Реферальная рулетка с накоплением PRO-дней\n"
+            "🪐 3D-майнинг 10 космических тел до Чёрной Дыры",
+            reply_markup=kb, parse_mode="Markdown"
         )
 
     @dp.pre_checkout_query()
@@ -669,87 +383,84 @@ if dp and bot:
     @dp.message(F.successful_payment)
     async def process_successful_payment(message: types.Message):
         payload = message.successful_payment.invoice_payload
-        user_id = str(message.from_user.id)
+        user_id = message.from_user.id
         tariff = TARRIFS.get(payload)
 
-        if tariff and tariff["seconds"] != 0:
+        if tariff:
             secs = tariff["seconds"]
             now = int(time.time())
-            key_code = generate_secure_code("PRO")
+            key_code = generate_secure_pro_key()
             
-            async with DB_LOCK:
-                keys_db = load_json_file(KEYS_DB_PATH, {})
-                keys_db[key_code] = {
-                    "bound_user_id": user_id,
-                    "seconds": secs,
-                    "created_at": now,
-                    "activated_status": "used",
-                    "activated_at": now
-                }
-                save_json_atomic_sync(KEYS_DB_PATH, keys_db)
-
-                game_db = load_json_file(GAME_DB_PATH, {})
-                user = get_user_profile(game_db, user_id)
-                
-                if user.get("pro_until") != -1:
-                    if secs == -1:
-                        user["pro_until"] = -1
-                    else:
-                        cur_pro = max(now, user.get("pro_until", 0))
-                        user["pro_until"] = cur_pro + secs
-                
-                user["rank"] = "👑 PRO Ловец"
-                user["pro_warned"] = False
-                user["pro_expired_notified"] = False
-                save_json_atomic_sync(GAME_DB_PATH, game_db)
+            async with async_session() as session:
+                session.add(PromoCode(code=key_code, type='pro', value=secs, is_used=True, used_by=user_id, created_at=now))
+                user = await get_or_create_user(session, user_id)
+                if secs == -1:
+                    user.pro_until = -1
+                else:
+                    user.pro_until = max(now, user.pro_until) + secs
+                user.rank = "👑 PRO Ловец"
+                await session.commit()
 
             duration_text = "Навсегда (Lifetime) 🌌" if secs == -1 else f"{secs // 86400} дней 📅"
             web_app_url = "https://user-bot-production-8a5d.up.railway.app"
-            kb = InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [InlineKeyboardButton(text="🚀 Открыть NameHunter PRO", web_app=WebAppInfo(url=web_app_url))]
-                ]
-            )
+            kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🚀 Открыть WebApp", web_app=WebAppInfo(url=web_app_url))]])
+            await message.answer(f"🎉 **СПАСИБО ЗА ПОКУПКУ PRO!**\nСрок: {duration_text}\nКлюч: `{key_code}`", parse_mode="Markdown", reply_markup=kb)
 
-            await message.answer(
-                f"🎉 **СПАСИБО ЗА ПОКУПКУ PRO ПОДПИСКИ!** 👑\n\n"
-                f"🌟 **Ваш статус:** АКТИВЕН\n"
-                f"⏳ **Срок действия:** {duration_text}\n\n"
-                f"🔑 **Ваш персональный ключ:**\n"
-                f"`{key_code}`\n\n"
-                f"_(Нажмите на ключ, чтобы скопировать его в 1 клик)_\n\n"
-                f"✨ **Что вам теперь доступно:**\n"
-                f"• 🎁 Снайпер скидок на Telegram Подарки\n"
-                f"• 🔋 Бесконечная энергия `∞` в 3D-майнинге\n"
-                f"• 🎯 Радар слежки расширен до 100 слотов\n"
-                f"• 🛠️ Конструктор ников по 20 категориям\n"
-                f"• ⚡ Турбо-парсер без задержек и безлимитный поиск",
-                parse_mode="Markdown",
-                reply_markup=kb
-            )
+async def pro_expiry_worker():
+    while True:
+        try:
+            now_ts = int(time.time())
+            async with async_session() as session:
+                res = await session.execute(select(User).where(User.pro_until > 0))
+                pro_users = res.scalars().all()
+                for u in pro_users:
+                    diff = u.pro_until - now_ts
+                    if 0 < diff <= 180 and not u.pro_warned:
+                        u.pro_warned = True
+                        if bot:
+                            try:
+                                await bot.send_message(
+                                    chat_id=u.telegram_id,
+                                    text="⏳ **Внимание! Ваша PRO-подписка истекает через 3 минуты!** ⚠️"
+                                )
+                            except Exception: pass
+                    if diff <= 0 and not u.pro_expired_notified:
+                        u.pro_expired_notified = True
+                        u.rank = "Ловец"
+                        if bot:
+                            try:
+                                await bot.send_message(
+                                    chat_id=u.telegram_id,
+                                    text="🥺 **Ваша PRO-подписка завершилась!** 🔒"
+                                )
+                            except Exception: pass
+                await session.commit()
+        except Exception:
+            pass
+        await asyncio.sleep(15)
 
 async def radar_worker():
     while True:
         try:
-            db = load_json_file(RADAR_DB_PATH, {})
-            if db and bot:
-                for chat_id, targets in list(db.items()):
-                    for username in list(targets):
-                        is_free = await check_username_telethon(username)
-                        if is_free is True:
-                            try:
-                                await bot.send_message(
-                                    chat_id=int(chat_id),
-                                    text=f"🚨 **РАДАР:** Ник `@{username}` освободился!\nЗабирай скорее!",
-                                    parse_mode="Markdown"
-                                )
-                                db[chat_id].remove(username)
-                                if not db[chat_id]:
-                                    del db[chat_id]
-                                save_json_atomic_sync(RADAR_DB_PATH, db)
-                            except Exception:
-                                pass
-                        await asyncio.sleep(2)
+            async with async_session() as session:
+                res = await session.execute(select(User).where(User.radar_targets != None))
+                users_with_radar = res.scalars().all()
+                if users_with_radar and bot and TELETHON_AVAILABLE:
+                    for u in users_with_radar:
+                        targets = list(u.radar_targets or [])
+                        for tg_target in targets:
+                            is_free = await check_username_telethon(tg_target)
+                            if is_free:
+                                try:
+                                    await bot.send_message(
+                                        chat_id=u.telegram_id,
+                                        text=f"🚨 **РАДАР:** Ник `@{tg_target}` освободился!\nЗабирай скорее!"
+                                    )
+                                    targets.remove(tg_target)
+                                    u.radar_targets = targets
+                                    await session.commit()
+                                except Exception: pass
+                            await asyncio.sleep(2)
         except Exception:
             pass
         await asyncio.sleep(10)
@@ -757,18 +468,17 @@ async def radar_worker():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global TELETHON_AVAILABLE
+    await init_db_and_promos()
     try:
         await telethon_client.connect()
         TELETHON_AVAILABLE = await telethon_client.is_user_authorized()
     except Exception:
         TELETHON_AVAILABLE = False
-    
-    asyncio.create_task(radar_worker())
-    asyncio.create_task(pro_expiry_worker())
-    asyncio.create_task(gifts_arbitrage_worker())
     if bot and dp:
         asyncio.create_task(dp.start_polling(bot))
-    
+    asyncio.create_task(pro_expiry_worker())
+    asyncio.create_task(radar_worker())
+    asyncio.create_task(gifts_arbitrage_worker())
     yield
     try:
         await telethon_client.disconnect()
@@ -779,732 +489,408 @@ app = FastAPI(title="Username Scanner PRO", lifespan=lifespan)
 
 @app.get("/")
 async def read_root():
-    if os.path.exists(INDEX_PATH): 
-        return FileResponse(
-            INDEX_PATH, 
-            media_type="text/html", 
-            headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"}
-        )
-    return JSONResponse(status_code=404, content={"error": "index.html не найден"})
+    if os.path.exists(INDEX_PATH):
+        return FileResponse(INDEX_PATH, media_type="text/html", headers={"Cache-Control": "no-cache"})
+    return JSONResponse(status_code=404, content={"error": "index.html not found"})
 
 @app.post("/api/game/restore_sync")
 async def restore_sync(request: Request):
     data = await request.json()
-    user_id = str(data.get("user_id", "")).strip()
-    client_profile = data.get("client_profile", {})
-    client_radar = data.get("client_radar", [])
+    uid = str(data.get("user_id", "")).strip()
+    if not uid.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_uid"})
+    user_id = int(uid)
 
-    if not user_id:
-        return JSONResponse(status_code=200, content={"status": "error", "msg": "no_user_id"})
-
-    async with DB_LOCK:
-        db = load_json_file(GAME_DB_PATH, {})
-        user = get_user_profile(db, user_id)
+    async with async_session() as session:
+        user = await get_or_create_user(session, user_id)
         now = int(time.time())
-
-        # Расчет оффлайн-фарма
-        time_diff = now - user["last_seen"]
+        time_diff = now - user.last_seen
         offline_earned = 0
         offline_seconds = 0
-        if time_diff > 60 and user.get("offline_miner_lvl", 0) > 0:
+        if time_diff > 60 and user.offline_miner_lvl > 0:
             offline_seconds = min(time_diff, 10800)
-            rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
-            offline_earned = int(offline_seconds * rate_per_sec)
-            user["offline_pending"] = offline_earned
+            offline_earned = int(offline_seconds * (OFFLINE_RATES.get(user.offline_miner_lvl, 500) / 3600.0))
+            user.coins += offline_earned
 
-        if client_profile.get("pro_until", 0) == -1 or client_profile.get("pro_until", 0) > user.get("pro_until", 0):
-            user["pro_until"] = client_profile["pro_until"]
-            user["rank"] = "👑 PRO Ловец"
-
-        if client_profile.get("coins", 0) > user.get("coins", 0):
-            user["coins"] = client_profile["coins"]
-
-        if client_profile.get("cases_opened_total", 0) > user.get("cases_opened_total", 0):
-            user["cases_opened_total"] = client_profile["cases_opened_total"]
-
-        if client_profile.get("planet_stage", 1) > user.get("planet_stage", 1):
-            user["planet_stage"] = client_profile["planet_stage"]
-            user["planet_hp"] = client_profile.get("planet_hp", PLANET_HP_TABLE.get(user["planet_stage"], 100))
-
-        if client_profile.get("multi_tap", 1) > user.get("multi_tap", 1):
-            user["multi_tap"] = client_profile["multi_tap"]
-
-        if client_profile.get("max_energy", 1000) > user.get("max_energy", 1000):
-            user["max_energy"] = client_profile["max_energy"]
-
-        if client_profile.get("offline_miner_lvl", 0) > user.get("offline_miner_lvl", 0):
-            user["offline_miner_lvl"] = client_profile["offline_miner_lvl"]
-
-        if client_profile.get("radar_extra_slots", 0) > user.get("radar_extra_slots", 0):
-            user["radar_extra_slots"] = client_profile["radar_extra_slots"]
-
-        for th in client_profile.get("unlocked_themes", []):
-            if th not in user.get("unlocked_themes", []):
-                user["unlocked_themes"].append(th)
-
-        client_ref_count = int(client_profile.get("referrals_count", 0))
-        if client_ref_count > user.get("referrals_count", 0):
-            user["referrals_count"] = client_ref_count
-
-        if len(client_profile.get("client_history", [])) > len(user.get("client_history", [])):
-            user["client_history"] = client_profile["client_history"]
-
-        if len(client_profile.get("client_achievements", [])) > len(user.get("client_achievements", [])):
-            user["client_achievements"] = client_profile["client_achievements"]
-
-        if client_profile.get("custom_theme_style"):
-            user["custom_theme_style"] = client_profile["custom_theme_style"]
-
-        if client_profile.get("custom_fog_rgb"):
-            user["custom_fog_rgb"] = client_profile["custom_fog_rgb"]
-
-        if client_profile.get("custom_filter_settings"):
-            user["custom_filter_settings"] = client_profile["custom_filter_settings"]
-
-        user["last_seen"] = now
-        save_json_atomic_sync(GAME_DB_PATH, db)
-
-        if client_radar:
-            rdb = load_json_file(RADAR_DB_PATH, {})
-            if user_id not in rdb:
-                rdb[user_id] = []
-            for target in client_radar:
-                if target not in rdb[user_id]:
-                    rdb[user_id].append(target)
-            save_json_atomic_sync(RADAR_DB_PATH, rdb)
-
-        ref_db = load_json_file(REFERRALS_DB_PATH, {})
-        my_refs = ref_db.get(user_id, [])
-        final_refs_count = max(len(my_refs), user.get("referrals_count", 0))
-        user["referrals_count"] = final_refs_count
-
-        is_pro, pro_until = is_user_pro(user_id)
-        return JSONResponse(status_code=200, content={
+        await session.commit()
+        is_pro = user.pro_until == -1 or user.pro_until > now
+        return {
             "status": "ok",
-            "profile": user,
+            "profile": {
+                "coins": user.coins, "energy": user.energy, "max_energy": user.max_energy,
+                "multi_tap": user.multi_tap, "planet_stage": user.planet_stage, "planet_hp": user.planet_hp,
+                "rank": user.rank, "pro_until": user.pro_until, "spins": user.spins,
+                "referrals_count": user.referrals_count, "unlocked_themes": user.unlocked_themes,
+                "radar_extra_slots": user.radar_extra_slots, "offline_miner_lvl": user.offline_miner_lvl
+            },
             "is_pro": is_pro,
-            "pro_until": pro_until,
-            "offline_earned": user.get("offline_pending", 0),
-            "offline_seconds": offline_seconds,
-            "referrals_count": final_refs_count,
-            "daily_gens_count": user.get("daily_gens_count", 0),
+            "pro_until": user.pro_until,
+            "spins": user.spins,
+            "referrals_count": user.referrals_count,
+            "gens_today": user.gen_count_today,
             "daily_limit": FREE_DAILY_LIMIT,
-            "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
-            "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
-        })
-
-@app.get("/api/game/state")
-async def get_game_state(user_id: str):
-    async with DB_LOCK:
-        db = load_json_file(GAME_DB_PATH, {})
-        user = get_user_profile(db, user_id)
-        now = int(time.time())
-        time_diff = now - user["last_seen"]
-        
-        offline_earned = 0
-        offline_seconds = 0
-        if time_diff > 60 and user.get("offline_miner_lvl", 0) > 0:
-            offline_seconds = min(time_diff, 10800)
-            rate_per_sec = OFFLINE_RATES.get(user["offline_miner_lvl"], 500) / 3600.0
-            offline_earned = int(offline_seconds * rate_per_sec)
-            user["offline_pending"] = offline_earned
-
-        user["last_seen"] = now
-        save_json_atomic_sync(GAME_DB_PATH, db)
-        is_pro, pro_until = is_user_pro(user_id)
-
-        ref_db = load_json_file(REFERRALS_DB_PATH, {})
-        my_refs = ref_db.get(str(user_id).strip(), [])
-        final_refs_count = max(len(my_refs), user.get("referrals_count", 0))
-
-        return JSONResponse(status_code=200, content={
-            "status": "ok", 
-            "profile": user, 
-            "offline_earned": user.get("offline_pending", 0),
+            "offline_earned": offline_earned,
             "offline_seconds": offline_seconds,
-            "is_pro": is_pro, 
-            "pro_until": pro_until,
-            "referrals_count": final_refs_count,
-            "daily_gens_count": user.get("daily_gens_count", 0),
-            "daily_limit": FREE_DAILY_LIMIT,
-            "turbo_until": user.get("turbo_until", 0),
-            "unlocked_themes": user.get("unlocked_themes", []),
-            "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0))),
-            "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100)
-        })
-
-@app.post("/api/case/open")
-async def open_case(request: Request):
-    data = await request.json()
-    user_id = str(data.get("user_id", "")).strip()
-    case_type = str(data.get("case_type", "daily"))
-    pay_method = str(data.get("pay_method", "free"))
-    client_coins = int(data.get("client_coins", 0))
-
-    if not user_id:
-        return JSONResponse(status_code=200, content={"status": "error", "msg": "ID пользователя не найден!"})
-
-    async with DB_LOCK:
-        game_db = load_json_file(GAME_DB_PATH, {})
-        user = get_user_profile(game_db, user_id)
-        now = int(time.time())
-
-        # Синхронизация монет с клиентом
-        if client_coins > user["coins"]:
-            user["coins"] = client_coins
-
-        if case_type == "daily":
-            if pay_method == "free":
-                last_free = user.get("last_free_case_time", 0)
-                time_passed = now - last_free
-                if time_passed < 86400:
-                    left_sec = 86400 - time_passed
-                    hours = left_sec // 3600
-                    mins = (left_sec % 3600) // 60
-                    time_str = f"{hours}ч {mins}мин" if hours > 0 else f"{mins}мин"
-                    return JSONResponse(status_code=200, content={
-                        "status": "error",
-                        "msg": f"⏳ Вы уже забрали бесплатный кейс! Следующий через {time_str}",
-                        "cooldown_seconds": left_sec
-                    })
-                user["last_free_case_time"] = now
-            elif pay_method == "coins":
-                if user["coins"] < 15000:
-                    return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет! Нужно 15 000 🟡"})
-                user["coins"] -= 15000
-
-        elif case_type == "elite":
-            if pay_method == "coins":
-                if user["coins"] < 60000:
-                    return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет! Нужно 60 000 🟡"})
-                user["coins"] -= 60000
-
-        elif case_type == "quantum":
-            if pay_method == "coins":
-                if user["coins"] < 150000:
-                    return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет! Нужно 150 000 🟡"})
-                user["coins"] -= 150000
-
-        user["cases_opened_total"] = user.get("cases_opened_total", 0) + 1
-        pity_trigger = (user["cases_opened_total"] % 20 == 0)
-
-        drop_item = {}
-        r = random.random()
-
-        if case_type == "daily":
-            if pity_trigger or r < 0.02:
-                drop_item = {"type": "pro_days", "val": 1, "name": "👑 PRO Доступ (1 день)", "rarity": "gold", "icon": "👑"}
-            elif r < 0.08:
-                drop_item = {"type": "turbo", "val": 15, "name": "🚀 X2 Турбо (15 мин)", "rarity": "purple", "icon": "🚀"}
-            elif r < 0.22:
-                drop_item = {"type": "gens", "val": 15, "name": "🎯 +15 Поисков ников", "rarity": "blue", "icon": "🎯"}
-            elif r < 0.45:
-                drop_item = {"type": "energy", "val": 1000, "name": "⚡ 100% Энергии", "rarity": "blue", "icon": "⚡"}
-            else:
-                coins_won = random.randint(5000, 10000)
-                drop_item = {"type": "coins", "val": coins_won, "name": f"🟡 {coins_won:,} Монет", "rarity": "gray", "icon": "🟡"}
-
-        elif case_type == "elite":
-            if pity_trigger or r < 0.03:
-                drop_item = {"type": "pro_days", "val": 7, "name": "👑 PRO Доступ (7 дней)", "rarity": "gold", "icon": "👑"}
-            elif r < 0.09:
-                drop_item = {"type": "pro_days", "val": 3, "name": "👑 PRO Доступ (3 дня)", "rarity": "red", "icon": "👑"}
-            elif r < 0.16:
-                drop_item = {"type": "radar_slot", "val": 1, "name": "🎯 +1 Слот в Радар", "rarity": "red", "icon": "🎯"}
-            elif r < 0.35:
-                drop_item = {"type": "turbo", "val": 20, "name": "🚀 X2 Турбо (20 мин)", "rarity": "purple", "icon": "🚀"}
-            elif r < 0.60:
-                drop_item = {"type": "gens", "val": 30, "name": "🎯 +30 Поисков ников", "rarity": "blue", "icon": "🎯"}
-            else:
-                coins_won = random.randint(15000, 25000)
-                drop_item = {"type": "coins", "val": coins_won, "name": f"🟡 {coins_won:,} Монет", "rarity": "blue", "icon": "🟡"}
-
-        elif case_type == "quantum":
-            if pity_trigger or r < 0.05:
-                drop_item = {"type": "pro_days", "val": 30, "name": "👑 PRO Доступ (30 ДНЕЙ!)", "rarity": "gold", "icon": "👑"}
-            elif r < 0.12:
-                drop_item = {"type": "theme", "val": "theme_quantum", "name": "🌌 Скин «Квантум»", "rarity": "gold", "icon": "🌌"}
-            elif r < 0.25:
-                drop_item = {"type": "pro_days", "val": 7, "name": "👑 PRO Доступ (7 дней)", "rarity": "red", "icon": "👑"}
-            elif r < 0.42:
-                drop_item = {"type": "radar_slot", "val": 2, "name": "🎯 +2 Слота в Радар", "rarity": "red", "icon": "🎯"}
-            elif r < 0.65:
-                drop_item = {"type": "turbo", "val": 35, "name": "🚀 X2 Турбо (35 мин)", "rarity": "purple", "icon": "🚀"}
-            else:
-                coins_won = random.randint(30000, 50000)
-                drop_item = {"type": "coins", "val": coins_won, "name": f"🟡 {coins_won:,} Монет", "rarity": "purple", "icon": "🟡"}
-
-        if drop_item["type"] == "coins":
-            user["coins"] += drop_item["val"]
-        elif drop_item["type"] == "energy":
-            user["energy"] = user["max_energy"]
-        elif drop_item["type"] == "gens":
-            user["daily_gens_count"] = max(0, user.get("daily_gens_count", 0) - drop_item["val"])
-        elif drop_item["type"] == "turbo":
-            cur_turbo = max(now, user.get("turbo_until", 0))
-            user["turbo_until"] = cur_turbo + (drop_item["val"] * 60)
-        elif drop_item["type"] == "radar_slot":
-            user["radar_extra_slots"] += drop_item["val"]
-        elif drop_item["type"] == "theme":
-            if drop_item["val"] not in user["unlocked_themes"]:
-                user["unlocked_themes"].append(drop_item["val"])
-        elif drop_item["type"] == "pro_days":
-            if user.get("pro_until") != -1:
-                cur_pro = max(now, user.get("pro_until", 0))
-                user["pro_until"] = cur_pro + (drop_item["val"] * 86400)
-            user["rank"] = "👑 PRO Ловец"
-
-        user["last_seen"] = now
-        save_json_atomic_sync(GAME_DB_PATH, db)
-
-        is_pro, pro_until = is_user_pro(user_id)
-        return JSONResponse(status_code=200, content={
-            "status": "ok",
-            "drop": drop_item,
-            "profile": user,
-            "is_pro": is_pro,
-            "pro_until": pro_until,
-            "cases_opened_total": user["cases_opened_total"],
-            "pity_progress": user["cases_opened_total"] % 20
-        })
+            "max_radar_slots": (100 if is_pro else (3 + user.radar_extra_slots)),
+            "planet_hp_max": PLANET_HP_TABLE.get(user.planet_stage, 100)
+        }
 
 @app.post("/api/game/collect_offline")
 async def collect_offline(request: Request):
     data = await request.json()
-    user_id = str(data.get("user_id", "")).strip()
-    if not user_id:
-        return JSONResponse(status_code=200, content={"status": "error", "msg": "Пользователь не найден"})
+    uid = str(data.get("user_id", "")).strip()
+    if not uid.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_uid"})
+    user_id = int(uid)
+    async with async_session() as session:
+        user = await get_or_create_user(session, user_id)
+        now = int(time.time())
+        time_diff = now - user.last_seen
+        earned = 0
+        if time_diff > 60 and user.offline_miner_lvl > 0:
+            offline_seconds = min(time_diff, 10800)
+            earned = int(offline_seconds * (OFFLINE_RATES.get(user.offline_miner_lvl, 500) / 3600.0))
+            user.coins += earned
+            user.last_seen = now
+            await session.commit()
+        return {"status": "ok", "coins": user.coins, "collected": earned}
 
-    async with DB_LOCK:
-        db = load_json_file(GAME_DB_PATH, {})
-        user = get_user_profile(db, user_id)
-        earned = user.get("offline_pending", 0)
-        user["coins"] += earned
-        user["offline_pending"] = 0
-        user["last_seen"] = int(time.time())
-        save_json_atomic_sync(GAME_DB_PATH, db)
-        is_pro, pro_until = is_user_pro(user_id)
-
-        return JSONResponse(status_code=200, content={
-            "status": "ok", 
-            "coins": user["coins"], 
-            "collected": earned,
-            "profile": user,
-            "is_pro": is_pro,
-            "pro_until": pro_until
-        })
-
-@app.post("/api/game/sync_tap")
-async def sync_tap(request: Request):
+@app.post("/api/roulette/spin")
+async def spin_roulette(request: Request):
     data = await request.json()
-    user_id = str(data.get("user_id", "default_guest")).strip()
-    taps = int(data.get("taps", 0))
-    damage = int(data.get("damage", 0))
-    
-    async with DB_LOCK:
-        db = load_json_file(GAME_DB_PATH, {})
-        user = get_user_profile(db, user_id)
-        is_pro, _ = is_user_pro(user_id)
-        
-        if taps > 0:
-            actual_taps = taps if is_pro else min(taps, user["energy"])
-            if actual_taps > 0:
-                earned = actual_taps * user["multi_tap"]
-                user["coins"] += earned
-                if not is_pro:
-                    user["energy"] = max(0, user["energy"] - actual_taps)
-                
-                user["planet_hp"] = max(0, user["planet_hp"] - damage)
-                if user["planet_hp"] <= 0:
-                    if user["planet_stage"] < 10:
-                        user["planet_stage"] += 1
-                        user["planet_hp"] = PLANET_HP_TABLE.get(user["planet_stage"], 100)
-                        user["coins"] += user["planet_stage"] * 500
-                    else:
-                        user["planet_hp"] = PLANET_HP_TABLE[10]
-                
-                user["last_seen"] = int(time.time())
-                save_json_atomic_sync(GAME_DB_PATH, db)
-        return JSONResponse(status_code=200, content={
-            "status": "ok", 
-            "coins": user["coins"], 
-            "server_energy": user["energy"], 
-            "planet_stage": user["planet_stage"], 
-            "planet_hp": user["planet_hp"],
-            "planet_hp_max": PLANET_HP_TABLE.get(user["planet_stage"], 100),
-            "is_pro": is_pro
-        })
+    uid = str(data.get("user_id", "")).strip()
+    if not uid.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_uid"})
+    user_id = int(uid)
+    pay_method = str(data.get("pay_method", "free"))
 
-@app.post("/api/game/buy")
-async def buy_game_item(request: Request):
-    data = await request.json()
-    user_id = str(data.get("user_id", "default_guest")).strip()
-    item_id = str(data.get("item_id", ""))
-    client_coins = int(data.get("client_coins", 0))
-    
-    async with DB_LOCK:
-        db = load_json_file(GAME_DB_PATH, {})
-        user = get_user_profile(db, user_id)
+    async with async_session() as session:
+        user = await get_or_create_user(session, user_id)
         now = int(time.time())
 
-        if client_coins > user["coins"]:
-            user["coins"] = client_coins
+        if pay_method == "free":
+            if user.spins <= 0:
+                return JSONResponse(status_code=400, content={"error": "no_spins", "msg": "Нет спинов! Пригласите друга."})
+            user.spins -= 1
+        elif pay_method == "coins_15":
+            if user.coins < 15000: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 15 000 🟡"})
+            user.coins -= 15000
+        elif pay_method == "coins_60":
+            if user.coins < 60000: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 60 000 🟡"})
+            user.coins -= 60000
+        elif pay_method == "coins_150":
+            if user.coins < 150000: return JSONResponse(status_code=400, content={"error": "not_enough_coins", "msg": "Нужно 150 000 🟡"})
+            user.coins -= 150000
 
-        if item_id == "turbo_boost_15":
-            if user["coins"] >= 65000:
-                user["coins"] -= 65000
-                cur_turbo = max(now, user.get("turbo_until", 0))
-                user["turbo_until"] = cur_turbo + (15 * 60)
-            else: 
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет! Нужно 65 000 🟡"})
+        prize = random.choices(ROULETTE_PRIZES, weights=[p["weight"] for p in ROULETTE_PRIZES], k=1)[0]
+        if prize["type"] == "coins":
+            user.coins += prize["amount"]
+        elif prize["type"] == "turbo":
+            user.turbo_until = max(now, user.turbo_until) + prize["amount"] * 60
+        elif prize["type"] == "radar_slot":
+            user.radar_extra_slots += prize["amount"]
+        elif prize["type"] == "pro_days":
+            if prize["amount"] == -1:
+                user.pro_until = -1
+            else:
+                base = max(now, user.pro_until)
+                user.pro_until = base + prize["amount"] * 86400
+            user.rank = "👑 PRO Ловец"
 
-        elif item_id == "radar_slot":
-            if user["coins"] >= 35000:
-                user["coins"] -= 35000
-                user["radar_extra_slots"] = user.get("radar_extra_slots", 0) + 1
-            else: 
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет! Нужно 35 000 🟡"})
-
-        elif item_id == "theme_quasar":
-            if "theme_quasar" in user.get("unlocked_themes", []):
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Тема уже куплена!"})
-            if user["coins"] >= 100000:
-                user["coins"] -= 100000
-                if "unlocked_themes" not in user:
-                    user["unlocked_themes"] = []
-                user["unlocked_themes"].append("theme_quasar")
-            else: 
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет!"})
-
-        elif item_id == "multi_tap":
-            cost = int(200 * (1.8 ** (user["multi_tap"] - 1)))
-            if user["coins"] >= cost and user["multi_tap"] < 20:
-                user["coins"] -= cost
-                user["multi_tap"] += 1
-            else: return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет!"})
-
-        elif item_id == "max_energy":
-            lvl = (user["max_energy"] - 1000) // 500
-            cost = int(150 * (1.6 ** lvl))
-            if user["coins"] >= cost and lvl < 20:
-                user["coins"] -= cost
-                user["max_energy"] += 500
-                user["energy"] = user["max_energy"]
-            else: return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет!"})
-
-        elif item_id == "offline_miner":
-            lvl = user["offline_miner_lvl"]
-            cost = 3000 if lvl == 0 else int(3000 * (2.2 ** lvl))
-            if user["coins"] >= cost and lvl < 10:
-                user["coins"] -= cost
-                user["offline_miner_lvl"] += 1
-            else: return JSONResponse(status_code=200, content={"status": "error", "msg": "Недостаточно монет!"})
-
-        user["last_seen"] = now
-        save_json_atomic_sync(GAME_DB_PATH, db)
-        is_pro, pro_until = is_user_pro(user_id)
-
-        return JSONResponse(status_code=200, content={
-            "status": "ok", 
-            "profile": user,
-            "is_pro": is_pro,
-            "pro_until": pro_until,
-            "turbo_until": user.get("turbo_until", 0),
-            "max_radar_slots": (100 if is_pro else (3 + user.get("radar_extra_slots", 0)))
-        })
+        await session.commit()
+        is_pro = user.pro_until == -1 or user.pro_until > now
+        return {"status": "ok", "drop": prize, "spins": user.spins, "coins": user.coins, "is_pro": is_pro, "pro_until": user.pro_until}
 
 @app.post("/api/promo/activate")
 async def activate_promo(request: Request):
     data = await request.json()
-    user_id = str(data.get("user_id", "")).strip()
+    uid = str(data.get("user_id", "")).strip()
     code = str(data.get("code", "")).strip().upper()
+    if not uid.isdigit() or not code: return JSONResponse(status_code=400, content={"error": "invalid_data"})
+    user_id = int(uid)
     now = int(time.time())
 
-    if not user_id or not code:
-        return JSONResponse(status_code=200, content={"status": "error", "msg": "Введите код!"})
+    if user_id in FAILED_ATTEMPTS:
+        fails, lock_time = FAILED_ATTEMPTS[user_id]
+        if fails >= 5:
+            if now - lock_time < 300:
+                return JSONResponse(status_code=429, content={"error": f"Блокировка на {300 - (now - lock_time)} сек."})
+            else:
+                FAILED_ATTEMPTS[user_id] = [0, 0]
 
-    async with DB_LOCK:
-        promos_db = load_json_file(PROMOS_DB_PATH, {})
-        matched_promo_key = None
-        for p_code in promos_db.keys():
-            if p_code.strip().upper() == code:
-                matched_promo_key = p_code
-                break
+    async with async_session() as session:
+        promo = await session.get(PromoCode, code)
+        if not promo or promo.is_used:
+            cur_fails = FAILED_ATTEMPTS.get(user_id, [0, 0])[0] + 1
+            FAILED_ATTEMPTS[user_id] = [cur_fails, now]
+            return JSONResponse(status_code=400, content={"error": "Промокод не существует или уже активирован!"})
 
-        if matched_promo_key:
-            promo_data = promos_db[matched_promo_key]
-            if promo_data.get("used_by"):
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Этот промокод уже был активирован!"})
-            
-            coins_reward = promo_data.get("coins", 100000)
-            promo_data["used_by"] = user_id
-            promo_data["used_at"] = now
-            save_json_atomic_sync(PROMOS_DB_PATH, promos_db)
+        user = await get_or_create_user(session, user_id)
+        promo.is_used = True
+        promo.used_by = user_id
 
-            game_db = load_json_file(GAME_DB_PATH, {})
-            user = get_user_profile(game_db, user_id)
-            user["coins"] += coins_reward
-            save_json_atomic_sync(GAME_DB_PATH, game_db)
+        if promo.type == 'coins':
+            user.coins += promo.value
+            msg = f"🎉 Начислено +{promo.value:,} 🟡 монет!"
+        else:
+            if promo.value == -1: user.pro_until = -1
+            else: user.pro_until = max(now, user.pro_until) + promo.value
+            user.rank = "👑 PRO Ловец"
+            msg = "🎉 PRO подписка успешно активирована!"
 
-            return JSONResponse(status_code=200, content={
-                "status": "ok", 
-                "type": "coins", 
-                "coins": user["coins"], 
-                "reward": coins_reward, 
-                "profile": user,
-                "msg": f"🎉 Начислено +{coins_reward:,} 🟡 монет!"
-            })
+        if user_id in FAILED_ATTEMPTS: del FAILED_ATTEMPTS[user_id]
+        await session.commit()
+        return {"status": "ok", "msg": msg, "coins": user.coins, "pro_until": user.pro_until}
 
-        keys_db = load_json_file(KEYS_DB_PATH, {})
-        matched_key = None
-        for k_code in keys_db.keys():
-            if k_code.strip().upper() == code:
-                matched_key = k_code
-                break
+@app.get("/api/generate")
+async def generate_username(
+    finder_id: str = Query("0"), 
+    finder_name: str = Query("Аноним"), 
+    custom_keyword: str = Query(""), 
+    custom_category: str = Query("superheroes"), 
+    use_filter: bool = Query(False), 
+    len_mode: str = Query("5-6")
+):
+    if not finder_id.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_id"})
+    user_id = int(finder_id)
+    reward_ref_id = None
 
-        if matched_key:
-            k_data = keys_db[matched_key]
-            if k_data.get("activated_status") == "used":
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Этот PRO-ключ уже активирован!"})
+    async with async_session() as session:
+        user = await get_or_create_user(session, user_id, finder_name)
+        now = int(time.time())
+        is_pro = user.pro_until == -1 or user.pro_until > now
 
-            secs = k_data.get("seconds", 30 * 86400)
-            k_data["bound_user_id"] = user_id
-            k_data["activated_status"] = "used"
-            k_data["activated_at"] = now
-            save_json_atomic_sync(KEYS_DB_PATH, keys_db)
+        if not is_pro:
+            if user.gen_count_today >= FREE_DAILY_LIMIT:
+                return JSONResponse(status_code=429, content={"error": "limit_reached", "msg": "Дневной лимит (100) исчерпан! Оформите PRO."})
+            user.gen_count_today += 1
 
-            game_db = load_json_file(GAME_DB_PATH, {})
-            user = get_user_profile(game_db, user_id)
-            
-            if user.get("pro_until") != -1:
-                if secs == -1:
-                    user["pro_until"] = -1
-                else:
-                    cur_pro = max(now, user.get("pro_until", 0))
-                    user["pro_until"] = cur_pro + secs
-            
-            user["rank"] = "👑 PRO Ловец"
-            save_json_atomic_sync(GAME_DB_PATH, game_db)
+        if user.referred_by and user.ref_status == "pending":
+            user.ref_status = "completed"
+            inviter = await session.get(User, user.referred_by)
+            if inviter:
+                inviter.referrals_count += 1
+                inviter.spins += 1
+                reward_ref_id = inviter.telegram_id
 
-            duration_text = "Навсегда (Lifetime) 🌌" if secs == -1 else f"{secs // 86400} дней 📅"
-            return JSONResponse(status_code=200, content={
-                "status": "ok", 
-                "type": "pro", 
-                "is_pro": True, 
-                "pro_until": user["pro_until"], 
-                "profile": user,
-                "msg": f"🎉 PRO активирован на {duration_text}!"
-            })
+        await session.commit()
 
-        return JSONResponse(status_code=200, content={"status": "error", "msg": "❌ Неверный промокод или ключ!"})
+    if reward_ref_id and bot:
+        try:
+            await bot.send_message(
+                chat_id=reward_ref_id,
+                text=f"🎉 **Ваш реферал ({finder_name}) сделал первую генерацию!**\n🎁 Вам начислен **+1 спин** в Рулетку Фортуны!"
+            )
+        except Exception: pass
+
+    if custom_keyword.strip():
+        generated = generate_keyword_custom_username(custom_keyword, custom_category)
+        is_pure, has_und = True, False
+    else:
+        generated, is_pure, has_und = generate_smart_username(len_mode=len_mode, strict_filter=use_filter)
+
+    is_free = await check_username_telethon(generated)
+    eval_data = calculate_catch_score(generated, is_free, is_pure, has_und)
+
+    if is_free and eval_data.get("score", 0) >= 40:
+        async with async_session() as session:
+            res = await session.execute(select(Leaderboard).where(Leaderboard.username == generated))
+            if not res.scalar_one_or_none():
+                session.add(Leaderboard(
+                    username=generated, rank=eval_data["rank"], price=eval_data["status"],
+                    score=eval_data["score"], color=eval_data["color"], finder_name=finder_name or "Аноним",
+                    finder_id=str(user_id), created_at=int(time.time())
+                ))
+                await session.commit()
+
+    return {
+        "status": "success", "generated_username": generated, "is_free": is_free,
+        "evaluation": eval_data, "gens_left_today": -1 if is_pro else max(0, FREE_DAILY_LIMIT - user.gen_count_today)
+    }
+
+@app.post("/api/game/sync_tap")
+async def sync_tap(request: Request):
+    data = await request.json()
+    uid = str(data.get("user_id", "")).strip()
+    if not uid.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_uid"})
+    taps = int(data.get("taps", 0))
+
+    async with async_session() as session:
+        user = await get_or_create_user(session, int(uid))
+        now = int(time.time())
+        is_pro = user.pro_until == -1 or user.pro_until > now
+        if taps > 0:
+            actual = taps if is_pro else min(taps, user.energy)
+            user.coins += actual * user.multi_tap
+            if not is_pro: user.energy = max(0, user.energy - actual)
+            user.planet_hp = max(0, user.planet_hp - taps)
+            if user.planet_hp <= 0:
+                user.planet_stage = min(10, user.planet_stage + 1)
+                user.planet_hp = PLANET_HP_TABLE.get(user.planet_stage, 100)
+                user.coins += user.planet_stage * 500
+            await session.commit()
+        return {"status": "ok", "coins": user.coins, "energy": user.energy, "planet_stage": user.planet_stage, "planet_hp": user.planet_hp}
+
+@app.post("/api/game/buy")
+async def buy_game_item(request: Request):
+    data = await request.json()
+    uid = str(data.get("user_id", "")).strip()
+    item_id = str(data.get("item_id", ""))
+    if not uid.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_uid"})
+    user_id = int(uid)
+
+    async with async_session() as session:
+        user = await get_or_create_user(session, user_id)
+        now = int(time.time())
+
+        if item_id == "turbo_boost_15":
+            if user.coins >= 65000:
+                user.coins -= 65000
+                user.turbo_until = max(now, user.turbo_until) + (15 * 60)
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "radar_slot":
+            if user.coins >= 35000:
+                user.coins -= 35000
+                user.radar_extra_slots += 1
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "theme_quasar":
+            themes = list(user.unlocked_themes or [])
+            if "theme_quasar" in themes:
+                return JSONResponse(status_code=400, content={"error": "already_owned"})
+            if user.coins >= 100000:
+                user.coins -= 100000
+                themes.append("theme_quasar")
+                user.unlocked_themes = themes
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "multi_tap":
+            cost = int(200 * (1.8 ** (user.multi_tap - 1)))
+            if user.coins >= cost and user.multi_tap < 20:
+                user.coins -= cost
+                user.multi_tap += 1
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "max_energy":
+            lvl = (user.max_energy - 1000) // 500
+            cost = int(150 * (1.6 ** lvl))
+            if user.coins >= cost and lvl < 20:
+                user.coins -= cost
+                user.max_energy += 500
+                user.energy = user.max_energy
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        elif item_id == "offline_miner":
+            lvl = user.offline_miner_lvl
+            cost = 3000 if lvl == 0 else int(3000 * (2.2 ** lvl))
+            if user.coins >= cost and lvl < 10:
+                user.coins -= cost
+                user.offline_miner_lvl += 1
+            else: return JSONResponse(status_code=400, content={"error": "not_enough_coins"})
+
+        await session.commit()
+        return {"status": "ok", "profile": {"coins": user.coins, "multi_tap": user.multi_tap, "max_energy": user.max_energy, "offline_miner_lvl": user.offline_miner_lvl}}
+
+@app.get("/api/radar/list")
+async def get_radar_list(chat_id: str = Query("0")):
+    if not chat_id.isdigit(): return {"targets": []}
+    async with async_session() as session:
+        user = await get_or_create_user(session, int(chat_id))
+        return {"targets": list(user.radar_targets or [])}
+
+@app.get("/api/radar/add")
+async def add_radar_target(chat_id: str = Query("0"), username: str = Query("")):
+    if not chat_id.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_id"})
+    user_id = int(chat_id)
+    raw_user = username.replace("@", "").strip().lower()
+    if not raw_user: return {"status": "error"}
+
+    async with async_session() as session:
+        user = await get_or_create_user(session, user_id)
+        now = int(time.time())
+        is_pro = user.pro_until == -1 or user.pro_until > now
+        max_slots = 100 if is_pro else (3 + user.radar_extra_slots)
+        targets = list(user.radar_targets or [])
+        if len(targets) >= max_slots:
+            return JSONResponse(status_code=403, content={"error": "limit_reached", "msg": f"Лимит радара ({max_slots}) исчерпан!"})
+        if raw_user not in targets:
+            targets.append(raw_user)
+            user.radar_targets = targets
+            await session.commit()
+        return {"status": "ok", "targets": targets}
+
+@app.get("/api/radar/remove")
+async def remove_radar_target(chat_id: str = Query("0"), username: str = Query("")):
+    if not chat_id.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_id"})
+    user_id = int(chat_id)
+    raw_user = username.replace("@", "").strip().lower()
+
+    async with async_session() as session:
+        user = await get_or_create_user(session, user_id)
+        targets = list(user.radar_targets or [])
+        if raw_user in targets:
+            targets.remove(raw_user)
+            user.radar_targets = targets
+            await session.commit()
+        return {"status": "ok", "targets": targets}
 
 @app.get("/api/gifts/catalog")
 async def get_gifts_catalog():
-    return JSONResponse(status_code=200, content={"status": "ok", "catalog": GIFTS_CATALOG})
+    return {"status": "ok", "catalog": GIFTS_CATALOG}
 
 @app.post("/api/gifts/settings")
 async def save_gift_settings(request: Request):
     data = await request.json()
-    user_id = str(data.get("user_id", "")).strip()
-    active = bool(data.get("active", False))
-    margin = int(data.get("margin", 30))
-    max_budget = float(data.get("max_budget", 1000))
-    gifts = list(data.get("gifts", []))
+    uid = str(data.get("user_id", "")).strip()
+    if not uid.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_id"})
+    user_id = int(uid)
 
-    is_pro, _ = is_user_pro(user_id)
-    if active and not is_pro:
-        return JSONResponse(status_code=200, content={"status": "error", "msg": "Снайпер подарков доступен только в PRO!"})
+    async with async_session() as session:
+        user = await get_or_create_user(session, user_id)
+        now = int(time.time())
+        is_pro = user.pro_until == -1 or user.pro_until > now
+        if not is_pro and data.get("active", False):
+            return JSONResponse(status_code=403, content={"error": "pro_required", "msg": "Снайпер Fragment доступен только в PRO!"})
+        
+        user.gift_radar_active = bool(data.get("active", False))
+        user.gift_margin = int(data.get("margin", 30))
+        user.gift_max_budget = int(data.get("max_budget", 10000))
+        user.selected_gifts = list(data.get("gifts", []))
+        await session.commit()
+        return {"status": "ok"}
 
-    async with DB_LOCK:
-        gdb = load_json_file(GIFTS_DB_PATH, {})
-        gdb[user_id] = {
-            "active": active,
-            "margin": margin,
-            "max_budget": max_budget,
-            "gifts": gifts,
-            "updated_at": int(time.time())
+@app.get("/api/leaderboard")
+async def get_leaderboard():
+    async with async_session() as session:
+        res = await session.execute(select(Leaderboard).order_by(Leaderboard.score.desc()).limit(100))
+        entries = res.scalars().all()
+        return {
+            "status": "ok",
+            "leaderboard": [
+                {
+                    "username": e.username, "rank": e.rank, "price": e.price,
+                    "score": e.score, "color": e.color, "finder_name": e.finder_name,
+                    "finder_id": e.finder_id
+                }
+                for e in entries
+            ]
         }
-        save_json_atomic_sync(GIFTS_DB_PATH, gdb)
-        return JSONResponse(status_code=200, content={"status": "ok", "settings": gdb[user_id]})
 
 @app.post("/api/pro/buy_invoice")
 async def create_pro_invoice(request: Request):
-    if not bot:
-        return JSONResponse(status_code=200, content={"status": "error", "msg": "Bot token not configured"})
+    if not bot: return JSONResponse(status_code=400, content={"error": "bot_not_configured"})
     data = await request.json()
-    user_id = str(data.get("user_id", "")).strip()
+    uid = str(data.get("user_id", "")).strip()
     tariff_id = str(data.get("tariff_id", "pro_30"))
-
     tariff = TARRIFS.get(tariff_id)
-    if not tariff or not user_id.isdigit():
-        return JSONResponse(status_code=200, content={"status": "error", "msg": "Invalid tariff or user_id"})
+    if not tariff or not uid.isdigit(): return JSONResponse(status_code=400, content={"error": "invalid_tariff"})
 
     try:
         invoice_link = await bot.create_invoice_link(
-            title=tariff["title"],
-            description=tariff["desc"],
-            payload=tariff_id,
-            provider_token="",
-            currency="XTR",
-            prices=[LabeledPrice(label=tariff["title"], amount=tariff["stars"])]
+            title=tariff["title"], description="NameHunter PRO Доступ", payload=tariff_id,
+            provider_token="", currency="XTR", prices=[LabeledPrice(label=tariff["title"], amount=tariff["stars"])]
         )
-        return JSONResponse(status_code=200, content={"status": "ok", "invoice_link": invoice_link})
+        return {"status": "ok", "invoice_link": invoice_link}
     except Exception as e:
-        return JSONResponse(status_code=200, content={"status": "error", "msg": str(e)})
-
-@app.get("/api/generate")
-async def generate_username(
-    request: Request, 
-    platform: str = Query("telegram"), 
-    use_filter: bool = Query(False), 
-    len_mode: str = Query("5-6"), 
-    use_num: bool = Query(False), 
-    use_und: bool = Query(False), 
-    custom_keyword: str = Query(""),
-    custom_category: str = Query("superheroes"),
-    finder_name: str = Query("Аноним"), 
-    finder_id: str = Query("0") 
-):
-    reward_referrer_id = None
-    async with DB_LOCK:
-        game_db = load_json_file(GAME_DB_PATH, {})
-        user = get_user_profile(game_db, finder_id)
-        is_pro, _ = is_user_pro(finder_id)
-        
-        if not is_pro:
-            if user.get("daily_gens_count", 0) >= FREE_DAILY_LIMIT:
-                return JSONResponse(
-                    status_code=429, 
-                    content={
-                        "error": "limit_reached",
-                        "msg": f"Дневной лимит ({FREE_DAILY_LIMIT} поисков) исчерпан!",
-                        "daily_gens_count": user["daily_gens_count"],
-                        "daily_limit": FREE_DAILY_LIMIT
-                    }
-                )
-            user["daily_gens_count"] = user.get("daily_gens_count", 0) + 1
-
-        user["gens_total_count"] = user.get("gens_total_count", 0) + 1
-
-        if user.get("referred_by") and not user.get("referral_reward_claimed", False) and user["gens_total_count"] >= 3:
-            user["referral_reward_claimed"] = True
-            referrer_id = user["referred_by"]
-            if referrer_id in game_db:
-                ref_user = get_user_profile(game_db, referrer_id)
-                now_ts = int(time.time())
-                if ref_user.get("pro_until") != -1:
-                    cur_pro = max(now_ts, ref_user.get("pro_until", 0))
-                    ref_user["pro_until"] = cur_pro + 86400
-                ref_user["rank"] = "👑 PRO Ловец"
-                ref_user["referrals_count"] = ref_user.get("referrals_count", 0) + 1
-                reward_referrer_id = referrer_id
-
-        save_json_atomic_sync(GAME_DB_PATH, game_db)
-
-    if reward_referrer_id and bot:
-        try:
-            await bot.send_message(
-                chat_id=int(reward_referrer_id),
-                text=(
-                    "🎉 **ВАШ ДРУГ АКТИВИРОВАЛ ПРИЛОЖЕНИЕ!** 👥\n\n"
-                    f"Ловец **{finder_name}** сделал 3 поиска и подтвердил активность!\n"
-                    "👑 Вам начислен **+1 ДЕНЬ PRO ПОДПИСКИ** (24 часа) бесплатно!"
-                ),
-                parse_mode="Markdown"
-            )
-        except Exception:
-            pass
-
-    generated = ""
-    is_free = False
-    eval_data = {}
-
-    clean_keyword = custom_keyword.strip() if use_filter else ""
-
-    for _ in range(12):
-        if clean_keyword:
-            if not is_pro:
-                return JSONResponse(status_code=200, content={"status": "error", "msg": "Конструктор по 20 категориям доступен только в PRO!"})
-            generated = generate_keyword_custom_username(clean_keyword, custom_category, use_und)
-            is_pure = True
-            has_und = ("_" in generated)
-        else:
-            generated, is_pure, has_und = generate_smart_username(len_mode, use_num, use_und, strict_filter=use_filter)
-
-        is_free = await check_username_telethon(generated)
-        eval_data = calculate_catch_score(generated, is_free, is_pure, has_und)
-        if is_free:
-            break
-
-    if is_free and eval_data.get("score", 0) >= 40:
-        lb = load_json_file(LEADERBOARD_PATH, [])
-        if not any(item["username"].lower() == generated.lower() for item in lb):
-            lb.append({
-                "username": generated,
-                "rank": eval_data["rank"],
-                "price": eval_data["status"],
-                "score": eval_data["score"],
-                "color": eval_data["color"],
-                "finder_name": finder_name or "Аноним",
-                "finder_id": finder_id or "0",
-                "timestamp": int(time.time())
-            })
-            lb = sorted(lb, key=lambda x: x.get("score", 0), reverse=True)[:1000]
-            save_json_atomic_sync(LEADERBOARD_PATH, lb)
-
-    return JSONResponse(status_code=200, content={
-        "status": "success",
-        "generated_username": generated,
-        "platform": platform,
-        "is_free": is_free,
-        "evaluation": eval_data,
-        "daily_gens_count": user.get("daily_gens_count", 0),
-        "daily_limit": FREE_DAILY_LIMIT,
-        "is_pro": is_pro
-    })
-
-@app.get("/api/radar/add")
-async def radar_add(chat_id: str, username: str):
-    chat_id = str(chat_id).strip()
-    is_pro, _ = is_user_pro(chat_id)
-
-    db = load_json_file(RADAR_DB_PATH, {})
-    user_targets = db.get(chat_id, [])
-    game_db = load_json_file(GAME_DB_PATH, {})
-    profile = get_user_profile(game_db, chat_id)
-    max_slots = 100 if is_pro else (3 + profile.get("radar_extra_slots", 0))
-
-    if len(user_targets) >= max_slots:
-        return JSONResponse(status_code=200, content={"status": "error", "msg": f"Достигнут лимит ({max_slots} слотов). Оформите PRO или купите слот в магазине!"})
-
-    if chat_id not in db: 
-        db[chat_id] = []
-    username = username.replace("@", "").strip().lower()
-    if username and username not in db[chat_id]:
-        db[chat_id].append(username)
-        save_json_atomic_sync(RADAR_DB_PATH, db)
-    return JSONResponse(status_code=200, content={"status": "ok", "targets": db[chat_id]})
-
-@app.get("/api/radar/list")
-async def radar_list(chat_id: str):
-    return JSONResponse(status_code=200, content={"targets": load_json_file(RADAR_DB_PATH, {}).get(str(chat_id).strip(), [])})
-
-@app.get("/api/radar/remove")
-async def radar_remove(chat_id: str, username: str):
-    db = load_json_file(RADAR_DB_PATH, {})
-    chat_id = str(chat_id).strip()
-    username = username.replace("@", "").strip().lower()
-    if chat_id in db and username in db[chat_id]:
-        db[chat_id].remove(username)
-        if not db[chat_id]:
-            del db[chat_id]
-        save_json_atomic_sync(RADAR_DB_PATH, db)
-    return JSONResponse(status_code=200, content={"status": "ok", "targets": db.get(chat_id, [])})
-
-@app.get("/api/leaderboard")
-async def get_leaderboard(period: str = Query("all")):
-    lb = load_json_file(LEADERBOARD_PATH, [])
-    return JSONResponse(status_code=200, content={"status": "ok", "leaderboard": lb[:1000]})
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
